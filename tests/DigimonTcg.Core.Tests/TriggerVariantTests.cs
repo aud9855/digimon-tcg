@@ -139,4 +139,54 @@ public class TriggerVariantTests
 
         Assert.Equal(8 - 3 + 1, state.MemoryGauge);
     }
+
+    /// <summary>
+    /// "When one of your opponent's level 5 or lower Digimon is deleted" (디지몬 카이저 BT8-094) — 상대 디지몬이 주어.
+    /// 예전에는 "your ~ Digimon"(자신의 디지몬) 규칙에 먼저 걸려 자신의 디지몬이 소멸했을 때 발동했다.
+    /// </summary>
+    [Fact]
+    public void OpponentsDigimonDeleted_WithLevel_OnlyOpponentsMatchingDigimon()
+    {
+        var (state, engine) = NewMainPhase("[All Turns] When one of your opponent's level 5 or lower Digimon is deleted, you may suspend this Tamer to ＜Draw 1＞ (Draw 1 card from your deck.)");
+        var tamer = state.Player.Tamers[0];
+        Assert.Contains(CardScripts.For(tamer)!.Effects, e => e.Trigger == EffectTrigger.OpponentDigimonDeleted);
+        var mine = new CardInstance(Card("TV-DMINE", type: CardType.Digimon, level: 4), 1);
+        var keep = new CardInstance(Card("TV-DKEEP", type: CardType.Digimon, level: 3), 1);
+        var enemyLv6 = new CardInstance(Card("TV-DLV6", type: CardType.Digimon, level: 6), 0);
+        var enemyLv4 = new CardInstance(Card("TV-DLV4", type: CardType.Digimon, level: 4), 0);
+        state.Player.BattleArea.AddRange(new[] { mine, keep });
+        state.DummyOpponent.BattleArea.AddRange(new[] { enemyLv6, enemyLv4 });
+        int hand = state.Player.Hand.Count;
+
+        void Delete(string id, string text, CardInstance target)
+        {
+            var opt = Card(id, text, playCost: 0);
+            state.Player.Hand.Add(opt);
+            Assert.True(engine.PlayCard(opt, target).CanExecute);
+        }
+
+        Delete("TV-DEL-MINE", "[Main] Delete 1 of your Digimon.", mine);                 // 자신의 Lv.4
+        Assert.DoesNotContain(mine, state.Player.BattleArea);
+        Assert.Equal(hand, state.Player.Hand.Count);
+        Assert.True(state.Player.HasActiveTamer(tamer));
+
+        Delete("TV-DEL-LV6", "[Main] Delete 1 of your opponent's Digimon.", enemyLv6);   // 상대 Lv.6
+        Assert.DoesNotContain(enemyLv6, state.DummyOpponent.BattleArea);
+        Assert.Equal(hand, state.Player.Hand.Count);
+        Assert.True(state.Player.HasActiveTamer(tamer));
+
+        Delete("TV-DEL-LV4", "[Main] Delete 1 of your opponent's Digimon.", enemyLv4);   // 상대 Lv.4 → 레스트하고 1드로우
+        Assert.Equal(hand + 1, state.Player.Hand.Count);
+        Assert.False(state.Player.HasActiveTamer(tamer));
+    }
+
+    /// <summary>"When one of your opponent's Digimon attacks" (사나다 아라타 BT22-091 등) — 자신의 디지몬 어택이 아니라 상대 디지몬 어택</summary>
+    [Fact]
+    public void OneOfYourOpponentsDigimonAttacks_IsOpponentAttack()
+    {
+        var tamer = Card("TV-OATK", "[Opponent's Turn] When one of your opponent's Digimon attacks, gain 1 memory.", CardType.Tamer);
+
+        var effect = Assert.Single(CardScripts.For(tamer)!.Effects);
+        Assert.Equal(EffectTrigger.OpponentDigimonAttacks, effect.Trigger);
+    }
 }

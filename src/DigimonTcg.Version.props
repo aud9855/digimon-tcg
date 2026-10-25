@@ -8,7 +8,7 @@
     빌드할 때 git 커밋 해시가 자동으로 붙어 앱에는 "v0.8.0 (bf07dad)"처럼 보인다.
   -->
   <PropertyGroup>
-    <Version>0.26.0</Version>
+    <Version>0.26.1</Version>
     <Product>DIGIMON TCG : DIGITAL COLOSSEUM</Product>
     <Company>DigimonTcg</Company>
   </PropertyGroup>

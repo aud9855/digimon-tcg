@@ -763,6 +763,15 @@ internal static class SentenceParser
             return (new List<EffectTrigger> { EffectTrigger.AllyOptionUsed, EffectTrigger.OpponentOptionUsed }, null);
         if (Regex.IsMatch(ev, @"^(?:an|one of your|any of your) opponent's Digimon attacks (?:a player|you)$", RegexOptions.IgnoreCase))
             return One(EffectTrigger.OpponentDigimonAttacks, c => c.TriggerCard == null);
+        // "When one of your opponent's level 5 or lower Digimon is deleted" · "When one of your opponent's Digimon attacks" — 상대 디지몬이 주어.
+        // 아래 "your ~ Digimon"(자신의 디지몬) 규칙보다 먼저 본다 ("one of your opponent's"도 "your"로 시작해서 자신의 디지몬 시점으로 잘못 붙었다 — BT8-094 · BT22-091)
+        if ((m = Regex.Match(ev, @"^(?:an|one of your|any of your) opponent's (?<spec>[^,]*?Digimon(?: with [^,]+?)?) (?<what>attacks|is deleted|are deleted)$", RegexOptions.IgnoreCase)).Success
+            && TargetSpec.Parse("all of your opponent's " + m.Groups["spec"].Value) is { } enemySubject)
+        {
+            bool attacks = m.Groups["what"].Value.Equals("attacks", StringComparison.OrdinalIgnoreCase);
+            return One(attacks ? EffectTrigger.OpponentDigimonAttacks : EffectTrigger.OpponentDigimonDeleted,
+                c => c.Other != null && enemySubject.Filters.All(f => f(c.Other)) && enemySubject.ContextFilters.All(f => f(c, c.Other)));
+        }
         // "When one of your blue Digimon attacks (a player)" · "When you play a level 3 yellow Digimon" · "When you play another Digimon"
         if ((m = Regex.Match(ev, @"^(?:one of |any of )?your (?<subj>(?:other )?[^,]*?Digimon(?: with [^,]+?)?) attacks(?<p> a player| your opponent)?$", RegexOptions.IgnoreCase)).Success
             && ParseAllySubject(m.Groups["subj"].Value) is { } attacker)
@@ -1016,7 +1025,7 @@ internal static class SentenceParser
         string p = Regex.Replace(subj, @"^(?:another|other|an?|1)\s+", "", RegexOptions.IgnoreCase);
         p = Regex.Replace(p, @"^other\s+", "", RegexOptions.IgnoreCase);
         var spec = TargetSpec.Parse("all of your " + p);
-        if (spec == null) return null;
+        if (spec == null || spec.Opponent || spec.AnySide) return null;   // "opponent's Digimon"은 자신의 디지몬이 아니다
         return (c, d) => (!other || !ReferenceEquals(d, c.Self)) && spec.Filters.All(f => f(d));
     }
 
