@@ -38,6 +38,45 @@ public static class StarterDecks
 
     public static bool IsTextOnlyEffectCard(string cardId) => TextOnlyEffectCardIds.Contains(cardId);
 
+    // 내장 한글 카드의 공식 영어 이름 (DigimonCard.io 공개 API의 카드 번호별 name — 2026-10 기준).
+    // 효과 문장(영어)의 이름 조건 "[Greymon]" · "with [X] in its name" 등은 Name(한글)과 이 이름을 함께 본다 (Models.CardNames).
+    private static readonly Dictionary<string, string> BuiltInEnglishNames = new(StringComparer.Ordinal)
+    {
+        ["BT1-001"] = "Yokomon", ["BT1-003"] = "Upamon", ["BT1-009"] = "Monodramon", ["BT1-010"] = "Agumon",
+        ["BT1-015"] = "Greymon", ["BT1-020"] = "Groundramon", ["BT1-021"] = "MetalGreymon", ["BT1-025"] = "WarGreymon",
+        ["BT1-029"] = "Gabumon", ["BT1-034"] = "Ikkakumon", ["BT1-040"] = "WereGarurumon", ["BT1-048"] = "Patamon",
+        ["BT1-060"] = "MagnaAngemon", ["BT1-067"] = "Palmon", ["BT1-074"] = "Togemon", ["BT1-079"] = "Lillymon",
+        ["BT1-084"] = "Omnimon", ["BT2-009"] = "Guilmon", ["BT2-020"] = "Gallantmon", ["BT2-021"] = "Veemon",
+        ["BT2-032"] = "UlforceVeedramon", ["BT2-039"] = "Magnadramon", ["BT2-052"] = "Hagurumon", ["BT2-059"] = "Kurisarimon",
+        ["BT2-065"] = "WarGreymon", ["BT2-068"] = "Impmon", ["BT2-074"] = "Devimon", ["BT2-080"] = "Piedmon",
+        ["BT3-031"] = "Imperialdramon Dragon Mode", ["BT3-112"] = "Omnimon Alter-S", ["BT5-086"] = "Omnimon", ["ST1-01"] = "Koromon",
+        ["ST1-02"] = "Biyomon", ["ST1-03"] = "Agumon", ["ST1-04"] = "Dracomon", ["ST1-05"] = "Birdramon",
+        ["ST1-06"] = "Coredramon", ["ST1-07"] = "Greymon", ["ST1-08"] = "Garudamon", ["ST1-09"] = "MetalGreymon",
+        ["ST1-10"] = "Phoenixmon", ["ST1-11"] = "WarGreymon", ["ST1-12"] = "Tai Kamiya", ["ST1-13"] = "Shadow Wing",
+        ["ST1-14"] = "Starlight Explosion", ["ST1-15"] = "Giga Destroyer", ["ST1-16"] = "Gaia Force", ["ST2-01"] = "Tsunomon",
+        ["ST2-02"] = "Gomamon", ["ST2-03"] = "Gabumon", ["ST2-04"] = "Bearmon", ["ST2-05"] = "Ikkakumon",
+        ["ST2-06"] = "Garurumon", ["ST2-07"] = "Grizzlymon", ["ST2-08"] = "WereGarurumon", ["ST2-09"] = "Zudomon",
+        ["ST2-10"] = "Plesiomon", ["ST2-11"] = "MetalGarurumon", ["ST2-12"] = "Matt Ishida", ["ST2-13"] = "Hammer Spark",
+        ["ST2-14"] = "Sorrow Blue", ["ST2-15"] = "Kaiser Nail", ["ST2-16"] = "Cocytus Breath", ["ST3-01"] = "Tokomon",
+        ["ST3-02"] = "Salamon", ["ST3-03"] = "Tapirmon", ["ST3-04"] = "Patamon", ["ST3-05"] = "Angemon",
+        ["ST3-06"] = "Gatomon", ["ST3-07"] = "Unimon", ["ST3-08"] = "MagnaAngemon", ["ST3-09"] = "Angewomon",
+        ["ST3-10"] = "Magnadramon", ["ST3-11"] = "Seraphimon", ["ST3-12"] = "T.K. Takaishi", ["ST3-13"] = "Heaven's Gate",
+        ["ST3-16"] = "Seven Heavens", ["ST4-01"] = "Motimon", ["ST4-02"] = "Floramon", ["ST4-03"] = "Tentomon",
+        ["ST4-04"] = "Palmon", ["ST4-05"] = "Kunemon", ["ST4-06"] = "Togemon", ["ST4-07"] = "Kuwagamon",
+        ["ST4-08"] = "Kabuterimon", ["ST4-09"] = "Okuwamon", ["ST4-10"] = "Lillymon", ["ST4-11"] = "MegaKabuterimon",
+        ["ST4-12"] = "Rosemon", ["ST4-13"] = "HerculesKabuterimon", ["ST4-14"] = "Izzy Izumi", ["ST4-16"] = "Electro Shocker",
+        ["ST5-01"] = "Kapurimon", ["ST5-02"] = "Jazamon", ["ST5-03"] = "Agumon", ["ST5-04"] = "ToyAgumon",
+        ["ST5-05"] = "Commandramon", ["ST5-06"] = "Greymon", ["ST5-07"] = "Jazardmon", ["ST5-08"] = "DarkTyrannomon",
+        ["ST5-09"] = "MetalGreymon", ["ST5-11"] = "Megadramon", ["ST5-12"] = "Machinedramon", ["ST5-14"] = "Tai Kamiya",
+        ["ST5-15"] = "Laser Eye", ["ST5-16"] = "Dark Side Attack", ["ST6-01"] = "Pagumon", ["ST6-02"] = "DemiDevimon",
+        ["ST6-03"] = "Gabumon", ["ST6-04"] = "Dracmon", ["ST6-05"] = "Elecmon", ["ST6-06"] = "Garurumon",
+        ["ST6-07"] = "Youkomon", ["ST6-08"] = "Devimon", ["ST6-09"] = "Kyukimon", ["ST6-10"] = "SkullSatamon",
+        ["ST6-11"] = "WereGarurumon", ["ST6-14"] = "Matt Ishida", ["ST6-15"] = "Death Claw", ["ST6-16"] = "Nail Bone",
+    };
+
+    /// <summary>내장 카드의 공식 영어 이름 (내장 카드가 아니면 null)</summary>
+    public static string? EnglishNameOf(string cardId) => BuiltInEnglishNames.TryGetValue(cardId, out var n) ? n : null;
+
     public static List<CardData> GetAllCatalogCards()
     {
         var cards = new List<CardData>
@@ -903,6 +942,7 @@ public static class StarterDecks
             {
                 card.ImageUrl = $"https://images.digimoncard.io/images/cards/{card.CardId}.jpg";
             }
+            card.EnglishName = EnglishNameOf(card.CardId);
         }
 
         return cards;

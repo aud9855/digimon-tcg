@@ -259,6 +259,7 @@ public partial class GoldfishEngine
             return;
         int logsBefore = ctx.State.ActionLogs.Count;
         string messageBefore = ctx.Message;
+        ctx.AnyEffectRan = true;
         effect.Resolve(ctx);
         // 카드에 적힌 시점([등장 시] · [진화 시] · [어택 시] · [소멸 시])의 효과가 대상 · 조건이 없어 아무것도 안 했으면 그렇다고 남긴다.
         // 조용히 넘어가면 "효과가 안 탔다"로 보인다 (사용자 신고: 로제몬 · 쥬드몬 · 엔젤우몬 등 내장 스크립트의 return)
@@ -1279,22 +1280,30 @@ public partial class GoldfishEngine
             return ActionResult.Fail("지금은 [메인] 효과를 쓸 수 없습니다.");
         if (!GetMainAbilities(State.Player).Any(a => ReferenceEquals(a.Digimon, digimon) && ReferenceEquals(a.Card, card)))
             return ActionResult.Fail($"[{card.Name}]의 [메인] 효과는 지금 쓸 수 없습니다 (이번 턴에 이미 썼거나 효과가 없음).");
-        UseMainAbility(State.Player, digimon, card);
+        bool used = UseMainAbility(State.Player, digimon, card);
         CheckTurnEndAndAutoReset();
+        // 패 · 트래시 [메인] 효과(ActivateZoneEffect)와 같이: 조건 · 비용이 맞지 않아 아무것도 안 했으면 "썼다"가 아니라 실패로 알린다
+        if (!used)
+            return ActionResult.Fail($"[{card.Name}]의 [메인] 효과: 조건 미충족 — 조건이 맞지 않거나 비용을 낼 수 없어 효과를 발휘하지 않았습니다.");
         return ActionResult.Success($"[{card.Name}]의 [메인] 효과를 썼습니다.");
     }
 
-    private void UseMainAbility(PlayerZones owner, CardInstance? digimon, CardData card)
+    /// <summary>[메인] 기동 효과를 쓴다. 반환: 실제로 효과를 발휘했는지 (아니면 이번 턴에 쓴 것으로 치지 않는다)</summary>
+    private bool UseMainAbility(PlayerZones owner, CardInstance? digimon, CardData card)
     {
         EffectLog(owner, $"[메인] {card.Name}의 효과 사용");
         var ctx = RunEffects(EffectTrigger.ActivateMain, owner, digimon, card, includeInherited: false);
-        // 비용을 내지 않았거나 조건이 맞지 않아 아무 문장도 처리하지 않았으면 사용으로 치지 않는다
-        if (!(ctx.StepsRan && !ctx.AnyStepResolved))
+        // 발동 조건("If ~")이 맞지 않았거나, 비용을 내지 않았거나 조건이 맞지 않아 아무 문장도 처리하지 않았으면 사용으로 치지 않는다
+        bool used = ctx.AnyEffectRan && !(ctx.StepsRan && !ctx.AnyStepResolved);
+        if (used)
         {
             object key = (object?)digimon ?? card;
             _usedMainAbilities[key] = _usedMainAbilities.GetValueOrDefault(key) + 1;
         }
+        else
+            EffectLog(owner, $"[메인] {card.Name}: 조건 미충족 — 효과를 발휘하지 않았습니다");
         RecalculateFieldBuffs();
+        return used;
     }
 
     /// <summary>AI: 쓸 만한 [메인] 기동 효과를 쓴다 (효과 문장 점수가 양수인 것)</summary>

@@ -1538,7 +1538,7 @@ public static class KoreanEffectRenderer
                 // 이름: 같은 영어 이름의 공식 한글 이름 중 가장 많이 나온 것 ("WereGarurumon" → "워가루몬", ACE 카드 이름 아님)
                 if (ko.Name.Length > 0)
                 {
-                    if (!nameVotes.TryGetValue(c.Name, out var nv)) nameVotes[c.Name] = nv = new();
+                    if (!nameVotes.TryGetValue(CardNames.MatchName(c), out var nv)) nameVotes[CardNames.MatchName(c)] = nv = new();   // 내장 한글 카드는 영어 이름으로
                     nv[ko.Name] = nv.GetValueOrDefault(ko.Name) + 1;
                 }
                 // 특징: 같은 카드에 함께 나온 횟수로 짝짓는다 (영어 · 한글 특징의 순서가 다른 카드가 있어 위치로 짝지으면 틀린다 — Hybrid ≠ 배리어블종)

@@ -4,6 +4,12 @@ public class CardData
 {
     public string CardId { get; set; } = string.Empty;              // 예: "ST1-03"
     public string Name { get; set; } = string.Empty;                // 예: "아구몬"
+    /// <summary>
+    /// 공식 영어 카드 이름 (내장 한글 카드만 채움, 예: ST1-07 "Greymon"). API 카드는 Name이 이미 영어라 null.
+    /// 효과 문장의 이름 조건("[Greymon]" · "with [X] in its name" 등)은 Name과 이 이름을 함께 본다 → Models.CardNames
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? EnglishName { get; set; }
     public CardType Type { get; set; }
     public CardColor Color { get; set; }
     public CardColor? SecondaryColor { get; set; }                  // 여러 색 카드의 두 번째 색 (없으면 null)

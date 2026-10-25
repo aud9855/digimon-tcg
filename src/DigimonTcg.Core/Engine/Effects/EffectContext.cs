@@ -87,6 +87,9 @@ public sealed class EffectContext
 
     /// <summary>문장 파서의 문장을 하나라도 처리하려 했는지 · 그중 하나라도 실제로 처리했는지 — [메인] 기동 효과가 아무것도 하지 않았으면 사용으로 치지 않는다</summary>
     public bool StepsRan { get; set; }
+
+    /// <summary>효과의 발동 조건("If ~" · 비용 지불 등)을 넘어 효과 본문을 하나라도 처리했는지 — 아니면 [메인] 기동 효과를 쓴 것으로 치지 않는다</summary>
+    public bool AnyEffectRan { get; set; }
     public bool AnyStepResolved { get; set; }
 
     /// <summary>[시큐리티] 결과를 한 번에 정한다</summary>

@@ -10,6 +10,17 @@
 
 ---
 
+## v0.26.2 — 2026-10-25
+효과 버그 수정: 내장 한글 카드가 영어 효과 문장의 이름 조건에 맞지 않던 문제 · 장한솔(BT1-088) [메인] 조건 미충족
+- 내장 카드 120장(ST1~ST6 · BT1~BT5)은 엔진 안의 이름이 한글(예: ST1-07 "그레이몬")이라, 영어 효과 문장의 "[Greymon]" · "with [X] in its name" · "named X" · 같은 명칭 판정에 걸리지 않았다
+  - 예: BT4-092 Marcus Damon "When one of your Digimon with [Greymon] in its name attacks"가 BT10-019 Greymon에는 발동하고 ST1-07 그레이몬에는 발동하지 않음
+- 내장 카드에 공식 영어 이름(`CardData.EnglishName`, DigimonCard.io 카드 번호별 이름)을 붙이고, 이름 판정을 한 곳(`Models.CardNames`)으로 모아 한글 · 영어 이름을 함께 본다. 화면의 한글 이름은 그대로
+  - 이름 포함 · 정확한 이름 · 이름 지정 진화 · "other than [X]" · 같은 명칭(오메가몬 BT1-084 · 크리사리몬 BT2-059 · "same name" 조건 · 같은 명칭 등장 제한)
+  - 영향: 내장 카드 이름과 맞는 이름 조건을 가진 API 카드 약 386장 · 문장 약 488개 (Greymon · Omnimon · Garurumon · Agumon · Tai Kamiya 등)
+  - "you play another Digimon with the same name as this Digimon"(BT2-053)이 같은 명칭이 아닌 디지몬 등장에도 발동하던 것도 같은 명칭일 때만으로
+- 장한솔(BT1-088) 등 테이머 · 디지몬의 [메인] 효과: 조건(그린 Lv.5 이상 등)이 맞지 않으면 레스트하지 않고도 "썼습니다"가 뜨던 것을 "조건 미충족" 실패로 알리고, 이번 턴에 쓴 것으로 치지 않는다 (패 · 트래시 [메인]과 같은 방식)
+- 테스트 7개 (NameMatchingTests)
+
 ## v0.26.1 — 2026-10-25
 효과 버그 수정: "one of your opponent's ~ Digimon" 주어가 자신의 디지몬 시점으로 붙던 문제
 - "When one of your opponent's level 5 or lower Digimon is deleted" · "When one of your opponent's Digimon attacks"가 "your ~ Digimon"(자신의 디지몬) 규칙에 먼저 걸려 **자신의 디지몬**이 소멸 · 어택했을 때 발동하고, 상대 디지몬일 때는 발동하지 않았다

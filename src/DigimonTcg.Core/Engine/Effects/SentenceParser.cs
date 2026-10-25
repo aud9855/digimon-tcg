@@ -90,7 +90,7 @@ internal static class SentenceParser
             bool exact = special.Groups["names"].Success;
             var names = Regex.Matches(special.Groups[exact ? "names" : "inname"].Value, @"\[([^\]]+)\]").Select(x => x.Groups[1].Value).ToList();
             // "Your [Agumon]"은 카드명이 정확히 같은 디지몬만 ("SnowAgumon"은 아님), "with [Agumon] in its name"은 이름에 포함하면 된다
-            def?.SpecialEvolution(d => names.Any(n => exact ? d.TopCard.Name.Equals(n, StringComparison.OrdinalIgnoreCase) : TargetSpec.NameHas(d.TopCard, n)), cost);
+            def?.SpecialEvolution(d => names.Any(n => exact ? CardNames.Is(d.TopCard, n) : TargetSpec.NameHas(d.TopCard, n)), cost);
             return null;
         }
         // 디지크로스 (엔진의 등장 처리 — GoldfishEngine.DigiXros.cs)
@@ -699,7 +699,7 @@ internal static class SentenceParser
             && TargetSpec.Parse("all of your opponent's " + m.Groups["spec"].Value) is { } delSpec)
             return One(EffectTrigger.DeletedOpponentInBattle, c => c.Other == null || delSpec.Filters.All(f => f(c.Other)));
         if (Regex.IsMatch(ev, @"^you play another Digimon with the same name as this Digimon$", RegexOptions.IgnoreCase))
-            return One(EffectTrigger.AllySameNamePlayed);
+            return One(EffectTrigger.AllySameNamePlayed, c => c.Other != null && c.Self != null && CardNames.Same(c.Self.TopCard, c.Other.TopCard));
         if ((m = Regex.Match(ev, @"^(?:an|one of your) opponent's (?<spec>[^,]*?)Digimon (?:is|are) played$", RegexOptions.IgnoreCase)).Success
             && TargetSpec.Parse("all of your opponent's " + m.Groups["spec"].Value + "Digimon") is { } oppPlayed)
             return One(EffectTrigger.OpponentDigimonPlayed, c => c.Other != null && oppPlayed.Filters.All(f => f(c.Other)));
@@ -938,7 +938,7 @@ internal static class SentenceParser
         if (Regex.IsMatch(spec, @"^\[[^\]]+\](?:\s*/\s*\[[^\]]+\])*$"))
         {
             var names = Regex.Matches(spec, @"\[([^\]]+)\]").Select(x => x.Groups[1].Value).ToList();
-            return c => names.Any(n => c.Name.Equals(n, StringComparison.OrdinalIgnoreCase) || TargetSpec.NameHas(c, n));
+            return c => names.Any(n => TargetSpec.NameHas(c, n));
         }
         if ((m = Regex.Match(spec, $@"^(?<x>\[[^\]]+\](?:\s*/\s*\[[^\]]+\])*) trait$", RegexOptions.IgnoreCase)).Success)
         {
@@ -1457,7 +1457,7 @@ internal static class SentenceParser
         if (ParseSideCondition(cond) is { } sc) return c => sc(c.Owner, c.Enemy);
         Match m;
         if (Regex.IsMatch(cond, @"^you have another Digimon with the same name as this Digimon(?: in play)?$", RegexOptions.IgnoreCase))
-            return c => c.Digimon != null && c.Owner.BattleArea.Any(d => !ReferenceEquals(d, c.Digimon) && d.TopCard.Name == c.Digimon.TopCard.Name);
+            return c => c.Digimon != null && c.Owner.BattleArea.Any(d => !ReferenceEquals(d, c.Digimon) && CardNames.Same(d.TopCard, c.Digimon.TopCard));
         if (Regex.IsMatch(cond, @"^(?:this Digimon|it) is suspended$", RegexOptions.IgnoreCase)) return c => c.Digimon?.IsSuspended == true;
         if (Regex.IsMatch(cond, @"^(?:this Digimon|it) is unsuspended$", RegexOptions.IgnoreCase)) return c => c.Digimon?.IsSuspended == false;
         if ((m = Regex.Match(cond, @"^(?:this Digimon|it) has (?<n>\d+) or more digivolution cards$", RegexOptions.IgnoreCase)).Success)
@@ -2894,9 +2894,9 @@ internal static class SentenceParser
                     return;
                 }
                 var blockedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                if (sameZones.Contains("battle area")) blockedNames.UnionWith(c.Owner.BattleArea.Select(d => d.TopCard.Name).Concat(c.Owner.Tamers.Select(t => t.Name)));
-                if (sameZones.Contains("trash")) blockedNames.UnionWith(c.Owner.Trash.Select(x => x.Name));
-                Func<CardData, bool> match = x => baseMatch(x) && !blockedNames.Contains(x.Name);
+                if (sameZones.Contains("battle area")) blockedNames.UnionWith(c.Owner.BattleArea.Select(d => CardNames.MatchName(d.TopCard)).Concat(c.Owner.Tamers.Select(CardNames.MatchName)));
+                if (sameZones.Contains("trash")) blockedNames.UnionWith(c.Owner.Trash.Select(CardNames.MatchName));
+                Func<CardData, bool> match = x => baseMatch(x) && !blockedNames.Contains(CardNames.MatchName(x));
                 Func<CardData, bool> playable = x => (toBreeding ? x.Type == CardType.Digimon : x.Type is CardType.Digimon or CardType.Tamer) && match(x);
                 var pool = new List<PoolCard>();
                 if (fromUnder) pool.AddRange(PoolFrom(c.Owner.UnderTamers, playable));
@@ -3735,7 +3735,7 @@ internal static class SentenceParser
         if (!m.Success) return null;
         int count = int.TryParse(m.Groups["n"].Value, out int k) ? k : 1;
         var names = Regex.Matches(m.Groups["names"].Value, @"\[([^\]]+)\]").Select(x => x.Groups[1].Value).ToList();
-        return (count, c => names.Any(n => c.Name.Equals(n, StringComparison.OrdinalIgnoreCase) || TargetSpec.NameHas(c, n)));
+        return (count, c => names.Any(n => TargetSpec.NameHas(c, n)));
     }
 
     private const string Colors = "red|blue|yellow|green|black|purple|white";
@@ -3844,7 +3844,7 @@ internal static class SentenceParser
                 filters.Add(dir is "lower" or "less" ? c => c.Level <= v : dir is "higher" or "more" ? c => c.Level >= v : c => c.Level == v);
             }
             else if ((f = Regex.Match(rest, $@"^(?:,\s*)?other than (?<x>{TargetSpec.NameList})", RegexOptions.IgnoreCase)).Success)
-            { var xs = TargetSpec.Names(f.Groups["x"].Value); filters.Add(c => !xs.Any(x => c.Name.Equals(x, StringComparison.OrdinalIgnoreCase))); }
+            { var xs = TargetSpec.Names(f.Groups["x"].Value); filters.Add(c => !xs.Any(x => CardNames.Is(c, x))); }
             else if ((f = Regex.Match(rest, $@"^(?<x>{TargetSpec.NameList})", RegexOptions.IgnoreCase)).Success)
             { var xs = TargetSpec.Names(f.Groups["x"].Value); filters.Add(c => xs.Any(x => TargetSpec.NameHas(c, x) || TargetSpec.HasTrait(c, x))); }
             else if ((f = Regex.Match(rest, @"^(?:with |and )?(?<n>\d+) or more colou?rs", RegexOptions.IgnoreCase)).Success)

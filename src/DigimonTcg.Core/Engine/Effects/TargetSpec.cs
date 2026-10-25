@@ -245,7 +245,7 @@ public sealed class TargetSpec
     internal static List<string> Names(string text) =>
         Regex.Matches(text, @"\[([^\]]+)\]").Select(m => m.Groups[1].Value.Trim()).ToList();
 
-    public static bool NameHas(CardData card, string x) => card.Name.Contains(x, StringComparison.OrdinalIgnoreCase);
+    public static bool NameHas(CardData card, string x) => CardNames.Contains(card, x);   // 내장 한글 카드는 공식 영어 이름도 본다
 
     public static bool TextHas(CardData card, string x) =>
         NameHas(card, x) || card.EffectText.Contains($"[{x}]", StringComparison.OrdinalIgnoreCase)
