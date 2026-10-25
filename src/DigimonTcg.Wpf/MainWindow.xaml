@@ -236,8 +236,8 @@
                                                 <TextBlock x:Name="TxtOpponentZonesSummary" DockPanel.Dock="Right" Text="상대 필드: 0마리" Foreground="{StaticResource Neo.Brush.Text.Dim}" FontSize="10" VerticalAlignment="Center" Margin="10,0,0,0" Visibility="Collapsed"/>
                                                 <TextBlock x:Name="TxtOpponentFieldHeader" Text="👾 상대 배틀 에어리어" Foreground="{StaticResource Neo.Brush.RoseSoft}" FontWeight="Bold" FontSize="10.5" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
                                             </DockPanel>
-                                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                                <StackPanel x:Name="OpponentBattleAreaPanel" Orientation="Horizontal" HorizontalAlignment="Center" MinHeight="92"/>
+                                            <ScrollViewer x:Name="OpponentBattleAreaScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" SizeChanged="FieldScroll_SizeChanged">
+                                                <Canvas x:Name="OpponentBattleAreaPanel" HorizontalAlignment="Left" VerticalAlignment="Top" MinHeight="92"/>
                                             </ScrollViewer>
                                         </DockPanel>
                                     </Border>
@@ -402,21 +402,24 @@
                                         <DockPanel>
                                             <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
                                                 <TextBlock Text="BATTLE AREA" Style="{StaticResource Duel.ZoneLabel}" Margin="0,0,12,0"/>
+                                                <Button x:Name="BtnAutoArrangeField" DockPanel.Dock="Right" Content="▦ 자동 정렬" Click="BtnAutoArrangeField_Click"
+                                                        ToolTip="끌어서 옮긴 카드 위치를 모두 지우고 격자로 다시 놓습니다 (디지몬은 왼쪽부터, 테이머는 오른쪽 끝부터)"
+                                                        Style="{StaticResource Neo.Button.Ghost}" FontWeight="Bold" FontSize="10" Padding="8,1" Margin="8,0,0,0"/>
                                                 <Button x:Name="BtnCancelPendingAction" DockPanel.Dock="Right" Content="❌ 선택 취소" Click="BtnCancelPendingAction_Click" Visibility="Collapsed"
                                                         Style="{StaticResource Neo.Button.Danger}" FontSize="10.5" Padding="8,2" Margin="8,0,0,0"/>
                                                 <TextBlock x:Name="TxtSelectedTarget" Text="" Foreground="{StaticResource Neo.Brush.Gold}" FontWeight="Bold" FontSize="10.5" VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
                                             </DockPanel>
 
-                                            <Border DockPanel.Dock="Bottom" Style="{StaticResource Duel.Zone}" BorderBrush="{StaticResource Duel.Brush.ZoneEdge.Neutral}" CornerRadius="8" Padding="8,3" Margin="0,6,0,0">
+                                            <Border x:Name="TamerStripBorder" DockPanel.Dock="Bottom" Style="{StaticResource Duel.Zone}" BorderBrush="{StaticResource Duel.Brush.ZoneEdge.Neutral}" CornerRadius="8" Padding="8,3" Margin="0,6,0,0">
                                                 <DockPanel>
-                                                    <TextBlock Text="TAMER" Style="{StaticResource Duel.ZoneLabel}" Margin="0,0,10,0"/>
+                                                    <TextBlock Text="OPTION · UNDER TAMER" Style="{StaticResource Duel.ZoneLabel}" Margin="0,0,10,0"/>
                                                     <TextBlock x:Name="TxtPlayerZonesSummary" DockPanel.Dock="Right" Text="" Visibility="Collapsed"/>
                                                     <StackPanel x:Name="TamerZonePanel" Orientation="Horizontal" VerticalAlignment="Center"/>
                                                 </DockPanel>
                                             </Border>
 
-                                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                                                <WrapPanel x:Name="BattleAreaPanel" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <ScrollViewer x:Name="BattleAreaScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" SizeChanged="FieldScroll_SizeChanged">
+                                                <Canvas x:Name="BattleAreaPanel" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent"/>
                                             </ScrollViewer>
                                         </DockPanel>
                                     </Border>

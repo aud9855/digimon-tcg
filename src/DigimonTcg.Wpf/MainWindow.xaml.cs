@@ -2235,6 +2235,7 @@ public partial class MainWindow : Window
             OpponentBattleAreaBorder.ToolTip = null;
         }
 
+        var oppFieldItems = new List<FieldItem>();
         foreach (var opp in _gameState.DummyOpponent.BattleArea.ToList())
         {
             // 옵션의 대상 조건(예: 전기 충격 = 레스트 상태)에 맞는 디지몬만 강조 · 클릭 대상
@@ -2389,7 +2390,6 @@ public partial class MainWindow : Window
                 BorderThickness = new Thickness(isHighlighted ? 2.5 : 1.5),
                 CornerRadius = new CornerRadius(7),
                 Padding = new Thickness(7, 5, 7, 5),
-                Margin = new Thickness(0, 0, 8, 0),
                 Cursor = isHighlighted ? System.Windows.Input.Cursors.Hand : System.Windows.Input.Cursors.Arrow,
                 Child = row
             };
@@ -2427,13 +2427,17 @@ public partial class MainWindow : Window
                 }
             };
 
-            OpponentBattleAreaPanel.Children.Add(oppCardBorder);
+            oppCardBorder.MouseEnter += (_, _) => Panel.SetZIndex(oppCardBorder, 10);
+            oppCardBorder.MouseLeave += (_, _) => Panel.SetZIndex(oppCardBorder, 0);
+            oppFieldItems.Add(new FieldItem(opp, oppCardBorder, IsTamer: false));
         }
 
-        for (int i = _gameState.DummyOpponent.BattleArea.Count; i < DuelZoneSlotCount; i++)
-        {
-            OpponentBattleAreaPanel.Children.Add(CreateEmptyZoneSlot(OpponentZoneSlotWidth, OpponentZoneSlotHeight, isOpponent: true, new Thickness(0, 0, 8, 0)));
-        }
+        // 상대 테이머도 카드로 한 장씩 (레스트면 가로로 눕힘) — 상대 필드는 자동 배치만 (거울 배치: 디지몬은 오른쪽부터, 테이머는 왼쪽 끝부터)
+        foreach (var key in TamerKeysOf(_gameState.DummyOpponent))
+            oppFieldItems.Add(new FieldItem(key, CreateFieldTamerWidget(key, _gameState.DummyOpponent, isOpponent: true), IsTamer: true));
+
+        LayoutFieldCanvas(OpponentBattleAreaPanel, OpponentBattleAreaScroll, oppFieldItems, _oppFieldPositions,
+            mirrored: true, guideHeight: OpponentZoneSlotHeight, contentDrivenHeight: false, dropCenter: null);
 
         RenderOpponentBreedingArea();
     }
@@ -2485,56 +2489,15 @@ public partial class MainWindow : Window
         OppBreedingSlot.Content = holder;
     }
 
-    // ==================== 🎴 듀얼 필드 카드 존 (유희왕 몬스터 존처럼 빈 슬롯을 각인해 둔다) ====================
-    private const int DuelZoneSlotCount = 4;
+    // ==================== 🎴 듀얼 필드 카드 크기 (배틀 에어리어는 고정 칸 없는 자유 배치 필드) ====================
     private const double PlayerZoneSlotWidth = 160;
     private const double PlayerZoneSlotHeight = 214;
     private const double FieldCardArtWidth = 104;
     private const double FieldCardArtHeight = 142;
     private const double OpponentZoneSlotWidth = 150;
     private const double OpponentZoneSlotHeight = 184;
-    private const double OpponentCardArtWidth = 88;
-    private const double OpponentCardArtHeight = 120;
-
-    private static FrameworkElement CreateEmptyZoneSlot(double width, double height, bool isOpponent, Thickness margin)
-    {
-        var edge = Theme.GetBrush(isOpponent ? "Duel.Brush.ZoneEdge.Opponent" : "Duel.Brush.ZoneEdge.Player");
-        var slot = new Grid { Width = width, Height = height, Margin = margin, IsHitTestVisible = false };
-        slot.Children.Add(new Border
-        {
-            CornerRadius = new CornerRadius(10),
-            Background = Theme.GetBrush("Duel.Brush.ZoneFill")
-        });
-        slot.Children.Add(new System.Windows.Shapes.Rectangle
-        {
-            RadiusX = 10,
-            RadiusY = 10,
-            Stroke = edge,
-            StrokeThickness = 1.2,
-            StrokeDashArray = new DoubleCollection { 4, 3 }
-        });
-        // 카드 모양 안쪽 각인 + 마름모 문양
-        slot.Children.Add(new Border
-        {
-            Width = width * 0.62,
-            Height = height * 0.62,
-            CornerRadius = new CornerRadius(6),
-            BorderBrush = edge,
-            BorderThickness = new Thickness(1),
-            Opacity = 0.45,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = new TextBlock
-            {
-                Text = "◇",
-                FontSize = 26,
-                Foreground = edge,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            }
-        });
-        return slot;
-    }
+    private const double OpponentCardArtWidth = 80;
+    private const double OpponentCardArtHeight = 110;
 
     // ==================== 🪪 플레이어 플레이트 & 상대 손패 (유희왕 LP 표시 자리) ====================
     private void RenderDuelPlates()
@@ -2632,16 +2595,15 @@ public partial class MainWindow : Window
 
     private void RenderBattleArea()
     {
-        BattleAreaPanel.Children.Clear();
+        // 자유 배치 필드: 디지몬 · 테이머를 한 장씩 캔버스에 놓는다 (끌어서 옮긴 자리 유지, 새 카드는 놓은 자리 · 빈 격자 자리)
+        var myFieldItems = new List<FieldItem>();
         foreach (var instance in _gameState.Player.BattleArea)
-        {
-            BattleAreaPanel.Children.Add(CreateFieldDigimonWidget(instance, isBreedingArea: false));
-        }
-        // 빈 배틀 존 슬롯 (육성 존에서 이동하거나 손패를 끌어 놓을 자리)
-        for (int i = _gameState.Player.BattleArea.Count; i < DuelZoneSlotCount; i++)
-        {
-            BattleAreaPanel.Children.Add(CreateEmptyZoneSlot(PlayerZoneSlotWidth, PlayerZoneSlotHeight, isOpponent: false, new Thickness(0, 0, 10, 6)));
-        }
+            myFieldItems.Add(new FieldItem(instance, CreateFieldDigimonWidget(instance, isBreedingArea: false), IsTamer: false));
+        foreach (var key in TamerKeysOf(_gameState.Player))
+            myFieldItems.Add(new FieldItem(key, CreateFieldTamerWidget(key, _gameState.Player, isOpponent: false), IsTamer: true));
+        if (LayoutFieldCanvas(BattleAreaPanel, BattleAreaScroll, myFieldItems, _myFieldPositions,
+                mirrored: false, guideHeight: PlayerZoneSlotHeight, contentDrivenHeight: false, dropCenter: _pendingFieldDropPoint))
+            _pendingFieldDropPoint = null;
 
         if (_pendingHandCard != null)
         {
@@ -2661,74 +2623,13 @@ public partial class MainWindow : Window
         }
         else
         {
-            TxtSelectedTarget.Text = "💡 필드 디지몬/테이머에 마우스를 올리거나 클릭하면 우측 카드 설명에서 DP·테이머·진화원 증가치를 확인할 수 있습니다";
+            TxtSelectedTarget.Text = "💡 카드를 끌어 내 배틀 에어리어 안에 놓으면 자리 이동 · 상대 시큐리티/레스트 디지몬에 놓으면 공격 · 클릭하면 DP·효과 확인";
             TxtSelectedTarget.Foreground = BrushFromHex("#F9E2AF");
             BtnCancelPendingAction.Visibility = Visibility.Collapsed;
         }
 
-        // 필드 테이머 미니 카드 칩 렌더링 (호버/클릭 시 우측 패널에서 테이머 증가치 확인 가능)
+        // 테이머는 배틀 에어리어에 카드로 놓인다 (위 자유 배치 필드). 이 줄에는 놓인 ≪딜레이≫ 옵션 · 테이머 아래 카드만 보여 준다
         TamerZonePanel.Children.Clear();
-        TamerZonePanel.Children.Add(new TextBlock
-        {
-            Text = "🎖️ 필드 테이머 지속 효과 (마우스 오버 확인): ",
-            Foreground = BrushFromHex("#CBA6F7"),
-            FontWeight = FontWeights.ExtraBold,
-            FontSize = 11.5,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 6, 0)
-        });
-
-        if (_gameState.Player.Tamers.Count == 0)
-        {
-            TamerZonePanel.Children.Add(new TextBlock
-            {
-                Text = "없음 (테이머 카드를 등장시키면 지속 효과가 여기에 표시됩니다)",
-                Foreground = BrushFromHex("#6C7086"),
-                FontSize = 11,
-                VerticalAlignment = VerticalAlignment.Center
-            });
-        }
-        else
-        {
-            foreach (var group in _gameState.Player.Tamers.GroupBy(t => t.CardId))
-            {
-                var tamer = group.First();
-                int count = group.Count();
-                string auraDesc = GetHandCardQuickEffectSummary(tamer).Text + (count > 1 ? $" (x{count})" : string.Empty);
-
-                var tamerChip = new Border
-                {
-                    Background = GetCardColorBrush(tamer.Color),
-                    CornerRadius = new CornerRadius(4),
-                    Padding = new Thickness(8, 2, 8, 2),
-                    Margin = new Thickness(0, 0, 6, 0),
-                    Cursor = System.Windows.Input.Cursors.Hand,
-                    Child = new TextBlock
-                    {
-                        Text = $"★ {tamer.DisplayName} x{count} [{auraDesc}]",
-                        Foreground = BrushFromHex("#11111B"),
-                        FontWeight = FontWeights.ExtraBold,
-                        FontSize = 11
-                    }
-                };
-                tamerChip.MouseEnter += (_, _) =>
-                {
-                    UpdateCardInspector(tamer);
-                    UpdateTamerBreakdownOnSidebar(tamer, count);
-                };
-                tamerChip.MouseLeftButtonUp += (_, _) =>
-                {
-                    UpdateCardInspector(tamer);
-                    UpdateTamerBreakdownOnSidebar(tamer, count);
-                    // [메인] 기동 효과가 있고 지금 쓸 수 있으면 사용, 아니면 지속 효과 안내
-                    if (_engine.GetMainAbilities(_gameState.Player).Any(a => a.Digimon == null && ReferenceEquals(a.Card, tamer)))
-                        TryActivateMainAbility(null, tamer);
-                    else
-                        ShowToast(true, $"🎖️ 테이머 [{tamer.DisplayName}] x{count}장 활성 중: {auraDesc}");
-                };
-                TamerZonePanel.Children.Add(tamerChip);
-            }
-        }
 
         // 배틀 에어리어에 놓인 내 옵션 (≪딜레이≫ — 놓은 다음 턴부터 클릭해서 파기하고 효과를 발휘)
         var readyOptions = _engine.GetMainAbilities(_gameState.Player).Where(a => a.Digimon == null && a.Card.Type == CardType.Option).Select(a => a.Card).ToList();
@@ -2793,6 +2694,8 @@ public partial class MainWindow : Window
             underChip.MouseLeftButtonUp += (_, _) => ShowToast(true, $"📥 테이머 아래에 놓인 카드 {underTamers.Count}장: {names}");
             TamerZonePanel.Children.Add(underChip);
         }
+        // 놓인 옵션 · 테이머 아래 카드가 없으면 줄을 숨겨 필드를 넓게 쓴다
+        TamerStripBorder.Visibility = TamerZonePanel.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         string myLastSecInfo = _gameState.PlayerSecurityCheckHistory.Count > 0
             ? $"최근 오픈: [{_gameState.PlayerSecurityCheckHistory[^1].SecurityCard.DisplayName}] → {_gameState.PlayerSecurityCheckHistory[^1].OutcomeSummary}"
@@ -3328,7 +3231,7 @@ public partial class MainWindow : Window
             BorderThickness = new Thickness(isValidPendingTarget ? 3 : isPinned ? 2.5 : 1.5),
             CornerRadius = new CornerRadius(8),
             Padding = new Thickness(7, 6, 7, 6),
-            Margin = new Thickness(0, 0, 10, 6),
+            Margin = isBreedingArea ? new Thickness(0, 0, 10, 6) : new Thickness(0),
             Opacity = isPendingAllyTargetMode && !isValidPendingTarget ? 0.55 : 1.0,
             Cursor = System.Windows.Input.Cursors.Hand,
             RenderTransformOrigin = new Point(0.5, 0.5),
@@ -3347,10 +3250,12 @@ public partial class MainWindow : Window
             var anim = new DoubleAnimation(1.03, TimeSpan.FromMilliseconds(120));
             scaleTrans.BeginAnimation(ScaleTransform.ScaleXProperty, anim);
             scaleTrans.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
+            Panel.SetZIndex(fieldCardBorder, 10);
         };
 
         fieldCardBorder.MouseLeave += (_, _) =>
         {
+            Panel.SetZIndex(fieldCardBorder, 0);
             var anim = new DoubleAnimation(1.0, TimeSpan.FromMilliseconds(120));
             scaleTrans.BeginAnimation(ScaleTransform.ScaleXProperty, anim);
             scaleTrans.BeginAnimation(ScaleTransform.ScaleYProperty, anim);
@@ -3374,9 +3279,12 @@ public partial class MainWindow : Window
                 }
                 else
                 {
+                    // 배틀 에어리어 디지몬: 상대 쪽에 놓으면 공격, 내 배틀 에어리어 안에 놓으면 자리 이동
                     _potentialDragFieldAttacker = instance;
                     _potentialDragBreedingDigimon = null;
+                    BeginPotentialFieldMove(fieldCardBorder, e);
                 }
+                _potentialDragFieldTamer = null;
             }
         };
 
@@ -3565,6 +3473,7 @@ public partial class MainWindow : Window
                     _potentialDragHandCard = card;
                     _potentialDragFieldAttacker = null;
                     _potentialDragBreedingDigimon = null;
+                    _potentialDragFieldTamer = null;
                 }
             };
 
@@ -3598,7 +3507,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (_potentialDragHandCard == null && _potentialDragFieldAttacker == null && _potentialDragBreedingDigimon == null)
+        if (_potentialDragHandCard == null && _potentialDragFieldAttacker == null && _potentialDragBreedingDigimon == null && _potentialDragFieldTamer == null)
             return;
 
         Point pos = e.GetPosition(this);
@@ -3626,6 +3535,7 @@ public partial class MainWindow : Window
             _potentialDragHandCard = null;
             _potentialDragFieldAttacker = null;
             _potentialDragBreedingDigimon = null;
+            _potentialDragFieldTamer = null;
             return;
         }
 
@@ -3637,14 +3547,17 @@ public partial class MainWindow : Window
     private void StartCardDrag(Point pos)
     {
         _isDragging = true;
-        if (_potentialDragBreedingDigimon == null)
+        // 손패를 끌기 시작하면 육성 페이즈를 넘긴다. 필드 카드는 자리만 옮길 수도 있으니
+        // 상대 쪽(공격할 곳)으로 가져갈 때 넘긴다 (UpdateDragHoverFeedback · CompleteCardDrop)
+        if (_potentialDragHandCard != null)
         {
             AutoPassBreedingIfNeeded();
         }
 
         CardData? cardToPreview = _potentialDragHandCard
             ?? _potentialDragFieldAttacker?.TopCard
-            ?? _potentialDragBreedingDigimon?.TopCard;
+            ?? _potentialDragBreedingDigimon?.TopCard
+            ?? _potentialDragFieldTamer?.Card;
         if (cardToPreview == null)
             return;
 
@@ -3663,7 +3576,7 @@ public partial class MainWindow : Window
             _pendingAttackerInstance = _potentialDragFieldAttacker;
             RefreshAllSimulatorUi();
         }
-        else if (_potentialDragBreedingDigimon != null)
+        else if (_potentialDragBreedingDigimon != null || _potentialDragFieldTamer != null)
         {
             _pendingHandCard = null;
             _pendingAttackerInstance = null;
@@ -4043,10 +3956,56 @@ public partial class MainWindow : Window
                 _dragGhostBadgeBorder.Background = BrushFromHex("#89DCEB");
             }
         }
+        else if (_potentialDragFieldTamer != null)
+        {
+            // 테이머는 공격하지 않으니 끌기 = 자리 이동뿐
+            if (info.OverBattleZone)
+            {
+                HighlightDropZone(BattleAreaZoneBorder, "#89DCEB");
+                _dragGhostBadgeText.Text = $"📍 [{_potentialDragFieldTamer.Card.DisplayName}] 여기로 옮기기";
+                _dragGhostBadgeBorder.Background = BrushFromHex("#89DCEB");
+                ShowFieldMovePreview(FieldMoveTarget(pos));
+            }
+            else
+            {
+                ResetDropZoneHighlights();
+                HideFieldMovePreview();
+                _dragGhostBadgeText.Text = "🖱️ 내 배틀 에어리어 안에 놓으면 테이머 자리를 옮깁니다";
+                _dragGhostBadgeBorder.Background = BrushFromHex("#F9E2AF");
+            }
+        }
         else if (_potentialDragFieldAttacker != null)
         {
             var attacker = _potentialDragFieldAttacker;
-            if (info.OpponentDigimon != null)
+            bool overOpponentSide = info.OpponentDigimon != null || info.OverOpponentSecurityZone || info.OverOpponentBattleZone;
+            if (!overOpponentSide)
+            {
+                if (info.OverBattleZone)
+                    ShowFieldMovePreview(FieldMoveTarget(pos));
+                else
+                    HideFieldMovePreview();
+            }
+            else
+            {
+                HideFieldMovePreview();
+                // 공격하러 상대 쪽으로 가져가면 그때 육성 페이즈를 넘기고 공격 대기 표시 (상대 레스트 디지몬 강조)
+                if (_gameState.CurrentPhase == Phase.Breeding)
+                {
+                    AutoPassBreedingIfNeeded();
+                    _pendingAttackerInstance = attacker;
+                    RefreshAllSimulatorUi();
+                    UpdateLayout();
+                    info = FindDropTargetInfo(pos);
+                }
+            }
+
+            if (!overOpponentSide && info.OverBattleZone)
+            {
+                HighlightDropZone(BattleAreaZoneBorder, "#89DCEB");
+                _dragGhostBadgeText.Text = $"📍 [{attacker.TopCard.DisplayName}] 여기로 옮기기 (공격은 상대 쪽에 놓기)";
+                _dragGhostBadgeBorder.Background = BrushFromHex("#89DCEB");
+            }
+            else if (info.OpponentDigimon != null)
             {
                 var check = ActionValidator.ValidateAttack(_gameState, attacker, info.OpponentDigimon);
                 HighlightDropZone(OpponentBattleAreaBorder, check.CanExecute ? "#A6E3A1" : "#F38BA8");
@@ -4172,11 +4131,82 @@ public partial class MainWindow : Window
         var draggedHand = _potentialDragHandCard;
         var draggedAttacker = _potentialDragFieldAttacker;
         var draggedBreeding = _potentialDragBreedingDigimon;
+        var draggedTamer = _potentialDragFieldTamer;
 
         var info = FindDropTargetInfo(dropPos);
+        // 필드 카드를 내 배틀 에어리어 안에 놓았으면 자리 이동 (공격 · 효과 없음 — 상대 쪽에 놓아야 공격)
+        bool overOpponentSide = info.OpponentDigimon != null || info.OverOpponentSecurityZone || info.OverOpponentBattleZone;
+        object? movedKey = draggedTamer ?? (object?)draggedAttacker;
+        bool moved = movedKey != null && info.OverBattleZone && !overOpponentSide && TryCompleteFieldMove(movedKey, dropPos);
         CancelDragVisuals();
 
+        if (moved)
+        {
+            RefreshAllSimulatorUi();
+            return;
+        }
+
         if (draggedHand != null)
+        {
+            // 배틀 에어리어 빈 곳에 놓아 새로 나오는 카드(디지몬 · 테이머)는 놓은 자리에 놓인다
+            RememberFieldDropPoint(dropPos, info.OverBattleZone, onCard: info.AllyDigimon != null);
+            try
+            {
+                CompleteHandCardDrop(draggedHand, info);
+            }
+            finally
+            {
+                _pendingFieldDropPoint = null;
+            }
+            return;
+        }
+        else if (draggedBreeding != null)
+        {
+            if (info.OverBattleZone)
+            {
+                RememberFieldDropPoint(dropPos, overBattleZone: true, onCard: false);
+                try
+                {
+                    ApplyActionResult(_engine.MoveFromBreedingArea());
+                }
+                finally
+                {
+                    _pendingFieldDropPoint = null;
+                }
+                return;
+            }
+        }
+        else if (draggedAttacker != null && overOpponentSide)
+        {
+            AutoPassBreedingIfNeeded();
+            if (info.OpponentDigimon != null)
+            {
+                ApplyActionResult(_engine.AttackOpponentDigimon(draggedAttacker, info.OpponentDigimon));
+                return;
+            }
+            var res = _engine.AttackSecurityOrDirect(draggedAttacker);
+            if (!res.CanExecute)
+            {
+                ApplyActionResult(res);
+            }
+            else
+            {
+                if (_gameState.SecurityCheckHistory.Count > 0)
+                {
+                    UpdateCardInspector(_gameState.SecurityCheckHistory[^1].SecurityCard);
+                }
+                ShowToast(_gameState.LastSecurityBattleWon || _gameState.IsVictory, res.GuideMessage);
+                RefreshAllSimulatorUi();
+            }
+            return;
+        }
+
+        RefreshAllSimulatorUi();
+    }
+
+    /// <summary>손패 카드를 놓았을 때: DNA · 링크 · 진화 · 등장 · 옵션 · 테이머 (놓은 자리로 판단)</summary>
+    private void CompleteHandCardDrop(CardData draggedHand, (CardInstance? AllyDigimon, CardInstance? OpponentDigimon, bool OverBattleZone, bool OverBreedingZone, bool OverOpponentSecurityZone, bool OverOpponentBattleZone) info)
+    {
         {
             // DNA 진화 · 링크: 내 디지몬 위에 놓았고 할 수 있으면 (진화 · 등장 · 옵션도 가능하면 무엇을 할지 고르게 한다)
             var specials = SpecialHandDropActions(draggedHand, info);
@@ -4267,40 +4297,6 @@ public partial class MainWindow : Window
                 }
             }
         }
-        else if (draggedBreeding != null)
-        {
-            if (info.OverBattleZone)
-            {
-                ApplyActionResult(_engine.MoveFromBreedingArea());
-                return;
-            }
-        }
-        else if (draggedAttacker != null)
-        {
-            if (info.OpponentDigimon != null)
-            {
-                ApplyActionResult(_engine.AttackOpponentDigimon(draggedAttacker, info.OpponentDigimon));
-                return;
-            }
-            if (info.OverOpponentSecurityZone || info.OverOpponentBattleZone)
-            {
-                var res = _engine.AttackSecurityOrDirect(draggedAttacker);
-                if (!res.CanExecute)
-                {
-                    ApplyActionResult(res);
-                }
-                else
-                {
-                    if (_gameState.SecurityCheckHistory.Count > 0)
-                    {
-                        UpdateCardInspector(_gameState.SecurityCheckHistory[^1].SecurityCard);
-                    }
-                    ShowToast(_gameState.LastSecurityBattleWon || _gameState.IsVictory, res.GuideMessage);
-                    RefreshAllSimulatorUi();
-                }
-                return;
-            }
-        }
 
         RefreshAllSimulatorUi();
     }
@@ -4317,6 +4313,8 @@ public partial class MainWindow : Window
         _potentialDragHandCard = null;
         _potentialDragFieldAttacker = null;
         _potentialDragBreedingDigimon = null;
+        _potentialDragFieldTamer = null;
+        HideFieldMovePreview();
         _pendingHandCard = null;
         _pendingAttackerInstance = null;
         _dragGhostBorder = null;
