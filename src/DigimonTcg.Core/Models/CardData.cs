@@ -35,6 +35,10 @@ public class CardData
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool IsDual { get; set; }
 
+    /// <summary>v0.36.0 디지몬으로도 취급하는 테이머를 배틀 에어리어에서 나타내는 복사본 (효과 문장 없음 — 효과는 테이머 쪽에서). 저장하지 않는다</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsTamerProxy { get; set; }
+
     /// <summary>진화원 효과 칸의 문장 (듀얼 카드의 옵션 쪽은 진화원 효과가 아니므로 빈 문자열)</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public string SourceEffectText => IsDual ? string.Empty : InheritedEffectText;

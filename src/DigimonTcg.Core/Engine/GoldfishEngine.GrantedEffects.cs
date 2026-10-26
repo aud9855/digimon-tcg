@@ -51,7 +51,7 @@ public partial class GoldfishEngine
 }
 
 /// <summary>v0.32.0 효과로 등장한 카드가 있던 곳 ("When you play a Digimon from your trash" · "~ is played from digivolution cards")</summary>
-internal enum PlayOrigin { Unknown, Hand, Trash, Sources, UnderTamers }
+internal enum PlayOrigin { Unknown, Hand, Trash, Sources, UnderTamers, Security, Revealed, Token }   // v0.36.0 Security · Revealed · Token
 
 public partial class GoldfishEngine
 {

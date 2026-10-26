@@ -24,7 +24,8 @@ public partial class GoldfishEngine
 
     /// <summary>v0.35.0 테이머가 "can't unsuspend" 상태인지 (액티브 페이즈에도 액티브가 되지 않는다)</summary>
     internal bool TamerUnsuspendLocked(PlayerZones owner, CardData tamer) =>
-        owner.TamerCannotUnsuspendUntil.TryGetValue(tamer, out int until) && EffectRules.IsActive(until, State);
+        (owner.TamerCannotUnsuspendUntil.TryGetValue(tamer, out int until) && EffectRules.IsActive(until, State))
+        || EnemyOf(owner).BattleArea.Any(d => Effects.CardScripts.HasKeyword(d, Effects.Keyword.OpponentTamersCannotUnsuspend));   // v0.36.0 "None of your opponent's Tamers can unsuspend" (BT17-048)
 
     /// <summary>액티브 페이즈: 레스트 상태인 테이머 중 "can't unsuspend"인 것은 레스트 그대로 둔다. 반환: 액티브가 된 테이머</summary>
     private List<CardData> WakeTamers(PlayerZones owner)

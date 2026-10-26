@@ -161,6 +161,13 @@ public enum Keyword
     CannotBlock,                   // (지속 효과) 블록할 수 없다 ("[All Turns] This Digimon can't attack or block")
     OpponentMemoryTamerOnly,       // (지속 효과) 상대는 테이머의 효과 이외로 메모리를 얻을 수 없다
     PlayersMemoryTamerOnly,        // v0.35.0 (지속 효과) 플레이어는(양쪽 모두) 테이머의 효과 이외로 메모리를 얻을 수 없다
+    // v0.36.0 플레이어 규칙 제한 (지속 효과 — 이 디지몬이 있는 동안)
+    PlayersCannotPlayDigimonByEffects, // 서로는 효과로 디지몬을 등장시킬 수 없다 ("Players can't play Digimon by effects")
+    PlayersCannotReducePlayCosts,      // 서로는 지불하는 등장 코스트를 마이너스할 수 없다 ("Players can't reduce play costs")
+    OpponentCannotUseOptions,          // 상대는 옵션 카드를 사용할 수 없다 ("your opponent can't use Option cards")
+    TamerAsDigimonAura,                // (지속 효과) 이 카드의 TamerAuras가 켜져 있다 ("All of your [Marcus Damon]s are also treated as ~ Digimon")
+    UnaffectedByOpponentDeDigivolve,   // 상대의 ≪퇴화≫ 효과를 받지 않는다 ("their ＜De-Digivolve＞ effects don't affect this Digimon")
+    OpponentTamersCannotUnsuspend,     // 상대의 테이머 전부는 액티브가 되지 않는다 ("None of your opponent's Tamers can unsuspend")
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>
@@ -306,6 +313,9 @@ public sealed class CardScript
 
     /// <summary>v0.34.0 "This Digimon can only digivolve into white Digimon" — (출처, 자신의 턴에만, 진화할 수 있는 카드)</summary>
     public List<(EffectSource Source, bool YourTurnOnly, Func<CardData, bool> Allowed)> EvoOnlyInto { get; } = new();
+
+    /// <summary>v0.36.0 테이머를 디지몬으로도 취급하는 지속 효과 (BT25-104)</summary>
+    public List<TamerAura> TamerAuras { get; } = new();
 
     /// <summary>"When this Digimon would digivolve (into ~), reduce the digivolution cost by N" — 진화하기 직전에 진화 코스트를 바꾸는 효과</summary>
     public List<EvoCostModifier> EvoCostModifiers { get; } = new();

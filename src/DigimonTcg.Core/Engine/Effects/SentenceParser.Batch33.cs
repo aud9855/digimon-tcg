@@ -560,7 +560,7 @@ internal static partial class SentenceParser
 
     /// <summary>진화 조건을 무시하는 진화: "That Digimon may digivolve into [MetalGarurumon] in your hand, ignoring its digivolution requirements and without paying the cost" 등</summary>
     private static readonly Regex IgnoreEvo33 = new(
-        @"^(?<t>that Digimon|it|this Digimon|(?:1|one) of your .+?) may digivolve into (?:an? |1 )?(?<pick>.+?) (?:in|from) (?:the |your )?(?<from>hand or (?:the |your )?trash|hand|trash)(?<tail>(?:,? ?(?:ignoring (?:its |this card's |the )?(?:digivolution requirements|level)|for (?:a digivolution cost of (?<cost>\d+)|its digivolution cost)|without paying (?:the|its) (?:memory |digivolution )?cost|and))+)$",
+        @"^(?<t>that Digimon|it|this Digimon|(?:1|one) of your .+?) may digivolve into (?:an? |1 )?(?<pick>.+?) (?:in|from) (?:the |your )?(?<from>hand or (?:the |your )?trash|hand|trash)(?<tail>(?:,? ?(?:ignoring (?:its |this card's |the )?(?:digivolution requirements|level)|for (?:a digivolution cost of (?<cost>\d+)|its digivolution cost)|without paying (?:the|its) (?:memory |digivolution )?cost|with the (?:digivolution )?cost reduced by (?<red>\d+)|and))+)$",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static (Action<EffectContext>? Act, string? Error)? ParseAction33(string raw, CardData card, List<EffectTrigger> triggers)
@@ -578,8 +578,10 @@ internal static partial class SentenceParser
             bool free = Regex.IsMatch(tail, @"without paying", RegexOptions.IgnoreCase);
             int? fixedCost = m.Groups["cost"].Success ? int.Parse(m.Groups["cost"].Value) : null;
             bool levelOnly = Regex.IsMatch(tail, @"ignoring (?:its )?level", RegexOptions.IgnoreCase);
+            int red = m.Groups["red"].Success ? int.Parse(m.Groups["red"].Value) : 0;
             // 테이머의 "it may digivolve into ~" (EX13-074) — 이 테이머를 진화 (테이머에서 진화와 같은 처리)
-            if (card.Type == CardType.Tamer && Regex.IsMatch(m.Groups["t"].Value, @"^(?:it|this Tamer)$", RegexOptions.IgnoreCase))
+            if (card.Type == CardType.Tamer && Regex.IsMatch(m.Groups["t"].Value, @"^(?:it|this Tamer)$", RegexOptions.IgnoreCase)
+                && !Regex.IsMatch(card.EffectText, @"\bas (?:1|one|any) of your [^,.]*? ?'s bottom digivolution cards?, it may digivolve\b", RegexOptions.IgnoreCase))   // v0.36.0 EX13-071: "it" = 비용으로 진화원을 놓은 디지몬
             {
                 var tpick = ParseCardPick("1 " + m.Groups["pick"].Value) ?? ParseNamePick("1 " + m.Groups["pick"].Value);
                 if (tpick == null) return null;
@@ -625,7 +627,7 @@ internal static partial class SentenceParser
                     if (fromTrash) pool.AddRange(PoolFrom(c.Owner.Trash, x => match(x) && Can(d, x)));
                     var evo = pool.OrderByDescending(x => x.Card.Level).ThenByDescending(x => x.Card.DP).FirstOrDefault();
                     if (evo.Card == null) continue;
-                    int cost = free ? 0 : fixedCost ?? evo.Card.EvoCost;
+                    int cost = free ? 0 : fixedCost ?? Math.Max(0, evo.Card.EvoCost - red);   // v0.36.0 "with the cost reduced by 1" (EX13-071)
                     c.Engine.EvolveByEffect(c.Owner, d, evo.Card, cost, evo.Zone);
                     c.LastTargets = new List<CardInstance> { d };
                     Emit(c, label, $"[{d.TopCard.Name}]으로 진화 조건을 무시하고 진화 (코스트 {cost})");

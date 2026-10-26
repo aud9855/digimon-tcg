@@ -19,7 +19,7 @@ public static partial class KoreanEffectRenderer
     [ThreadStatic] private static bool _itOther35;
 
     private static void BeginClause35(string clause) =>
-        _itOther35 = Regex.IsMatch(clause, @"\b(?:any|1|one) of your [^,.]*?Digimon's bottom digivolution cards?|as the bottom digivolution cards? of (?:any|1|one) of your\b|\bone of those Digimon\b|\bany of those Digimon\b", RegexOptions.IgnoreCase);
+        _itOther35 = Regex.IsMatch(clause, @"\b(?:any|1|one) of your [^,.]*?Digimon's bottom digivolution cards?|\b(?:any|1|one) of your \[[^\]]+\] ?'s bottom digivolution cards?|as the bottom digivolution cards? of (?:any|1|one) of your\b|\bone of those Digimon\b|\bany of those Digimon\b", RegexOptions.IgnoreCase);
 
     private const RegexOptions IC = RegexOptions.IgnoreCase;
 

@@ -34,6 +34,7 @@ internal static partial class SentenceParser
         (new Regex(@"^(?:isn't|is not|aren't|are not) affected by (?:the effects of (?:your opponent's|their) Digimon|(?:your opponent's|their) Digimon(?:'s)? effects)$", I), new[] { Keyword.UnaffectedByOpponentDigimonEffects }, true),
         (new Regex(@"^(?:isn't|is not|aren't|are not) affected by (?:the effects of (?:your opponent's|their) Option cards|(?:your opponent's|their) Option(?: card)?(?:'s|s')? effects)$", I), new[] { Keyword.UnaffectedByOpponentOptionEffects }, true),
         (new Regex(@"^(?:isn't|is not|aren't|are not) affected by (?:the effects of )?(?:your opponent's|their|the opponent's) effects$|^(?:isn't|is not|aren't|are not) affected by (?:your opponent's|their) effects$", I), new[] { Keyword.UnaffectedByOpponentEffects }, true),
+        (new Regex(@"^(?:isn't|is not) affected by (?:your opponent's|their) ＜De-Digivolve＞ effects$", I), new[] { Keyword.UnaffectedByOpponentDeDigivolve }, true),   // v0.36.0 (BT22-060)
         (new Regex(@"^can't have (?:its|their) DP reduced by (?:your |the )?opponent's(?: card)? effects$", I), new[] { Keyword.DpCannotBeReducedByOpponent }, true),
         (new Regex(@"^can't have (?:its|their) DP reduced$", I), new[] { Keyword.DpCannotBeReduced }, true),
         (new Regex(@"^can't be blocked(?: by (?:your opponent's|their) Digimon)?$|^(?:is|are) unblockable$", I), new[] { Keyword.Unblockable }, true),
@@ -537,6 +538,7 @@ internal static partial class SentenceParser
             pending.Registrations.Add(d => d.Static(StaticStat.Keyword, inherited ? EffectSource.Inherited : EffectSource.Main, c => cPlayers(c) ? 1 : 0, Keyword.PlayersMemoryTamerOnly));
             return null;
         }
+        if (ParseStatic36(s, inherited, card, cond, pending) is { } static36) return static36.Length == 0 ? null : static36;   // v0.36.0 플레이어 제한 (SentenceParser.Batch36.cs)
         s = NormalizeSubjectForms34(NormalizeProtection34(s));
         if (SplitSubject34(s) is not { } split) return "주어";
         var preds = ParsePreds34(split.Preds);
@@ -762,6 +764,8 @@ internal static partial class SentenceParser
                     _ => true, hand ? "자신의 테이머 1장을 패로 되돌려" : "자신의 테이머 1장을 덱 아래로 되돌려");
         }
         // "suspending up to 2 of your yellow Tamers" · "suspending up to 5 Tamers" (낸 매수는 PaidCount)
+        if ((m = Regex.Match(cost, @"^suspending up to (?<n>\d+) Tamers$", I)).Success && SuspendAnyTamers36(int.Parse(m.Groups["n"].Value)) is { } anyTamers)
+            return anyTamers;   // v0.36.0 "of your"가 없으면 양쪽의 테이머 (공식 Q&A BT17-048)
         if ((m = Regex.Match(cost, $@"^suspending up to (?<n>\d+) (?:of your )?(?:(?<color>{Colors}) )?Tamers$", I)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);

@@ -10,7 +10,7 @@ namespace DigimonTcg.Core.Engine;
 /// <summary>
 /// 블록 가능 여부처럼 엔진과 ActionValidator(공격 미리보기)가 함께 쓰는 판정
 /// </summary>
-public static class EffectRules
+public static partial class EffectRules
 {
     /// <summary>"~ 턴 종료 시까지" 기간 효과가 아직 유효한지 (0 = 효과 없음)</summary>
     public static bool IsActive(int until, GameState state) => until > 0 && until >= state.TurnSequence;
@@ -397,8 +397,19 @@ public partial class GoldfishEngine
     {
         PruneFaceUp(State.Player);
         PruneFaceUp(State.DummyOpponent);
+        SyncTamerProxies();   // v0.36.0 디지몬으로 취급하는 테이머 (GoldfishEngine.TamerAsDigimon.cs)
         ApplyContinuousEffects(State.Player, State.DummyOpponent, State.PlayerAllSecurityAttackUntil);
         ApplyContinuousEffects(State.DummyOpponent, State.Player, State.OpponentAllSecurityAttackUntil);
+        if (_tamerProxies.Count > 0 || AnyTamerAura())
+        {
+            int before = _tamerProxies.Count;
+            SyncTamerProxies();   // 지속 효과(키워드)가 막 켜지거나 꺼진 것
+            if (_tamerProxies.Count != before)
+            {
+                ApplyContinuousEffects(State.Player, State.DummyOpponent, State.PlayerAllSecurityAttackUntil);
+                ApplyContinuousEffects(State.DummyOpponent, State.Player, State.OpponentAllSecurityAttackUntil);
+            }
+        }
     }
 
     private void ApplyContinuousEffects(PlayerZones owner, PlayerZones enemy, int allSecurityAttackUntil)
@@ -777,10 +788,10 @@ public partial class GoldfishEngine
                 NotifySecurityAdded(zones, top);
             }
 
-            if (fortitude != null && zones.Trash.Remove(fortitude))
+            if (fortitude != null && zones.Trash.Contains(fortitude) && CanPlayByEffect(zones, fortitude, PlayOrigin.Trash))   // v0.36.0 효과로 등장 (막혀 있으면 트래시에 남는다)
             {
                 EffectLog(zones, $"[≪불굴≫] [{fortitude.Name}]이(가) 코스트 없이 다시 등장합니다.");
-                PlayWithoutCost(zones, fortitude);
+                TryPlayByEffect(zones, fortitude, PlayOrigin.Trash, () => zones.Trash.Remove(fortitude));
             }
         });
     }
@@ -950,6 +961,7 @@ public partial class GoldfishEngine
     /// <summary>배틀이 끝난 시큐리티 디지몬을 트래시에서 코스트 없이 등장 ("At the end of the battle, play this card")</summary>
     private void PlaySecurityDigimonAfterBattle(PlayerZones owner, CardData card)
     {
+        if (EffectPlayBlock(owner, card, PlayOrigin.Security) is { } why) { EffectLog(owner, $"[{card.Name}] {why}."); return; }   // v0.36.0 효과로 등장 — 트래시에 남는다
         if (!owner.Trash.Remove(card))
             return;
         owner.BattleArea.Add(new CardInstance(card, State.CurrentTurn) { IsOwnersTurn = IsTurnOf(owner) });
@@ -1064,6 +1076,11 @@ public partial class GoldfishEngine
     /// <summary>≪퇴화 N≫ — 버린 매수 반환</summary>
     internal int DeDigivolve(PlayerZones zones, CardInstance inst, int count)
     {
+        if (CardScripts.HasKeyword(inst, Keyword.UnaffectedByOpponentDeDigivolve) && IsOpponentEffectFor(zones))   // v0.36.0 "their ＜De-Digivolve＞ effects don't affect this Digimon" (BT22-060)
+        {
+            EffectLog(zones, $"[{inst.TopCard.Name}]은(는) 상대의 ≪퇴화≫ 효과를 받지 않습니다.");
+            return 0;
+        }
         int n = 0;
         while (n < count)
         {
@@ -1211,15 +1228,6 @@ public partial class GoldfishEngine
         EffectLog(owner, $"[효과] [{card.Name}(Lv.{card.Level})] 코스트 없이 {(suspended ? "레스트 상태로 " : "")}등장");
         if (triggerOnPlay)
             ApplyOnPlayEffects(owner, inst);
-    }
-
-    /// <summary>효과로 코스트를 내고 등장 ("play ~ with the play cost reduced by N" · "for a play cost of N") — [등장 시] 효과 발휘</summary>
-    internal void PlayPayingCost(PlayerZones owner, CardData card, int cost)
-    {
-        AddMemory(owner, -cost);
-        if (ReferenceEquals(owner, State.Player)) State.TotalMemorySpent += cost;
-        EffectLog(owner, $"[효과] [{card.Name}] 등장 코스트 {cost} 지불");
-        PlayWithoutCost(owner, card);
     }
 
     /// <summary>플레이어의 어택이 상대 효과로 바뀐 대상 (플레이어 어택 처리 중에만 쓰인다)</summary>
@@ -1545,11 +1553,17 @@ public partial class GoldfishEngine
         var owner = OwnerOf(inst);
         if (!owner.BattleArea.Contains(inst))
             return;
+        bool tamerToo = inst.TamerProxyOf != null && SuspendProxyTamer(owner, inst);   // v0.36.0 디지몬으로 취급하는 테이머 — 테이머도 레스트
         WithSuspendCause(() =>   // v0.32.0 "When an effect suspends ~"
         {
             RunEffects(EffectTrigger.ThisDigimonSuspends, owner, inst, inst.TopCard);
             FireForSide(EffectTrigger.AllyDigimonSuspended, owner, inst);
             FireForSide(EffectTrigger.OpponentDigimonSuspended, EnemyOf(owner), inst);
+            if (tamerToo && inst.TamerProxyOf is { } tamer)
+            {
+                FireForSide(EffectTrigger.AllyTamerSuspended, owner, null, triggerCard: tamer);
+                FireForSide(EffectTrigger.OpponentTamerSuspended, EnemyOf(owner), null, triggerCard: tamer);
+            }
             return true;
         });
     }
@@ -1674,6 +1688,7 @@ public partial class GoldfishEngine
         if (!owner.HasActiveTamer(tamer) || TamerSuspendLocked(owner, tamer))   // v0.35.0 "can't suspend until ~"
             return;
         owner.SuspendedTamers.Add(tamer);
+        if (TamerProxyOf(owner, tamer) is { } proxy36) { proxy36.IsSuspended = true; SyncTamerProxies(); }   // v0.36.0 디지몬으로도 취급 중이면 그 디지몬도
         WithSuspendCause(() =>   // v0.32.0 "When one of your effects suspends a Tamer"
         {
             FireForSide(EffectTrigger.AllyTamerSuspended, owner, null, triggerCard: tamer);
@@ -1853,6 +1868,7 @@ public partial class GoldfishEngine
             return;
         inst.IsSuspended = false;
         var owner = OwnerOf(inst);
+        if (inst.TamerProxyOf != null) UnsuspendProxyTamer(owner, inst);   // v0.36.0
         bool mainPhase = ReferenceEquals(owner, State.Player) ? State.CurrentPhase == Phase.Main && _aiTurn == null : _aiTurn != null;
         if (owner.BattleArea.Contains(inst) && IsTurnOf(owner) && mainPhase)
             RunEffects(EffectTrigger.ThisDigimonUnsuspendedInMain, owner, inst, inst.TopCard);
@@ -1877,6 +1893,7 @@ public partial class GoldfishEngine
         RunPlacedOptions(EffectTrigger.EndOfOpponentsTurn, owner);
         RunTrashEffects(EffectTrigger.EndOfOpponentsTurn, owner);   // v0.31.0 [트래시] [~ 시] 효과
         RunScheduledDeletions();   // "~ is deleted at the end of the turn" (이 효과로 등장한 디지몬) — 턴 종료 시의 마지막
+        ExpireTamerProxies();   // v0.36.0 테이머의 디지몬 취급 기간 끝
         RecalculateFieldBuffs();
     }
 
@@ -1895,7 +1912,7 @@ public partial class GoldfishEngine
     /// <summary>트래시에서 조건에 맞는 디지몬을 코스트 없이 등장시킨다 ([등장 시] 효과는 발휘하지 않음)</summary>
     internal List<CardData> PlayFromTrash(PlayerZones zones, Func<CardData, bool> match, int maxCount)
     {
-        var ranked = zones.Trash.Where(c => c.Type == CardType.Digimon && match(c))
+        var ranked = zones.Trash.Where(c => c.Type == CardType.Digimon && match(c) && CanPlayByEffect(zones, c, PlayOrigin.Trash))   // v0.36.0
             .OrderByDescending(c => c.Level).ThenByDescending(c => c.DP).ToList();
         var picks = ChooseCards(zones, CardChoiceZone.Trash, ranked, maxCount, upTo: false, $"트래시에서 등장시킬 디지몬 {maxCount}장을 고르세요.");
         foreach (var c in picks)

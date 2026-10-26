@@ -55,6 +55,9 @@ public class CardInstance
     public bool HasGrantedBlocker { get; set; }
     public bool HasBlocker => TopCard.IsBlocker || HasGrantedBlocker;
 
+    /// <summary>v0.36.0 디지몬으로도 취급하는 테이머 (이 디지몬이 그 테이머를 나타낸다 — 테이머 카드는 테이머 존에 그대로). 보통 디지몬이면 null</summary>
+    public CardData? TamerProxyOf { get; set; }
+
     public CardInstance(CardData baseCard, int currentTurn)
     {
         InstanceId = Guid.NewGuid().ToString();

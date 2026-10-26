@@ -10,6 +10,40 @@
 
 ---
 
+## v0.36.0 — 2026-10-27
+미지원 효과 문장 10차 묶음 (효과로 등장 한 곳 · 플레이어 제한 · 테이머를 디지몬으로 취급) — 도감 효과 문장 지원 8,828 → 8,872 / 10,366 (85.2% → 85.6%, +44)
+- 모든 절이 동작하는 카드 3,057 → 3,092장 (수정 전 지원되던 문장 중 깨진 것 0). 원래 지원하던 문장의 한글은 용어집 보강으로 바뀐 20문장과 BT14-090("이 디지몬을" → "그 디지몬을") 말고는 그대로. 새로 지원한 44문장 모두 생성 한글이 붙는다
+- 효과로 등장 — 한 곳 (GoldfishEngine.EffectPlay.cs `TryPlayByEffect`)
+  - 효과로 카드를 등장시키는 모든 길(패 · 트래시 · 진화원 · 테이머 아래 · 시큐리티 · 공개한 카드 · 토큰 · 육성 에어리어 · ≪불굴≫ · 시큐리티 디지몬/테이머 · 내장 스크립트)이 있던 곳을 알리고 한 곳에서 판단한다. 등장시킬 수 없으면 카드를 꺼내지 않는다 — 원래 있던 곳에 그대로, 공개한 카드는 남은 카드와 같이
+  - 고를 때도 등장시킬 수 없는 카드는 후보에서 빠진다. 제한이 없으면 동작은 전과 같다 (전체 테스트 · 시뮬레이션으로 확인)
+- 플레이어 제한 (공식 한글 · Q&A)
+  - "Players can't play Digimon by effects" (BT14-009 · BT9-033 · BT9-047 — "서로는 효과로 디지몬을 등장시킬 수 없다", Q&A BT9-033: 옵션 카드의 효과도) — 토큰도 막고, 테이머는 막지 않는다
+  - "Your opponent can't play Digimon by effects until the end of their turn" (BT8-097) · "~ Digimon or Tamers ~" (BT20-020) · "Until your opponent's turn ends, their effects can't play Digimon or Tamers from the trash" (BT23-014)
+  - "Players can't reduce play costs" (BT8-071 · EX7-015 · ST12-03 · ST13-08 — Q&A: 등장 코스트를 지불할 때 마이너스할 수 없다, 양쪽 플레이어): 카드의 등장 코스트 감소 · 비용을 내는 감소 · 필드의 감소 · 디지크로스 감소 · 효과의 "with the play cost reduced by N" 모두 적용하지 않는다 (코스트 없이 등장 · 옵션 사용 코스트 · 진화 코스트는 그대로)
+  - "Your opponent can't use Option cards until the end of their next turn" · "~ this turn" (EX1-072) · "[Opponent's Turn] While all of your Digimon are suspended, your opponent can't use Option cards" (BT8-057) — 패에서 사용 · 효과로 사용 모두 (Q&A EX1-072: 체크한 옵션의 【시큐리티】 효과는 사용이 아니라 그대로). 화면에서 사용하면 이유를 알려 주고, AI도 쓰지 않는다
+  - "[Opponent's Turn] None of your opponent's Tamers can unsuspend" (BT17-048 · BT17-051)
+- 테이머를 디지몬으로도 취급 — 「최건우」 (GoldfishEngine.TamerAsDigimon.cs) — 공식 Q&A: "DP X000인 디지몬"으로도 취급, 보통 디지몬과 같이 어택할 수 있다. 등장한 턴의 테이머는 그 턴에 어택할 수 없다
+  - "For the turn, 1 of your [Marcus Damon]s is also treated as a 3000 DP Digimon and can't digivolve" (BT13-008) · "this Tamer ~" (BT12-092) · "~, can't digivolve, and gains ＜Blocker＞" (BT13-018 · BT17-087) · "~ ＜Rush＞ and ＜Alliance＞" (BT21-044) · "12000 DP ~. Then, that Digimon may attack your opponent's Digimon. Your opponent's unsuspended Digimon can also be attacked with this effect." (BT21-096) · AD1-021 · 지속 효과 "[Your Turn] All of your [Marcus Damon]s are also treated as 12000 DP Digimon and gain ＜Rush＞" (BT25-104)
+  - 테이머 카드는 테이머 존에 그대로 있고 (테이머 효과 · "자신의 테이머" · 테이머 비용 그대로), 배틀 에어리어에 그 테이머를 나타내는 디지몬(DP · 키워드 · 진화 불가)이 하나 놓인다. 어택 · 블록 · 효과로 레스트하면 테이머도 레스트해 "자신의 테이머가 레스트했을 때"가 유발하고 (BT13-008 진화원 효과), 테이머가 레스트하면 그 디지몬도 레스트
+  - 배틀 · 효과로 소멸하거나 패 · 덱 등으로 가면 테이머 카드가 그곳으로 간다 ("자신의 테이머가 소멸했을 때"도 — BT21-044 진화원 효과). 기간이 끝나면 디지몬 취급만 끝나고 테이머는 그대로
+  - 화면: 배틀 에어리어에 그 디지몬이 DP와 함께 보이고, 테이머 칸 상태 줄에 "디지몬 DP 3000". AI도 어택 · 블록에 쓴다
+  - 아직 하지 않은 것: 테이머 아래에 겹쳐진 카드의 진화원 효과 (테이머 아래 카드가 테이머마다 나뉘어 있지 않다) · Lv.이 없는 디지몬이라는 점 (Lv. 조건은 Lv.0으로 본다)
+- 두 술어 보호 · 공개 + 상한 · 비용
+  - "Until your opponent's turn ends, their ＜De-Digivolve＞ effects don't affect this Digimon, and it gets +1000 DP for each of its face-down digivolution cards" (BT22-060 — 공식 "상대의 《퇴화》의 효과를 받지 않고") · "their Digimon effects don't affect this Digimon, and it gets +3000 DP" (BT26-057 · EX10-010)
+  - "you may delete 1 of your Digimon with the [Ver.3] trait and all of your opponent's Digimon with the lowest play cost" (BT26-055)
+  - "For each of this Digimon's face-down digivolution cards, add 1 to the play cost maximum" (BT26-077 · EX10-074) · 공개 중간의 "~ add 1 to this effect's play cost maximum" (EX9-053)
+  - 비용 "By trashing 1 card in your hand or placing it face down under any of your [Keenan Crier]s" (BT26-072) · "By placing 1 ~ from your hand as any of your Digimon's bottom digivolution card, or face down under any of your [DATA SQUAD] trait Tamers" (BT27-020) · "A and B" 둘 다 내는 비용 (EX13-071 · BT27-095 · BT23-084 · BT23-090) · "By suspending 1 of your [Rhythm]" (BT17-048 진화원)
+- 진화할 때 비용을 내는 진화 코스트 감소: "When digivolving into this card, by suspending up to 5 Tamers, for each Tamer suspended by this effect, reduce the digivolution cost by 1" (BT17-048 — Q&A: 상대의 테이머도 고를 수 있다) · "When you would digivolve into this card, by returning up to 5 cards with the [D-Brigade] trait ~ to the top of your deck, reduce the digivolution cost by 1 for each returned card" (EX3-054)
+- "1 each of level 3, level 4 and level 5" — "You may play 1 each of level 3, level 4 and level 5 Digimon cards with [Aqua] or [Sea Animal] in any of their traits from this Digimon's digivolution cards" (BT22-028) · 비용 "placing 1 each of level 4 and level 5 ~ from your trash as 1 of your [Kudamon]'s bottom digivolution cards" + "it may digivolve into [Kentaurosmon] in the hand or trash, ignoring level and with the cost reduced by 1" (EX13-071 — "it"은 진화원을 놓은 그 디지몬)
+- "This effect can't play cards with the same name as any of your Tamers" (BT22-072 · BT24-034 · EX10-047 · EX10-051 — 공식 "이 효과로는, 자신의 테이머와 같은 명칭의 카드는 등장시킬 수 없다")
+- 용어집 (공식 한글 효과문에서 확인, 공식 데이터가 있을 때만): 「데크스」([Dex] · [DeathX]) · 「윗체르니」 · 「데바」 · 「어둠의 4천왕」 · 「어플몬」 · 「반쵸」 · 「브이」 · 「무샤 유지」 · 「카자마 쇼토」. 같은 한글이 된 이름은 한 번만 (「데크스」/「데크스」 → 「데크스」)
+- 룰에 맞춘 수정 (기존 카드 동작이 바뀜)
+  - 효과로 등장할 때 있던 곳이 정확해졌다: "play this card (from your trash) with the play cost reduced by N" · 트래시의 이 카드 등장 · ≪불굴≫ · 코스트를 내는 등장도 "When you play a Digimon from your trash" 같은 "있던 곳" 조건에 맞는다 (전에는 알 수 없음)
+  - 비용 "playing ~ to your empty breeding area"에서 카드를 고르지 않으면 비용을 내지 않은 것으로 본다
+  - BT14-090 한글: "이 디지몬을" → "그 디지몬을" (진화원을 놓은 「아구몬」)
+- 읽지 않고 남긴 것: "your opponent can't play Digimon with 6000 DP or less" (EX3-012 · EX7-014 · BT14-017 — 보통 등장까지 막는 제한, 다음 묶음) · "This effect can't play [Plutomon]" (BT26-059) · "~ can't play cards of the same level" (P-220) · 토큰 이름 제한 (BT19-091 · BT23-013) · "Trash the top or bottom digivolution card of 1 of your opponent's Digimon" (BT27-020 진화원) · 이름/특징 조각 「Glowing Dawn」 · 「Sovereign」 · 「Animal」 · 「Plant」 (공식 한글 데이터에 없거나 어느 것인지 가릴 수 없음) · BT11-034 (결정 대기)
+- 테스트 35개 (EffectBatch36Tests)
+
 ## v0.35.0 — 2026-10-27
 미지원 효과 문장 9차 묶음 (뒷면 진화원) — 도감 효과 문장 지원 8,733 → 8,828 / 10,366 (84.2% → 85.2%, +95)
 - 모든 절이 동작하는 카드 2,991 → 3,057장 (수정 전 지원되던 문장 중 깨진 것 0). 원래 지원하던 문장의 한글은 그대로이고, 한글이 없던 4문장(ST23-13/14 · ST24-13/14 "테이머 아래에 뒷면으로")에 새로 붙었다. 새로 지원한 95문장 중 91문장에 생성 한글이 붙는다

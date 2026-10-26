@@ -68,11 +68,12 @@ public partial class GoldfishEngine
             var key = (mod, (object?)holder ?? card);
             if (mod.Cost is { } pay)
             {
-                if (!pay.CanPay(ctx) || !AskYesNo(owner, holder, $"[{card.Name}] {pay.Describe} [{evoCard.Name}] 진화 코스트를 {mod.Reduce} 줄일까요?", pay.Recommend(ctx)))
+                if (!pay.CanPay(ctx) || !AskYesNo(owner, holder, $"[{card.Name}] {pay.Describe} [{evoCard.Name}] 진화 코스트를 {mod.Reduce}{(pay.PerCount ? "씩" : "")} 줄일까요?", pay.Recommend(ctx)))
                     continue;
+                ctx.PaidCount = 0;
                 pay.Pay(ctx);
             }
-            int reduced = Math.Min(mod.ReduceFor(ctx, target), cost);
+            int reduced = Math.Min(mod.Cost is { PerCount: true } ? mod.Reduce * Math.Max(0, Math.Min(ctx.PaidCount, 20)) : mod.ReduceFor(ctx, target), cost);   // v0.36.0 낸 매수마다
             cost -= reduced;
             if (mod.OncePerTurn)
                 _evoCostModifierUsedTurn[key] = State.TurnSequence;

@@ -59,6 +59,7 @@ public static partial class KoreanEffectRenderer
         if (!clause.Contains('{')) clause = clause.Replace("}", "");
         if (clause.Length == 0)
             return string.Empty;
+        if (ClauseKo36(clause) is { } k36) return k36;   // v0.36.0 (KoreanEffectRenderer.Batch36.cs)
 
         // 고르는 효과의 선택지 줄 "・~"
         if (clause.StartsWith("・"))
@@ -180,7 +181,7 @@ public static partial class KoreanEffectRenderer
 
         // v0.30.0 — 공식 (BT18-029 · BT19-052 · ST21-06 · BT21-078): "다른 자신의 디지몬 1마리마다 이 효과의 Lv. 상한 +1" · "~ 이 효과의 등장 코스트 상한 +2" ·
         // "~ 이 효과의 DP 상한 +2000" · "자신의 테이머의 색 합계가 2색 이상이라면, 이 효과의 Lv. 상한 +1"
-        if ((m = Regex.Match(s, @"^(?:For (?:each|every) (?<cnt>.+?)|If (?<cond>[^,]+)), add (?<n>\d+) to this effect's (?<what>choosable levels|level maximum|maximum level|play cost maximum|maximum play cost|DP maximum|maximum DP|DP reduction)$", RegexOptions.IgnoreCase)).Success)
+        if ((m = Regex.Match(s, @"^(?:For (?:each|every) (?<cnt>.+?)|If (?<cond>[^,]+)), add (?<n>\d+) to (?:this effect's|the(?= (?:play cost|level|DP) maximum$)) (?<what>choosable levels|level maximum|maximum level|play cost maximum|maximum play cost|DP maximum|maximum DP|DP reduction)$", RegexOptions.IgnoreCase)).Success)   // v0.36.0 "the play cost maximum" (BT26-077)
         {
             string what = m.Groups["what"].Value.ToLowerInvariant();
             string capKo = what.Contains("level") ? "Lv. 상한" : what.Contains("play cost") ? "등장 코스트 상한" : what.Contains("reduction") ? "DP 마이너스" : "DP 상한";
@@ -285,7 +286,7 @@ public static partial class KoreanEffectRenderer
         // "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ ~" — 주어 뒤의 may (SentenceParser.ParseStep과 같은 읽기)
         if (direct == null && !may && Regex.Match(s, @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } sm)
             return Action($"{sm.Groups["t"].Value} {sm.Groups["v"].Value}s{sm.Groups["rest"].Value}", Form.May);
-        return direct ?? (may ? SentenceKo33(s, true) : null) ?? SentenceKo34(s, may) ?? SentenceKo35(may ? "you may " + s : s);   // v0.35.0 (Batch35)   // v0.33.0 (KoreanEffectRenderer.Batch33.cs) · v0.34.0 (Batch34)
+        return direct ?? (may ? SentenceKo33(s, true) : null) ?? SentenceKo34(s, may) ?? SentenceKo35(may ? "you may " + s : s) ?? SentenceKo36(s, may);   // v0.36.0 (Batch36) · v0.35.0 (Batch35)   // v0.33.0 (KoreanEffectRenderer.Batch33.cs) · v0.34.0 (Batch34)
     }
 
     // =====================================================================
@@ -940,7 +941,7 @@ public static partial class KoreanEffectRenderer
             if (Core(verb + m.Groups["rest"].Value) is { } p)
                 return p.Render(Form.By) + ",";
         }
-        return CostKo32(cost) ?? CostKo33(cost) ?? CostKo34(cost) ?? CostKo35(cost);   // v0.35.0 (Batch35)   // v0.32.0 (KoreanEffectRenderer.Batch32.cs) · v0.33.0 (Batch33)
+        return CostKo32(cost) ?? CostKo33(cost) ?? CostKo34(cost) ?? CostKo35(cost) ?? CostKo36(cost);   // v0.36.0   // v0.35.0 (Batch35)   // v0.32.0 (KoreanEffectRenderer.Batch32.cs) · v0.33.0 (Batch33)
     }
 
     // =====================================================================
@@ -2058,7 +2059,7 @@ public static partial class KoreanEffectRenderer
     /// <summary>"[A], [B] or [C]" → 「A」/「B」/「C」 (공식 한글 이름이 있으면 한글)</summary>
     private static string NamesKo(string names, bool trait = false)
     {
-        var list = Regex.Matches(names, @"\[([^\]]+)\]").Select(x => $"「{(trait ? TraitKo(x.Groups[1].Value) : NameKo(x.Groups[1].Value))}」").ToList();
+        var list = Regex.Matches(names, @"\[([^\]]+)\]").Select(x => $"「{(trait ? TraitKo(x.Groups[1].Value) : NameKo(x.Groups[1].Value))}」").Distinct().ToList();   // v0.36.0 같은 한글이 된 이름은 한 번만 (「데크스」)
         return list.Count == 0 ? names : string.Join("/", list);
     }
 
@@ -2103,10 +2104,12 @@ public static partial class KoreanEffectRenderer
         : Regex.Match(en.Trim(), @"^(?<b>.+?) \((?<p>X Antibody|Awakened)\)$") is { Success: true } xp && Glossary.Value.Names.TryGetValue(xp.Groups["b"].Value, out var baseKo)
             ? (xp.Groups["p"].Value == "X Antibody" ? baseKo + " X항체" : baseKo + "(각성)")
         : Glossary.Value.Names.Count > 0 && ExtraNames34.TryGetValue(en.Trim(), out var extra) ? extra   // v0.34.0 카드 이름이 아닌 이름 조각 (공식 한글 데이터가 있을 때만)
+        : Glossary.Value.Names.Count > 0 && Extra36.TryGetValue(en.Trim(), out var extra36) ? extra36   // v0.36.0
         : en.Trim();
 
     internal static string TraitKo(string en) => Glossary.Value.Traits.TryGetValue(en.Trim(), out var ko) ? ko
         : Glossary.Value.Traits.Count > 0 && ExtraTraits34.TryGetValue(en.Trim(), out var extra) ? extra   // v0.34.0
+        : Glossary.Value.Traits.Count > 0 && Extra36.TryGetValue(en.Trim(), out var extra36) ? extra36   // v0.36.0
         : en.Trim();
 
     /// <summary>
@@ -2117,6 +2120,17 @@ public static partial class KoreanEffectRenderer
     {
         ["Sistermon"] = "시스터몬", ["Chessmon"] = "체스몬", ["Imperialdramon"] = "황제드라몬", ["Dramon"] = "드라몬",
         ["Justimon"] = "저스티몬", ["Belphemon"] = "벨페몬", ["Gizmon"] = "기즈몬", ["Plug-In"] = "플러그인", ["Three Musketeers"] = "3총사",
+    };
+
+    /// <summary>
+    /// v0.36.0 용어집이 카드 번호로 맞추지 못한 이름 · 특징 조각 — 공식 한글 효과문에서 확인한 표기 (공식 한글 데이터가 있을 때만):
+    /// 「데크스」(BT7 [Dex] · [DeathX]) · 「윗체르니」(BT13 [Witchelny]) · 「데바」(BT9 [Deva]) · 「어둠의 4천왕」(BT15 [Dark Masters]) · 「어플몬」(BT16 [Appmon]) ·
+    /// 「반쵸」(BT19 [Bancho]) · 「브이」([Vee]) · 「무샤 유지」([Yuji Musha]) · 「카자마 쇼토」([Shoto Kazama])
+    /// </summary>
+    private static readonly Dictionary<string, string> Extra36 = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Dex"] = "데크스", ["DeathX"] = "데크스", ["Witchelny"] = "윗체르니", ["Deva"] = "데바", ["Dark Masters"] = "어둠의 4천왕", ["Appmon"] = "어플몬",
+        ["Bancho"] = "반쵸", ["Vee"] = "브이", ["Yuji Musha"] = "무샤 유지", ["Shoto Kazama"] = "카자마 쇼토",
     };
 
     /// <summary>v0.34.0 특징 조각 ("[Aqua] or [Sea Animal] in any of its traits") — 공식 (BT22-018 · P-164): 「수생」</summary>

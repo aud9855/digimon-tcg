@@ -31,6 +31,8 @@ public static class CardScripts
     /// <summary>카드의 효과 정의: 사람이 쓴 스크립트 → (내장 카드가 아니면) 키워드 사전이 만든 스크립트</summary>
     public static CardScript? For(CardData card)
     {
+        if (card.IsTamerProxy)   // v0.36.0 디지몬으로 취급하는 테이머의 복사본 — 효과는 테이머 쪽에서만
+            return null;
         if (Registry.Value.TryGetValue(card.CardId, out var script))
             return script;
         if (StarterDecks.IsBuiltInCard(card.CardId))
@@ -100,8 +102,13 @@ public static class CardScripts
     /// 실제로 지불할 등장 · 사용 코스트 (카드의 코스트 감소 효과 반영, 0 미만이 되지 않음).
     /// enemy = 상대의 필드 ("if your opponent has ~" · "for each of your opponent's Digimon"). 모르면 빈 필드로 본다
     /// </summary>
-    public static int EffectivePlayCost(PlayerZones owner, CardData card, PlayerZones? enemy = null) =>
-        Math.Max(0, card.PlayCost - (ForUse(card)?.PlayCostReduction?.Invoke(owner, enemy ?? NoZones) ?? 0));
+    public static int EffectivePlayCost(PlayerZones owner, CardData card, PlayerZones? enemy = null)
+    {
+        int reduction = ForUse(card)?.PlayCostReduction?.Invoke(owner, enemy ?? NoZones) ?? 0;
+        if (reduction > 0 && GoldfishEngine.PlayCostReductionBlocked(owner, enemy, card))   // v0.36.0 "Players can't reduce play costs" (늘리는 것은 그대로)
+            reduction = 0;
+        return Math.Max(0, card.PlayCost - reduction);
+    }
 
     private static readonly PlayerZones NoZones = new();
 
@@ -235,6 +242,13 @@ public sealed class CardScriptDefinition
 
     /// <summary>등장할 때 비용을 내면 코스트 -N ("When this card would be played, by ~ing, reduce the play cost by N")</summary>
     /// <summary>v0.34.0 진화할 수 있는 카드를 제한한다 ("This Digimon can only digivolve into [Apocalymon]")</summary>
+    /// <summary>v0.36.0 "All of your [X]s are also treated as N DP Digimon" — 이 카드의 지속 효과(Keyword.TamerAsDigimonAura가 켜진 동안)</summary>
+    public CardScriptDefinition TamerAura(TamerAura aura)
+    {
+        _script.TamerAuras.Add(aura);
+        return this;
+    }
+
     public CardScriptDefinition EvoOnlyInto(EffectSource source, bool yourTurnOnly, Func<CardData, bool> allowed)
     {
         _script.EvoOnlyInto.Add((source, yourTurnOnly, allowed));

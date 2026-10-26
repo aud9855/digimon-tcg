@@ -69,7 +69,7 @@ public sealed class SmartAiPolicy : IAiPolicy
 
     public AiOptionUse? ChooseOption(GoldfishEngine engine, int memory, bool beforeAttacks)
     {
-        if (!Tuning.UseOptions)
+        if (!Tuning.UseOptions || EffectRules.OptionUseBlocked(engine.State, engine.State.DummyOpponent))   // v0.36.0 옵션 사용 제한
             return null;
         var state = engine.State;
         var ai = state.DummyOpponent;

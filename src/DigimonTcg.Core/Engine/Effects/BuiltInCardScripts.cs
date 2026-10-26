@@ -274,7 +274,7 @@ internal static class BuiltInCardScripts
             .Main(TargetKind.OwnDigimonWithDigimonSource, c =>
             {
                 var ally = c.PickOwn(d => d.SourcesAny(IsDigimon), AllyTarget(c));
-                var card = ally?.TakeSource(s => !ally.IsFaceDown(s) && IsDigimon(s) && s.Level == ally.SourcesWhere(IsDigimon).Max(x => x.Level));
+                var card = ally?.TakeSource(s => !ally.IsFaceDown(s) && IsDigimon(s) && s.Level == ally.SourcesWhere(IsDigimon).Max(x => x.Level) && c.Engine.CanPlayByEffect(c.Owner, s, PlayOrigin.Sources));   // v0.36.0 효과로 등장
                 if (ally == null || card == null) return;
                 c.PlayWithoutCost(card);
                 c.Message = $"❄️ 카이저 네일: [{ally.TopCard.Name}]의 진화원 [{card.Name}(Lv.{card.Level})]이(가) 코스트 없이 등장!";
@@ -282,7 +282,7 @@ internal static class BuiltInCardScripts
             .Security(c =>
             {
                 var host = c.Owner.BattleArea.FirstOrDefault(d => d.SourcesAny(IsDigimon));
-                var card = host?.TakeSource(s => !host.IsFaceDown(s) && IsDigimon(s));
+                var card = host?.TakeSource(s => !host.IsFaceDown(s) && IsDigimon(s) && c.Engine.CanPlayByEffect(c.Owner, s, PlayOrigin.Sources));   // v0.36.0
                 if (card == null) { c.SecurityResult("꺼낼 진화원이 없어 불발", "불발"); return; }
                 c.PlayWithoutCost(card).IsOwnersTurn = false;
                 c.SecurityResult($"진화원의 [{card.Name}]이(가) 코스트 없이 등장!", $"[{card.Name}] 등장");
@@ -806,7 +806,7 @@ internal static class BuiltInCardScripts
             .WhenAttacking(c =>   // 패의 옐로 Lv.3 디지몬 1장을 코스트 없이 등장
             {
                 // 공식 Q&A BT2-039 Q1: 쓰지 않아도 되는 효과 ("~할 수 있다")
-                var candidates = c.Owner.Hand.Where(x => IsDigimon(x) && x.Color == CardColor.Yellow && x.Level == 3).ToList();
+                var candidates = c.Owner.Hand.Where(x => IsDigimon(x) && x.Color == CardColor.Yellow && x.Level == 3 && c.Engine.CanPlayByEffect(c.Owner, x, PlayOrigin.Hand)).ToList();   // v0.36.0
                 if (candidates.Count == 0 || c.Owner.BattleArea.Count >= 8
                     || !c.Engine.AskYesNo(c.Owner, c.Self, "홀리드라몬: 패의 옐로 Lv.3 디지몬 1장을 코스트 없이 등장시킬까요?", recommended: true))
                     return;

@@ -652,12 +652,12 @@ public static partial class KoreanEffectRenderer
         if (t != s.Trim().TrimEnd('.')) return Sentence(may ? "You may " + Uncap(t) : t, nested: true);
         // 진화 조건 무시 진화 — 공식 (BT15-091 · BT17-053 · BT17-085): "그 디지몬을 패의 「메탈가루몬」으로 진화 조건을 무시하고 코스트를 지불하지 않고 진화시킬 수 있다" ·
         // "~ 진화 조건을 무시하고 진화 코스트 4로 진화시킬 수 있다"
-        if ((m = Regex.Match(t, @"^(?<t>that Digimon|it|this Digimon|this Tamer|(?:1|one) of your .+?) may digivolve into (?:an? |1 )?(?<pick>.+?) (?:in|from) (?:the |your )?(?<from>hand or (?:the |your )?trash|hand|trash)(?<tail>(?:,? ?(?:ignoring (?:its |this card's |the )?(?:digivolution requirements|level)|for (?:a digivolution cost of (?<cost>\d+)|its digivolution cost)|without paying (?:the|its) (?:memory |digivolution )?cost|and))+)$", RegexOptions.IgnoreCase)).Success
+        if ((m = Regex.Match(t, @"^(?<t>that Digimon|it|this Digimon|this Tamer|(?:1|one) of your .+?) may digivolve into (?:an? |1 )?(?<pick>.+?) (?:in|from) (?:the |your )?(?<from>hand or (?:the |your )?trash|hand|trash)(?<tail>(?:,? ?(?:ignoring (?:its |this card's |the )?(?:digivolution requirements|level)|for (?:a digivolution cost of (?<cost>\d+)|its digivolution cost)|without paying (?:the|its) (?:memory |digivolution )?cost|with the (?:digivolution )?cost reduced by (?<red>\d+)|and))+)$", RegexOptions.IgnoreCase)).Success
             && Regex.IsMatch(m.Groups["tail"].Value, @"\bignoring\b", RegexOptions.IgnoreCase))
         {
             string who = m.Groups["t"].Value.ToLowerInvariant() switch
             {
-                "that digimon" => "그 디지몬", "it" => _tamerSubject ? "이 테이머" : _mentionedTarget ? "그 디지몬" : "이 디지몬", "this digimon" => "이 디지몬", "this tamer" => "이 테이머",
+                "that digimon" => "그 디지몬", "it" => _tamerSubject ? "이 테이머" : _mentionedTarget || _itOther35 ? "그 디지몬" : "이 디지몬", "this digimon" => "이 디지몬", "this tamer" => "이 테이머",
                 _ => TargetKo(m.Groups["t"].Value) ?? (Regex.Match(m.Groups["t"].Value, $@"^(?:1|one) of your (?<x>{TargetSpec.NameList})$", RegexOptions.IgnoreCase) is { Success: true } nm ? $"자신의 {NamesKo(nm.Groups["x"].Value)} 1마리" : ""),
             };
             if (who.Length == 0) return null;
@@ -668,7 +668,8 @@ public static partial class KoreanEffectRenderer
             string tail = m.Groups["tail"].Value;
             string ign = Regex.IsMatch(tail, @"ignoring (?:its )?level", RegexOptions.IgnoreCase) ? "Lv.을 무시하고" : "진화 조건을 무시하고";
             string pay = Regex.IsMatch(tail, @"without paying", RegexOptions.IgnoreCase) ? "코스트를 지불하지 않고"
-                : m.Groups["cost"].Success ? $"진화 코스트 {m.Groups["cost"].Value}{J(m.Groups["cost"].Value, "으로", "로")}" : "진화 코스트를 지불하여";
+                : m.Groups["cost"].Success ? $"진화 코스트 {m.Groups["cost"].Value}{J(m.Groups["cost"].Value, "으로", "로")}"
+                : m.Groups["red"].Success ? $"지불하는 진화 코스트를 -{m.Groups["red"].Value} 하여" : "진화 코스트를 지불하여";   // v0.36.0 "with the cost reduced by 1" (EX13-071)
             return $"{who}{J(who, "을", "를")} {zone} {pk}{J(pk, "으로", "로")} {ign} {pay} 진화시킬 수 있다";
         }
         // 테이머를 이 카드로 진화 — 공식 (BT18-053 · BT12-015): "그 테이머를 이 카드로 진화 조건을 무시하고 진화 코스트 3으로 진화시킨다" · "그 테이머를 레드인 Lv.4의 디지몬으로 취급하여 이 카드로 진화시킨다"

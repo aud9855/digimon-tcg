@@ -308,10 +308,12 @@ public partial class MainWindow
         double artH = isOpponent ? OpponentTamerArtHeight : TamerArtHeight;
 
         var stack = new StackPanel();
+        // v0.36.0 디지몬으로도 취급 중이면 (배틀 에어리어에 그 디지몬이 있다) 상태 줄에 DP와 함께 알린다
+        var asDigimon = zones.BattleArea.FirstOrDefault(d => ReferenceEquals(d.TamerProxyOf, tamer));
         // 상태 한 줄 (카드 오른쪽 위 배지에 이미 TAMER가 있다)
         stack.Children.Add(new TextBlock
         {
-            Text = rested ? "↻ REST" : "⚡ ACTIVE",
+            Text = (rested ? "↻ REST" : "⚡ ACTIVE") + (asDigimon != null ? $" · 디지몬 DP {asDigimon.GetCurrentDP()}" : ""),
             Foreground = BrushFromHex(rested ? "#FAB387" : "#A6E3A1"),
             FontWeight = FontWeights.ExtraBold,
             FontSize = 10,

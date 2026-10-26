@@ -62,6 +62,12 @@ public class PlayerZones
     public Dictionary<CardData, int> TamerCannotSuspendUntil { get; } = new(ReferenceEqualityComparer.Instance);
     public Dictionary<CardData, int> TamerCannotUnsuspendUntil { get; } = new(ReferenceEqualityComparer.Instance);
 
+    // v0.36.0 플레이어 제한 기간 (값 = 끝나는 GameState.TurnSequence): 효과로 디지몬 · 테이머를 등장시킬 수 없다 · 트래시에서 효과로 등장시킬 수 없다 · 옵션 카드를 사용할 수 없다
+    public int CannotPlayDigimonByEffectsUntil { get; set; }
+    public int CannotPlayTamersByEffectsUntil { get; set; }
+    public int CannotPlayFromTrashByEffectsUntil { get; set; }
+    public int CannotUseOptionsUntil { get; set; }
+
     /// <summary>테이머 아래 카드가 뒷면인지</summary>
     public bool IsFaceDownUnderTamer(CardData card) => FaceDownUnderTamers.Count > 0 && FaceDownUnderTamers.Contains(card);
 

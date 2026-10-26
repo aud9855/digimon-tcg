@@ -529,7 +529,7 @@ public partial class GoldfishEngine
         State.CanMulligan = false;
         State.Player.Hand.Remove(card);
         var xros = card.Type == CardType.Digimon && !card.IsDual ? TakeXrosMaterials(State.Player, card) : new List<CardData>();   // 디지크로스 재료 (1장마다 코스트 -N)
-        int cost = Math.Max(0, CardScripts.EffectivePlayCost(State.Player, card, State.DummyOpponent) - XrosReduction(card, xros.Count));   // 카드의 코스트 감소 효과 반영
+        int cost = Math.Max(0, CardScripts.EffectivePlayCost(State.Player, card, State.DummyOpponent) - (PlayCostReductionBlocked(State.Player, card) ? 0 : XrosReduction(card, xros.Count)));   // 카드의 코스트 감소 효과 반영 (v0.36.0 마이너스할 수 없으면 디지크로스도)
         cost = ApplyPlayCostOptions(State.Player, card, cost);   // "by ~ing, reduce the play cost" — 비용을 낼지 묻는다
         State.MemoryGauge -= cost;
         State.TotalMemorySpent += cost;
@@ -839,7 +839,7 @@ public partial class GoldfishEngine
             State.LastRevealedSecurityCard = securityCard;
 
             // [공식 룰 A] [시큐리티] 효과가 있는 테이머 → 배틀 없이 코스트 없이 상대 필드에 등장 (효과가 없으면 아래에서 트래시)
-            if (securityCard.Type == CardType.Tamer && EffectRules.HasSecurityEffect(securityCard))
+            if (securityCard.Type == CardType.Tamer && EffectRules.HasSecurityEffect(securityCard) && CanPlayByEffect(opp, securityCard, PlayOrigin.Security))   // v0.36.0 효과로 등장
             {
                 AddTamer(opp, securityCard);
                 RecalculateFieldBuffs();
@@ -1483,7 +1483,7 @@ public partial class GoldfishEngine
             finally { _securityCheckRemoval = false; }
 
             // 1) 내 시큐리티에서 [시큐리티] 효과가 있는 [테이머]가 나온 경우 -> 코스트 지불 없이 내 테이머 존에 무료 등장!
-            if (mySec.Type == CardType.Tamer && EffectRules.HasSecurityEffect(mySec))
+            if (mySec.Type == CardType.Tamer && EffectRules.HasSecurityEffect(mySec) && CanPlayByEffect(State.Player, mySec, PlayOrigin.Security))   // v0.36.0 효과로 등장
             {
                 AddTamer(State.Player, mySec);
                 RecalculateFieldBuffs();
@@ -1747,7 +1747,7 @@ public partial class GoldfishEngine
         int beforeMem = ctx.Memory;
         var xros = TakeXrosMaterials(opp, card);   // 디지크로스: AI는 패의 카드만
         // 코스트는 필드에 놓기 전에 정한다 (플레이어와 같다 — "by deleting 1 of your Digimon"이 이 카드를 고르지 않게)
-        int cost = Math.Max(0, CardScripts.EffectivePlayCost(opp, card, State.Player) - XrosReduction(card, xros.Count));
+        int cost = Math.Max(0, CardScripts.EffectivePlayCost(opp, card, State.Player) - (PlayCostReductionBlocked(opp, card) ? 0 : XrosReduction(card, xros.Count)));   // v0.36.0
         cost = ApplyPlayCostOptions(opp, card, cost);
         var summoned = new CardInstance(card, State.CurrentTurn) { IsOwnersTurn = true };
         PlaceXrosMaterials(summoned, xros);
@@ -1785,7 +1785,7 @@ public partial class GoldfishEngine
     private void AiUseOption(AiTurnContext ctx, AiOptionUse use)
     {
         var opp = State.DummyOpponent;
-        if (!opp.Hand.Remove(use.Card))
+        if (EffectRules.OptionUseBlocked(State, opp) || !opp.Hand.Remove(use.Card))   // v0.36.0 옵션 사용 제한
             return;
         int beforeMem = ctx.Memory;
         ctx.Memory -= CardScripts.EffectivePlayCost(opp, use.Card, State.Player);

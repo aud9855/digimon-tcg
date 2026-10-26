@@ -40,6 +40,8 @@ public static class ActionValidator
         {
             if (card.IsDual && CardScripts.OptionSideFor(card)?.Effects.Any(e => e.Trigger == EffectTrigger.Main) != true)
                 return ActionResult.Fail($"[{card.Name}]은(는) 듀얼 카드입니다 — 디지몬 쪽으로 진화하거나 옵션 쪽으로 사용합니다 (이 카드의 옵션 쪽 효과는 아직 지원하지 않습니다).");
+            if (EffectRules.OptionUseBlocked(state, state.Player))   // v0.36.0 "Your opponent can't use Option cards"
+                return ActionResult.Fail("상대의 효과로 지금은 옵션 카드를 사용할 수 없습니다.");
             var missing = MissingOptionColors(state.Player, card);
             if (missing.Count > 0)
                 return ActionResult.Fail($"[{card.Name}]을(를) {(card.IsDual ? "옵션 쪽으로 " : "")}사용하려면 내 필드에 {string.Join(" · ", missing.Select(ColorName))} 디지몬 또는 테이머가 있어야 합니다{(card.IsDual ? " (또는 옵션 쪽의 사용 조건)" : "")}.");

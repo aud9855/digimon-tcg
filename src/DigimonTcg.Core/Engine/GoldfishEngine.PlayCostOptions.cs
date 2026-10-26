@@ -22,6 +22,8 @@ public partial class GoldfishEngine
     public int PreviewPlayCostWithOptions(PlayerZones owner, CardData card)
     {
         int cost = CardScripts.EffectivePlayCost(owner, card, EnemyOf(owner));
+        if (PlayCostReductionBlocked(owner, card))   // v0.36.0 "Players can't reduce play costs"
+            return cost;
         foreach (var option in CardScripts.ForUse(card)?.PlayCostOptions ?? new List<PlayCostOption>())
         {
             if (cost <= 0)
@@ -43,6 +45,8 @@ public partial class GoldfishEngine
 
     private int ApplyPlayCostOptions(PlayerZones owner, CardData card, int cost)
     {
+        if (PlayCostReductionBlocked(owner, card))   // v0.36.0 "Players can't reduce play costs" — 줄이는 비용도 묻지 않는다
+            return cost;
         var options = CardScripts.ForUse(card)?.PlayCostOptions ?? new List<PlayCostOption>();
         foreach (var option in options)
         {
