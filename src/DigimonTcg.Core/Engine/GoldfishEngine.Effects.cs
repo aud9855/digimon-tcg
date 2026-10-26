@@ -269,8 +269,18 @@ public partial class GoldfishEngine
         string messageBefore = ctx.Message;
         ctx.AnyEffectRan = true;
         bool watching = ctx.Engine.BeginSourceWatch();
-        try { effect.Resolve(ctx); }
-        finally { if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); }
+        // "the Digimon this effect played" — 이 효과가 직접 등장시킨 디지몬 (안쪽 효과는 자기 목록)
+        var outerCollector = ctx.Engine.PlayCollector;
+        ctx.PlayedThisEffect = new List<CardInstance>();
+        ctx.Engine.PlayCollector = ctx.PlayedThisEffect;
+        var handBefore = ctx.Self != null ? ctx.Owner.Hand.ToArray() : null;   // "one of your Digimon's effects adds cards to your hand" (v0.30.0)
+        int drawsBefore = ctx.Engine.DrawSerial.GetValueOrDefault(ctx.Owner);
+        try
+        {
+            effect.Resolve(ctx);
+            if (handBefore != null) ctx.Engine.NoteDigimonHandAdd(ctx.Owner, handBefore, drawsBefore);
+        }
+        finally { ctx.Engine.PlayCollector = outerCollector; if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); }
         // 카드에 적힌 시점([등장 시] · [진화 시] · [어택 시] · [소멸 시])의 효과가 대상 · 조건이 없어 아무것도 안 했으면 그렇다고 남긴다.
         // 조용히 넘어가면 "효과가 안 탔다"로 보인다 (사용자 신고: 로제몬 · 쥬드몬 · 엔젤우몬 등 내장 스크립트의 return)
         if (ctx.State.ActionLogs.Count == logsBefore && ctx.Message == messageBefore && AnnouncedLabel(effect) is { } label)
@@ -911,8 +921,12 @@ public partial class GoldfishEngine
         var card = zones.MainDeck[0];
         zones.MainDeck.RemoveAt(0);
         zones.Hand.Add(card);
+        DrawSerial[zones] = DrawSerial.GetValueOrDefault(zones) + 1;   // "효과로 패가 늘어났다" — 뽑은 카드를 곧 버려 장수가 같아도 (공식 Q&A BT15-002)
         return card;
     }
+
+    /// <summary>쪽마다 드로우한 횟수 (늘기만 한다) — 효과 처리 전후를 비교해 "효과로 패가 늘어났다"를 안다 (v0.30.0)</summary>
+    internal readonly Dictionary<PlayerZones, int> DrawSerial = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>≪리커버리 +N (덱)≫: 덱 위에서 N장을 시큐리티 위에 놓는다</summary>
     internal int Recovery(PlayerZones zones, int count)
@@ -1085,7 +1099,7 @@ public partial class GoldfishEngine
     {
         if (card.Type == CardType.Tamer)
         {
-            owner.Tamers.Add(card);
+            AddTamer(owner, card);
             EffectLog(owner, $"[효과] 테이머 [{card.Name}] 코스트 없이 등장");
             if (triggerOnPlay) RunEffects(EffectTrigger.OnPlay, owner, null, card, includeInherited: false);
             FireForSide(EffectTrigger.AllyTamerPlayed, owner, null, triggerCard: card);
@@ -1095,6 +1109,7 @@ public partial class GoldfishEngine
         }
         var inst = new CardInstance(card, State.CurrentTurn) { IsOwnersTurn = IsTurnOf(owner), IsSuspended = suspended };
         owner.BattleArea.Add(inst);
+        PlayCollector?.Add(inst);
         RecalculateFieldBuffs();
         EffectLog(owner, $"[효과] [{card.Name}(Lv.{card.Level})] 코스트 없이 {(suspended ? "레스트 상태로 " : "")}등장");
         if (triggerOnPlay)
@@ -1561,6 +1576,7 @@ public partial class GoldfishEngine
         foreach (var tamer in owner.Tamers.ToList())
             RunEffects(EffectTrigger.EndOfOpponentsTurn, owner, null, tamer, includeInherited: false);
         RunPlacedOptions(EffectTrigger.EndOfOpponentsTurn, owner);
+        RunScheduledDeletions();   // "~ is deleted at the end of the turn" (이 효과로 등장한 디지몬) — 턴 종료 시의 마지막
         RecalculateFieldBuffs();
     }
 
@@ -1742,9 +1758,14 @@ public partial class GoldfishEngine
         string msg = optionCtx.Message;
         if (msg.Length > 0)
             Log("[효과] " + msg);
+        // 〈아츠 진화〉 (종합 룰 4-20): 사용 뒤 트래시하는 대신 자신의 카드를 이 듀얼 카드로 코스트 없이 진화 (치환 처리).
+        // 효과 처리 중에 일어난 [소멸 시] 등은 그 뒤에 — 공식 Q&A BT25-043 (Q6313): 아츠 진화 뒤 룰 처리로 소멸하고, 그 [소멸 시]는 이 카드의 [진화 시]와 함께 유발
+        LastOptionArtsDigivolved = !optionCtx.LinkedThisCard && optionCtx.ThisCardToSecurityTop == null && !optionCtx.PlaceInBattleArea
+            && TryArtsDigivolve(owner, optionCard);
         if (_effectDepth == 0)
             FlushPendingTriggers();
-        if (optionCtx.LinkedThisCard) { }   // "link this card to ~" — 링크 카드가 되었다
+        if (LastOptionArtsDigivolved) { }
+        else if (optionCtx.LinkedThisCard) { }   // "link this card to ~" — 링크 카드가 되었다
         else if (optionCtx.ThisCardToSecurityTop is bool secTop) PlaceSecurityFaceUp(owner, optionCard, secTop);   // "place this card face up as the bottom security card"
         else if (optionCtx.PlaceInBattleArea) PlaceOption(owner, optionCard);
         else owner.Trash.Add(optionCard);
@@ -1753,6 +1774,47 @@ public partial class GoldfishEngine
         FireForSide(EffectTrigger.OpponentOptionUsed, EnemyOf(owner), null, triggerCard: optionCard);
         RecalculateFieldBuffs();
         return msg;
+    }
+
+    /// <summary>마지막으로 쓴 옵션이 〈아츠 진화〉로 진화했는지 (사용 로그 · 테스트용)</summary>
+    internal bool LastOptionArtsDigivolved { get; private set; }
+
+    /// <summary>
+    /// 〈아츠 진화〉 (종합 룰 2-11 · 4-20, 공식 카드 리스트의 [DUAL Rule] — <see cref="DualCardRules"/>): 옵션 쪽으로 사용한 듀얼 카드를
+    /// 트래시하는 대신, 에어리어(배틀 · 육성)의 자신의 디지몬을 그 카드로 코스트 없이 진화시킬 수 있다 (임의). 진화 조건은 보통 진화와 같다.
+    /// 진화했으면 보통 진화처럼 1장 드로우 · [진화 시] (공식 Q&A Q6313: 아츠 진화로 진화하면 이 카드의 [진화 시]가 유발).
+    /// </summary>
+    private bool TryArtsDigivolve(PlayerZones owner, CardData dual)
+    {
+        if (!DualCardRules.HasArtsDigivolve(dual) || State.IsGameOver)
+            return false;
+        var bases = owner.BattleArea.ToList();
+        if (owner.BreedingArea != null) bases.Add(owner.BreedingArea);
+        var candidates = bases
+            .Where(d => !EffectRules.IsDigivolveLocked(State, d) && ActionValidator.ValidateEvolution(d, dual).CanExecute)
+            .OrderBy(d => owner.BattleArea.Contains(d) ? 0 : 1)
+            .ThenByDescending(d => d.EvolutionSources.Count)
+            .ThenByDescending(d => d.GetCurrentDP())
+            .ToList();
+        if (candidates.Count == 0)
+            return false;
+        if (!AskYesNo(owner, null, $"〈아츠 진화〉 [{dual.Name}]을(를) 트래시하는 대신, 자신의 디지몬을 이 카드로 코스트 없이 진화시킬까요?", recommended: true))
+            return false;
+        var target = AskDigimon(owner, $"〈아츠 진화〉 [{dual.Name}]으로 진화시킬 디지몬을 고르세요.", candidates, candidates[0], optional: true);
+        if (target == null)
+            return false;
+        target.Evolve(dual);
+        if (ReferenceEquals(owner, State.Player))
+            State.TotalEvolutionsCount++;
+        EffectLog(owner, $"[〈아츠 진화〉] [{dual.Name}(Lv.{dual.Level})]을(를) 트래시하는 대신 진화 (코스트 0)");
+        DrawFor(owner);
+        RecalculateFieldBuffs();
+        if (owner.BattleArea.Contains(target))
+        {
+            ApplyWhenDigivolvingEffects(owner, target, dual);
+            FireForSide(EffectTrigger.AllyDigimonDigivolved, owner, target);
+        }
+        return true;
     }
 
     /// <summary>[상대의 턴 종료 시] 이 턴에 상대가 어택하지 않았을 때 (owner = 턴을 마친 쪽의 상대)</summary>
@@ -1825,6 +1887,7 @@ public partial class GoldfishEngine
     {
         owner.OptionsInPlay.Add(new PlacedOption { Card = option, PlacedTurn = State.TurnSequence });
         EffectLog(owner, $"[{option.Name}]을(를) 배틀 에어리어에 놓았습니다.");
+        RunOrDefer(() => { if (!State.IsGameOver) FireForSide(EffectTrigger.AllyOptionPlaced, owner, null, triggerCard: option); });   // "When any of your Option cards are placed in the battle area"
     }
 
     /// <summary>배틀 에어리어의 옵션을 트래시로 (≪딜레이≫ 비용) — 놓은 턴에는 쓸 수 없다. 성공하면 true</summary>
@@ -1832,9 +1895,27 @@ public partial class GoldfishEngine
     {
         var placed = owner.OptionsInPlay.FirstOrDefault(p => ReferenceEquals(p.Card, option) && p.PlacedTurn < State.TurnSequence);
         if (placed == null) return false;
-        owner.OptionsInPlay.Remove(placed);
-        owner.Trash.Add(option);
+        TrashOptionFromBattleArea(owner, placed);
         return true;
+    }
+
+    /// <summary>
+    /// 배틀 에어리어에 놓인 옵션 카드를 트래시로 (≪딜레이≫ · 비용 "by trashing 1 Option card in the battle area" · 효과) — v0.30.0:
+    /// 그 카드의 "When this card is trashed from the battle area"와 "When Option cards in the battle area are trashed"를 효과가 끝난 뒤 발휘
+    /// </summary>
+    internal void TrashOptionFromBattleArea(PlayerZones owner, PlacedOption placed)
+    {
+        if (!owner.OptionsInPlay.Remove(placed)) return;
+        var option = placed.Card;
+        owner.Trash.Add(option);
+        EffectLog(owner, $"[배틀 에어리어의 옵션] [{option.Name}]을(를) 파기했습니다.");
+        FireThisCardTrashed(owner, new[] { option }, EffectTrigger.ThisTrashedFromBattleArea);
+        RunOrDefer(() =>
+        {
+            if (State.IsGameOver) return;
+            FireForSide(EffectTrigger.OptionTrashedFromBattleArea, owner, null, triggerCard: option);
+            FireForSide(EffectTrigger.OptionTrashedFromBattleArea, EnemyOf(owner), null, triggerCard: option);
+        });
     }
 
     /// <summary>≪딜레이≫를 쓸 수 있는 장수 (놓은 다음 턴 이후인 것)</summary>

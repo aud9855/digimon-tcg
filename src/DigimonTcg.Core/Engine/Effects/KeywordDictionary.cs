@@ -213,7 +213,7 @@ public static class KeywordDictionary
                 SentenceParser.TryParse(clause, inherited, card, def);   // 키워드 절이 아니면 문장 파서 (읽지 못하면 등록하지 않음)
         }
         bool any = script.Keywords.Count + script.InheritedKeywords.Count + script.Effects.Count + script.Statics.Count > 0
-                   || script.OverflowMemory > 0 || script.DigisorptionReduction > 0 || script.BlastDigivolve || script.MaterialSave > 0 || script.LinkRequirement != null || script.SpecialEvolutions.Count > 0 || script.IgnoreColorRequirement != null || script.PlayCostReduction != null || script.PlayCostOptions.Count > 0 || script.EvoCostModifiers.Count > 0
+                   || script.OverflowMemory > 0 || script.DigisorptionReduction > 0 || script.BlastDigivolve || script.MaterialSave > 0 || script.LinkRequirement != null || script.SpecialEvolutions.Count > 0 || script.TamerEvolutions.Count > 0 || script.IgnoreColorRequirement != null || script.PlayCostReduction != null || script.PlayCostOptions.Count > 0 || script.EvoCostModifiers.Count > 0
                    || script.XrosAliases.Count > 0 || script.XrosFromTrash != null || script.XrosUnderTamersFor != null || script.OverclockSpecified != null;
         return any ? script : null;
     }

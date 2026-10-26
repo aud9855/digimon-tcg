@@ -52,7 +52,7 @@ public class KeywordTests
     public void Analyze_ShouldMarkKeywordClausesSupportedAndSentencesUnsupported()
     {
         var card = Api("KW-ANALYZE", 5, 7000,
-            main: "＜Rush＞ ＜Piercing＞ (This Digimon can attack the turn it comes into play.)\n[On Play] [When Digivolving] ＜De-Digivolve 1＞ 1 of your opponent's Digimon. (Trash the top card.)\n[Your Turn] When Option cards in the battle area are trashed, gain 1 memory.");
+            main: "＜Rush＞ ＜Piercing＞ (This Digimon can attack the turn it comes into play.)\n[On Play] [When Digivolving] ＜De-Digivolve 1＞ 1 of your opponent's Digimon. (Trash the top card.)\n[Your Turn] When attack targets change or effects trash cards from under your Tamers, gain 1 memory.");
         var clauses = KeywordDictionary.Analyze(card);
 
         Assert.Equal(3, clauses.Count);

@@ -10,6 +10,28 @@
 
 ---
 
+## v0.30.0 — 2026-10-26
+미지원 효과 문장 4차 묶음 — 도감 효과 문장 지원 7,404 → 7,548 / 10,366 (71.4% → 72.8%, +144)
+- 모든 절이 동작하는 카드 2,140 → 2,217장 (수정 전 지원되던 문장 중 깨진 것 0 · 한글이 사라진 것 0). API 동기화로 새로 받은 카드 없음 (도감 4,526장 그대로)
+- 듀얼 카드 〈아츠 진화〉 (종합 룰 2-11 · 4-20, 공식 Q&A Q6313): 옵션 쪽으로 사용한 뒤 트래시하는 대신, 에어리어의 자신의 디지몬을 그 카드로 코스트 없이 진화 (임의, 진화 조건은 보통 진화와 같다) → 1장 드로우 · 그 카드의 [진화 시]
+  - 영어 API 데이터에는 없는 아이콘이라, 공식 카드 리스트(world.digimoncard.com · digimoncard.com)의 [DUAL Rule] 칸을 로컬 파일 `data/kr/dual_rules.json`(개인 사용 · git 제외)으로 받아 읽는다 (`DualCardRules`). 확인된 19장(BT25 · BT26 · EX12 · EX13 · ST23 · ST24)은 모두 〈아츠 진화〉. 공식 사이트에 아직 없는 12장(BT27 8장 · EX14-012 · LM-066~068)은 추측하지 않고 트래시
+  - 효과 처리 중에 유발한 [소멸 시] 등은 아츠 진화 뒤에 발휘 (Q6313). 화면: 듀얼 카드의 옵션 쪽 설명 끝에 "〈아츠 진화〉 (사용한 뒤 트래시하는 대신, 자신의 카드를 이 카드로 코스트를 지불하지 않고 진화시킬 수 있다)"
+- 진화원을 비용으로 옵션 쪽 [메인] (BT27-043 켄타루몬 X · BT27-070 크레니엄몬 X · BT27-084 로드나이트몬 X): 비용 "by placing 1 [Kentaurosmon] or [X Antibody] from this Digimon's digivolution cards as the bottom security card" · "by trashing 1 [Craniamon] or [X Antibody] from this Digimon's digivolution cards" · 시점 "When any of your other Digimon are played or deleted" · 옵션 쪽 "For each card in both players' security stacks, add 1000 to this effect's DP reduction" · "it further gets -5000 DP" (BT26-031)
+- 이 효과로 등장한 디지몬 (BT23-017 · BT23-037 · BT23-048 · EX4-063 · EX10-072 · EX11-022 · EX11-061 · P-216): "The Digimon this effect played can't digivolve and is deleted at the end of your opponent's turn" · "~ is deleted at turn end" · "At turn end, delete the Digimon this effect played" · "At the end of your turn, ~" — 그 효과(절)가 직접 등장시킨 디지몬만, 정해진 턴 종료 시에 그 효과의 주인이 소멸시킨다
+- 배틀 에어리어의 옵션 카드 (공식 Q&A BT19-062 · BT23-059: 「배틀 에어리어에 놓는다」로 놓인 옵션): "When this card is trashed from the battle area" · "When effects trash this card from the battle area" (≪딜레이≫ · 비용 · 효과 모두) · "When Option cards in the battle area are trashed" · "When any of your [CS] trait Option cards are placed in the battle area" · 비용 "by trashing 1 (of your) (non-red) Option card(s) in the battle area" · "by placing 1 Option card with the [Device] trait from your hand in the battle area" · 동작 "Trash 1 of your / their Option cards in the battle area" · "Place 1 [Device] trait Option card ~ from your trash / hand in the battle area" · 디바이스 "While you don't have [Queen Device] (in the battle area), you may ignore this card's color requirements" (BT19 · P-155 · P-159 · P-161 · EX3 · EX8-052 · BT17-100 등)
+- 비용 "by deleting 1 of your opponent's ~" (BT24-018 · EX13-015): 공식 Q&A EX13-015 (Q7247) · BT24-018 (Q5599) — 상대 디지몬의 소멸이 막히면 "~하는 것으로"를 채우지 못해 뒤는 처리하지 않는다 (배틀 에어리어를 벗어난다)
+- "When one of your Digimon's effects adds cards to your hand" (BT15-002 · BT15-026 · BT15-083): 자신의 디지몬(배틀 에어리어의 메인 · 진화원 효과, [소멸 시] 포함)의 효과로 패가 늘었을 때. 공식 Q&A BT15-002: 1장 드로우하고 1장 버려 장수가 같아도 발휘 — "효과로 패가 늘어났을 때"(v0.29.0)도 같은 판단으로 고침 (드로우를 센다)
+- [타이탄족] 트래시 진화 (BT24-009 · BT24-013 · BT24-021 · BT24-026 · BT24-042 · BT24-045 · BT26-066 · BT26-069): "When your hand is trashed from, this [Demon] or [Titan] trait Digimon may digivolve into [Titamon] or a [Titan] trait Digimon card in the trash with the (digivolution) cost reduced by 1" — 진화 동작이 "with the cost reduced by N"도 읽어 EX12 · EX13 · BT25 · BT26 · ST23 · ST24 등의 같은 표기도 함께
+- 테이머에서 진화 (하이브리드체, 28문장 — BT4 · BT6 · BT7 · BT12 · BT17): "You may digivolve this card from your hand onto one of your red Tamers (or [Takuya Kanbara]s) as if the Tamer is a level 3 red Digimon (for a memory cost of 2)"
+  - 공식 Q&A BT4-011: 테이머를 디지몬으로도 취급하여 진화 — "디지몬이 진화할 때 · 했을 때"가 유발, 1장 드로우 · [진화 시]. 테이머가 진화원 맨 아래, 레스트 상태 그대로, 테이머가 1명이면 테이머 아래 카드도 진화원으로 (종합 룰 4-3-2)
+  - 종합 룰 3-4-5 (겹쳐지면 같은 존재): 이번 턴에 나온 테이머가 아니면 진화한 디지몬은 바로 어택할 수 있다 (엔진이 테이머가 나온 턴을 적어 둔다)
+  - 화면: 손패의 하이브리드체를 내 테이머 카드 위에 놓으면 "🧬 테이머에서 진화" (등장도 가능하면 고르기). AI: 어택 전에 메모리 안에서 한다
+- "add N to this effect's level / play cost / DP maximum" (BT16-079 · BT18-029 · BT19-052 · BT21-078 · BT21-079 · BT23-057 · EX8-028 · EX10-049 · ST21-11): 앞 문장의 상한을 셈 · 조건만큼 늘려 처리 (공식 BT18-029 "다른 자신의 디지몬 1마리마다 이 효과의 Lv. 상한 +1"). 셈 "colors your Tamers have" · "cards in both players' trashes / security stacks", 조건 "If your Tamers have 2 or more total colors"
+- 비용 안의 쉼표 목록 "By trashing 1 card with the [Demon], [Shaman] or [Titan] trait from your hand, ~" (BT11-063 · BT15-007 · BT22-089 · BT24-008 · P-242 · P-247 등 15문장) · 원문 오타 "By trash 1 card" · 비용 "trashing 2 level 5 Digimon cards in this Digimon's digivolution cards to prevent ~" (EX1-073) · "trashing 1 Option card in this Digimon's digivolution cards" (EX7-048 · EX7-059 · EX7-073)
+- 생성 한글 (공식 표기): 새로 지원한 144문장 중 142문장 — "이 효과로 등장한 디지몬은 진화할 수 없으며, 상대의 턴 종료 시, 소멸한다" · "배틀 에어리어의 자신의 옵션 카드 1장을 파기한다" · "이 카드가 배틀 에어리어에서 파기되었을 때," · "자신의 패가 자신의 디지몬의 효과로 늘어났을 때," · "패의 이 카드는, 레드인 자신의 테이머를 레드인 Lv.3의 디지몬으로서 취급하여 진화할 수 있다." · "다른 자신의 디지몬 1마리마다 이 효과의 Lv. 상한 +1" · "이 디지몬의 진화원에서 「크레니엄몬」/「X항체」 1장을 파기하는 것으로," 등. 나머지 2문장(BT23-017 · BT23-055)은 공식 한글 데이터가 화면에 나온다. 원래 지원하던 문장 중 한글이 새로 붙은 것 43문장
+- 읽지 않고 남긴 것: 〈아츠 진화〉 데이터가 공식 사이트에 없는 12장 · 듀얼 카드 옵션 쪽 중 API 원문이 잘린 문장 (BT25-057 "gains , and" · BT26-033 · BT26-056 "Then," · EX13-065/066 "card with from" 등 — 영어 API 데이터만 쓰므로 고치지 않음) · 엔진이 효과 안에서 바로 처리하는 [등장 시] · [어택 시]는 아츠 진화로 잃지 않는다 (공식 Q&A Q7430 · Q6344: 아츠 진화로 진화하면 발휘하지 못함 — 효과 대기열 구조가 달라 보류) · "효과로 등장한 디지몬"의 소멸이 막혔을 때 진화 불가가 이어지는지
+- 테스트 39개 (EffectBatch30Tests)
+
 ## v0.29.0 — 2026-10-26
 미지원 효과 문장 3차 묶음 — 도감 효과 문장 지원 7,279 → 7,404 / 10,366 (70.2% → 71.4%, +125)
 - 모든 절이 동작하는 카드 2,100 → 2,140장 (수정 전 지원되던 문장 중 깨진 것 0 · 한글이 사라진 것 0). API 동기화로 새로 받은 카드 없음 (도감 4,526장 그대로)

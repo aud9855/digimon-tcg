@@ -116,6 +116,8 @@ public partial class GoldfishEngine
         State.PendingBlock = null;
         State.BlitzAttacker = null;
         _aiTurn = null;
+        _scheduledDeletions.Clear();
+        _tamerEntries.Clear();
         State.TurnSequence = 0;
         State.PendingEndOfTurnMemoryLoss = 0;
         State.PlayerSecurityDpBuffs.Clear();
@@ -551,7 +553,7 @@ public partial class GoldfishEngine
         }
         else if (card.Type == CardType.Tamer)
         {
-            State.Player.Tamers.Add(card);
+            AddTamer(State.Player, card);
             RecalculateFieldBuffs();
             effectSummary = string.IsNullOrWhiteSpace(card.EffectText)
                 ? string.Empty
@@ -565,7 +567,7 @@ public partial class GoldfishEngine
         else if (card.Type == CardType.Option || card.IsDual)   // 듀얼 카드 = 옵션 쪽으로 사용 (종합 룰 4-6-2)
         {
             effectSummary = " " + ApplyOptionEffect(State.Player, card, target);
-            Log($"{(card.IsDual ? "듀얼 카드 옵션 쪽 사용" : "옵션 사용")}: [{card.Name}] (코스트 {cost} 지불 후 {(State.Player.OptionsInPlay.Any(p => ReferenceEquals(p.Card, card)) ? "배틀 에어리어에 놓음" : "트래시 이동")})");
+            Log($"{(card.IsDual ? "듀얼 카드 옵션 쪽 사용" : "옵션 사용")}: [{card.Name}] (코스트 {cost} 지불 후 {(LastOptionArtsDigivolved ? "〈아츠 진화〉로 진화" : State.Player.OptionsInPlay.Any(p => ReferenceEquals(p.Card, card)) ? "배틀 에어리어에 놓음" : "트래시 이동")})");
         }
 
         CheckTurnEndAndAutoReset();
@@ -826,7 +828,7 @@ public partial class GoldfishEngine
             // [공식 룰 A] [시큐리티] 효과가 있는 테이머 → 배틀 없이 코스트 없이 상대 필드에 등장 (효과가 없으면 아래에서 트래시)
             if (securityCard.Type == CardType.Tamer && EffectRules.HasSecurityEffect(securityCard))
             {
-                opp.Tamers.Add(securityCard);
+                AddTamer(opp, securityCard);
                 RecalculateFieldBuffs();
                 string msg = $"✨ [시큐리티 테이머 발동!] 오픈된 [{securityCard.Name}]이(가) 코스트 지불 없이 상대 필드에 등장! 내 [{attacker.TopCard.Name}]은(는) 생존합니다. (남은 시큐리티: {opp.SecurityStack.Count}장)";
                 State.LastSecurityBattleResult = $"시큐리티 테이머 [{securityCard.Name}] 공짜 등장! (내 디지몬 생존)";
@@ -1199,6 +1201,7 @@ public partial class GoldfishEngine
         {
             if (AiPolicy.ChooseOption(this, ctx.Memory, beforeAttacks: true) is { } option) { AiUseOption(ctx, option); continue; }
             if (AiPolicy.ChooseEvolution(this, ctx.Memory, beforeAttacks: true) is { } evo) { AiEvolve(ctx, evo.Base, evo.Card); continue; }
+            if (AiTryTamerEvolution(ctx)) continue;   // v0.30.0 테이머에서 진화 (하이브리드체)
             if (AiPolicy.ChooseDnaEvolution(this, ctx.Memory, beforeAttacks: true) is { } dna && AiDnaEvolve(dna)) continue;
             break;
         }
@@ -1462,7 +1465,7 @@ public partial class GoldfishEngine
             // 1) 내 시큐리티에서 [시큐리티] 효과가 있는 [테이머]가 나온 경우 -> 코스트 지불 없이 내 테이머 존에 무료 등장!
             if (mySec.Type == CardType.Tamer && EffectRules.HasSecurityEffect(mySec))
             {
-                State.Player.Tamers.Add(mySec);
+                AddTamer(State.Player, mySec);
                 RecalculateFieldBuffs();
                 string tamerMsg = $"✨ [내 시큐리티 테이머 발동!] AI [{aiAttacker.TopCard.Name}]의 공격으로 오픈된 내 시큐리티 [{mySec.Name}]이(가) 코스트 없이 내 필드에 무료 등장했습니다! (내 남은 시큐리티: {State.Player.SecurityStack.Count}장)";
                 State.PlayerSecurityCheckHistory.Add(new SecurityCheckHistoryItem(
@@ -1585,7 +1588,7 @@ public partial class GoldfishEngine
             {
                 State.DummyOpponent.Hand.Remove(tamerCandidate);
                 int beforeMem = ctx.Memory;
-                State.DummyOpponent.Tamers.Add(tamerCandidate);
+                AddTamer(State.DummyOpponent, tamerCandidate);
                 ctx.Memory -= CardScripts.EffectivePlayCost(State.DummyOpponent, tamerCandidate, State.Player);
                 RecalculateFieldBuffs();
                 Log($"🤖 [AI 테이머 등장] [{tamerCandidate.Name}(코스트 {tamerCandidate.PlayCost})] 배치! (AI 메모리: +{beforeMem} → {ctx.Memory})");

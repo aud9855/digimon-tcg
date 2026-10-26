@@ -73,6 +73,12 @@ public sealed class EffectContext
     /// <summary>앞 문장이 옮긴 카드 ("If it's a yellow card, ~" — 시큐리티에서 패에 넣은 카드 등)</summary>
     public CardData? LastCard { get; set; }
 
+    /// <summary>지금 처리 중인 효과(절)가 직접 등장시킨 디지몬 — "the Digimon this effect played" (v0.30.0)</summary>
+    public List<CardInstance> PlayedThisEffect { get; internal set; } = new();
+
+    /// <summary>비용을 내다가 이루지 못했다 ("by deleting 1 of your opponent's ~"의 소멸이 막힘) — 뒤의 효과를 처리하지 않는다 (v0.30.0)</summary>
+    public bool CostFailed { get; set; }
+
     /// <summary>앞 문장이 실제로 처리되었는지 (조건 불충족 · "~할 수 있다" 거절 · 비용 미지불이면 false) — "If you do, ~"</summary>
     public bool LastStepResolved { get; set; } = true;
 

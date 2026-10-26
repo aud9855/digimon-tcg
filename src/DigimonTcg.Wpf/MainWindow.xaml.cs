@@ -3812,6 +3812,7 @@ public partial class MainWindow : Window
             return;
 
         var info = FindDropTargetInfo(pos);
+        _dropTamer = FindTamerAt(pos);
 
         if (_potentialDragHandCard != null)
         {
@@ -4120,7 +4121,40 @@ public partial class MainWindow : Window
         }
         if (LinkTargetOf(card, info) is { } linkTarget)
             actions.Add((LinkLabel(card, linkTarget), () => ApplyActionResult(_engine.LinkFromHand(card, linkTarget))));
+        // v0.30.0 테이머에서 진화 (하이브리드체): 내 테이머 카드 위에 놓았을 때
+        if (_dropTamer is { } tamerKey && _engine.ValidateTamerEvolution(tamerKey.Card, card).CanExecute
+            && CardScripts.TamerEvolutionCost(card, tamerKey.Card) is int tamerCost)
+        {
+            var tamer = tamerKey.Card;
+            actions.Add(($"🧬 테이머에서 진화: [{tamer.DisplayName}] → [{card.DisplayName}] (코스트 {tamerCost})", () => ApplyActionResult(_engine.EvolveTamer(tamer, card))));
+        }
         return actions;
+    }
+
+    /// <summary>드래그 중 · 놓은 자리의 내 테이머 카드 (테이머에서 진화 — v0.30.0)</summary>
+    private TamerKey? _dropTamer;
+
+    /// <summary>창 좌표 아래에 있는 내 배틀 에어리어의 테이머 카드</summary>
+    private TamerKey? FindTamerAt(Point windowPos)
+    {
+        if (BattleAreaPanel == null || !BattleAreaPanel.IsVisible)
+            return null;
+        foreach (var child in BattleAreaPanel.Children.OfType<FrameworkElement>())
+        {
+            if (child.Tag is not TamerKey key || !child.IsVisible || child.ActualWidth <= 0 || child.ActualHeight <= 0)
+                continue;
+            try
+            {
+                Point topLeft = child.TranslatePoint(new Point(0, 0), this);
+                if (new Rect(topLeft.X - 6, topLeft.Y - 6, child.ActualWidth + 12, child.ActualHeight + 12).Contains(windowPos))
+                    return key;
+            }
+            catch
+            {
+                // 좌표 변환 실패는 무시
+            }
+        }
+        return null;
     }
 
     private static string DnaLabel(CardData card, CardInstance ally, IReadOnlyList<CardInstance> partners) =>
@@ -4169,6 +4203,7 @@ public partial class MainWindow : Window
         {
             // 배틀 에어리어 빈 곳에 놓아 새로 나오는 카드(디지몬 · 테이머)는 놓은 자리에 놓인다
             RememberFieldDropPoint(dropPos, info.OverBattleZone, onCard: info.AllyDigimon != null);
+            _dropTamer = FindTamerAt(dropPos);
             try
             {
                 CompleteHandCardDrop(draggedHand, info);
@@ -4176,6 +4211,7 @@ public partial class MainWindow : Window
             finally
             {
                 _pendingFieldDropPoint = null;
+                _dropTamer = null;
             }
             return;
         }

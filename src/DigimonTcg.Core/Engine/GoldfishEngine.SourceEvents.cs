@@ -21,11 +21,27 @@ public partial class GoldfishEngine
     private List<SourceSnapshot>? _sourceWatch;
     private Dictionary<PlayerZones, CardData[]>? _sourceWatchTrash;
     private Dictionary<PlayerZones, CardData[]>? _sourceWatchHand;   // "When an effect adds a card to your hand" (v0.29.0)
+    private readonly Dictionary<PlayerZones, int> _sourceWatchDraws = new(ReferenceEqualityComparer.Instance);   // 그동안 드로우했는지 (v0.30.0)
     private int _sourceNotifyTurn = -1, _sourceNotifyCount;
     private int _handAddNotifyTurn = -1, _handAddNotifyCount;
 
     /// <summary>진화원 시점을 알리는 동안: 파기되었거나 놓인 카드 (조건 "Tamer cards are placed ~" 등이 본다)</summary>
     internal IReadOnlyList<CardData> CurrentSourceCards { get; private set; } = new List<CardData>();
+
+    /// <summary>
+    /// "When one of your Digimon's effects adds cards to your hand" (v0.30.0): 지금 알리는 "효과로 패가 늘어났다"가 자신의 디지몬의 효과(배틀 에어리어 디지몬의
+    /// 메인 · 진화원 효과, [소멸 시] 포함 — 가장 바깥 효과 기준)였는지. 공식 Q&A BT15-002 · BT15-026 · BT15-083: 1장 드로우 뒤 1장 버려 장수가 같아도 발휘
+    /// </summary>
+    internal bool HandAddedByDigimonEffect { get; private set; }
+
+    private readonly HashSet<PlayerZones> _digimonHandAdds = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>디지몬의 효과(Self가 있는 효과) 하나를 처리한 뒤: 그 효과(안쪽 효과 포함)로 패가 늘었으면 적어 둔다</summary>
+    internal void NoteDigimonHandAdd(PlayerZones zones, CardData[] handBefore, int drawsBefore)
+    {
+        if (_sourceWatch != null && (Diff(zones.Hand, handBefore).Count > 0 || DrawSerial.GetValueOrDefault(zones) != drawsBefore))
+            _digimonHandAdds.Add(zones);
+    }
 
     /// <summary>진화원 시점을 일으킨 효과의 주인 ("one of your effects places ~")</summary>
     internal PlayerZones? CurrentSourceEffectOwner { get; private set; }
@@ -44,6 +60,7 @@ public partial class GoldfishEngine
                 _sourceWatch.Add(new SourceSnapshot(d, zones, d.TopCard, d.EvolutionSources.ToArray()));
             _sourceWatchTrash[zones] = zones.Trash.ToArray();
             _sourceWatchHand[zones] = zones.Hand.ToArray();
+            _sourceWatchDraws[zones] = DrawSerial.GetValueOrDefault(zones);
         }
         return true;
     }
@@ -57,6 +74,8 @@ public partial class GoldfishEngine
         _sourceWatch = null;
         _sourceWatchTrash = null;
         _sourceWatchHand = null;
+        var digimonAdds = _digimonHandAdds.ToList();
+        _digimonHandAdds.Clear();
         if (snaps == null || trashBefore == null)
             return;
 
@@ -65,15 +84,21 @@ public partial class GoldfishEngine
             foreach (var (zones, before) in handBefore)
             {
                 var addedToHand = Diff(zones.Hand, before);
-                if (addedToHand.Count == 0) continue;
+                // 뽑은 카드를 같은 효과로 곧 버려 패가 그대로여도 "패가 늘어났다" (공식 Q&A BT15-002 · BT15-026 · BT15-083) — v0.30.0
+                bool drew = DrawSerial.GetValueOrDefault(zones) != _sourceWatchDraws.GetValueOrDefault(zones);
+                if (addedToHand.Count == 0 && !drew) continue;
                 var zonesOfHand = zones;
-                var firstAdded = addedToHand[0];
+                var firstAdded = addedToHand.Count > 0 ? addedToHand[0] : zones.Trash.LastOrDefault();
+                bool byDigimon = digimonAdds.Contains(zones);
                 RunOrDefer(() =>
                 {
                     if (State.IsGameOver) return;
                     if (_handAddNotifyTurn != State.TurnSequence) { _handAddNotifyTurn = State.TurnSequence; _handAddNotifyCount = 0; }
                     if (++_handAddNotifyCount > 100) return;   // 서로 부르며 끝없이 이어지는 것을 막는다
-                    FireForSide(EffectTrigger.AllyHandAddedByEffect, zonesOfHand, null, triggerCard: firstAdded);
+                    var outerKind = HandAddedByDigimonEffect;
+                    HandAddedByDigimonEffect = byDigimon;
+                    try { FireForSide(EffectTrigger.AllyHandAddedByEffect, zonesOfHand, null, triggerCard: firstAdded); }
+                    finally { HandAddedByDigimonEffect = outerKind; }
                 });
             }
 

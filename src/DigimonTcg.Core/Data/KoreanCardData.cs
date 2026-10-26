@@ -118,10 +118,16 @@ public static class KoreanCardData
         {
             if (StarterDecks.IsBuiltInCard(card.CardId))
                 return card.InheritedEffectText;
-            return card.Type is CardType.Tamer or CardType.Option ? string.Empty : Generated(card, inherited: true);
+            if (card.Type is CardType.Tamer or CardType.Option) return string.Empty;
+            string gen = Generated(card, inherited: true);
+            // 듀얼 카드 옵션 쪽의 〈아츠 진화〉 (공식 카드 리스트의 [DUAL Rule] — 영어 API 문장에는 없다). 설명은 종합 룰 4-20-1 문구
+            return DualCardRules.HasArtsDigivolve(card) ? (gen.Length == 0 ? ArtsDigivolveText : gen + "\n" + ArtsDigivolveText) : gen;
         }
         return card.Type is CardType.Tamer or CardType.Option ? string.Empty : Clean(ko.SourceText);
     }
+
+    /// <summary>〈아츠 진화〉 표시 문구 (종합 룰 2-11 · 4-20-1)</summary>
+    public const string ArtsDigivolveText = "〈아츠 진화〉 (사용한 뒤 트래시하는 대신, 자신의 카드를 이 카드로 코스트를 지불하지 않고 진화시킬 수 있다)";
 
     /// <summary>공식 한글이 없는 카드: 영어 효과 문장으로 만든 한글 (절 하나도 번역하지 못하면 영어 원문)</summary>
     private static string Generated(CardData card, bool inherited)

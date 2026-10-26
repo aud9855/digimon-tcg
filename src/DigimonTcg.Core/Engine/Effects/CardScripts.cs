@@ -90,6 +90,15 @@ public static class CardScripts
         For(evoCard)?.AlternativeEvolution?.Invoke(target) ?? false;
 
     /// <summary>진화 조건을 무시하는 다른 진화로 target에서 evoCard로 진화할 수 있으면 그 코스트 (여럿이면 가장 싼 것), 없으면 null</summary>
+    /// <summary>
+    /// 패의 evoCard로 테이머 tamer를 진화시킬 수 있으면 그 진화 코스트 (v0.30.0): 카드의 "~ Tamers as if the Tamer is a level 3 red Digimon" 이 테이머에 맞고,
+    /// 그 레벨 · 색의 디지몬에서 진화하는 진화 조건을 가질 때
+    /// </summary>
+    public static int? TamerEvolutionCost(CardData evoCard, CardData tamer) =>
+        tamer.Type != CardType.Tamer || evoCard.Type != CardType.Digimon ? null
+        : For(evoCard)?.TamerEvolutions.Where(t => t.Tamer(tamer) && evoCard.EvoRequirementLevel == t.Level && evoCard.EvoRequirementColor == t.Color)
+            .Select(t => (int?)(t.Cost ?? evoCard.EvoCost)).Min();
+
     public static int? SpecialEvolutionCost(CardData evoCard, CardInstance target) =>
         For(evoCard)?.SpecialEvolutions.Where(s => s.From(target)).Select(s => (int?)s.Cost).Min();
 }
@@ -195,6 +204,13 @@ public sealed class CardScriptDefinition
     public CardScriptDefinition SpecialEvolution(Func<CardInstance, bool> from, int cost)
     {
         _script.SpecialEvolutions.Add((from, cost));
+        return this;
+    }
+
+    /// <summary>테이머를 Lv.N 색 디지몬으로 취급해 패의 이 카드로 진화 (v0.30.0, 공식 Q&A BT4-011 · BT12-012)</summary>
+    public CardScriptDefinition TamerEvolution(Func<CardData, bool> tamer, int level, CardColor color, int? cost)
+    {
+        _script.TamerEvolutions.Add((tamer, level, color, cost));
         return this;
     }
 

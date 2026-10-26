@@ -82,6 +82,9 @@ public enum EffectTrigger
     ThisTrashedFromDeck,            // 이 카드가 덱에서 (직접) 파기되었을 때 — 카드 자신의 효과 (공식 Q&A P-077: 오픈 · 확인 중인 카드는 아님)
     ThisTrashedFromHand,            // 이 카드가 패에서 파기되었을 때 — 카드 자신의 효과 (Q&A BT10-080)
     AllyHandAddedByEffect,          // 효과로 자신의 패에 카드가 들어갔을 때 (드로우 포함 — 종합 룰 4-14-1, TriggerCard = 들어간 카드 중 1장)
+    ThisTrashedFromBattleArea,      // 배틀 에어리어에 놓인 이 옵션 카드가 파기되었을 때 — 카드 자신의 효과 (v0.30.0, BT19 디바이스 · P-159 · P-161)
+    AllyOptionPlaced,               // 자신의 옵션 카드가 배틀 에어리어에 놓였을 때 (TriggerCard = 그 옵션, v0.30.0 — BT23-003 · BT23-053)
+    OptionTrashedFromBattleArea,    // 배틀 에어리어의 옵션 카드가 파기되었을 때 (어느 쪽이든, TriggerCard = 그 옵션 — 공식 Q&A BT23-059: 「배틀 에어리어에 놓는다」로 놓인 옵션)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
@@ -210,6 +213,12 @@ public sealed class CardScript
 
     /// <summary>"Your [Shoutmon] can digivolve into this card in your hand for a memory cost of 4, ignoring this card's digivolution requirements" — 진화 조건을 무시하는 다른 진화 (대상 조건, 코스트)</summary>
     public List<(Func<CardInstance, bool> From, int Cost)> SpecialEvolutions { get; } = new();
+
+    /// <summary>
+    /// v0.30.0 "You may digivolve this card from your hand onto one of your red Tamers as if the Tamer is a level 3 red Digimon (for a memory cost of 2)" —
+    /// 패의 이 카드로 자신의 테이머를 Lv.N 색 디지몬으로 취급해 진화 (테이머 조건, 레벨, 색, 코스트 — null이면 이 카드의 진화 코스트)
+    /// </summary>
+    public List<(Func<CardData, bool> Tamer, int Level, CardColor Color, int? Cost)> TamerEvolutions { get; } = new();
 
     public StartOfTurnMemoryEffect? StartOfTurnMemory { get; set; }
 

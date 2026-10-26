@@ -77,6 +77,13 @@ public static class KoreanEffectRenderer
         if (Regex.Match(clause, @"^Your (?<who>.+?) can digivolve into this card in (?:your|the) hand for a (?:memory |digivolution )?cost of (?<n>\d+), ignoring (?:this card's )?digivolution requirements\.?$", RegexOptions.IgnoreCase) is { Success: true } sp
             && WhoKo(sp.Groups["who"].Value) is { } spWho)
             return $"자신의 {spWho}{J(spWho, "은", "는")} 패의 이 카드로, 진화 조건을 무시하고 진화 코스트 {sp.Groups["n"].Value}로 진화할 수 있다.";
+        // v0.30.0 테이머에서 진화 — 공식 (BT4-011 · BT7-011 · BT12-012): "패의 이 카드는, 레드인 자신의 테이머를 레드인 Lv.3의 디지몬으로서 취급하여 (진화 코스트 2를 지불하여) 진화할 수 있다."
+        if (Regex.Match(clause, $@"^You may digivolve this card from your hand onto one of your (?:(?<tcolor>{Colors}) Tamers|(?<any>Tamers)|(?<names>\[[^\]]+\](?: or \[[^\]]+\])*)s?) as if (?:the Tamer|that card|it) (?:is|were) a level (?<lv>\d+) (?<lcolor>{Colors}) Digimon(?: for a (?:memory |digivolution )?cost of (?<n>\d+))?\.?$", RegexOptions.IgnoreCase) is { Success: true } te)
+        {
+            string tamerKo = te.Groups["tcolor"].Success ? $"{ColorKo(te.Groups["tcolor"].Value)}인 자신의 테이머" : te.Groups["names"].Success ? $"자신의 {NamesKo(te.Groups["names"].Value)}" : "자신의 테이머";
+            string pay = te.Groups["n"].Success ? $"진화 코스트 {te.Groups["n"].Value}{J(te.Groups["n"].Value, "을", "를")} 지불하여 " : "";
+            return $"패의 이 카드는, {tamerKo}{J(tamerKo, "을", "를")} {ColorKo(te.Groups["lcolor"].Value)}인 Lv.{te.Groups["lv"].Value}의 디지몬으로서 취급하여 {pay}진화할 수 있다.";
+        }
         // 코스트 감소 (공식 표기): "패의 이 카드를 등장시킬 때, 자신의 「디아블로몬」 1마리를 소멸시키는 것으로, 지불하는 등장 코스트를 -12 한다."
         // v0.29.0: 사용 코스트 증가 "For each of your security cards, add 1 to this card's use cost." · "Add 1 to this card's use cost for each ~"
         if (Regex.Match(clause, @"^(?:For (?:each|every) (?<c1>[^,]+), add (?<n1>\d+) to this card's (?:use |play )?cost|Add (?<n2>\d+) to this card's (?:use |play )?cost for (?:each|every) (?<c2>.+?))\.?$", RegexOptions.IgnoreCase) is { Success: true } addc
@@ -158,6 +165,15 @@ public static class KoreanEffectRenderer
         if ((m = Regex.Match(s, @"^Then,?\s+(?<rest>.+)$", RegexOptions.IgnoreCase)).Success)
             return Sentence(Cap(m.Groups["rest"].Value)) is { } then ? "그 후, " + then : null;
 
+        // v0.30.0 — 공식 (BT18-029 · BT19-052 · ST21-06 · BT21-078): "다른 자신의 디지몬 1마리마다 이 효과의 Lv. 상한 +1" · "~ 이 효과의 등장 코스트 상한 +2" ·
+        // "~ 이 효과의 DP 상한 +2000" · "자신의 테이머의 색 합계가 2색 이상이라면, 이 효과의 Lv. 상한 +1"
+        if ((m = Regex.Match(s, @"^(?:For (?:each|every) (?<cnt>.+?)|If (?<cond>[^,]+)), add (?<n>\d+) to this effect's (?<what>choosable levels|level maximum|maximum level|play cost maximum|maximum play cost|DP maximum|maximum DP|DP reduction)$", RegexOptions.IgnoreCase)).Success)
+        {
+            string what = m.Groups["what"].Value.ToLowerInvariant();
+            string capKo = what.Contains("level") ? "Lv. 상한" : what.Contains("play cost") ? "등장 코스트 상한" : what.Contains("reduction") ? "DP 마이너스" : "DP 상한";
+            string? head = m.Groups["cnt"].Success ? CounterKo(m.Groups["cnt"].Value)?.TrimEnd(',') : CondKo(m.Groups["cond"].Value)?.Then;
+            return head == null ? null : $"{head} 이 효과의 {capKo} +{m.Groups["n"].Value}";
+        }
         // "If ~, ~ instead" — 대신
         if ((m = Regex.Match(s, @"^If (?<c>[^,]+), (?:instead,? (?<rest>.+?)|(?<rest>.+?),? instead)$", RegexOptions.IgnoreCase)).Success)
             return CondKo(m.Groups["c"].Value) is { } ic && Sentence(Cap(m.Groups["rest"].Value)) is { } ir ? $"{(nested ? ic.Then : ic.If)} 대신에 {ir}" : null;
@@ -213,12 +229,20 @@ public static class KoreanEffectRenderer
         if ((m = Regex.Match(s, @"^you may\s+(?<rest>.+)$", RegexOptions.IgnoreCase)).Success) { may = true; s = Cap(m.Groups["rest"].Value); }
 
         // 비용: "suspend this Tamer to gain 1 memory" · "unsuspend this Digimon by decreasing your memory by 3" → "By ~ing, ~"
-        if ((m = Regex.Match(s, @"^(?<verb>suspend|trash|delete|return|pay|place|add)\b(?<obj>[^,]*?) to (?<rest>(?:gain|draw|unsuspend|delete|suspend|give|reveal|return|play|trash|add|reduce|have|＜)\b?.+)$", RegexOptions.IgnoreCase)).Success)
+        if ((m = Regex.Match(s, @"^(?<verb>suspend|trash|delete|return|pay|place|add)\b(?<obj>[^,]*?) to (?<rest>(?:gain|draw|unsuspend|delete|suspend|give|reveal|return|play|trash|add|reduce|have|prevent|＜)\b?.+)$", RegexOptions.IgnoreCase)).Success)
             s = $"By {Gerund(m.Groups["verb"].Value)}{m.Groups["obj"].Value}, {m.Groups["rest"].Value}";
         else if ((m = Regex.Match(s, @"^(?<act>[^,]+?) by (?<cost>(?:suspending|trashing|deleting|returning|paying|placing|decreasing your memory by \d+)\b[^,]*)$", RegexOptions.IgnoreCase)).Success)
             s = $"By {m.Groups["cost"].Value}, {m.Groups["act"].Value}";
         if ((m = Regex.Match(s, @"^By (?<cost>[^,]+), (?<rest>.+)$", RegexOptions.IgnoreCase)).Success)
         {
+            // v0.30.0: 비용 안의 쉼표 목록 "By trashing 1 card with the [Demon], [Shaman] or [Titan] trait from your hand, ~" (SentenceParser.ParseStep과 같은 읽기)
+            if (CostKo(m.Groups["cost"].Value) == null)
+                for (int at = s.IndexOf(", ", m.Groups["cost"].Index + m.Groups["cost"].Length + 1, StringComparison.Ordinal); at > 0; at = s.IndexOf(", ", at + 2, StringComparison.Ordinal))
+                {
+                    var wider = Regex.Match(s, $@"^By (?<cost>.{{{at - 3}}}), (?<rest>.+)$", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                    if (wider.Success && Regex.Matches(wider.Groups["cost"].Value, @", ").All(x => Regex.IsMatch(wider.Groups["cost"].Value[(x.Index + 2)..], @"^\["))
+                        && CostKo(wider.Groups["cost"].Value) != null) { m = wider; break; }
+                }
             if (CostKo(m.Groups["cost"].Value) is not { } cost) return null;
             // 비용이 있는 "~할 수 있다"는 비용 쪽이 이미 선택 — 동작은 평서형 ("~하는 것으로, ~한다")
             return Sentence(Cap(m.Groups["rest"].Value)) is { } r ? $"{cost} {r}" : null;
@@ -376,6 +400,35 @@ public static class KoreanEffectRenderer
             return new("이 카드를 코스트를 지불하지 않고 ", Siki("등장"));
         if (Regex.IsMatch(s, @"^Place (?:this card|it) in (?:the|your) battle area$", RegexOptions.IgnoreCase))
             return new("이 카드를 배틀 에어리어에 ", Notda);
+        // v0.30.0 배틀 에어리어의 옵션 카드 — 공식 (BT19-062 · BT23-047 · BT19-064 · P-155): "배틀 에어리어의 자신의 옵션 카드 1장을 파기한다" ·
+        // "배틀 에어리어의 상대의 옵션 카드 1장을 파기한다" · "배틀 에어리어의 옵션 카드 1장을 파기하는" · "배틀 에어리어의 레드 이외의 자신의 옵션 카드 1장을 파기하는"
+        if ((m = Regex.Match(s, $@"^Trash (?<n>\d+) (?:of (?<who>your opponent's|their|your) )?(?<non>non-)?(?:(?<color>{Colors}) )?option cards? in the battle area$", RegexOptions.IgnoreCase)).Success)
+        {
+            string who = !m.Groups["who"].Success ? "" : m.Groups["who"].Value.Equals("your", StringComparison.OrdinalIgnoreCase) ? "자신의 " : "상대의 ";
+            string col = m.Groups["color"].Success ? $"{ColorKo(m.Groups["color"].Value)}{(m.Groups["non"].Success ? " 이외의" : "인")} " : "";
+            return new($"배틀 에어리어의 {col}{who}옵션 카드 {m.Groups["n"].Value}장을 ", Ha("파기"));
+        }
+        // 공식 (BT19-086 · EX8-052 · BT17-100 · EX3-025): "자신의 패/트래시에서 특징으로 「디바이스」를 가진 옵션 카드 1장을 배틀 에어리어에 놓는다" · "이 디지몬의 진화원에서 「종말의 시계」 1장을 배틀 에어리어에 놓는다"
+        if ((m = Regex.Match(s, @"^Place (?<pick>.+?) from (?<from>your hand or (?:your )?trash|your hand|your trash|this Digimon's digivolution cards) in (?:the|your) battle area$", RegexOptions.IgnoreCase)).Success
+            && PickKo(Regex.Replace(m.Groups["pick"].Value, @"\bwith a use cost of\b", "with a cost of", RegexOptions.IgnoreCase)) is { } opk)
+        {
+            string fz = m.Groups["from"].Value.ToLowerInvariant();
+            string from = fz.Contains("digivolution") ? "이 디지몬의 진화원에서" : fz.Contains("hand") && fz.Contains("trash") ? "자신의 패/트래시에서" : fz.Contains("hand") ? "자신의 패에서" : "자신의 트래시에서";
+            return new($"{from} {opk}{J(opk, "을", "를")} 배틀 에어리어에 ", Notda);
+        }
+        // v0.30.0 — 공식 (EX10-072): "자신의 시큐리티에서, 특징 「어둠의 4천왕」을 가진 앞면의 디지몬 카드 1장을 코스트를 지불하지 않고 등장시킬 수 있다"
+        if ((m = Regex.Match(s, @"^Play (?<n>\d+) (?<fu>face[- ]up )?(?<rest>.+?) from your security stack without paying (?:the|its) (?:memory |play )?cost$", RegexOptions.IgnoreCase)).Success
+            && PickKo($"{m.Groups["n"].Value} {m.Groups["rest"].Value}") is { } secPick)
+        {
+            string pk = m.Groups["fu"].Success ? Regex.Replace(secPick, @"(디지몬 카드|카드)(?= \d+장)", "앞면의 $1") : secPick;
+            return new($"자신의 시큐리티에서 {pk}{J(pk, "을", "를")} 코스트를 지불하지 않고 ", Siki("등장"));
+        }
+        // v0.30.0 이 효과로 등장한 디지몬 — 공식 (BT23-017 · EX10-072): "이 효과로 등장한 디지몬은 진화할 수 없으며, 상대의 턴 종료 시, 소멸한다" ·
+        // "턴 종료 시, 이 효과로 등장한 디지몬을 소멸시킨다" · "자신의 턴 종료 시, 이 효과로 등장한 디지몬을 소멸시킨다"
+        if ((m = Regex.Match(s, @"^(?:the Digimon this effect played|(?:the )?Digimon played by this effect) (?<nd>can't digivolve and )?(?:is|are) deleted at (?<when>turn end|the end of (?:the|this) turn|the end of your opponent's turn|the end of their turn|the end of your turn)$", RegexOptions.IgnoreCase)).Success)
+            return new($"이 효과로 등장한 디지몬은 {(m.Groups["nd"].Success ? "진화할 수 없으며, " : "")}{EndWhenKo(m.Groups["when"].Value)}, 소멸한다", new Verb("", "", "", ""));
+        if ((m = Regex.Match(s, @"^At (?<when>turn end|the end of (?:the|this) turn|the end of your opponent's turn|the end of their turn|the end of your turn), delete (?:the Digimon this effect played|(?:the )?Digimon played by this effect)$", RegexOptions.IgnoreCase)).Success)
+            return new($"{EndWhenKo(m.Groups["when"].Value)}, 이 효과로 등장한 디지몬을 소멸시킨다", new Verb("", "", "", ""));
         // v0.29.0 — 공식 (BT13-106 · BT15-092): "이 카드의 【메인】 효과를 발휘한다" · "이 카드의 【시큐리티】 효과를 발휘한다"
         if (Regex.IsMatch(s, @"^Activate (?:this card'?s|its) \[Main\] effects?$", RegexOptions.IgnoreCase))
             return new("이 카드의 【메인】 효과를 ", Ha("발휘"));
@@ -487,7 +540,8 @@ public static class KoreanEffectRenderer
         if ((m = Regex.Match(s, @"^(?:prevent (?:it|that Digimon|this Digimon|them|those Digimon) from (?:leaving(?: the battle area)?|being deleted)|(?<one>1 of those Digimon|it|they|that Digimon|this Digimon) (?:doesn't|don't|does not|do not) leave(?: the battle area)?|prevent (?:that|its|this|the) deletion|(?:it|this Digimon|that Digimon) (?:isn't|is not) deleted)$", RegexOptions.IgnoreCase)).Success)
         {
             bool deletion = Regex.IsMatch(s, @"delet", RegexOptions.IgnoreCase);
-            string who = m.Groups["one"].Value.StartsWith("1 of", StringComparison.OrdinalIgnoreCase) ? "그 디지몬 1마리는" : "그 디지몬은";
+            string who = m.Groups["one"].Value.StartsWith("1 of", StringComparison.OrdinalIgnoreCase) ? "그 디지몬 1마리는"
+                : Regex.IsMatch(s, @"^prevent this Digimon\b", RegexOptions.IgnoreCase) ? "이 디지몬은" : "그 디지몬은";   // v0.30.0 공식 (EX1-073): "이 디지몬은 소멸하지 않는다"
             return new($"{who} {(deletion ? "소멸하지" : "배틀 에어리어를 벗어나지")} ", Anhda);
         }
         if ((m = Regex.Match(s, @"^(?<t>.+?) can't (?<v>suspend|unsuspend)(?<next> (?:in|during) (?:their|your opponent's|its owner's) next unsuspend phase)?$", RegexOptions.IgnoreCase)).Success
@@ -635,6 +689,9 @@ public static class KoreanEffectRenderer
                 ? new($"{gt}에게 {gk}{J(gk, "을", "를")} 주고, DP {m.Groups["dp"].Value}", new Verb("", " 할 수 있다", " 하는 것으로", "하고"))
                 : new($"{gt}{J(gt, "은", "는")} {gk}{J(gk, "을", "를")} 얻고, DP {m.Groups["dp"].Value}", new Verb("", " 할 수 있다", " 하는 것으로", "하고"));
         }
+        // v0.30.0 "it further gets -5000 DP" (BT26-031) — "그 디지몬의 DP를 추가로 -5000 한다"
+        if ((m = Regex.Match(s, @"^(?:it|that Digimon) further gets? (?<dp>[+-]\d+) DP$", RegexOptions.IgnoreCase)).Success)
+            return new($"그 디지몬의 DP를 추가로 {m.Groups["dp"].Value} ", Ha());
         if ((m = Regex.Match(s, @"^(?<t>.+?) gets? (?<dp>[+-]\d+) DP$", RegexOptions.IgnoreCase)).Success && TargetKo(m.Groups["t"].Value) is { } dpT)
             return new($"{dpT}의 DP를 {m.Groups["dp"].Value} ", Ha());
         if ((m = Regex.Match(s, @"^(?<t>.+?) gains? (?<kws>＜.+)$", RegexOptions.IgnoreCase)).Success && TargetKo(m.Groups["t"].Value) is { } kt && KeywordListKo(m.Groups["kws"].Value) is { } kk)
@@ -730,8 +787,10 @@ public static class KoreanEffectRenderer
         // ---- 진화 ----
         if ((m = Regex.Match(s, @"^reduce (?:the|its) digivolution cost by (?<n>\d+)$", RegexOptions.IgnoreCase)).Success)
             return new($"지불하는 진화 코스트를 -{m.Groups["n"].Value} ", Ha());
-        if ((m = Regex.Match(s, @"^(?<t>this Digimon|\d+ of your Digimon(?: with [^,]+?)?) (?<may>may )?digivolves? into (?<pick>.+?) in (?:the|your) (?<zone>hand or (?:the |your )?trash|hand|trash)(?: for (?:a digivolution cost of (?<cost>\d+)|its digivolution cost))? ?(?<free>without paying (?:the|its) (?:memory |digivolution )?cost|with the digivolution cost reduced by (?<red>\d+))?$", RegexOptions.IgnoreCase)).Success
-            && TargetKo(m.Groups["t"].Value) is { } et && (PickKo("1 " + m.Groups["pick"].Value) ?? PickKo(m.Groups["pick"].Value)) is { } ep)
+        if ((m = Regex.Match(s, @"^(?<t>this Digimon|this (?<selfx>\[[^\]]+\](?: or \[[^\]]+\])*) trait Digimon|\d+ of your (?:[^,]*? )?Digimon(?: with [^,]+?)?) (?<may>may )?digivolves? into (?<pick>.+?) in (?:the|your) (?<zone>hand or (?:the |your )?trash|hand|trash)(?: for (?:a digivolution cost of (?<cost>\d+)|its digivolution cost))? ?(?<free>without paying (?:the|its) (?:memory |digivolution )?cost|with the (?:digivolution )?cost reduced by (?<red>\d+))?$", RegexOptions.IgnoreCase)).Success
+            // v0.30.0 "this [Demon] or [Titan] trait Digimon" — 공식 표기 "특징으로 「데몬」/「타이탄」을 가진 이 디지몬"
+            && (m.Groups["selfx"].Success ? $"특징으로 {NamesKo(m.Groups["selfx"].Value, trait: true)}{J(NamesKo(m.Groups["selfx"].Value, trait: true), "을", "를")} 가진 이 디지몬" : TargetKo(m.Groups["t"].Value)) is { } et
+            && (PickKo("1 " + m.Groups["pick"].Value) ?? PickKo(m.Groups["pick"].Value) ?? PickKo(Regex.Replace(m.Groups["pick"].Value, @"^an? ", "1 ", RegexOptions.IgnoreCase))) is { } ep)
         {
             string how = m.Groups["free"].Value.StartsWith("without", StringComparison.OrdinalIgnoreCase) ? "코스트를 지불하지 않고 "
                 : m.Groups["red"].Success ? $"진화 코스트를 -{m.Groups["red"].Value} 하고 " : m.Groups["cost"].Success ? $"진화 코스트 {m.Groups["cost"].Value}로 " : "";
@@ -742,11 +801,28 @@ public static class KoreanEffectRenderer
         return null;
     }
 
+    /// <summary>"turn end" · "the end of your opponent's turn" → "턴 종료 시" · "상대의 턴 종료 시" (v0.30.0)</summary>
+    private static string EndWhenKo(string when)
+    {
+        string w = when.ToLowerInvariant();
+        return w.Contains("opponent's") || w.Contains("their") ? "상대의 턴 종료 시" : w.Contains("your turn") ? "자신의 턴 종료 시" : "턴 종료 시";
+    }
+
     /// <summary>비용 "~ing ..." → "~하는 것으로,"</summary>
     private static string? CostKo(string cost)
     {
         cost = cost.Trim().TrimEnd('.');
         Match m;
+        // 공식 (BT21-083): "자신의 패에서 특징 「크로스 하트」/「블루 플레어」/「히어로」를 가진 디지몬 카드 1장을 이 테이머 아래에 놓는 것으로,"
+        if ((m = Regex.Match(cost, @"^placing (?<pick>.+?) from your hand (?:face down )?under (?<who>this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success && PickKo(m.Groups["pick"].Value) is { } underK)
+            return $"자신의 패에서 {underK}{J(underK, "을", "를")} {(m.Groups["who"].Value.StartsWith("this", StringComparison.OrdinalIgnoreCase) ? "이 테이머" : "자신의 테이머")} 아래에 놓는 것으로,";
+        // v0.30.0 이 디지몬의 진화원 중 지정된 카드 — 공식 (EX7-059 · EX7-073 · EX1-073): "이 디지몬의 진화원에서 옵션 카드 1장을 파기하는 것으로," ·
+        // "이 디지몬의 진화원에서 특징으로 「3총사」를 가진 카드 2장을 파기하는 것으로," · (BT27-043) "~ 1장을 시큐리티 아래에 놓는 것으로,"
+        if ((m = Regex.Match(cost, @"^(?<v>trashing|placing) (?<pick>.+?) (?:from|in|of) this Digimon's digivolution cards(?: as (?:the|your) (?<pos>top|bottom) security card)?$", RegexOptions.IgnoreCase)).Success
+            && PickKo(m.Groups["pick"].Value) is { } srcK)
+            return m.Groups["pos"].Success
+                ? $"이 디지몬의 진화원에서 {srcK}{J(srcK, "을", "를")} 시큐리티 {(m.Groups["pos"].Value.Equals("top", StringComparison.OrdinalIgnoreCase) ? "위" : "아래")}에 놓는 것으로,"
+                : $"이 디지몬의 진화원에서 {srcK}{J(srcK, "을", "를")} 파기하는 것으로,";
         // v0.29.0 — 공식 (BT22-043 · EX5-007 · BT23-008): "특징 「CS」를 가진 이 디지몬에 겹쳐져 있는 카드를 위에서부터 1장 이 디지몬의 진화원 아래에 놓는 것으로,"
         if ((m = Regex.Match(cost, @"^placing (?:this (?:(?<t1>\[[^\]]+\](?: or \[[^\]]+\])*) trait )?Digimon's top stacked card|the top card of this Digimon(?: with the (?<t2>\[[^\]]+\](?: or \[[^\]]+\])*) traits?)?) as (?:its|this Digimon's) bottom digivolution card$", RegexOptions.IgnoreCase)).Success)
         {
@@ -852,6 +928,14 @@ public static class KoreanEffectRenderer
         }
         if ((m = Regex.Match(cond, @"^(?:this Digimon|it) has (?<n>\d+) or more colors$", RegexOptions.IgnoreCase)).Success)
             return Be($"이 디지몬이 {m.Groups["n"].Value}색 이상");
+        // v0.30.0 — 공식 (BT13-111 · P-186): "자신의 디지몬이 없다면" · "DP 13000 이상의 디지몬이 있다면,"
+        if (Regex.IsMatch(cond, @"^you have no Digimon(?: in play)?$", RegexOptions.IgnoreCase))
+            return NotHave("자신의 디지몬이");
+        if ((m = Regex.Match(cond, @"^there is a Digimon with (?<n>\d+) DP or (?<dir>more|higher|less|lower)$", RegexOptions.IgnoreCase)).Success)
+            return Have($"DP {m.Groups["n"].Value} {Dir(m.Groups["dir"].Value)}의 디지몬이");
+        // v0.30.0 — 공식 (BT21-078): "자신의 테이머의 색 합계가 2색 이상이라면,"
+        if ((m = Regex.Match(cond, @"^your Tamers have (?<n>\d+) or more (?:total )?colors$", RegexOptions.IgnoreCase)).Success)
+            return Be($"자신의 테이머의 색 합계가 {m.Groups["n"].Value}색 이상");
         if ((m = Regex.Match(cond, $@"^any of them (?:have|has) the (?<x>{TargetSpec.NameList}) traits?$", RegexOptions.IgnoreCase)).Success)
         {
             string x = NamesKo(m.Groups["x"].Value, trait: true);
@@ -1074,6 +1158,17 @@ public static class KoreanEffectRenderer
         if (Regex.IsMatch(ev, @"^(?:this card is trashed from (?:the top of )?(?:the|your) deck|(?:an effect trashes|effects trash) this card from (?:the|your) deck)$", RegexOptions.IgnoreCase)) return "이 카드가 덱에서 파기되었을 때,";
         if (Regex.IsMatch(ev, @"^(?:an effect trashes|effects trash) this card from the deck or security stack$", RegexOptions.IgnoreCase)) return "이 카드가 덱 또는 시큐리티에서 효과로 파기되었을 때,";
         if (Regex.IsMatch(ev, @"^an effect adds (?:a card|cards) to your hand$", RegexOptions.IgnoreCase)) return "효과로 자신의 패가 늘어났을 때,";
+        // v0.30.0 — 공식 (BT15-002 · BT15-083): "자신의 패가 자신의 디지몬의 효과로 늘어났을 때,"
+        if (Regex.IsMatch(ev, @"^(?:one of your|any of your|your) Digimon's effects? adds? (?:a card|cards) to your hand$", RegexOptions.IgnoreCase)) return "자신의 패가 자신의 디지몬의 효과로 늘어났을 때,";
+        // v0.30.0 — 공식 (BT19-093 · P-159 · BT23-059): "이 카드가 배틀 에어리어에서 (효과로) 파기되었을 때," · "배틀 에어리어의 옵션 카드가 파기되었을 때,"
+        if (Regex.IsMatch(ev, @"^this card is trashed from (?:the|your) battle area$", RegexOptions.IgnoreCase)) return "이 카드가 배틀 에어리어에서 파기되었을 때,";
+        if (Regex.IsMatch(ev, @"^(?:an effect trashes|effects trash) this card from (?:the|your) battle area$", RegexOptions.IgnoreCase)) return "이 카드가 배틀 에어리어에서 효과로 파기되었을 때,";
+        if (Regex.IsMatch(ev, @"^(?:an )?Option cards? in the battle area (?:is|are) trashed$", RegexOptions.IgnoreCase)) return "배틀 에어리어의 옵션 카드가 파기되었을 때,";
+        if ((m = Regex.Match(ev, $@"^(?:one of |any of )?your (?:(?<x>{TargetSpec.NameList}) trait )?Option cards? (?:is|are) placed in (?:the|your) battle area$", RegexOptions.IgnoreCase)).Success)
+        {
+            string trait = m.Groups["x"].Success ? NamesKo(m.Groups["x"].Value, trait: true) : "";
+            return $"{(trait.Length > 0 ? $"특징으로 {trait}{J(trait, "을", "를")} 가진 " : "")}자신의 옵션 카드가 배틀 에어리어에 놓였을 때,";
+        }
         // 어택 대상이 바뀌었을 때 (v0.15.0 — SentenceParser와 같은 표기)
         if (Regex.IsMatch(ev, @"^(?:an|the) attack targets? (?:is|are) (?:switched|changed)$|^attack targets? (?:change|changes|switch|switches)$", RegexOptions.IgnoreCase)) return "어택의 대상이 변경되었을 때,";
         if (Regex.IsMatch(ev, @"^this Digimon's attack target (?:is switched|is changed|changes|switches)$", RegexOptions.IgnoreCase)) return "이 디지몬의 어택의 대상이 변경되었을 때,";
@@ -1150,12 +1245,12 @@ public static class KoreanEffectRenderer
             && TargetKo("all of your opponent's " + m.Groups["spec"].Value + "Digimon", bare: true) is { } op)
             return $"{op}{J(op, "이", "가")} 등장했을 때,";
         if (Regex.IsMatch(ev, @"^you play another Digimon with the same name as this Digimon$", RegexOptions.IgnoreCase)) return "자신이 이 디지몬과 같은 명칭의 다른 디지몬을 등장시켰을 때,";
-        if ((m = Regex.Match(ev, @"^(?:one of |any of )?your (?<subj>(?:other )?[^,]*?Digimon(?: with [^,]+?)?) (?<what>attacks(?: a player| your opponent)?|suspends?|becomes suspended|(?:is|are) deleted|(?:is |are )?(?:played or digivolves?|played|digivolves?|digivolved))$", RegexOptions.IgnoreCase)).Success
+        if ((m = Regex.Match(ev, @"^(?:one of |any of )?your (?<subj>(?:other )?[^,]*?Digimon(?: with [^,]+?)?) (?<what>attacks(?: a player| your opponent)?|suspends?|becomes suspended|(?:is|are) deleted|(?:is |are )?(?:played or digivolves?|played or deleted|played|digivolves?|digivolved))$", RegexOptions.IgnoreCase)).Success
             && TargetKo("all of your " + m.Groups["subj"].Value, bare: true) is { } ally)
         {
             string w = m.Groups["what"].Value.ToLowerInvariant();
             string verb = w.StartsWith("attacks a player") || w.StartsWith("attacks your") ? "플레이어에게 어택했을 때," : w.StartsWith("attack") ? "어택했을 때," : w.Contains("suspend") ? "레스트 상태가 되었을 때,"
-                : w.Contains("deleted") ? "소멸했을 때," : w.Contains("played") && w.Contains("digivolv") ? "등장하거나 진화했을 때," : w.Contains("played") ? "등장했을 때," : "진화했을 때,";
+                : w.Contains("played") && w.Contains("deleted") ? "등장하거나 소멸했을 때," : w.Contains("deleted") ? "소멸했을 때," : w.Contains("played") && w.Contains("digivolv") ? "등장하거나 진화했을 때," : w.Contains("played") ? "등장했을 때," : "진화했을 때,";
             return $"{ally}{J(ally, "이", "가")} {verb}";
         }
         if ((m = Regex.Match(ev, @"^your opponent plays (?<subj>(?:an?|1) [^,]*?Digimon(?: with [^,]+?)?)$", RegexOptions.IgnoreCase)).Success
@@ -1422,6 +1517,15 @@ public static class KoreanEffectRenderer
             return $"{withKw}{J(withKw, "을", "를")} 가진 상대의 디지몬 1마리마다";
         if (Regex.IsMatch(counter, @"^Digimon deleted$", RegexOptions.IgnoreCase))
             return "소멸한 디지몬 1마리마다";
+        // v0.30.0 — 공식 (BT19-052 · BT21-102 · ST21-06 · BT21-079)
+        if (Regex.IsMatch(counter, @"^(?:of your face[- ]up security cards|face[- ]up security cards? you have)$", RegexOptions.IgnoreCase))
+            return "자신의 앞면의 시큐리티 1장마다";
+        if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) colors? your Tamers have|of your Tamers' colors|color your Tamers have)$", RegexOptions.IgnoreCase)).Success)
+            return $"자신의 테이머의 색 {Per(m)}색마다";
+        if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?(?:total )?cards? in both players' trash(?:es)?$", RegexOptions.IgnoreCase)).Success)
+            return $"서로의 트래시 합계 {Per(m)}장마다";
+        if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?(?:total )?cards? in both players' security stacks$", RegexOptions.IgnoreCase)).Success)
+            return $"서로의 시큐리티 {Per(m)}장마다";
         if ((m = Regex.Match(counter, $@"^(?<x>{TargetSpec.NameList}) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
             return $"이 디지몬의 진화원의 {NamesKo(m.Groups["x"].Value)} 1장마다";
         return null;
