@@ -74,6 +74,10 @@ public enum EffectTrigger
     AllyDigimonUnsuspended,         // 자신의 디지몬이 액티브 상태가 되었을 때 (Other = 그 디지몬 — 액티브 페이즈 · 효과 모두)
     OpponentDigimonUnsuspended,     // 상대의 디지몬이 액티브 상태가 되었을 때 (Other)
     AllyDeletedOpponentInBattle,    // 자신의 디지몬이 배틀에서 상대 디지몬을 소멸시켰을 때 (Other = 이긴 자신의 디지몬, 어택 · 블록 모두 — 함께 소멸해도)
+    SourceTrashedThis,              // 이 카드가 효과로 진화원에서 파기되었을 때 (Self = 그 진화원을 가졌던 디지몬, 파기된 카드의 진화원 효과로 처리)
+    AllySourcesTrashed,             // 자신의 디지몬의 진화원이 효과로 파기되었을 때 (Other = 그 디지몬, GoldfishEngine.CurrentSourceCards = 파기된 카드)
+    OpponentSourcesTrashed,         // 상대 디지몬의 진화원이 효과로 파기되었을 때 (Other = 그 디지몬)
+    AllySourcesAdded,               // 효과로 자신의 디지몬의 진화원에 카드가 놓였을 때 (Other = 그 디지몬, CurrentSourceCards = 놓인 카드 — 진화로 겹친 것은 아님)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>

@@ -10,6 +10,31 @@
 
 ---
 
+## v0.28.0 — 2026-10-26
+미지원 효과 문장 2차 묶음 — 도감 효과 문장 지원 7,017 → 7,279 / 10,366 (68.3% → 70.2%)
+- 같은 도감(4,497장) 기준 7,017 → 7,228 / 10,279 (+211, 수정 전 지원되던 문장 중 깨진 것 0). 모든 절이 동작하는 카드 1,976 → 2,093장
+- BT27 추가분 29장을 받아 도감 4,497 → 4,526장 (아래). 전체 기준 모든 절이 동작하는 카드 2,100장
+- 진화원 시점 (엔진 — `GoldfishEngine.SourceEvents`): 효과 하나를 처리하기 전후의 진화원을 비교해, 그 효과가 끝난 뒤에 알린다
+  - "When this card is trashed from digivolution cards by an effect" · "When an effect trashes this (digivolution) card" · "When effects trash this card from a [Mineral] or [Rock] trait Digimon's digivolution cards" (옵션 메인 칸의 같은 문장 포함)
+  - "When one of your opponent's digivolution cards is trashed" · "When effects trash digivolution cards from your opponent's Digimon" · "When effects trash any of your [Mineral] or [Rock] trait Digimon's digivolution cards"
+  - "When an effect places a digivolution card under this Digimon" · "When one of your effects places ~" · "When effects add to this Digimon's digivolution cards" · "When an effect places a Tamer card in this Digimon's digivolution cards" · "When Tamer cards are placed in ~" · "When effects place [CS] trait Digimon cards in ~" · "~ under any of your Digimon with ~"
+  - 공식 Q&A: 진화(효과로 진화해도)로 겹친 카드는 늘어난 것이 아니다 (BT7-005) · 패로 되돌린 디지몬의 진화원은 "파기했다"가 아니다 (BT2-085 · P-004) · 자신의 효과로 파기해도 발휘 (BT10-006) · ≪마인드 링크≫로 놓은 테이머도 (BT17-003)
+- ≪사용 조건≫ (옵션 21장): 공식 공지(2026-10-16 "＜Use Req.＞ 변경")대로 배틀 · 육성 에어리어의 지정된 디지몬 · 테이머가 색 조건을 충족한다 — 사용 가능 판정(엔진 · AI · 화면) 한 곳(`ActionValidator.MissingOptionColors`)에 반영. 생성 한글 설명문도 바뀐 공지대로 "지정된 조건이 색 조건을 충족한다"
+- 정보가 적힌 토큰: "Play 1 [Familiar] Token. (Digimon/Yellow/3000 DP/[On Deletion] ~)" · "[Pipe Fox]" · "[Atho, René & Por]"(≪디코이《레드》/《블랙》≫) · "[Amon of Crimson Flame] Token (~) and 1 [Umon of Blue Thunder] Token (~)" · 디아블로몬 토큰 등 — 토큰의 키워드 · 효과도 모두 읽을 수 있을 때만
+- 시큐리티 찾기: "Search your security stack, reveal 1 card among it and add it to your hand" · "~ for 1 ~, reveal it, and add it" · "~. You may add / play 1 ~ among them" · "Then, shuffle your security stack" · 조건 "If it's a yellow card" · "If you added" · "If you did"
+- 공개: 보기만 하는 공개 "Reveal the top 5 cards of your or your opponent's deck. Return the revealed cards to the top or the bottom of the deck" · 공개 조건의 다른 표기 ("1 card with the [Hybrid] trait, or [Susanoomon] or [Takuya Kanbara]" · "1 [Four Great Dragons] trait or 1 yellow card" · "1 non-white Tamer card" · "1 [Angel], [Archangel] or [Fallen Angel] trait") · 원문 오타 3건
+- 진화원: "Trash any 2 digivolution cards from your opponent's Digimon" · "~ of / under 1 of your opponent's Digimon" · "Trash its bottom 2 digivolution cards" · "Place ~ from your trash as this Digimon's bottom digivolution cards" · 비용 "placing ~ from your hand or trash as this Digimon's bottom digivolution card"
+- 대상 표기: "[Mineral] or [Rock] trait Digimon" · "7000 DP or lower Digimon" (이름 앞에 둔 조건)
+- 버그 수정
+  - 카드 고르기 조건의 "or" — "with [Knightmon] in its name or [Twilight] trait"를 둘 다로 읽던 것을 둘 중 하나로 (BT10-092 · BT13-087 · BT20-057 · BT22-068 등, 화면 한글도 "~을 포함하거나 특징으로 ~를 가진")
+  - "in any of its traits (other than [Sea Animal])" — 괄호를 지워 [Sea Animal]이 [Animal]로 잡히던 것을 제외 (BT13-048 · BT15-001 · BT23-012 등)
+  - 비용 "by deleting 1 of your opponent's ~"를 자신의 디지몬을 소멸시키는 비용으로 읽을 수 있던 것을 읽지 않음으로 (BT24-018 · EX13-015)
+  - 생성 한글: 비용 "deleting 1 of your opponent's ~" 앞의 "자신의" 제거, ≪디코이≫ 색 여럿은 "《디코이《레드》/《블랙》》" (공식 BT20-017)
+- 카드 데이터: 영어 API 동기화가 이미 받은 세트를 건너뛰어 새 카드 번호를 놓치던 것을 고쳐(전체 번호 목록을 늘 본다) BT27 29장 추가 · BT27-020 종류 수정(디지타마 → 디지몬). 새 카드 29장 중 효과가 있는 25장의 절 87개 중 51개 지원 (7장 전부 동작), 지원 절 중 45개에 생성 한글 (공식 한글 데이터 없음)
+- 생성 한글: 새로 지원한 211문장 중 187문장 (공식 표기: "이 카드가 효과로 진화원에서 파기되었을 때," · "이 디지몬의 진화원이 효과로 늘어났을 때," · "자신의 효과로 이 디지몬의 진화원이 늘어났을 때," · "「사역마」(디지몬・옐로・DP 3000・~) 토큰 1마리를 등장시킬 수 있다." · "자신의 시큐리티를 전부 확인한다. 그중 ~ 1장을 패에 추가할 수 있다." · "상대의 디지몬의 진화원을 선택하여 2장 파기한다." 등). 생성 한글이 붙는 절 6,952 → 7,202
+- 읽지 않고 남긴 것: 비용 "by deleting 1 of your opponent's ~" · 대상 동작 뒤 "If you did" (LM-018) · 이름에 쉼표가 있는 조건 (EX13-014) · 듀얼 카드의 "Use Requirement: ~" (옵션 면 미구현)
+- 테스트 35개 (EffectBatch28Tests)
+
 ## v0.27.0 — 2026-10-26
 미지원 효과 문장 1차 묶음 — 도감 효과 문장 지원 6,778 → 7,017 / 10,279 (65.9% → 68.3%, +239)
 - 모든 절이 동작하는 카드 1,860 → 1,976장, 미지원 절이 남은 카드 2,433 → 2,317장 (수정 전 지원되던 문장 중 깨진 것 0)

@@ -70,6 +70,9 @@ public sealed class EffectContext
     /// <summary>앞 문장에서 고른 대상 ("that Digimon" · "it"이 가리키는 디지몬)</summary>
     public List<CardInstance> LastTargets { get; set; } = new();
 
+    /// <summary>앞 문장이 옮긴 카드 ("If it's a yellow card, ~" — 시큐리티에서 패에 넣은 카드 등)</summary>
+    public CardData? LastCard { get; set; }
+
     /// <summary>앞 문장이 실제로 처리되었는지 (조건 불충족 · "~할 수 있다" 거절 · 비용 미지불이면 false) — "If you do, ~"</summary>
     public bool LastStepResolved { get; set; } = true;
 

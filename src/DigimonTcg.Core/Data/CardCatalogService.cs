@@ -276,34 +276,47 @@ public class CardCatalogService
 
         try
         {
-            // 1) 세트 목록: 이미 전체 목록을 한 번 받았다면 도감에 있는 카드 번호로 대신한다 (요청 1회 절약)
+            // 1) 세트 목록: 전체 카드 번호 목록을 받는다 (요청 1회). 받지 못하면 도감에 있는 카드 번호로 대신한다.
+            //    v0.28.0: 이미 받은 세트라도 API에 새 카드 번호가 생겼으면(예: BT27 추가분) 다시 받도록 번호 목록을 늘 본다
             List<string> prefixes;
-            if (map.Count > coreIds.Count)
+            var apiIds = new HashSet<string>(StringComparer.Ordinal);
+            string? listJson = null;
+            try
+            {
+                progress?.Report("🌐 전체 카드 목록을 받는 중...");
+                listJson = await GetWithRateLimitAsync($"{ApiBase}/getAllCards?series={ApiSeries}",
+                    wait => progress?.Report($"⏳ API 요청 제한으로 {wait}초 기다리는 중..."));
+            }
+            catch (HttpRequestException) when (map.Count > coreIds.Count)
+            {
+                listJson = null;
+            }
+            if (listJson != null)
+            {
+                using var listDoc = JsonDocument.Parse(listJson);
+                foreach (var e in listDoc.RootElement.EnumerateArray())
+                    if (e.TryGetProperty("cardnumber", out var n) && n.GetString() is { } num && !string.IsNullOrWhiteSpace(num) && num.Contains('-'))
+                        apiIds.Add(num.Trim());
+                prefixes = apiIds.Select(SetPrefixOf).Distinct().OrderBy(SetSortKey).ToList();
+            }
+            else if (map.Count > coreIds.Count)
             {
                 prefixes = map.Keys.Select(SetPrefixOf).Distinct().OrderBy(SetSortKey).ToList();
             }
             else
             {
-                progress?.Report("🌐 전체 카드 목록을 받는 중...");
-                string listJson = await GetWithRateLimitAsync($"{ApiBase}/getAllCards?series={ApiSeries}",
-                    wait => progress?.Report($"⏳ API 요청 제한으로 {wait}초 기다리는 중...")) ?? throw new InvalidOperationException("카드 목록 응답 없음");
-                using var listDoc = JsonDocument.Parse(listJson);
-                prefixes = listDoc.RootElement.EnumerateArray()
-                    .Select(e => e.TryGetProperty("cardnumber", out var n) ? n.GetString() : null)
-                    .Where(n => !string.IsNullOrWhiteSpace(n) && n!.Contains('-'))
-                    .Select(n => SetPrefixOf(n!))
-                    .Distinct()
-                    .OrderBy(SetSortKey)
-                    .ToList();
+                throw new InvalidOperationException("카드 목록 응답 없음");
             }
 
-            // 2) 이어받기: 이미 등급까지 받아 둔 세트는 건너뛰고 아직 안 받았거나 덜 받은 세트만 요청
+            // 2) 이어받기: 이미 등급까지 받아 두었고 API의 카드 번호가 모두 도감에 있는 세트는 건너뛰고, 아직 안 받았거나 덜 받은 세트만 요청
             var completeSets = map.Values
                 .Where(c => !coreIds.Contains(c.CardId))
                 .GroupBy(c => SetPrefixOf(c.CardId))
                 .Where(g => g.All(c => !string.IsNullOrEmpty(c.Rarity)))
                 .Select(g => g.Key)
                 .ToHashSet();
+            foreach (var missing in apiIds.Where(id => !map.ContainsKey(id)).Select(SetPrefixOf).Distinct().ToList())
+                completeSets.Remove(missing);
             var pending = prefixes.Where(p => !completeSets.Contains(p)).ToList();
 
             for (int i = 0; i < pending.Count; i++)

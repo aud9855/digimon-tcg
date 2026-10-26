@@ -261,7 +261,9 @@ public partial class GoldfishEngine
         int logsBefore = ctx.State.ActionLogs.Count;
         string messageBefore = ctx.Message;
         ctx.AnyEffectRan = true;
-        effect.Resolve(ctx);
+        bool watching = ctx.Engine.BeginSourceWatch();
+        try { effect.Resolve(ctx); }
+        finally { if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); }
         // 카드에 적힌 시점([등장 시] · [진화 시] · [어택 시] · [소멸 시])의 효과가 대상 · 조건이 없어 아무것도 안 했으면 그렇다고 남긴다.
         // 조용히 넘어가면 "효과가 안 탔다"로 보인다 (사용자 신고: 로제몬 · 쥬드몬 · 엔젤우몬 등 내장 스크립트의 return)
         if (ctx.State.ActionLogs.Count == logsBefore && ctx.Message == messageBefore && AnnouncedLabel(effect) is { } label)

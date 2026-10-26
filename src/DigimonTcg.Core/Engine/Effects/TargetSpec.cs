@@ -39,6 +39,7 @@ public sealed class TargetSpec
     public static TargetSpec? Parse(string phrase)
     {
         phrase = phrase.Trim().TrimEnd('.').Trim();
+        phrase = NormalizePreNoun(phrase);
         if (Regex.IsMatch(phrase, @"^this Digimon$", RegexOptions.IgnoreCase))
             return new TargetSpec { IsThis = true, Text = phrase };
         if (Regex.IsMatch(phrase, @"^(?:it|they|that Digimon|those Digimon|them|that card|the Digimon)$", RegexOptions.IgnoreCase))
@@ -98,6 +99,14 @@ public sealed class TargetSpec
         if (!ParseFilters(rest, spec))
             return null;
         return spec;
+    }
+
+    /// <summary>이름 앞에 둔 조건 (v0.28.0): "[Mineral] or [Rock] trait Digimon" → "Digimon with the [Mineral] or [Rock] trait" · "7000 DP or lower Digimon" → "Digimon with 7000 DP or less" (렌더러도 쓴다)</summary>
+    internal static string NormalizePreNoun(string phrase)
+    {
+        phrase = Regex.Replace(phrase, @"(?<x>\[[^\]]+\](?:,?\s+(?:or\s+|and/or\s+)?\[[^\]]+\])+) traits? Digimon\b(?<rest>.*)$", m => "Digimon with the " + m.Groups["x"].Value + " trait" + (m.Groups["rest"].Value.Trim().Length > 0 ? " and " + Regex.Replace(m.Groups["rest"].Value.Trim(), @"^with ", "", RegexOptions.IgnoreCase) : ""), RegexOptions.IgnoreCase);
+        phrase = Regex.Replace(phrase, @"\b(?<n>\d+) DP or (?<d>lower|less|higher|more) Digimon\b(?<rest>.*)$", m => $"Digimon with {m.Groups["n"].Value} DP or {(m.Groups["d"].Value.ToLowerInvariant() is "lower" or "less" ? "less" : "more")}" + (m.Groups["rest"].Value.Trim().Length > 0 ? " and " + Regex.Replace(m.Groups["rest"].Value.Trim(), @"^with ", "", RegexOptions.IgnoreCase) : ""), RegexOptions.IgnoreCase);
+        return phrase;
     }
 
     private TargetSpec WithAnySide(string text)
@@ -167,10 +176,11 @@ public sealed class TargetSpec
                 var xs = Names(m.Groups["x"].Value);
                 spec.Filters.Add(d => xs.Any(x => NameHas(d.TopCard, x)));
             }
-            else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?:the )?(?<x>{NameList}) traits?|^with (?<x>{NameList}) in any of its traits", RegexOptions.IgnoreCase)).Success)
+            else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?:the )?(?<x>{NameList}) traits?|^(?:with |or )?(?:the )?(?<x>{NameList}) in any of (?:its|their) traits(?: other than (?<ex>\[[^\]]+\]))?", RegexOptions.IgnoreCase)).Success)
             {
                 var xs = Names(m.Groups["x"].Value);
-                spec.Filters.Add(d => xs.Any(x => HasTrait(d.TopCard, x)));
+                var ex = Names(m.Groups["ex"].Value);
+                spec.Filters.Add(d => xs.Any(x => HasTrait(d.TopCard, x, ex)));
             }
             else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?<x>{NameList}) in (?:its|their) texts?", RegexOptions.IgnoreCase)).Success)
             {
@@ -261,6 +271,11 @@ public sealed class TargetSpec
 
     public static bool HasTrait(CardData card, string x) =>
         card.Traits.Any(t => t.Equals(x, StringComparison.OrdinalIgnoreCase) || t.Contains(x, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>"[Animal] in any of its traits other than [Sea Animal]" — 제외한 특징은 빼고 본다</summary>
+    public static bool HasTrait(CardData card, string x, IReadOnlyCollection<string> except) =>
+        except.Count == 0 ? HasTrait(card, x)
+        : card.Traits.Any(t => !except.Any(e => t.Equals(e, StringComparison.OrdinalIgnoreCase)) && t.Contains(x, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// 대상 고르기. harmful = 상대에게 불리한 효과(소멸 · DP − · 레스트 …)면 DP가 높은 것부터, 아니면 자신의 이 디지몬 → DP 높은 순.
