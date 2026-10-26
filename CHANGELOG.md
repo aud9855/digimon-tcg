@@ -10,6 +10,40 @@
 
 ---
 
+## v0.38.0 — 2026-10-27
+미지원 효과 문장 12차 묶음 (다른 카드와 비교하는 대상 · 액티브 + 다른 동작 · 키워드 부여 · 비용 · 위 또는 아래 · [시큐리티]【상대의 턴 종료 시】) — 도감 효과 문장 지원 8,956 → 9,056 / 10,366 (86.4% → 87.4%, +100)
+- 모든 절이 동작하는 카드 3,155 → 3,228장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 원래 지원하던 문장 중 한글이 없던 5문장(EX5-015 · EX5-018 · P-011 · P-047 "디지타마 카드 이외의 카드 N장을 덱 아래로 되돌리는 것으로" · BT18-018)에 새로 붙었다. 새로 지원한 100문장 모두 생성 한글이 붙는다
+- 읽는 방법: 원래 규칙이 읽지 못한 문장 · 비용 · 조건 · 지속 효과만 12차 규칙으로 다시 읽는다 (ParseStep · ParseCost · ParseEventCondition · ParseStatic · 한글 렌더러 모두 "원래 규칙 → 실패하면 12차" 순서)
+- 다른 카드와 비교하는 대상 (TargetSpec.Batch38 — 비용이 옮긴 카드를 비용 전후의 필드를 비교해 기억한다, RefCard38)
+  - "with the same level as the placed card" (BT18-042 — 공식 "놓은 카드와 같은 Lv.의 상대의 디지몬 전부") · "~ as the returned card" (BT7-029) · "~ as that card" (EX5-026) · EX6-066 · EX9-055
+  - "with a level less than or equal to the deleted Digimon's level" (BT11-076 · BT8-107 · BT7-078 — 공식 "소멸한 디지몬의 Lv. 이하의") · "whose level is less than or equal to the trashed card" (BT13-109 · BT15-099) · "the placed card's level" (BT15-029) · "as high or lower a level as the returned Digimon" (BT19-002) · "the deleted Digimon" 시점 (BT17-071 — 소멸한 그 디지몬) · "the played Digimon's level" (ST10-06)
+  - "with a play cost less than or equal to the Digimon you played" (BT10-106 · EX3-054 — 공식 "등장한 디지몬의 등장 코스트 이하의") · "the trashed card's play cost" (BT9-102 · BT12-108 [시큐리티])
+  - "with DP less than or equal to the Digimon played with this effect" (BT6-110 — 공식 "이 효과로 등장한 디지몬의 DP 이하의") · "the deleted Digimon's DP" (RB1-029 — 떠나기 전의 DP)
+  - "with a level as high or lower than the number of cards in your security stack" (EX6-028 · BT8-042 — 공식 "자신의 시큐리티 매수 이하의 Lv.의") · "~ in your or their security stack" (BT16-063 — 큰 쪽) · "~ in this Digimon's digivolution cards" (RB1-031)
+  - "Delete that Digimon and 1 of your opponent's Digimon with DP less than or equal to the chosen Digimon" (BT12-108 — 공식 "~ 상대의 디지몬 1마리와 선택한 자신의 디지몬을 소멸시킨다", 상대를 먼저 고른다) · BT17-067 · EX10-055 · "Choose 1 of your opponent's Digimon and return all ~ with the same level as it" (BT17-078)
+  - 조건 "If your opponent has no Digimon with as many or more digivolution cards as that Digimon" (BT14-091 — 공식 "진화원 매수가 선택한 디지몬 이상의 상대의 디지몬이 없다면")
+- 액티브 + 다른 동작 · 테이머 액티브
+  - "Unsuspend this Digimon, and gain 1 memory for each red Tamer you have in play" (BT11-017 — 공식 "이 디지몬을 액티브로 하고, ~") · BT7-016 (셈 "digivolution card this Digimon has with the [Hybrid] trait") · BT8-038 · EX2-024 · "it gains ＜Security A. +1＞ for the turn and unsuspends" (BT18-018) · "1 of your Digimon unsuspends and gets +5000 DP" (BT27-067) · "[Security] Gain 1 memory, and add this card to its owner's hand" (BT9-109 · ST12-14 · BT9-098 · EX4-072)
+  - 테이머를 액티브로 (새 동작): "Unsuspend this Digimon or 1 of your blue Tamers" (BT12-029) · "~ this Digimon or Tamer" (P-153) · "~ this Digimon and 1 of your Tamers" (P-048) · "unsuspend 1 of your Tamers" (BT10-009) · "1 of your Digimon and 1 of your [Kiyoshiro Higashimitarai]" (LM-004). "can't unsuspend" 상태의 테이머는 그대로
+  - 조건이 붙은 이 디지몬: "you may unsuspend this Digimon with [Gallantmon] in its name" (BT17-013 진화원 — 공식 "명칭에 「듀크몬」을 포함하는 이 디지몬을 액티브로 할 수 있다") · EX13-002 · BT24-002 · BT27-015 · "this Digimon and 1 of your Digimon with [Greymon] in its name may unsuspend" (AD1-012)
+  - "Until the end of your opponent's turn, 1 of your opponent's Digimon doesn't unsuspend" (BT13-053 · BT13-058 · BT13-060 · BT23-046 — 공식 "상대의 턴 종료까지 상대의 디지몬 1마리는 액티브가 되지 않는다") · "can't be unsuspended" (BT19-046) · "Delete 1 Tamer" (BT10-069 — 양쪽 테이머, 추천: 상대)
+  - "When DNA digivolving, ~" = "If DNA digivolving, ~" (BT8-042 · BT8-015 · EX3-074 · ST9-11 — 공식 "조그레스 진화하고 있었을 때,")
+- 키워드 부여 · 어택
+  - 얻는 ≪가드≫ (EX12-072 · EX13-063) · ≪디코이 (블랙)≫ · ≪디코이 (레드/블랙)≫ (BT8-060 · ST12-12) — 효과로 얻은 키워드도 카드에 적힌 것과 같이 막는다 (다른 자신의 디지몬이 상대의 효과로 떠날 때 · 그 색의 디지몬이 소멸할 때, 이 디지몬을 소멸시키는 것으로)
+  - 얻는 ≪천승≫ (BT26-030 "＜Execute＞ and ＜Ascension＞") — 소멸했을 때 맨 위 카드를 시큐리티 위에
+  - "1 of your Digimon may gain ＜Rush＞ for the turn and attack a player" (BT16-077 · BT20-102 · EX12-029 · EX12-056 · EX6-027 — 공식 BT16-077 "턴 종료까지 자신의 디지몬 1마리는 《속공》을 얻고, 그 디지몬으로 플레이어에게 어택할 수 있다") · "~ gains ＜Security A. +1＞ for the turn and that Digimon attacks" (EX7-013 — 어택은 효과 어택과 같은 처리)
+  - "gain ＜Piercing＞ and can also attack unsuspended Digimon" (BT20-019 지속 효과 두 문장) · "For the turn 1 of your Digimon gains ＜Raid＞ and gets +3000 DP" (BT20-071) · "1 of your [Rasenmon] gains ~" (BT7-100) · "To 1 of your opponent's Digimon give -2000 DP ~" (BT21-036) · "This Digimon with 5 or more digivolution cards may attack without suspending" (AD1-007)
+- 비용
+  - 여러 곳에서 고르기: "trashing 1 [Mineral] or [Rock] trait card from your hand or your Digimon's digivolution cards" (EX11-038 · EX11-065) · "~ in your hand or this Digimon's digivolution cards" (BT11-041 · BT15-065) · "trashing 1 Option card from any of your Digimon's digivolution cards or link cards" (BT25-085) · BT25-092 · "returning 3 cards with the [Three Musketeers] trait from your hand or trash to the top of the deck" (EX7-043 — 공식 "자신의 패/트래시에서 ~ 3장을 덱 위로 되돌리는 것으로"). 추천: 트래시 → 진화원 효과가 없는 진화원 → 패
+  - "deleting 2 of your level 5 or higher Digimon with [Myotismon] in their texts" (EX10-011) · "deleting 1 Token" (EX11-012) · "deleting 1 of your Digimon with the [Composite] trait Digimon" (BT19-075) · "suspending 1 of your yellow or red Tamers" (BT21-045) · "returning the top card of one of your [Leopardmon: Leopard Mode] to hand" (BT13-107) · "trashing 1 card from your hand with the same level as the deleted Digimon" (EX4-052) · "trashing 1 of your Digimon with the [Machine] or [Cyborg] trait from your hand" (BT12-108)
+- 위 또는 아래
+  - 진화원 위 또는 아래에 놓기: "placing 3 Digimon cards with [Gammamon] in their texts from your hand or trash as this Digimon's top or bottom digivolution cards" (AD1-007 비용) · EX12-077 (자신의 디지몬 1마리) · EX12-018 (동작) · "under this Digimon as its top digivolution card" (BT11-071) · 트래시에서 "under this Digimon as its bottom digivolution cards" (BT11-065 · BT11-111). 위 · 아래는 고른다 (추천: 아래)
+  - "trash the top or bottom card of their security stack" (BT16-056 — 공식 "상대의 시큐리티를 위 또는 아래에서부터 1장 파기한다", 추천: 상대 = 위 · 자신 = 아래) · "Place the top card of 1 of your opponent's [Vaccine] trait Digimon on top of their security stack" (BT16-056 — 진화원이 없으면 그 디지몬이 시큐리티로)
+- [시큐리티]【상대의 턴 종료 시】 "Play this card without paying the cost" (BT20-052 · BT20-055 · BT26-082 · EX11-041 · EX11-043 — 종합 룰 15-14-5-1: 시큐리티에 앞면으로 있는 동안 유발. 상대의 턴 종료 시 자신의 시큐리티의 앞면인 그 카드를 코스트 없이 등장, 한글 표시 "[시큐리티]【상대의 턴 종료 시】")
+- 룰에 맞춘 수정 (기존 카드 동작이 바뀜): 없음 (원래 지원하던 문장은 그대로 — 새 규칙은 읽지 못하던 문장에만)
+- 읽지 않고 남긴 것: [육성] 효과 15문장 (육성 에어리어에서 유발하는 시점 모델이 없다) · 턴 종료 조건 변경 (BT14-081 · BT17-069 — 플레이어 · AI 턴 진행의 메모리 판정 여러 곳) · 상한 · DP의 "for each" (BT12-043 · EX7-066 · EX13-077) · BT11-073 ("without [X] in its name" 카드 고르기) · BT18-019 · BT20-097 · BT26-016 (상대 트래시 · "those Digimon" 비용) · EX5-060 (등장 조건 "level less than or equal to it") · EX7-023 · BT19-100 · BT11-107 · BT16-065 · BT9-105 · BT15-081 · 효과로 얻는 ≪디코이 (특징)≫ (P-045) · BT11-034 (결정 대기)
+- 테스트 34개 (EffectBatch38Tests)
+
 ## v0.37.0 — 2026-10-27
 미지원 효과 문장 11차 묶음 (메모리 조건 · DP 소멸 상한 · 등장 제한 · 색 · 시큐리티) — 도감 효과 문장 지원 8,872 → 8,956 / 10,366 (85.6% → 86.4%, +84)
 - 모든 절이 동작하는 카드 3,092 → 3,155장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 원래 지원하던 문장 중 한글이 없던 3문장(BT8-001 · BT8-008 · BT10-011 "이 디지몬의 DP가 N 이상일 때")에 새로 붙었다. 새로 지원한 84문장 모두 생성 한글이 붙는다

@@ -44,6 +44,14 @@ public static partial class KoreanEffectRenderer
     /// <summary>절 하나 → 한글 (번역할 수 없으면 null)</summary>
     public static string? RenderClause(string rawClause)
     {
+        // v0.38.0 시큐리티 에어리어의 효과 표시 — 공식 BT20-052 "[시큐리티]【상대의 턴 종료 시】" (【시큐리티】 효과가 아니다)
+        if (Regex.IsMatch(rawClause.TrimStart(), @"^\[Security\]\s*\[End of Opponent's Turn\]", RegexOptions.IgnoreCase) && RenderClauseCore(rawClause) is { } zoneKo)
+            return Regex.Replace(zoneKo, @"^【시큐리티】\s*", "[시큐리티]");
+        return RenderClauseCore(rawClause);
+    }
+
+    private static string? RenderClauseCore(string rawClause)
+    {
         _mentionedTarget = false;
         _eventOther = false;
         _tamerSubject = false;
@@ -169,7 +177,9 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>문장 하나 → 한글 (마침표 없이)</summary>
-    private static string? Sentence(string s, bool nested = false)
+    private static string? Sentence(string s, bool nested = false) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested);   // v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
+
+    private static string? SentenceCore(string s, bool nested = false)
     {
         s = s.Trim().TrimEnd('.').Trim();
         Match m;
@@ -850,7 +860,9 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>비용 "~ing ..." → "~하는 것으로,"</summary>
-    private static string? CostKo(string cost)
+    private static string? CostKo(string cost) => CostKoCore(cost) ?? CostKo38(cost);   // v0.38.0 읽지 못한 비용만 (KoreanEffectRenderer.Batch38.cs)
+
+    private static string? CostKoCore(string cost)
     {
         cost = cost.Trim().TrimEnd('.');
         Match m;
@@ -1142,8 +1154,8 @@ public static partial class KoreanEffectRenderer
         if ((m = Regex.Match(cond, @"^you have another Digimon with the same name as this Digimon(?: in play)?$", RegexOptions.IgnoreCase)).Success)
             return Have("이 디지몬과 같은 명칭의 자신의 다른 디지몬이");
         if (Regex.IsMatch(cond, @"^(?:DNA digivolving|DigiXrosing|it DNA digivolved|this Digimon DNA digivolved)$", RegexOptions.IgnoreCase))
-            return new(cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화했을 때,", "조그레스 진화한 동안,");
-        return CondKo32(cond) ?? CondKo33(cond) ?? CondKo34(cond) ?? CondKo35(cond) ?? CondKo37(cond);   // v0.37.0 · v0.32.0 · v0.33.0
+            return new(cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화했을 때,", cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화하고 있었을 때,");
+        return CondKo32(cond) ?? CondKo33(cond) ?? CondKo34(cond) ?? CondKo35(cond) ?? CondKo37(cond) ?? CondKo38(cond);   // v0.38.0 · v0.37.0 · v0.32.0 · v0.33.0
     }
 
     /// <summary>"When ~," 사건 → "~했을 때,"</summary>
@@ -1578,7 +1590,7 @@ public static partial class KoreanEffectRenderer
             return $"서로의 시큐리티 {Per(m)}장마다";
         if ((m = Regex.Match(counter, $@"^(?<x>{TargetSpec.NameList}) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
             return $"이 디지몬의 진화원의 {NamesKo(m.Groups["x"].Value)} 1장마다";
-        return CounterKo32(counter) ?? CounterKo34(counter);   // v0.32.0 · v0.34.0
+        return CounterKo32(counter) ?? CounterKo34(counter) ?? CounterKo38(counter);   // v0.32.0 · v0.34.0 · v0.38.0
     }
 
     // =====================================================================
@@ -1727,6 +1739,7 @@ public static partial class KoreanEffectRenderer
                 list.Add($"이 디지몬보다 {(m.Groups["w"].Value.Equals("DP", StringComparison.OrdinalIgnoreCase) ? "DP가" : "Lv.이")} 낮은");
             else if (FilterKo34(rest) is { } f34) { m = f34.M; list.Add(f34.Ko); }   // v0.34.0 (KoreanEffectRenderer.Batch34.cs)
             else if (FilterKo35(rest) is { } f35) { m = f35.M; list.Add(f35.Ko); }   // v0.35.0
+            else if (FilterKo38(rest) is { } f38) { m = f38.M; list.Add(f38.Ko); }   // v0.38.0 (KoreanEffectRenderer.Batch38.cs)
             else return null;
             rest = rest[m.Length..].Trim().TrimStart(',').Trim();
         }

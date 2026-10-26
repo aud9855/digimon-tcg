@@ -261,6 +261,8 @@ public partial class GoldfishEngine
                 prevented |= RunEffects(EffectTrigger.AllyDigimonWouldLeave, zones, d, d.TopCard, other: inst).PreventLeave;
                 if (deletion && !prevented)
                     prevented |= RunEffects(EffectTrigger.AllyDigimonWouldBeDeleted, zones, d, d.TopCard, other: inst).PreventLeave;
+                if (!prevented && canPrevent)
+                    prevented |= GrantedGuardOrDecoy38(zones, d, inst, deletion, inBattle);   // v0.38.0 얻은 ≪가드≫ · ≪디코이≫
             }
             foreach (var card in zones.Tamers.Concat(zones.OptionsInPlay.Select(p => p.Card)).Distinct().ToList())
             {
@@ -784,12 +786,13 @@ public partial class GoldfishEngine
 
             // ≪천승≫ (종합 룰 16-43, 임의): 이 디지몬이 소멸했을 때, 이 카드를 시큐리티 위에 놓을 수 있다 (트래시에 있을 때만 — 다른 효과로 옮겨졌으면 못 한다)
             var top = instance.TopCard;
-            if (!IsToken(top) && CardScripts.For(top)?.Keywords.Contains(Keyword.Ascension) == true && zones.Trash.Contains(top) && !State.IsGameOver
+            if (!IsToken(top) && (CardScripts.For(top)?.Keywords.Contains(Keyword.Ascension) == true || instance.ActiveKeywords.Contains(Keyword.Ascension)) && zones.Trash.Contains(top) && !State.IsGameOver
                 && AskYesNo(zones, null, $"≪천승≫ [{top.Name}]을(를) 시큐리티 맨 위에 놓을까요?", recommended: true))
             {
                 zones.Trash.Remove(top);
                 zones.SecurityStack.Insert(0, top);
                 EffectLog(zones, $"[≪천승≫] [{top.Name}]을(를) 시큐리티 맨 위에 놓았습니다.");
+                if (instance.ActiveKeywords.Contains(Keyword.Ascension)) Diag38.Hit(ref Diag38.Ascension);
                 NotifySecurityAdded(zones, top);
             }
 
@@ -1898,6 +1901,7 @@ public partial class GoldfishEngine
             RunEffects(EffectTrigger.EndOfOpponentsTurn, owner, null, tamer, includeInherited: false);
         RunPlacedOptions(EffectTrigger.EndOfOpponentsTurn, owner);
         RunTrashEffects(EffectTrigger.EndOfOpponentsTurn, owner);   // v0.31.0 [트래시] [~ 시] 효과
+        PlayFaceUpSecurityAtEndOfOpponentTurn38(owner);   // v0.38.0 [시큐리티]【상대의 턴 종료 시】
         RunScheduledDeletions();   // "~ is deleted at the end of the turn" (이 효과로 등장한 디지몬) — 턴 종료 시의 마지막
         ExpireTamerProxies();   // v0.36.0 테이머의 디지몬 취급 기간 끝
         RecalculateFieldBuffs();

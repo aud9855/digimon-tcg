@@ -61,6 +61,8 @@ internal static partial class SentenceParser
         ["Armor Purge"] = Keyword.ArmorPurge, ["Fortitude"] = Keyword.Fortitude, ["Collision"] = Keyword.Collision, ["Scapegoat"] = Keyword.Scapegoat,
         ["Iceclad"] = Keyword.Iceclad, ["Progress"] = Keyword.Progress,
         ["Link +1"] = Keyword.LinkPlusOne, ["Vortex"] = Keyword.Vortex, ["Execute"] = Keyword.Execute, ["Engage"] = Keyword.Engage,
+        ["Guard"] = Keyword.Guard, ["Ascension"] = Keyword.Ascension,   // v0.38.0 얻는 ≪가드≫ · ≪천승≫
+        ["CanAttackUnsuspendedInternal"] = Keyword.CanAttackUnsuspended,   // v0.38.0 내부용: "gain ＜Piercing＞ and can also attack unsuspended Digimon" (ParseStatic38)
     };
 
     /// <summary>파싱한 절을 스크립트에 등록하는 일 (전부 읽은 뒤에만 등록한다)</summary>
@@ -188,6 +190,13 @@ internal static partial class SentenceParser
         if (Regex.IsMatch(clause, @"^＜Link \+\d+＞\.?$", RegexOptions.IgnoreCase))
         {
             if (inherited) def?.InheritedKeyword(Keyword.LinkPlusOne); else def?.Keyword(Keyword.LinkPlusOne);
+            return null;
+        }
+        // v0.38.0 "[Security] [End of Opponent's Turn] Play this card without paying the cost" (BT20-052 · BT20-055 · BT26-082 · EX11-041 · EX11-043 —
+        // 공식 "[시큐리티]【상대의 턴 종료 시】이 카드를 코스트를 지불하지 않고 등장시킨다", 종합 룰 15-14-5-1: 시큐리티에 앞면으로 있는 동안 유발)
+        if (Regex.IsMatch(clause, @"^\[Security\]\s*\[End of Opponent's Turn\]\s*Play this card without paying (?:the|its) (?:memory )?cost\.?$", RegexOptions.IgnoreCase) && card.Type is CardType.Digimon or CardType.Tamer && !inherited)
+        {
+            def?.SecurityPlayAtEndOfOpponentTurn38();
             return null;
         }
         // 떠나려 할 때 · 소멸하려 할 때 키워드: ≪디코드≫ · ≪파티션≫ · ≪프래그먼트≫ · ≪디코이≫ · ≪가드≫, [메인] ≪트레이닝≫
@@ -1606,6 +1615,8 @@ internal static partial class SentenceParser
             if (ParseStatic34(body, inherited, card, qualifier, alt, outer) == null) { pending.Registrations.AddRange(alt.Registrations); return null; }
             var multi = new Pending();
             if (ParseStaticMulti37(body, inherited, card, qualifier, multi, outer)) { pending.Registrations.AddRange(multi.Registrations); return null; }   // v0.37.0 "While ~. While ~." (EX8-029)
+            var s38 = new Pending();
+            if (ParseStatic38(body, inherited, card, qualifier, s38, outer)) { pending.Registrations.AddRange(s38.Registrations); return null; }   // v0.38.0 (Batch38b)
         }
         pending.Registrations.AddRange(trial.Registrations);
         return err;
@@ -1809,6 +1820,7 @@ internal static partial class SentenceParser
             else if (name.Equals("Link", StringComparison.OrdinalIgnoreCase) && m.Groups["num"].Value.Trim().StartsWith("+")) result.Add((Keyword.LinkPlusOne, 0));
             else if (name.StartsWith("Security A", StringComparison.OrdinalIgnoreCase))
                 result.Add((null, int.Parse(m.Groups["num"].Value.Replace(" ", "").Replace("−", "-"))));
+            else if (DecoyColors38(name) is { } decoy) result.AddRange(decoy.Select(k => ((Keyword?)k, 0)));   // v0.38.0 얻는 ≪디코이 (블랙)≫
             else return null;
             rest = rest[m.Length..].Trim();
         }
@@ -2331,6 +2343,13 @@ internal static partial class SentenceParser
 
     private static (Step? Step, string? Error) ParseStep(string sentence, CardData card, List<EffectTrigger> triggers)
     {
+        var r = ParseStepCore(sentence, card, triggers);
+        if (r.Error == null) return r;
+        return StepFallback38(sentence, card, triggers) ?? r;   // v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
+    }
+
+    private static (Step? Step, string? Error) ParseStepCore(string sentence, CardData card, List<EffectTrigger> triggers)
+    {
         string s = sentence.Trim();
         s = Regex.Replace(s, @"^Then,?\s+", "", RegexOptions.IgnoreCase);
         s = NormalizeStep35(s);   // v0.35.0 "This [X] trait Digimon unsuspends" → If ~
@@ -2390,7 +2409,9 @@ internal static partial class SentenceParser
             {
                 if (!PayOrSkip(c, canPay, recommend, describe)) { c.LastStepResolved = false; return; }
                 c.CostFailed = false;
+                var snap38 = RefSnap38.Take(c);   // v0.38.0 "the placed card" · "the deleted Digimon" — 비용이 옮긴 카드
                 pay(c);
+                if (snap38.Moved(c) is { } moved38) { c.RefCard38 = moved38.Card; c.RefDp38 = moved38.Dp; }
                 // v0.30.0: 비용을 다 내지 못했으면 (상대 디지몬 소멸이 막힘 등) 뒤는 처리하지 않는다 — 공식 Q&A EX13-015 (Q7247)
                 if (c.CostFailed) { c.CostFailed = false; c.LastStepResolved = false; c.Log($"[{c.Card.Name}] {describe} 하지 못해 뒤의 효과는 처리하지 않습니다"); return; }
                 RunStep(innerStep, c);
@@ -2455,6 +2476,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction35(s.TrimEnd('.'), card, triggers) is { } act35) act = act35;   // v0.35.0 (SentenceParser.Batch35.cs)
         if (act.Error != null && ParseAction36(s.TrimEnd('.'), card, triggers) is { } act36) act = act36;   // v0.36.0 (SentenceParser.Batch36.cs)
         if (act.Error != null && ParseAction37(s.TrimEnd('.'), card, triggers) is { } act37) act = act37;   // v0.37.0 (SentenceParser.Batch37.cs)
+        if (act.Error != null && ParseAction38(s.TrimEnd('.'), card, triggers) is { } act38) act = act38;   // v0.38.0 (SentenceParser.Batch38.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2527,7 +2549,7 @@ internal static partial class SentenceParser
         { int per = Per(m); return (o, e, _) => (o.Trash.Count + e.Trash.Count) / per; }
         if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?(?:total )?cards? in both players' security stacks$", RegexOptions.IgnoreCase)).Success)
         { int per = Per(m); return (o, e, _) => (o.SecurityStack.Count + e.SecurityStack.Count) / per; }
-        return ParseCounter32(counter) ?? ParseCounter34(counter) ?? ParseCounter35(counter);   // v0.35.0 뒷면 진화원 (Batch35)   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
+        return ParseCounter32(counter) ?? ParseCounter34(counter) ?? ParseCounter35(counter) ?? ParseCounter38(counter);   // v0.38.0 (Batch38b)   // v0.35.0 뒷면 진화원 (Batch35)   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
     }
 
     private static string Gerund(string verb) => verb.ToLowerInvariant() switch
@@ -2538,7 +2560,10 @@ internal static partial class SentenceParser
     };
 
     /// <summary>비용 구절 → (낼 수 있는지, 내기, AI 추천, 설명)</summary>
-    private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCost(string cost, CardData card)
+    private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCost(string cost, CardData card) =>
+        ParseCostCore(cost, card) ?? ParseCost38(cost, card);   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
+
+    private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCostCore(string cost, CardData card)
     {
         cost = cost.Trim();
         Match m;
@@ -3036,7 +3061,9 @@ internal static partial class SentenceParser
         return null;
     }
 
-    private static Func<EffectContext, bool>? ParseEventCondition(string cond)
+    private static Func<EffectContext, bool>? ParseEventCondition(string cond) => ParseEventConditionCore(cond) ?? ParseEventCondition38(cond);   // v0.38.0 읽지 못한 조건만 (Batch38b)
+
+    private static Func<EffectContext, bool>? ParseEventConditionCore(string cond)
     {
         cond = cond.Trim();
         if (ParseDigimonCondition(cond) is { } dc) return c => dc(c.Self);

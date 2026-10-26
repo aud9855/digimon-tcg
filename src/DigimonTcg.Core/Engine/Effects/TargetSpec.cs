@@ -10,7 +10,7 @@ namespace DigimonTcg.Core.Engine.Effects;
 /// 효과 문장의 대상 구절 — "1 of your opponent's Digimon with 4000 DP or less", "all of your opponent's level 4 or lower Digimon", "this Digimon" …
 /// 파서가 만들고, 효과를 처리할 때 Resolve로 실제 디지몬을 고른다.
 /// </summary>
-public sealed class TargetSpec
+public sealed partial class TargetSpec
 {
     public bool IsThis { get; private init; }
     /// <summary>"that Digimon" · "it" — 앞 문장의 대상 (EffectContext.LastTargets, 없으면 이 디지몬)</summary>
@@ -131,6 +131,7 @@ public sealed class TargetSpec
     private TargetSpec WithAnySide(string text)
     {
         var spec = new TargetSpec { AnySide = true, Count = Count, UpTo = UpTo, Text = text, Selector = Selector };
+        spec.UsesRef38 = UsesRef38;
         spec.Filters.AddRange(Filters);
         spec.ContextFilters.AddRange(ContextFilters);
         return spec;
@@ -259,6 +260,10 @@ public sealed class TargetSpec
             {
                 m = m34;   // v0.34.0 (아래 ParseFilter34)
             }
+            else if (ParseFilter38(rest, spec) is { } m38)
+            {
+                m = m38;   // v0.38.0 놓은 카드 · 소멸한 디지몬 등과 비교 (TargetSpec.Batch38.cs)
+            }
             else
             {
                 return false;
@@ -363,8 +368,12 @@ public sealed class TargetSpec
     /// 대상 고르기. harmful = 상대에게 불리한 효과(소멸 · DP − · 레스트 …)면 DP가 높은 것부터, 아니면 자신의 이 디지몬 → DP 높은 순.
     /// preferred = UI가 고른 대상 / 어택 중인 디지몬 (조건에 맞으면 먼저)
     /// </summary>
-    public List<CardInstance> Resolve(EffectContext c, CardInstance? preferred) =>
-        ResolveCore(c, preferred).Where(d => !c.Engine.IsUnaffectedBy(c.Owner, d)).ToList();   // ≪프로그레스≫: 어택 중이면 상대 효과를 받지 않는다
+    public List<CardInstance> Resolve(EffectContext c, CardInstance? preferred)
+    {
+        var list = ResolveCore(c, preferred).Where(d => !c.Engine.IsUnaffectedBy(c.Owner, d)).ToList();
+        if (UsesRef38 && list.Count > 0) Diag38.Hit(ref Diag38.RefCompare);   // v0.38.0 시뮬레이션 진단
+        return list;
+    }   // ≪프로그레스≫: 어택 중이면 상대 효과를 받지 않는다
 
     private List<CardInstance> ResolveCore(EffectContext c, CardInstance? preferred)
     {

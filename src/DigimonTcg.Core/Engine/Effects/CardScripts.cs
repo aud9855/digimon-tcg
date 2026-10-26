@@ -330,6 +330,13 @@ public sealed class CardScriptDefinition
         return this;
     }
 
+    /// <summary>v0.38.0 시큐리티(앞면)에서 상대의 턴 종료 시 이 카드를 코스트 없이 등장</summary>
+    public CardScriptDefinition SecurityPlayAtEndOfOpponentTurn38()
+    {
+        _script.SecurityPlayAtEndOfOpponentTurn38 = true;
+        return this;
+    }
+
     public CardScriptDefinition AllowBreedingActivation()
     {
         _script.ActivateInBreeding = true;

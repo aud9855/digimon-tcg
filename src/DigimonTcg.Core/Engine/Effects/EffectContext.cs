@@ -88,6 +88,11 @@ public sealed class EffectContext
     /// <summary>v0.34.0 "Choose 1 of your Digimon"으로 고른 디지몬 ("the chosen Digimon")</summary>
     internal CardInstance? Chosen34 { get; set; }
 
+    /// <summary>v0.38.0 비용이 옮긴 카드 ("the placed card" · "the returned card" · "the trashed card" · "the deleted Digimon") — RefSnap38</summary>
+    internal CardData? RefCard38 { get; set; }
+    /// <summary>v0.38.0 RefCard38의 DP (떠난 디지몬이면 떠나기 전 DP)</summary>
+    internal int RefDp38 { get; set; }
+
     /// <summary>앞 문장이 옮긴 카드 ("If it's a yellow card, ~" — 시큐리티에서 패에 넣은 카드 등)</summary>
     public CardData? LastCard { get; set; }
 

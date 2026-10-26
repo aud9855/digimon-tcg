@@ -171,6 +171,9 @@ public enum Keyword
     // v0.37.0
     CannotSuspend,                     // 레스트할 수 없다 (지속 효과 — "none of your opponent's Digimon can suspend" EX8-026, 어택도 할 수 없다)
     CannotActivateOnPlay,              // 【등장 시】 효과를 발휘할 수 없다 ("none of your opponent's Digimon can activate [On Play] effects" EX8-029)
+    // v0.38.0 얻는 ≪가드≫ · ≪디코이 (색)≫ — 카드에 적힌 것은 ParseLeaveKeyword가 효과로 등록한다
+    Guard,                             // ≪가드≫: 다른 자신의 디지몬이 상대의 효과로 떠날 때, 이 디지몬을 소멸시키는 것으로 떠나지 않는다
+    DecoyRed, DecoyBlue, DecoyYellow, DecoyGreen, DecoyBlack, DecoyPurple, DecoyWhite,   // ≪디코이 (색)≫: 그 색의 다른 자신의 디지몬이 상대의 효과로 소멸할 때
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>
@@ -303,6 +306,9 @@ public sealed class CardScript
 
     /// <summary>≪트레이닝≫ — 육성 에어리어에서도 [메인] 기동 효과를 쓸 수 있다</summary>
     public bool ActivateInBreeding { get; set; }
+
+    /// <summary>v0.38.0 "[Security] [End of Opponent's Turn] Play this card without paying the cost" — 시큐리티에 앞면으로 있는 동안 상대의 턴 종료 시 이 카드를 등장 (종합 룰 15-14-5-1)</summary>
+    public bool SecurityPlayAtEndOfOpponentTurn38 { get; set; }
 
     /// <summary>링크 조건 ("Link Requirements [Link] [Appmon] trait: Cost 2") — 이 카드를 링크할 수 있는 디지몬. null = 영어 데이터에 없음</summary>
     public Func<CardInstance, bool>? LinkRequirement { get; set; }
