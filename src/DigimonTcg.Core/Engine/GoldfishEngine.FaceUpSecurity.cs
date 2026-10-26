@@ -73,8 +73,11 @@ public partial class GoldfishEngine
     private void OnSecurityCardChecked(PlayerZones securityOwner, CardData card, CardInstance attacker)
     {
         LastCheckedWasFaceUp = securityOwner.FaceUpSecurity.Remove(card);
-        if (!LastCheckedWasFaceUp) return;
         var attackerOwner = EnemyOf(securityOwner);
+        // v0.33.0 "When this Digimon checks your opponent's security stack" — 체크할 때마다
+        if (attackerOwner.BattleArea.Contains(attacker))
+            FireForSide(EffectTrigger.AllyCheckedSecurity, attackerOwner, attacker, triggerCard: card);
+        if (!LastCheckedWasFaceUp) return;
         if (attackerOwner.BattleArea.Contains(attacker))
             FireForSide(EffectTrigger.AllyCheckedFaceUpSecurity, attackerOwner, attacker, triggerCard: card);
     }

@@ -346,7 +346,7 @@ internal static partial class SentenceParser
         var ignore = Regex.Match(clause, @"^While (?<cond>.+?), you (?:can|may) ignore this card's color requirements\.?$", RegexOptions.IgnoreCase);
         if (ignore.Success)
         {
-            var zoneCond = ParseZoneCondition(ignore.Groups["cond"].Value);
+            var zoneCond = ParseZoneCondition(ignore.Groups["cond"].Value) ?? IgnoreColorCondition33(ignore.Groups["cond"].Value);   // v0.33.0
             if (zoneCond == null) return $"미지원 조건 (색 조건 무시: {ignore.Groups["cond"].Value})";
             def?.IgnoreColorRequirementWhen(zoneCond);
             return null;
@@ -1312,7 +1312,7 @@ internal static partial class SentenceParser
                 && (!mine || ReferenceEquals(c.Engine.CurrentSourceEffectOwner, c.Owner))
                 && c.Engine.CurrentSourceCards.Any(what));
         }
-        return ParseEventPhrase31(ev) ?? ParseEventPhrase32(ev);   // v0.31.0 (SentenceParser.Batch31.cs) · v0.32.0 (SentenceParser.Batch32.cs)
+        return ParseEventPhrase31(ev) ?? ParseEventPhrase32(ev) ?? ParseEventPhrase33(ev);   // v0.31.0 (SentenceParser.Batch31.cs) · v0.32.0 (SentenceParser.Batch32.cs)
     }
 
     /// <summary>
@@ -1890,6 +1890,9 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, $@"^(?<who>you|your opponent) (?:(?<neg>don't|doesn't|do not|does not) )?ha(?:ve|s) (?:(?:a|an|any|another) )?(?<x>{TargetSpec.NameList})(?: card)?(?: in play)?$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); bool neg = m.Groups["neg"].Success; bool opp = m.Groups["who"].Value.Contains("opponent", StringComparison.OrdinalIgnoreCase);
+            // v0.33.0 "you have [Davis Motomiya] and [Ken Ichijoji] in play" (P-022) — "and"로 이은 이름은 둘 다 (공식 한글: "「최산해」와 「서정우」가 있을 때")
+            bool all = Regex.IsMatch(m.Groups["x"].Value, @"\] and \[", RegexOptions.IgnoreCase);
+            if (all) return (o, e) => { var z = opp ? e : o; return xs.All(x => z.BattleArea.Any(d => TargetSpec.NameHas(d.TopCard, x)) || z.Tamers.Any(t => TargetSpec.NameHas(t, x))) != neg; };
             return (o, e) => { var z = opp ? e : o; return xs.Any(x => z.BattleArea.Any(d => TargetSpec.NameHas(d.TopCard, x)) || z.Tamers.Any(t => TargetSpec.NameHas(t, x))) != neg; };
         }
         // "your opponent has a level 6 or higher Digimon in play" · "you have a Digimon with ＜Blocker＞ in play" · "you have a Digimon in play with [Omnimon] in its name"
@@ -2050,7 +2053,7 @@ internal static partial class SentenceParser
         { int n = int.Parse(m.Groups["n"].Value); return c => c.Owner.Trash.Count >= n; }
         if ((m = Regex.Match(cond, @"^your opponent has (?<n>\d+) or more cards in (?:their|your opponent's) trash$", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); return c => c.Enemy.Trash.Count >= n; }
-        return null;
+        return ParseStaticCondition33(cond);   // v0.33.0 (SentenceParser.Batch33b.cs)
     }
 
     // =====================================================================
@@ -2308,6 +2311,10 @@ internal static partial class SentenceParser
         if (ifm.Success)
         {
             cond = ParseEventCondition(ifm.Groups["c"].Value);
+            // v0.33.0 조건 안의 쉼표 목록 "If this Digimon has the [Angel], [Archangel] or [Three Great Angels] trait, ~" — 원래 나눈 조건을 읽지 못할 때만
+            if (cond == null && Regex.Match(s, IfWithListPattern, RegexOptions.IgnoreCase) is { Success: true } ifList && ifList.Groups["c"].Value != ifm.Groups["c"].Value
+                && ParseEventCondition(IfSubject33(ifList.Groups["c"].Value, triggers)) is { } listCond)
+            { cond = listCond; ifm = ifList; }
             if (cond == null) return (null, $"미지원 조건 (If {ifm.Groups["c"].Value})");
             s = ifm.Groups["rest"].Value;
         }
@@ -2412,6 +2419,7 @@ internal static partial class SentenceParser
 
         var act = ParseAction(s.TrimEnd('.'), card, triggers);
         if (act.Error != null && Compound32(s.TrimEnd('.'), card, triggers) is { } compound) act = compound;   // v0.32.0 "Suspend ~, and 1 of your Digimon gains ~" (SentenceParser.Batch32.cs)
+        if (act.Error != null && ParseAction33(s.TrimEnd('.'), card, triggers) is { } act33) act = act33;   // v0.33.0 (SentenceParser.Batch33.cs) — 원래 규칙이 읽지 못한 문장만
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2719,6 +2727,7 @@ internal static partial class SentenceParser
                         if (toEggDeck) GoldfishEngine.AddToDigitamaDeckBottom(c.Owner, picked);
                         else if (top) c.Owner.MainDeck.InsertRange(0, picked);
                         else c.Owner.MainDeck.AddRange(picked);
+                        if (!toEggDeck) c.Engine.NotifyTrashMoved(c.Owner, picked, toHand: false);   // v0.33.0 "When a card is returned to the deck from your trash"
                     },
                     c => c.Owner.Trash.Count(ok) >= n + 3, $"트래시의 카드 {n}장을 {(toEggDeck ? "디지타마 덱" : "덱")} {(top ? "위" : "아래")}로 되돌려");
         }
@@ -2828,10 +2837,10 @@ internal static partial class SentenceParser
         }
         // v0.31.0 "deleting this Tamer" (BT16-089) — 자신의 테이머가 소멸했을 때도 알린다
         if (Regex.IsMatch(cost, @"^deleting this Tamer$", RegexOptions.IgnoreCase) && card.Type == CardType.Tamer)
-            return (c => c.Owner.Tamers.Contains(c.Card), c => c.Engine.DeleteTamer(c.Owner, c.Card), _ => true, "이 테이머를 소멸시켜");
+            return (c => c.Owner.Tamers.Contains(c.Card), c => c.Engine.DeleteTamer(c.Owner, c.Card, canPrevent: false), _ => true, "이 테이머를 소멸시켜");
         if (Regex.IsMatch(cost, @"^returning this Tamer to the bottom of the deck$", RegexOptions.IgnoreCase) && card.Type == CardType.Tamer)
             return (c => c.Owner.Tamers.Contains(c.Card),
-                    c => { c.Owner.Tamers.Remove(c.Card); c.Owner.SuspendedTamers.Remove(c.Card); c.Owner.MainDeck.Add(c.Card); c.Engine.ClearUnderTamersIfNoTamer(c.Owner); },
+                    c => { c.Engine.TryPreventTamerLeave(c.Owner, c.Card, canPrevent: false, GoldfishEngine.LeaveDestination.Deck); c.Owner.Tamers.Remove(c.Card); c.Owner.SuspendedTamers.Remove(c.Card); c.Owner.MainDeck.Add(c.Card); c.Engine.ClearUnderTamersIfNoTamer(c.Owner); },
                     _ => true, "이 테이머를 덱 아래로 되돌려");
         if ((m = Regex.Match(cost, @"^paying (?<n>\d+) (?:memory|cost)$|^decreasing your memory by (?<n>\d+)$", RegexOptions.IgnoreCase)).Success)
         {
@@ -3085,7 +3094,8 @@ internal static partial class SentenceParser
         { int n = int.Parse(m.Groups["n"].Value); bool more = m.Groups["dir"].Value == "more"; return c => more ? c.Enemy.Hand.Count >= n : c.Enemy.Hand.Count <= n; }
         if ((m = Regex.Match(cond, @"^your opponent has (?<n>\d+) or (?<dir>fewer|less|more) memory$", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); bool more = m.Groups["dir"].Value == "more"; return c => more ? -c.OwnerMemory >= n : -c.OwnerMemory <= n; }
-        return ParseZoneCondition(cond) is { } zc ? c => zc(c.Owner) : null;   // 육성 에어리어 · 트래시 매수 등 자신의 영역 조건
+        if (ParseZoneCondition(cond) is { } zc) return c => zc(c.Owner);   // 육성 에어리어 · 트래시 매수 등 자신의 영역 조건
+        return ParseEventCondition33(cond);   // v0.33.0 (SentenceParser.Batch33b.cs)
     }
 
     // =====================================================================
@@ -3793,6 +3803,7 @@ internal static partial class SentenceParser
             {
                 int k = 0;
                 while (k < n && c.Enemy.SecurityStack.Count > 0) { var x = c.Enemy.SecurityStack[0]; c.Enemy.Trash.Add(x); c.Enemy.SecurityStack.RemoveAt(0); c.Engine.NotifySecurityRemoved(c.Enemy, x, trashed: true); k++; }
+                if (k == 0) c.LastStepResolved = false;   // v0.33.0 "If this effect didn't trash, ~"
                 Emit(c, label, $"상대 시큐리티 위에서 {k}장 파기");
             }, null);
         }
@@ -3887,6 +3898,8 @@ internal static partial class SentenceParser
                 var ranked = c.Owner.Trash.Where(match).OrderByDescending(x => x.Level).ThenByDescending(x => x.PlayCost).ToList();
                 var cards = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Trash, ranked, count, upTo, $"[{c.Card.Name}] 트래시에서 패로 되돌릴 카드를 {(upTo ? $"{count}장까지" : $"{count}장")} 고르세요.");
                 foreach (var card in cards) { c.Owner.Trash.Remove(card); c.Owner.Hand.Add(card); }
+                if (cards.Count == 0) c.LastStepResolved = false;   // v0.33.0 "If this effect didn't return, ~"
+                else c.Engine.NotifyTrashMoved(c.Owner, cards, toHand: true);   // v0.33.0 "When a red card returns from your trash to the hand"
                 Emit(c, label, cards.Count > 0 ? $"트래시의 [{string.Join(", ", cards.Select(x => x.Name))}] 패로 회수" : "회수할 카드가 없습니다");
             }, null);
         }
@@ -4085,6 +4098,7 @@ internal static partial class SentenceParser
             {
                 var list = Pick(target, c, security);
                 foreach (var d in list) c.Engine.ReturnToHand(c.Engine.OwnerOf(d), d);
+                if (list.All(d => c.Owner.BattleArea.Contains(d) || c.Enemy.BattleArea.Contains(d))) c.LastStepResolved = false;   // v0.33.0 되돌리지 못했다 (대상 없음 · 막힘)
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] 패로" : "대상이 없습니다", attackerRemoved: list.Contains(c.Other!));
             }, null);
         }
@@ -4096,6 +4110,7 @@ internal static partial class SentenceParser
             {
                 var list = Pick(target, c, security);
                 foreach (var d in list) c.Engine.BottomDeck(c.Engine.OwnerOf(d), d);
+                if (list.All(d => c.Owner.BattleArea.Contains(d) || c.Enemy.BattleArea.Contains(d))) c.LastStepResolved = false;   // v0.33.0
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] 덱 아래로" : "대상이 없습니다", attackerRemoved: list.Contains(c.Other!));
             }, null);
         }

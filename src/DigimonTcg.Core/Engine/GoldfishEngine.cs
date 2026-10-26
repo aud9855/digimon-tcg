@@ -824,7 +824,9 @@ public partial class GoldfishEngine
             var securityCard = opp.SecurityStack[0];
             opp.SecurityStack.RemoveAt(0);
             OnSecurityCardChecked(opp, securityCard, attacker);   // 앞면 카드 체크 효과
-            NotifySecurityRemoved(opp, securityCard);   // 앞면 체크 처리 뒤에 "시큐리티가 빠졌을 때"
+            _securityCheckRemoval = true;
+            try { NotifySecurityRemoved(opp, securityCard); }   // 앞면 체크 처리 뒤에 "시큐리티가 빠졌을 때"
+            finally { _securityCheckRemoval = false; }
             State.LastRevealedSecurityCard = securityCard;
 
             // [공식 룰 A] [시큐리티] 효과가 있는 테이머 → 배틀 없이 코스트 없이 상대 필드에 등장 (효과가 없으면 아래에서 트래시)
@@ -1463,7 +1465,9 @@ public partial class GoldfishEngine
             var mySec = State.Player.SecurityStack[0];
             State.Player.SecurityStack.RemoveAt(0);
             OnSecurityCardChecked(State.Player, mySec, aiAttacker);   // 앞면 카드 체크 효과
-            NotifySecurityRemoved(State.Player, mySec);
+            _securityCheckRemoval = true;
+            try { NotifySecurityRemoved(State.Player, mySec); }
+            finally { _securityCheckRemoval = false; }
 
             // 1) 내 시큐리티에서 [시큐리티] 효과가 있는 [테이머]가 나온 경우 -> 코스트 지불 없이 내 테이머 존에 무료 등장!
             if (mySec.Type == CardType.Tamer && EffectRules.HasSecurityEffect(mySec))

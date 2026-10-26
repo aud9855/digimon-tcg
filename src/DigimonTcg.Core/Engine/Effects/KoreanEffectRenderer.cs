@@ -45,6 +45,8 @@ public static partial class KoreanEffectRenderer
     public static string? RenderClause(string rawClause)
     {
         _mentionedTarget = false;
+        _eventOther = false;
+        _tamerSubject = false;
         string clause = SentenceParser.NormalizeForRender(rawClause);
         _leaveKind = LeaveKindOf(clause);   // v0.32.0 "Prevent it"의 한글 (벗어나지 / 소멸하지 / 소멸하지 않고, 패/덱으로 되돌아가지)
         clause = Regex.Replace(clause, @"^(?:Inherited|Security) Effect\s*", "", RegexOptions.IgnoreCase).Trim();
@@ -186,8 +188,18 @@ public static partial class KoreanEffectRenderer
         // "If ~," / "While ~,"
         if ((m = Regex.Match(s, @"^(?<w>If|While) (?<c>[^,]+), (?<rest>.+)$", RegexOptions.IgnoreCase)).Success)
         {
-            if (CondKo(m.Groups["c"].Value) is not { } c) return null;
-            if (Sentence(Cap(m.Groups["rest"].Value), nested: true) is not { } r) return null;
+            var c = CondKo(m.Groups["c"].Value);
+            // v0.33.0 조건 안의 쉼표 목록 "If this Digimon has the [Angel], [Archangel] or [Three Great Angels] trait, ~" (SentenceParser.ParseStep과 같은 읽기)
+            if (c == null && Regex.Match(s, SentenceParser.IfWithListPattern, RegexOptions.IgnoreCase) is { Success: true } il && il.Groups["c"].Value != m.Groups["c"].Value
+                && CondKo(_eventOther && Regex.IsMatch(il.Groups["c"].Value, @"^it (?:has|have|is)\b", RegexOptions.IgnoreCase) ? "that Digimon" + il.Groups["c"].Value[2..] : il.Groups["c"].Value) is { } lc)
+            { c = lc; m = il; }
+            if (c == null) return null;
+            var r = Sentence(Cap(m.Groups["rest"].Value), nested: true);
+            // v0.33.0 앞의 조건이 쉼표 목록 앞에서 끊겨도 읽혔을 때 ("While you have a level 5 [WarGrowlmon], [Taomon] or [Rapidmon], ~") — 목록까지 넓혀 다시
+            if (r == null && Regex.Match(s, SentenceParser.IfWithListPattern, RegexOptions.IgnoreCase) is { Success: true } il2 && il2.Groups["c"].Value != m.Groups["c"].Value
+                && CondKo(il2.Groups["c"].Value) is { } lc2 && Sentence(Cap(il2.Groups["rest"].Value), nested: true) is { } r2)
+            { c = lc2; m = il2; r = r2; }
+            if (r == null) return null;
             return $"{(m.Groups["w"].Value.Equals("While", StringComparison.OrdinalIgnoreCase) ? c.While : nested ? c.Then : c.If)} {r}";
         }
         // "When ~," (문장 안의 발동 시점)
@@ -199,6 +211,8 @@ public static partial class KoreanEffectRenderer
                 m = wl;
             string? ev = EventKo(m.Groups["ev"].Value) ?? (CondKo(m.Groups["ev"].Value)?.While);
             if (ev == null) return null;
+            // v0.33.0 사건의 디지몬이 있는 사건 — 뒤 조건의 "it"은 그 디지몬 (SentenceParser.IfSubject33)
+            _eventOther = Regex.IsMatch(m.Groups["ev"].Value, @"\b(?:played|digivolves?|attacks?)\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(m.Groups["ev"].Value, @"^this \w+ (?:attacks|digivolves)", RegexOptions.IgnoreCase);
             // "When an opponent's Digimon attacks, trash its bottom 2 ~" — 사건의 디지몬이 뒤의 "it" (공식 BT14-019: "그 디지몬의 진화원을")
             if (Regex.IsMatch(m.Groups["ev"].Value, @"^(?:an|one of your|any of your) opponent's [^,]*Digimon (?:attacks?|is played|are played|digivolves?)$", RegexOptions.IgnoreCase))
                 _mentionedTarget = true;
@@ -262,11 +276,11 @@ public static partial class KoreanEffectRenderer
         if (mult.Success && CounterKo(mult.Groups["cnt"].Value) is { } mc && Action(Cap(mult.Groups["core"].Value) + mult.Groups["dur"].Value, may ? Form.May : Form.Plain) is { } ma)
             return $"{mc} {ma}";
 
-        var direct = Action(s, may ? Form.May : Form.Plain);
+        var direct = Action(s, may ? Form.May : Form.Plain) ?? (may ? null : SentenceKo33(s, false));   // v0.33.0
         // "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ ~" — 주어 뒤의 may (SentenceParser.ParseStep과 같은 읽기)
         if (direct == null && !may && Regex.Match(s, @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } sm)
             return Action($"{sm.Groups["t"].Value} {sm.Groups["v"].Value}s{sm.Groups["rest"].Value}", Form.May);
-        return direct;
+        return direct ?? (may ? SentenceKo33(s, true) : null);   // v0.33.0 (KoreanEffectRenderer.Batch33.cs)
     }
 
     // =====================================================================
@@ -909,7 +923,7 @@ public static partial class KoreanEffectRenderer
             if (Core(verb + m.Groups["rest"].Value) is { } p)
                 return p.Render(Form.By) + ",";
         }
-        return CostKo32(cost);   // v0.32.0 (KoreanEffectRenderer.Batch32.cs)
+        return CostKo32(cost) ?? CostKo33(cost);   // v0.32.0 (KoreanEffectRenderer.Batch32.cs) · v0.33.0 (Batch33)
     }
 
     // =====================================================================
@@ -1111,7 +1125,7 @@ public static partial class KoreanEffectRenderer
             return Have("이 디지몬과 같은 명칭의 자신의 다른 디지몬이");
         if (Regex.IsMatch(cond, @"^(?:DNA digivolving|DigiXrosing|it DNA digivolved|this Digimon DNA digivolved)$", RegexOptions.IgnoreCase))
             return new(cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화했을 때,", "조그레스 진화한 동안,");
-        return CondKo32(cond);   // v0.32.0
+        return CondKo32(cond) ?? CondKo33(cond);   // v0.32.0 · v0.33.0
     }
 
     /// <summary>"When ~," 사건 → "~했을 때,"</summary>
@@ -1464,7 +1478,7 @@ public static partial class KoreanEffectRenderer
                 return m.Groups["mine"].Success ? $"자신의 효과로 {host}의 진화원이 늘어났을 때," : $"{host}의 진화원이 효과로 늘어났을 때,";
             return $"{(m.Groups["mine"].Success ? "자신의 효과로 " : "")}{host}의 진화원에 {card}{J(card, "이", "가")} {(byEffect && !m.Groups["mine"].Success ? "효과로 " : "")}놓였을 때,";
         }
-        return EventKo31(ev) ?? EventKo32(ev);   // v0.31.0 (KoreanEffectRenderer.Batch31.cs) · v0.32.0 (Batch32)
+        return EventKo31(ev) ?? EventKo32(ev) ?? EventKo33(ev);   // v0.31.0 (KoreanEffectRenderer.Batch31.cs) · v0.32.0 (Batch32)
     }
 
     /// <summary>벗어날 때 · 소멸할 때의 단서 → "자신의 효과 이외로 " · "배틀 이외로 " · "배틀에서 " · "상대의 효과로 " (빈 단서 = "", 모르면 null)</summary>
@@ -1634,6 +1648,7 @@ public static partial class KoreanEffectRenderer
             {
                 string prev = list[^1];
                 list[^1] = prev.EndsWith("포함하는") ? prev[..^2] + "하거나" : prev.EndsWith("가진") ? prev[..^2] + "가지거나"
+                    : prev.EndsWith("제외)하는") ? prev[..^2] + "하거나"
                     : prev.EndsWith("있는") ? prev[..^2] + "있거나" : prev.EndsWith("인") ? prev[..^1] + "이거나" : prev;
             }
             if ((m = Regex.Match(rest, @"^(?:with |that has |that have |and |or )?(?:(?:a|an) )?(?<n>\d+) DP or (?<dir>less|more)", RegexOptions.IgnoreCase)).Success)
@@ -1661,8 +1676,18 @@ public static partial class KoreanEffectRenderer
                 list.Add($"{m.Groups["n"].Value}색 이상인");
             else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?<x>{TargetSpec.NameList}) in (?:its|their) names?", RegexOptions.IgnoreCase)).Success)
             { string x = NamesKo(m.Groups["x"].Value); list.Add($"명칭에 {x}{J(x, "을", "를")} 포함하는"); }
+            // v0.33.0 — 공식 (BT13-048 · BT23-078 · EX4-064): "특징으로 「수」/「짐승」을 포함(「수생형」은 제외)하거나" · "~ 또는 특징으로 「조」/「새」를 포함하는"
+            else if ((m = Regex.Match(rest, $@"^or (?<x>{TargetSpec.NameList}) in any of (?:its|their) traits(?: other than (?<ex>{TargetSpec.NameList}))?|^with (?<x>{TargetSpec.NameList}) in any of (?:its|their) traits other than (?<ex>{TargetSpec.NameList})", RegexOptions.IgnoreCase)).Success)
+            {
+                string x = NamesKo(m.Groups["x"].Value, trait: true);
+                string ex = m.Groups["ex"].Success ? $"({NamesKo(m.Groups["ex"].Value, trait: true)}은 제외)" : "";
+                list.Add($"특징으로 {x}{J(x, "을", "를")} 포함{ex}하는");
+            }
             else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?:the )?(?<x>{TargetSpec.NameList}) traits?|^with (?<x>{TargetSpec.NameList}) in any of its traits", RegexOptions.IgnoreCase)).Success)
             { string x = NamesKo(m.Groups["x"].Value, trait: true); list.Add($"특징으로 {x}{J(x, "을", "를")} 가진"); }
+            // v0.33.0 — 공식 (BT17-090): "진화원에 테이머 카드가 있는"
+            else if ((m = Regex.Match(rest, @"^(?:with |that has |and )?(?:a|an) (?<kind>Tamer|Option|Digimon) card in its digivolution cards", RegexOptions.IgnoreCase)).Success)
+                list.Add($"진화원에 {(m.Groups["kind"].Value.ToLowerInvariant() switch { "tamer" => "테이머", "option" => "옵션", _ => "디지몬" })} 카드가 있는");
             else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?<x>{TargetSpec.NameList}) in (?:its|their) texts?", RegexOptions.IgnoreCase)).Success)
             { string x = NamesKo(m.Groups["x"].Value); list.Add($"{x}{J(x, "이", "가")} 기술되어 있는"); }
             else if ((m = Regex.Match(rest, @"^(?<neg>with|without|that (?:has|have)|that (?:doesn't|don't) have) ＜(?<k>[^＞]+?)\s*＞(?:\s*or\s*＜(?<k2>[^＞]+?)\s*＞)?", RegexOptions.IgnoreCase)).Success)
@@ -1739,14 +1764,15 @@ public static partial class KoreanEffectRenderer
         if (nm.Success)
             return $"{NamesKo(nm.Groups["names"].Value)} {Count(nm)}";
         var m = Regex.Match(part,
-            $@"^(?<up>up to )?(?<n>\d+|a|an|all) (?<adj>(?:(?:{TargetSpec.NameList}(?: traits?)?|level \d+(?: or (?:lower|higher|(?:level )?\d+))?|play costs? \d+ or (?:lower|higher|less|more)|(?:{Colors})(?:(?:,| or| and/or|/) (?:{Colors}))*)\s+)*)(?<kind>Digimon|Tamer|Option)?\s*(?:cards?)?(?<filter>.*)$",
+            $@"^(?<up>up to )?(?<n>\d+|a|an|all) (?<adj>(?:(?:{TargetSpec.NameList}(?: traits?)?|level \d+(?: or (?:lower|higher|(?:level )?\d+))?|play costs? \d+ or (?:lower|higher|less|more)|single-colou?r|(?:{Colors})(?:(?:,| or| and/or|/) (?:{Colors}))*)\s+)*)(?<kind>Digimon|Tamer|Option)?\s*(?:cards?)?(?<filter>.*)$",
             RegexOptions.IgnoreCase);
         if (!m.Success) return null;
         var mods = new List<string>();
         var colorMods = new List<string>();
-        foreach (Match a in Regex.Matches(m.Groups["adj"].Value, $@"(?<names>{TargetSpec.NameList})(?<trait> traits?)?|level (?<lv>\d+)(?: or (?:(?<dir>lower|higher)|(?:level )?(?<lv2>\d+)))?|play costs? (?<pc>\d+) or (?<pdir>lower|higher|less|more)|(?<colors>(?:{Colors})(?:(?:,| or| and/or|/) (?:{Colors}))*)", RegexOptions.IgnoreCase))
+        foreach (Match a in Regex.Matches(m.Groups["adj"].Value, $@"(?<names>{TargetSpec.NameList})(?<trait> traits?)?|level (?<lv>\d+)(?: or (?:(?<dir>lower|higher)|(?:level )?(?<lv2>\d+)))?|play costs? (?<pc>\d+) or (?<pdir>lower|higher|less|more)|(?<single>single-colou?r)|(?<colors>(?:{Colors})(?:(?:,| or| and/or|/) (?:{Colors}))*)", RegexOptions.IgnoreCase))
         {
-            if (a.Groups["names"].Success)
+            if (a.Groups["single"].Success) mods.Add("1색의");   // v0.33.0 (LM-023)
+            else if (a.Groups["names"].Success)
             {
                 string x = NamesKo(a.Groups["names"].Value, trait: a.Groups["trait"].Success);
                 mods.Add(a.Groups["trait"].Success ? $"특징으로 {x}{J(x, "을", "를")} 가진" : $"{x}인");

@@ -318,7 +318,7 @@ internal static partial class SentenceParser
                         { var x = z.SecurityStack[0]; z.SecurityStack.RemoveAt(0); z.Trash.Add(x); c.Engine.NotifySecurityRemoved(z, x, trashed: true); }
                     },
                     c => c.Owner.SecurityStack.Count > 1, "서로의 시큐리티를 위에서부터 1장 파기하여");
-        return null;
+        return ParseCost33(cost, card);   // v0.33.0 (SentenceParser.Batch33.cs)
     }
 
     /// <summary>v0.32.0 동작 (앞의 ParseAction보다 먼저 본다 — 지금까지 읽지 못하던 표기만)</summary>

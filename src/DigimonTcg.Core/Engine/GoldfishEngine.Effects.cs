@@ -217,7 +217,11 @@ public partial class GoldfishEngine
     internal PlayerZones? CurrentEffectOwner { get; private set; }
 
     /// <summary>지금 배틀 에어리어를 떠나려는 디지몬의 사정 ("would leave the battle area / be deleted" 효과의 조건이 본다)</summary>
-    internal sealed record LeaveInfo(CardInstance Digimon, bool Deletion, bool InBattle, bool ByOwnEffect, bool CanPrevent = true, LeaveDestination Destination = LeaveDestination.Other);
+    internal sealed record LeaveInfo(CardInstance Digimon, bool Deletion, bool InBattle, bool ByOwnEffect, bool CanPrevent = true, LeaveDestination Destination = LeaveDestination.Other)
+    {
+        /// <summary>v0.33.0 떠나려는 것이 테이머 (Digimon = 그 테이머 카드만 든 가짜 디지몬)</summary>
+        public bool IsTamer { get; init; }
+    }
 
     /// <summary>v0.32.0 떠나는 곳 ("would be deleted or returned to your hand or deck" 같은 조건이 본다)</summary>
     internal enum LeaveDestination { Other, Deleted, Hand, Deck, Security }
@@ -726,6 +730,7 @@ public partial class GoldfishEngine
         while (instance.EvolutionSources.Count > 0)
             zones.Trash.Add(instance.EvolutionSources.Pop());
         PurgeTokens(zones);
+        NotifyLeftBattleArea(zones, instance);   // v0.33.0 "When any of your opponent's Digimon leave the battle area"
 
         // [소멸 시] · "소멸했을 때" · ≪불굴≫ — 효과 처리 중이면 그 효과가 끝난 뒤에
         RunOrDefer(() =>
@@ -1025,6 +1030,8 @@ public partial class GoldfishEngine
             zones.Trash.Add(inst.EvolutionSources.Pop());
         zones.Hand.Add(inst.TopCard);
         PurgeTokens(zones);
+        NotifyLeftBattleArea(zones, inst);   // v0.33.0
+        if (!IsToken(inst.TopCard)) NotifyReturnedToHand(zones, inst);   // v0.33.0 "When another Digimon is returned to the hand"
         FireForSide(EffectTrigger.OpponentHandAddedByEffect, EnemyOf(zones), null, triggerCard: inst.TopCard);   // "When an effect adds cards to your opponent's hand"
     }
 
@@ -1108,6 +1115,7 @@ public partial class GoldfishEngine
             zones.MainDeck.Add(s);
         inst.EvolutionSources.Clear();
         PurgeTokens(zones);
+        NotifyLeftBattleArea(zones, inst);   // v0.33.0
     }
 
     /// <summary>디지몬을 주인의 시큐리티 맨 위에 뒷면으로 (맨 위 카드만 — 진화원은 트래시)</summary>
@@ -1127,6 +1135,7 @@ public partial class GoldfishEngine
             NotifySecurityAdded(zones, inst.TopCard);
         }
         PurgeTokens(zones);
+        NotifyLeftBattleArea(zones, inst);   // v0.33.0
     }
 
     /// <summary>진화원을 위에서부터 count장 파기. 반환: 파기한 카드</summary>
@@ -1255,14 +1264,30 @@ public partial class GoldfishEngine
         EffectLog(owner, $"[효과로 진화] [{evoCard.Name}(Lv.{evoCard.Level})] (코스트 {cost})");
         if (owner.BattleArea.Contains(target))
         {
-            ApplyWhenDigivolvingEffects(owner, target, evoCard);
-            _digivolvingByEffect++;   // v0.31.0 "When effects digivolve your opponent's Digimon"
-            try { FireForSide(EffectTrigger.AllyDigimonDigivolved, owner, target); }
-            finally { _digivolvingByEffect--; }
+            bool fromTrash = ReferenceEquals(from, owner.Trash);   // v0.33.0 "When any of your Digimon digivolve from the trash" · "this card is digivolving from the trash"
+            if (fromTrash) _digivolvingFromTrash++;
+            try
+            {
+                _whenDigivolvingByEffect++;   // v0.33.0 [진화 시] "If played or digivolved by effects"
+                try { ApplyWhenDigivolvingEffects(owner, target, evoCard); }
+                finally { _whenDigivolvingByEffect--; }
+                _digivolvingByEffect++;   // v0.31.0 "When effects digivolve your opponent's Digimon"
+                try { FireForSide(EffectTrigger.AllyDigimonDigivolved, owner, target); }
+                finally { _digivolvingByEffect--; }
+            }
+            finally { if (fromTrash) _digivolvingFromTrash--; }
         }
     }
 
     private int _digivolvingByEffect;
+    private int _whenDigivolvingByEffect;
+    private int _digivolvingFromTrash;
+
+    /// <summary>v0.33.0 지금 알리는 진화([진화 시] · 진화했을 때)가 트래시의 카드로 진화한 것인지</summary>
+    internal bool DigivolvingFromTrash => _digivolvingFromTrash > 0;
+
+    /// <summary>v0.33.0 지금 발휘하는 [진화 시]가 효과로 진화한 것인지 ("If played or digivolved by effects")</summary>
+    internal bool WhenDigivolvingByEffect => _whenDigivolvingByEffect > 0;
 
     /// <summary>지금 알리는 진화가 효과로 진화한 것인지 (v0.31.0)</summary>
     internal bool DigivolvingByEffect => _digivolvingByEffect > 0;
@@ -1503,6 +1528,20 @@ public partial class GoldfishEngine
     /// </summary>
     internal void NotifySecurityRemoved(PlayerZones zones, CardData? card = null, bool trashed = false)
     {
+        var (outerEffect, outerTrashed) = (SecurityRemovedByEffect, SecurityRemovedTrashed);
+        SecurityRemovedByEffect = !_securityCheckRemoval;   // v0.33.0 "When an effect removes cards from your security stack" · "When a card is trashed from your security stack by an effect"
+        SecurityRemovedTrashed = trashed;
+        try { NotifySecurityRemovedCore(zones, card, trashed); }
+        finally { (SecurityRemovedByEffect, SecurityRemovedTrashed) = (outerEffect, outerTrashed); }
+    }
+
+    /// <summary>v0.33.0 지금 알리는 "시큐리티가 빠졌다"가 효과로 빠진 것인지 (체크가 아님) · 파기된 것인지</summary>
+    internal bool SecurityRemovedByEffect { get; private set; }
+    internal bool SecurityRemovedTrashed { get; private set; }
+    private bool _securityCheckRemoval;
+
+    private void NotifySecurityRemovedCore(PlayerZones zones, CardData? card, bool trashed)
+    {
         FireForSide(EffectTrigger.AllySecurityRemoved, zones, null, triggerCard: card);
         FireForSide(EffectTrigger.OpponentSecurityRemoved, EnemyOf(zones), null, triggerCard: card);
         // 효과가 시큐리티에서 직접 파기한 카드 자신의 "When an effect trashes this card from the security stack" (v0.29.0)
@@ -1540,8 +1579,11 @@ public partial class GoldfishEngine
     internal PlayerZones? ThisTrashedByOwner { get; private set; }
 
     /// <summary>zones의 시큐리티에 카드가 놓였다 (≪리커버리≫ 등) — "When a card is added to your security stack"</summary>
-    internal void NotifySecurityAdded(PlayerZones zones, CardData? card = null) =>
+    internal void NotifySecurityAdded(PlayerZones zones, CardData? card = null)
+    {
         FireForSide(EffectTrigger.AllySecurityAdded, zones, null, triggerCard: card);
+        FireForSide(EffectTrigger.OpponentSecurityAdded, EnemyOf(zones), null, triggerCard: card);   // v0.33.0 "When a card is added to your opponent's security stack"
+    }
 
     /// <summary>owner 쪽 디지몬(메인 · 진화원)과 테이머 전부에 trigger 시점을 알린다 (other = 그 일을 일으킨 디지몬)</summary>
     internal void FireForSide(EffectTrigger trigger, PlayerZones owner, CardInstance? other, CardData? triggerCard = null)
@@ -1642,8 +1684,11 @@ public partial class GoldfishEngine
     }
 
     /// <summary>테이머를 소멸시킨다 (효과 · 비용) + "자신의 테이머가 소멸했을 때" (v0.31.0) — 디지몬 소멸처럼 효과 처리 중이면 끝난 뒤에</summary>
-    internal void DeleteTamer(PlayerZones owner, CardData tamer)
+    internal void DeleteTamer(PlayerZones owner, CardData tamer, bool canPrevent = true)
     {
+        // v0.33.0 "When any of your Digimon or Tamers would leave the battle area" — 비용으로 소멸시키는 것은 막을 수 없다
+        if (TryPreventTamerLeave(owner, tamer, canPrevent, LeaveDestination.Deleted) && canPrevent)
+            return;
         if (!owner.Tamers.Remove(tamer))
             return;
         owner.SuspendedTamers.Remove(tamer);

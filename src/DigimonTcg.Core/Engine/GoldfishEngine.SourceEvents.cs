@@ -185,6 +185,7 @@ public partial class GoldfishEngine
             {
                 CurrentSourceCards = added;
                 FireForSide(EffectTrigger.AllySourcesAdded, zones, digimon, triggerCard: added[0]);
+                FireForSide(EffectTrigger.OpponentSourcesAdded, EnemyOf(zones), digimon, triggerCard: added[0]);   // v0.33.0
             }
         }
         finally

@@ -93,6 +93,17 @@ public enum EffectTrigger
     AllyLinkCardsTrashed,           // 효과로 자신의 디지몬의 링크 카드가 파기되었을 때 (Other = 그 디지몬)
     OpponentDeckTrashed,            // 상대의 덱에서 카드가 파기되었을 때 (TriggerCard)
     Counter,                        // 【카운터】 (종합 룰 11-3): 상대의 디지몬이 어택했을 때 어택받는 쪽이 어택 1번에 1개 발휘할 수 있다 (Other = 어택한 디지몬)
+    // v0.33.0
+    AllyTamerWouldLeave,            // 자신의 테이머가 배틀 에어리어를 떠나려 할 때 (Other = 그 테이머만 든 가짜 디지몬 — GoldfishEngine.CurrentLeave.IsTamer, PreventLeave로 막는다)
+    AllyTamerReturnedToHand,        // 자신의 테이머가 패로 되돌아갔을 때 (TriggerCard = 그 테이머)
+    AllyDigimonLeft,                // 자신의 디지몬이 배틀 에어리어를 떠났을 때 (소멸 · 패 · 덱 · 시큐리티 · 진화원으로, Other = 그 디지몬)
+    OpponentDigimonLeft,            // 상대의 디지몬이 배틀 에어리어를 떠났을 때 (Other)
+    DigimonReturnedToHand,          // 어느 쪽이든 디지몬이 패로 되돌아갔을 때 (Other = 그 디지몬)
+    AllyCheckedSecurity,            // 자신의 디지몬이 시큐리티를 1장 체크했을 때 (Other = 체크한 디지몬, TriggerCard = 그 카드)
+    OpponentSecurityAdded,          // 상대의 시큐리티에 카드가 놓였을 때 (TriggerCard)
+    OpponentSourcesAdded,           // 효과로 상대의 디지몬의 진화원에 카드가 놓였을 때 (Other = 그 디지몬)
+    AllyTrashToHand,                // 자신의 트래시에서 카드가 효과로 패에 되돌아갔을 때 (GoldfishEngine.CurrentMovedCards = 그 카드)
+    AllyTrashToDeck,                // 자신의 트래시에서 카드가 덱으로 되돌아갔을 때 (CurrentMovedCards)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>

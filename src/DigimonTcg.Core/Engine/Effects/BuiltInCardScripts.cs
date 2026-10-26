@@ -907,7 +907,7 @@ internal static class BuiltInCardScripts
             {
                 c.Engine.Unsuspend(c.Self!);
                 c.Log("👑 [진화 시] 오메가몬: 액티브 상태가 됩니다");
-                if (c.Engine.TryGrantBlitz(c.Owner, c.Self))
+                if (c.Engine.TryGrantBlitz(c.Owner, c.Self!))
                     c.Log("👑 [진화 시] 오메가몬: ≪진격≫ — 상대 쪽 메모리가 1 이상이어서 이 디지몬으로 어택할 수 있습니다");
             });
     }
