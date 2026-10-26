@@ -273,16 +273,16 @@ internal static class BuiltInCardScripts
         b.Card("ST2-15")
             .Main(TargetKind.OwnDigimonWithDigimonSource, c =>
             {
-                var ally = c.PickOwn(d => d.EvolutionSources.Any(IsDigimon), AllyTarget(c));
-                var card = ally?.TakeSource(s => IsDigimon(s) && s.Level == ally.EvolutionSources.Where(IsDigimon).Max(x => x.Level));
+                var ally = c.PickOwn(d => d.SourcesAny(IsDigimon), AllyTarget(c));
+                var card = ally?.TakeSource(s => !ally.IsFaceDown(s) && IsDigimon(s) && s.Level == ally.SourcesWhere(IsDigimon).Max(x => x.Level));
                 if (ally == null || card == null) return;
                 c.PlayWithoutCost(card);
                 c.Message = $"❄️ 카이저 네일: [{ally.TopCard.Name}]의 진화원 [{card.Name}(Lv.{card.Level})]이(가) 코스트 없이 등장!";
             })
             .Security(c =>
             {
-                var host = c.Owner.BattleArea.FirstOrDefault(d => d.EvolutionSources.Any(IsDigimon));
-                var card = host?.TakeSource(IsDigimon);
+                var host = c.Owner.BattleArea.FirstOrDefault(d => d.SourcesAny(IsDigimon));
+                var card = host?.TakeSource(s => !host.IsFaceDown(s) && IsDigimon(s));
                 if (card == null) { c.SecurityResult("꺼낼 진화원이 없어 불발", "불발"); return; }
                 c.PlayWithoutCost(card).IsOwnersTurn = false;
                 c.SecurityResult($"진화원의 [{card.Name}]이(가) 코스트 없이 등장!", $"[{card.Name}] 등장");
@@ -758,7 +758,7 @@ internal static class BuiltInCardScripts
             })
             .WhenAttacking(c =>   // [턴에 1회] 진화원의 Lv.6 디지몬 1장을 패로 → 액티브
             {
-                var lv6 = c.Self!.TakeSource(s => IsDigimon(s) && s.Level == 6);
+                var lv6 = c.Self!.TakeSource(s => !c.Self.IsFaceDown(s) && IsDigimon(s) && s.Level == 6);
                 if (lv6 == null) return;
                 c.Owner.Hand.Add(lv6);
                 c.Engine.Unsuspend(c.Self);
@@ -892,7 +892,7 @@ internal static class BuiltInCardScripts
             .WhenAttacking(c =>   // 진화원의 Lv.6 디지몬 1장을 패로 → 이 턴 동안 블록당하지 않음 (막을 블로커가 있을 때만)
             {
                 if (EffectRules.FindBlocker(c.State, c.Enemy.BattleArea.Where(d => !ReferenceEquals(d, c.Other)), c.Self!) == null) return;
-                var lv6 = c.Self!.TakeSource(s => IsDigimon(s) && s.Level == 6);
+                var lv6 = c.Self!.TakeSource(s => !c.Self.IsFaceDown(s) && IsDigimon(s) && s.Level == 6);
                 if (lv6 == null) return;
                 c.Owner.Hand.Add(lv6);
                 c.Self.UnblockableUntil = c.TurnSequence;

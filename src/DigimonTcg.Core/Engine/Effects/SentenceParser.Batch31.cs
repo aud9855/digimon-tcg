@@ -326,14 +326,15 @@ internal static partial class SentenceParser
         }
 
         // ---- 테이머 아래: "Place the top 2 cards of your deck face down under this Tamer" ----
-        if ((m = Regex.Match(s, @"^(?:you may )?place the top (?<n>\d+) cards of your deck(?: face down)? under (?:this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success)
+        if ((m = Regex.Match(s, @"^(?:you may )?place the top (?<n>\d+) cards of your deck(?<fd> face down)? under (?:this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);
+            bool fd = m.Groups["fd"].Success;   // v0.35.0 뒷면으로
             return (c =>
             {
                 if (c.Owner.Tamers.Count == 0 || c.Owner.MainDeck.Count == 0) { c.LastStepResolved = false; return; }
                 int placed = 0;
-                for (; placed < n && c.Owner.MainDeck.Count > 0; placed++) { c.Owner.UnderTamers.Add(c.Owner.MainDeck[0]); c.Owner.MainDeck.RemoveAt(0); }
+                for (; placed < n && c.Owner.MainDeck.Count > 0; placed++) { var top = c.Owner.MainDeck[0]; c.Owner.MainDeck.RemoveAt(0); if (fd) c.Engine.PlaceFaceDownUnderTamer(c.Owner, top); else c.Owner.UnderTamers.Add(top); }
                 Emit(c, label, $"덱 위 {placed}장을 테이머 아래에 놓는다");
             }, null);
         }
@@ -405,7 +406,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(s, $@"^Digimon with (?<x>{TargetSpec.NameList}) in (?:its|their) digivolution cards$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return (_, d) => d.EvolutionSources.Any(src => xs.Any(x => TargetSpec.NameHas(src, x)));
+            return (_, d) => d.SourcesAny(src => xs.Any(x => TargetSpec.NameHas(src, x)));
         }
         // "Digimon with 2 or more colors"
         if ((m = Regex.Match(s, @"^Digimon with (?<n>\d+) or more colors$", RegexOptions.IgnoreCase)).Success)

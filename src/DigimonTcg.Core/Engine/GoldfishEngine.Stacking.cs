@@ -35,7 +35,7 @@ public partial class GoldfishEngine
             zones.Trash.Add(moving.EvolutionSources.Pop());
         if (!IsToken(moving.TopCard))
         {
-            if (top) target.EvolutionSources.Push(moving.TopCard);   // 진화원 맨 위 (맨 위 카드 바로 아래)
+            if (top) target.AddTopSource(moving.TopCard);   // 진화원 맨 위 (맨 위 카드 바로 아래)
             else target.AddBottomSource(moving.TopCard);
         }
         PurgeTokens(zones);
@@ -50,7 +50,7 @@ public partial class GoldfishEngine
         TryPreventLeave(zones, inst, deletion: false, inBattle: false, canPrevent: false, LeaveDestination.Deck);
         if (!zones.BattleArea.Remove(inst))
             return;
-        ApplyOverflow(zones, inst.GetEvolutionStackBottomUp().Append(inst.TopCard));
+        ApplyOverflow(zones, inst.GetFaceUpStackBottomUp().Append(inst.TopCard));
         TrashLinks(zones, inst);
         if (!IsToken(inst.TopCard)) zones.MainDeck.Add(inst.TopCard);
         foreach (var s in inst.GetEvolutionStackBottomUp().Reverse())
@@ -86,7 +86,7 @@ public partial class GoldfishEngine
             return false;
         if (!zones.BattleArea.Remove(inst))
             return false;
-        ApplyOverflow(zones, inst.GetEvolutionStackBottomUp().Append(inst.TopCard));
+        ApplyOverflow(zones, inst.GetFaceUpStackBottomUp().Append(inst.TopCard));
         TrashLinks(zones, inst);
         while (inst.EvolutionSources.Count > 0)
             zones.Trash.Add(inst.EvolutionSources.Pop());
@@ -115,6 +115,7 @@ public partial class GoldfishEngine
         if (top) owner.SecurityStack.Insert(0, card); else owner.SecurityStack.Add(card);
         NotifySecurityAdded(owner, card);
         RecalculateFieldBuffs();
+        TrashExposedFaceDownTops();   // v0.35.0
         return true;
     }
 

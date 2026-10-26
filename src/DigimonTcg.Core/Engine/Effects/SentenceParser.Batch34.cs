@@ -530,6 +530,13 @@ internal static partial class SentenceParser
             pending.Registrations.Add(d => d.Static(StaticStat.Keyword, inherited ? EffectSource.Inherited : EffectSource.Main, c => c1(c) ? 1 : 0, Keyword.OpponentMemoryTamerOnly));
             return null;
         }
+        // v0.35.0 "Players can't gain memory other than by Tamer effects" (BT25-079 · EX13-050) — 양쪽 플레이어 모두 (이 디지몬이 있는 동안)
+        if (Regex.IsMatch(s, @"^players can't gain memory (?:other than|except) (?:by|with|through) Tamer(?:s'|'s)? effects$", I) && card.Type == CardType.Digimon)
+        {
+            var cPlayers = cond;
+            pending.Registrations.Add(d => d.Static(StaticStat.Keyword, inherited ? EffectSource.Inherited : EffectSource.Main, c => cPlayers(c) ? 1 : 0, Keyword.PlayersMemoryTamerOnly));
+            return null;
+        }
         s = NormalizeSubjectForms34(NormalizeProtection34(s));
         if (SplitSubject34(s) is not { } split) return "주어";
         var preds = ParsePreds34(split.Preds);
@@ -628,7 +635,7 @@ internal static partial class SentenceParser
             var (n, match) = spick;
             bool upTo = m.Groups["up"].Success, self = m.Groups["who"].Value.StartsWith("this", StringComparison.OrdinalIgnoreCase);
             IEnumerable<CardInstance> Hosts(EffectContext c) => self ? (c.Self != null && c.Owner.BattleArea.Contains(c.Self) ? new[] { c.Self } : Array.Empty<CardInstance>()) : c.Owner.BattleArea;
-            int Avail(EffectContext c) => Hosts(c).Sum(d => d.EvolutionSources.Count(match));
+            int Avail(EffectContext c) => Hosts(c).Sum(d => d.SourcesCount(match));
             return (c => Avail(c) >= (upTo ? 1 : n),
                     c => { c.PaidCount = TrashChosenSources34(c, Hosts(c).ToList(), match, n, upTo); if (!upTo && c.PaidCount < n) c.CostFailed = true; },
                     c => Avail(c) >= n,
@@ -668,10 +675,10 @@ internal static partial class SentenceParser
             && (ParseCardPick(m.Groups["pick"].Value) ?? ParseNamePick(m.Groups["pick"].Value)) is { } rpick)
         {
             var (n, match) = rpick;
-            return (c => c.Self != null && c.Owner.BattleArea.Contains(c.Self) && c.Self.EvolutionSources.Count(match) >= n,
+            return (c => c.Self != null && c.Owner.BattleArea.Contains(c.Self) && c.Self.SourcesCount(match) >= n,
                     c =>
                     {
-                        var picks = c.Engine.ChooseCards(c.Owner, CardChoiceZone.DigivolutionCards, c.Self!.EvolutionSources.Where(match).OrderByDescending(x => x.Level).ToList(), n, upTo: false,
+                        var picks = c.Engine.ChooseCards(c.Owner, CardChoiceZone.DigivolutionCards, c.Self!.SourcesWhere(match).OrderByDescending(x => x.Level).ToList(), n, upTo: false,
                             $"[{c.Card.Name}] 비용으로 패로 되돌릴 진화원 {n}장을 고르세요.");
                         foreach (var x in picks) { if (c.Self.TakeSource(s => ReferenceEquals(s, x)) is { } took) c.Owner.Hand.Add(took); }
                         c.PaidCount = picks.Count;
@@ -797,7 +804,7 @@ internal static partial class SentenceParser
     /// <summary>호스트 디지몬들의 진화원에서 match에 맞는 카드를 count장 골라 파기 (반환: 파기한 매수)</summary>
     private static int TrashChosenSources34(EffectContext c, IReadOnlyList<CardInstance> hosts, Func<CardData, bool> match, int count, bool upTo)
     {
-        var pool = hosts.SelectMany(d => d.EvolutionSources.Where(match).Select(x => (Host: d, Card: x))).ToList();
+        var pool = hosts.SelectMany(d => d.SourcesWhere(match).Select(x => (Host: d, Card: x))).ToList();
         if (pool.Count == 0) return 0;
         // 추천: 진화원 효과가 없는 카드 · Lv.이 낮은 카드부터
         var ranked = pool.OrderBy(p => p.Card.InheritedEffectText.Length > 0 ? 1 : 0).ThenBy(p => p.Card.Level).ToList();

@@ -24,7 +24,7 @@ internal static partial class SentenceParser
         int Per(Match x) => x.Groups["n"].Success && x.Groups["n"].Value.Length > 0 ? Math.Max(1, int.Parse(x.Groups["n"].Value)) : 1;
         // "color in its digivolution cards" · "color in this Digimon's digivolution cards" — 진화원의 색 수
         if (Regex.IsMatch(c0, @"^colou?r in (?:its|this Digimon's) digivolution cards$", I))
-            return (_, _, self) => self == null ? 0 : self.EvolutionSources.SelectMany(s => s.AllColors).Distinct().Count();
+            return (_, _, self) => self == null ? 0 : self.FaceUpSources.SelectMany(s => s.AllColors).Distinct().Count();
         // "of its colors" · "of this Digimon's colors"
         if (Regex.IsMatch(c0, @"^of (?:its|this Digimon's) colou?rs$", I))
             return (_, _, self) => self == null ? 0 : self.TopCard.AllColors.Distinct().Count();
@@ -36,7 +36,7 @@ internal static partial class SentenceParser
             && (ParseCardPick("1 " + m.Groups["pick"].Value) ?? ParseNamePick("1 " + m.Groups["pick"].Value)) is { } sp)
         {
             int per = Per(m);
-            return (_, _, self) => self == null ? 0 : self.EvolutionSources.Count(sp.Match) / per;
+            return (_, _, self) => self == null ? 0 : self.SourcesCount(sp.Match) / per;
         }
         // "Digimon card with [Etemon] in its name in your trash" · "card in your trash with the [Cyborg] or [Machine] trait" · "[Eyesmon: Scatter Mode] in your trash"
         if ((m = Regex.Match(c0, @"^(?:(?<n>\d+) )?(?<pick>.+?) in your trash$", I)).Success
@@ -123,7 +123,7 @@ internal static partial class SentenceParser
     /// </summary>
     private static (Action<EffectContext>? Act, string? Error)? TamerTargetAction34(string s, string label, bool security)
     {
-        var m = Regex.Match(s, @"^(?<v>Delete|Suspend|Return) (?<t>(?<n>1|one|up to \d+|all) of (?:your opponent's|their) (?<body>.*?\b(?:Digimon or Tamers|Tamers)\b.*?))(?<to> to (?:the|its owner's|their owners'?|their|the owner's) hands?| to the bottom of (?:the|its owner's|their owners'?|the owner's) decks?)?$", I);
+        var m = Regex.Match(s, @"^(?<v>Delete|Suspend|Return) (?<t>(?<n>\d+|one|up to \d+|all) of (?:your opponent's|their) (?<body>.*?\b(?:Digimon or Tamers|Tamers)\b.*?))(?<to> to (?:the|its owner's|their owners'?|their|the owner's) hands?| to the bottom of (?:the|its owner's|their owners'?|the owner's) decks?)?$", I);
         if (!m.Success) return null;
         string verb = m.Groups["v"].Value.ToLowerInvariant();
         bool toHand = m.Groups["to"].Value.Contains("hand", StringComparison.OrdinalIgnoreCase), toDeck = m.Groups["to"].Value.Contains("deck", StringComparison.OrdinalIgnoreCase);
@@ -177,6 +177,7 @@ internal static partial class SentenceParser
                 }
             }
             c.LastTargets = picks.Where(d => !tamerOf.ContainsKey(d)).ToList();
+            c.LastTamers35 = picks.Where(tamerOf.ContainsKey).Select(d => tamerOf[d]).ToList();   // v0.35.0 "It can't unsuspend ~"
             if (picks.Count == 0) c.LastStepResolved = false;
             Emit(c, label, names.Count > 0 ? $"[{string.Join(", ", names)}] {(verb == "delete" ? "소멸" : verb == "suspend" ? "레스트" : toHand ? "패로" : "덱 아래로")}" : "대상이 없습니다");
         }, null);

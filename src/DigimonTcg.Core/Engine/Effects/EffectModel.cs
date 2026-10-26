@@ -160,6 +160,7 @@ public enum Keyword
     CannotBeReturnedByEffects,     // 효과로 패 · 덱으로 되돌아가지 않는다 (자신의 효과도)
     CannotBlock,                   // (지속 효과) 블록할 수 없다 ("[All Turns] This Digimon can't attack or block")
     OpponentMemoryTamerOnly,       // (지속 효과) 상대는 테이머의 효과 이외로 메모리를 얻을 수 없다
+    PlayersMemoryTamerOnly,        // v0.35.0 (지속 효과) 플레이어는(양쪽 모두) 테이머의 효과 이외로 메모리를 얻을 수 없다
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>

@@ -117,7 +117,7 @@ public partial class GoldfishEngine
             foreach (var mod in CardScripts.For(d.TopCard)?.FieldPlayCostModifiers ?? Enumerable.Empty<FieldPlayCostModifier>())
                 if (mod.Source == EffectSource.Main && mod.Breeding == breeding)
                     yield return (mod, d, d.TopCard);
-            foreach (var src in d.EvolutionSources)
+            foreach (var src in d.FaceUpSources)
                 foreach (var mod in CardScripts.For(src)?.FieldPlayCostModifiers ?? Enumerable.Empty<FieldPlayCostModifier>())
                     if (mod.Source == EffectSource.Inherited && mod.Breeding == breeding)
                         yield return (mod, d, src);

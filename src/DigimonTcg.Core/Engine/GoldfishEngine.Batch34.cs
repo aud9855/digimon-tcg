@@ -93,7 +93,8 @@ public partial class GoldfishEngine
     {
         if (!ReferenceEquals(CurrentEffectOwner, side) || CurrentEffectCard is { Type: CardType.Tamer })
             return false;
-        if (!EnemyOf(side).BattleArea.Any(d => CardScripts.HasKeyword(d, Keyword.OpponentMemoryTamerOnly)))
+        if (!EnemyOf(side).BattleArea.Any(d => CardScripts.HasKeyword(d, Keyword.OpponentMemoryTamerOnly))
+            && !State.Player.BattleArea.Concat(State.DummyOpponent.BattleArea).Any(d => CardScripts.HasKeyword(d, Keyword.PlayersMemoryTamerOnly)))   // v0.35.0 "Players can't ~"
             return false;
         EffectLog(side, "상대의 효과로 테이머의 효과 이외로는 메모리를 얻을 수 없습니다.");
         return true;
@@ -264,7 +265,7 @@ public partial class GoldfishEngine
         TryPreventLeave(zones, inst, deletion: false, inBattle: false, canPrevent: false, LeaveDestination.Hand);
         if (!zones.BattleArea.Remove(inst))
             return;
-        ApplyOverflow(zones, inst.GetEvolutionStackBottomUp().Append(inst.TopCard));
+        ApplyOverflow(zones, inst.GetFaceUpStackBottomUp().Append(inst.TopCard));
         TrashLinks(zones, inst);
         while (inst.EvolutionSources.Count > 0)
             zones.Trash.Add(inst.EvolutionSources.Pop());

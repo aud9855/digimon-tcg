@@ -306,6 +306,9 @@ public static partial class KoreanEffectRenderer
         // 공식 (BT3-061): "상대는 테이머의 효과 이외로 메모리를 플러스할 수 없다"
         if (Regex.IsMatch(s, @"^your opponent can't gain memory (?:other than|except) (?:by|with|through) Tamer(?:s'|'s)? effects$", RegexOptions.IgnoreCase))
             return "상대는 테이머의 효과 이외로 메모리를 플러스할 수 없다";
+        // v0.35.0 "Players can't gain memory other than by Tamer effects" — 서로의 플레이어 (BT3-061 표기를 따른다)
+        if (Regex.IsMatch(s, @"^players can't gain memory (?:other than|except) (?:by|with|through) Tamer(?:s'|'s)? effects$", RegexOptions.IgnoreCase))
+            return "서로의 플레이어는 테이머의 효과 이외로 메모리를 플러스할 수 없다";
         // ---- 제한 · 보호 (기간 · 지속) ----
         return RestrictionKo34(s, may);
     }

@@ -58,12 +58,12 @@ internal static partial class SentenceParser
         // "[Myotismon] or [X Antibody] was in this Digimon's digivolution cards" ([소멸 시])
         if ((m = Regex.Match(c0, @"^(?<p>.+?) (?:is |are |was |were )?in (?:this Digimon's|its) digivolution cards?$", RegexOptions.IgnoreCase)).Success
             && SourceCardPick33(m.Groups["p"].Value) is { } inSrc)
-            return d => d != null && d.EvolutionSources.Any(inSrc);
+            return d => d != null && d.SourcesAny(inSrc);
         // "this Digimon has a red digivolution card" · "~ a purple card in its digivolution cards" · "~ an [Agumon] digivolution card" · "~ a non-red card in its digivolution cards" ·
         // "~ 4 or more level 6 cards in its digivolution cards"
         if ((m = Regex.Match(c0, @"^(?:this Digimon|it) has (?:an? |(?<n>\d+) or more )(?<p>.+?) (?:digivolution cards?|cards? in its digivolution cards)$", RegexOptions.IgnoreCase)).Success
             && SourceCardPick33(m.Groups["p"].Value + " card") is { } hasSrc)
-        { int n = m.Groups["n"].Success ? int.Parse(m.Groups["n"].Value) : 1; return d => d != null && d.EvolutionSources.Count(hasSrc) >= n; }
+        { int n = m.Groups["n"].Success ? int.Parse(m.Groups["n"].Value) : 1; return d => d != null && d.SourcesCount(hasSrc) >= n; }
         // "this Digimon has 1 digivolution card" · "this Digimon has 3 digivolution cards" (정확히)
         if ((m = Regex.Match(c0, @"^(?:this Digimon|it) has (?<n>\d+) digivolution cards?$", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); return d => d != null && d.EvolutionSources.Count == n; }
@@ -71,7 +71,7 @@ internal static partial class SentenceParser
         { int n = int.Parse(m.Groups["n"].Value); return d => d != null && d.EvolutionSources.Count >= n; }
         // "there are 5 or more [Vemmon] in this Digimon's digivolution cards"
         if ((m = Regex.Match(c0, $@"^there are (?<n>\d+) or more (?<x>{TargetSpec.NameList}) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
-        { int n = int.Parse(m.Groups["n"].Value); var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && d.EvolutionSources.Count(s => xs.Any(x => CardNames.Is(s, x))) >= n; }
+        { int n = int.Parse(m.Groups["n"].Value); var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && d.SourcesCount(s => xs.Any(x => CardNames.Is(s, x))) >= n; }
         // "this Digimon has 7 link cards"
         if ((m = Regex.Match(c0, @"^(?:this Digimon|it) has (?<n>\d+)(?<more> or more)? link cards?$", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); bool more = m.Groups["more"].Success; return d => d != null && (more ? d.LinkedCards.Count >= n : d.LinkedCards.Count == n); }
@@ -306,7 +306,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(c0, $@"^you have an? Digimon(?: in play)? with (?<x>{TargetSpec.NameList}) in its name or (?:with )?(?<y>{TargetSpec.NameList}) in its digivolution cards(?: in play)?$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); var ys = TargetSpec.Names(m.Groups["y"].Value);
-            return (o, _) => o.BattleArea.Any(d => xs.Any(x => TargetSpec.NameHas(d.TopCard, x)) || d.EvolutionSources.Any(s => ys.Any(y => TargetSpec.NameHas(s, y))));
+            return (o, _) => o.BattleArea.Any(d => xs.Any(x => TargetSpec.NameHas(d.TopCard, x)) || d.SourcesAny(s => ys.Any(y => TargetSpec.NameHas(s, y))));
         }
         // "you have a Digimon card with [Sistermon] in its name in play"
         if ((m = Regex.Match(c0, @"^you have an? Digimon card (?<with>with .+?) in play$", RegexOptions.IgnoreCase)).Success
@@ -413,7 +413,7 @@ internal static partial class SentenceParser
         {
             int n = int.Parse(m.Groups["n"].Value); bool more = m.Groups["dir"].Value.Equals("more", StringComparison.OrdinalIgnoreCase);
             var xs = m.Groups["x"].Success ? TargetSpec.Names(m.Groups["x"].Value) : null;
-            return c => { int k = c.Owner.UnderTamers.Count(x => xs == null || xs.Any(v => TargetSpec.TextHas(x, v))); return more ? k >= n : k <= n; };
+            return c => { int k = c.Owner.UnderTamers.Count(x => xs == null || !c.Owner.IsFaceDownUnderTamer(x) && xs.Any(v => TargetSpec.TextHas(x, v))); return more ? k >= n : k <= n; };
         }
         // 어택: "this Digimon is attacking" · "one of their Digimon is attacking"
         if (Regex.IsMatch(c0, @"^this Digimon is attacking$", RegexOptions.IgnoreCase))

@@ -173,6 +173,11 @@ public sealed class TargetSpec
                     return l.Where(d => key(d) == best);
                 };
             }
+            // v0.35.0 "with face-down digivolution cards" (EX9-069) — 뒷면 진화원이 1장 이상
+            else if ((m = Regex.Match(rest, @"^(?:with|that has) face[- ]down digivolution cards", RegexOptions.IgnoreCase)).Success)
+            {
+                spec.Filters.Add(d => d.FaceDownSourceCount > 0);
+            }
             else if ((m = Regex.Match(rest, @"^(?:with no|without|with no digivolution cards|that has no) digivolution cards", RegexOptions.IgnoreCase)).Success
                      || (m = Regex.Match(rest, @"^with no digivolution cards", RegexOptions.IgnoreCase)).Success)
             {
@@ -182,7 +187,7 @@ public sealed class TargetSpec
             {
                 // "with a Tamer card in its digivolution cards" — 진화원에 그 종류의 카드가 있다
                 var kind = Enum.Parse<CardType>(m.Groups["kind"].Value, ignoreCase: true);
-                spec.Filters.Add(d => d.EvolutionSources.Any(s => s.Type == kind));
+                spec.Filters.Add(d => d.SourcesAny(s => s.Type == kind));
             }
             else if ((m = Regex.Match(rest, @"^(?:with |and )?(?<n>\d+) or (?<dir>more|fewer|less) digivolution cards", RegexOptions.IgnoreCase)).Success)
             {
@@ -234,7 +239,7 @@ public sealed class TargetSpec
                 var ks = new[] { m.Groups["k"].Value.Trim(), m.Groups["k2"].Value.Trim() }.Where(k => k.Length > 0).ToList();
                 spec.Filters.Add(d => ks.Any(k => KeywordNames.TryGetValue(k, out var kk)
                     ? (kk == Keyword.Blocker ? d.HasBlocker : CardScripts.HasKeyword(d, kk))
-                    : d.GetEvolutionStackBottomUp().Append(d.TopCard).Any(x => x.EffectText.Contains($"＜{k}", StringComparison.OrdinalIgnoreCase))) != without);
+                    : d.GetFaceUpStackBottomUp().Append(d.TopCard).Any(x => x.EffectText.Contains($"＜{k}", StringComparison.OrdinalIgnoreCase))) != without);
             }
             else if ((m = Regex.Match(rest, @"^with an? \[(?<t>On Play|On Deletion|When Digivolving|When Attacking|Security|Main)\] effect", RegexOptions.IgnoreCase)).Success)
             {
@@ -307,14 +312,14 @@ public sealed class TargetSpec
         { spec.ContextFilters.Add((c, d) => Ref(c) is { } r && d.TopCard.Level <= r.TopCard.Level); return m; }
         // "with 4 or more [Vemmon] digivolution cards" · "with 4 or more [Vemmon] in its digivolution cards"
         if ((m = Regex.Match(rest, $@"^(?:with |and )?(?<n>\d+) or more (?<x>{NameList}) (?:digivolution cards|in (?:its|their) digivolution cards)", RegexOptions.IgnoreCase)).Success)
-        { int n = int.Parse(m.Groups["n"].Value); var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => d.EvolutionSources.Count(s => xs.Any(x => CardNames.Is(s, x))) >= n); return m; }
+        { int n = int.Parse(m.Groups["n"].Value); var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => d.SourcesCount(s => xs.Any(x => CardNames.Is(s, x))) >= n); return m; }
         if ((m = Regex.Match(rest, @"^(?:with |and )?(?<n>\d+) or more colors", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); spec.Filters.Add(d => d.TopCard.AllColors.Distinct().Count() >= n); return m; }
         if ((m = Regex.Match(rest, $@"^(?<neg>with|without|and|or|that has|that have)?\s*(?<x>{NameList}) in (?:its|their) digivolution cards", RegexOptions.IgnoreCase)).Success)
         {
             var xs = Names(m.Groups["x"].Value);
             bool without = m.Groups["neg"].Value.Equals("without", StringComparison.OrdinalIgnoreCase);
-            spec.Filters.Add(d => d.EvolutionSources.Any(s => xs.Any(x => NameHas(s, x) || HasTrait(s, x))) != without);
+            spec.Filters.Add(d => d.SourcesAny(s => xs.Any(x => NameHas(s, x) || HasTrait(s, x))) != without);
             return m;
         }
         if ((m = Regex.Match(rest, $@"^without (?:the )?(?<x>{NameList}) traits?", RegexOptions.IgnoreCase)).Success)

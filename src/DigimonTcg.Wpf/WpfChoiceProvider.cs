@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -125,13 +126,33 @@ public sealed class WpfChoiceProvider : IChoiceProvider
         };
         // 번호마다 새 객체를 키로 써서 같은 카드 여러 장도 따로 고를 수 있게 한다
         var keys = options.Select((_, i) => (object)new IndexKey(i)).ToList();
+        // v0.35.0 뒷면 카드 (상대의 뒷면 진화원 · 테이머 아래): 내용을 가리고 실물 카드 뒷면으로 (종합 룰 4-7-10 — 주인만 볼 수 있다). 자신의 뒷면 카드는 "🂠뒷면" 표시
+        var hidden = new HashSet<CardData>(options.Where(c => IsOpponentFaceDown(state, c)), ReferenceEqualityComparer.Instance);
         var items = options.Select((card, i) => new MultiCardPicker.Item(keys[i], card,
-            $"{card.DisplayName}\n{(card.Level > 0 ? $"Lv.{card.Level} " : "")}{KoreanLabels.Type(card.Type)}{(card.Type == CardType.Digimon ? $"\nDP {card.DP:N0}" : "")}")).ToList();
+            hidden.Contains(card) ? "🂠 뒷면 카드"
+            : $"{(IsOwnFaceDown(state, card) ? "🂠뒷면 · " : "")}{card.DisplayName}\n{(card.Level > 0 ? $"Lv.{card.Level} " : "")}{KoreanLabels.Type(card.Type)}{(card.Type == CardType.Digimon ? $"\nDP {card.DP:N0}" : "")}")).ToList();
         var recommendedKeys = recommended.Where(i => i >= 0 && i < keys.Count).Select(i => keys[i]).ToList();
         // 여러 곳(패 · 필드 등)에서 모은 후보(Other)는 장소를 붙이지 않는다
         string title = zone == CardChoiceZone.Other ? "카드 고르기" : $"{where}에서 카드 고르기";
-        var picked = MultiCardPicker.Show(_owner, title, question, items, min, max, recommendedKeys, _cardVisual);
+        Func<CardData, FrameworkElement>? visual = _cardVisual == null ? null : card => hidden.Contains(card) ? CardBack() : _cardVisual(card);
+        var picked = MultiCardPicker.Show(_owner, title, question, items, min, max, recommendedKeys, visual);
         return picked?.Cast<IndexKey>().Select(k => k.Index).ToList() ?? recommended;
+    }
+
+    private static bool IsOpponentFaceDown(GameState state, CardData card) =>
+        state.DummyOpponent.BattleArea.Any(d => d.IsFaceDown(card) && d.EvolutionSources.Any(x => ReferenceEquals(x, card)))
+        || (state.DummyOpponent.IsFaceDownUnderTamer(card) && state.DummyOpponent.UnderTamers.Any(x => ReferenceEquals(x, card)));
+
+    private static bool IsOwnFaceDown(GameState state, CardData card) =>
+        state.Player.BattleArea.Append(state.Player.BreedingArea).Any(d => d != null && d.IsFaceDown(card) && d.EvolutionSources.Any(x => ReferenceEquals(x, card)))
+        || (state.Player.IsFaceDownUnderTamer(card) && state.Player.UnderTamers.Any(x => ReferenceEquals(x, card)));
+
+    /// <summary>실물 TCG 카드 뒷면 (Duel.Brush.CardBackArt — data/images/_card_back.jpg가 있으면 그 그림)</summary>
+    private static FrameworkElement CardBack()
+    {
+        Brush back;
+        try { back = Theme.GetBrush("Duel.Brush.CardBackArt"); } catch { back = Brushes.DarkSlateBlue; }
+        return new Border { Width = 108, Height = 151, CornerRadius = new CornerRadius(6), Background = back, BorderBrush = Brushes.SlateGray, BorderThickness = new Thickness(1) };
     }
 
     private sealed record IndexKey(int Index);

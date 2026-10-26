@@ -66,7 +66,7 @@ public partial class MainWindow : Window
 
     private static bool IsValidAllyOptionTarget(CardData option, CardInstance d) =>
         CardScripts.IsValidMainTarget(option, d)
-        && (CardScripts.MainTargetOf(option) != TargetKind.OwnDigimonWithDigimonSource || d.EvolutionSources.Any(s => s.Type == CardType.Digimon));
+        && (CardScripts.MainTargetOf(option) != TargetKind.OwnDigimonWithDigimonSource || d.SourcesAny(s => s.Type == CardType.Digimon));
 
     /// <summary>상대 디지몬 대상 옵션을 빈 칸에 놓았을 때의 대상: 대상 조건을 만족하는 상대 디지몬 중 DP가 가장 높은 것 (없으면 null)</summary>
     private CardInstance? BestEnemyOptionTarget(CardData option) =>
@@ -1079,6 +1079,9 @@ public partial class MainWindow : Window
         {
             var srcTexts = evoSources.Select(s =>
             {
+                // v0.35.0 뒷면 진화원: 상대 것은 가리고, 자신의 것은 이름만 괄호로 (정보가 없어 효과 · DP는 들어가지 않는다)
+                if (instance.IsFaceDown(s))
+                    return isOpponent ? "🂠뒷면" : $"🂠뒷면({s.DisplayName})";
                 string bonus = s.InheritedSecurityAttackBonus > 0
                     ? $"[💥시큐+{s.InheritedSecurityAttackBonus}]"
                     : s.InheritedDpBonus > 0
@@ -1086,7 +1089,8 @@ public partial class MainWindow : Window
                         : "";
                 return $"Lv.{s.Level} {s.DisplayName}{bonus}";
             });
-            detailLines.Add($"🧬 진화원({evoSources.Count}장): {string.Join(" ➔ ", srcTexts)}");
+            int faceDown = instance.FaceDownSourceCount;
+            detailLines.Add($"🧬 진화원({evoSources.Count}장{(faceDown > 0 ? $", 뒷면 {faceDown}장" : "")}): {string.Join(" ➔ ", srcTexts)}");
         }
         else
         {
@@ -2222,7 +2226,7 @@ public partial class MainWindow : Window
               + (_gameState.DummyOpponent.OptionsInPlay.Count > 0
                   ? $" | ⏳ AI 딜레이 옵션: {string.Join(", ", _gameState.DummyOpponent.OptionsInPlay.Select(p => p.Card.DisplayName))}"
                   : "")
-              + (_gameState.DummyOpponent.UnderTamers.Count > 0 ? $" | 📥 AI 테이머 아래 {_gameState.DummyOpponent.UnderTamers.Count}장" : "")
+              + (_gameState.DummyOpponent.UnderTamers.Count > 0 ? $" | 📥 AI 테이머 아래 {_gameState.DummyOpponent.UnderTamers.Count}장{(_gameState.DummyOpponent.FaceDownUnderTamerCount > 0 ? $" (뒷면 {_gameState.DummyOpponent.FaceDownUnderTamerCount})" : "")}" : "")
               + $" | AI 손패: {_gameState.DummyOpponent.Hand.Count}장 | AI 덱: {_gameState.DummyOpponent.MainDeck.Count}장"
             : $"상대 필드: {_gameState.DummyOpponent.BattleArea.Count}체 | 상대 트래시: {_gameState.DummyOpponent.Trash.Count}장";
 
@@ -2674,7 +2678,9 @@ public partial class MainWindow : Window
         var underTamers = _gameState.Player.UnderTamers;
         if (underTamers.Count > 0)
         {
-            string names = string.Join(", ", underTamers.Select(c => c.DisplayName));
+            // v0.35.0 뒷면으로 놓인 카드는 "🂠" 표시 (자신의 카드라 내용은 볼 수 있다 — 종합 룰 4-7-10)
+            string names = string.Join(", ", underTamers.Select(c => _gameState.Player.IsFaceDownUnderTamer(c) ? $"🂠{c.DisplayName}" : c.DisplayName));
+            int underFaceDown = _gameState.Player.FaceDownUnderTamerCount;
             var underChip = new Border
             {
                 Background = BrushFromHex("#33CBA6F7"),
@@ -2687,7 +2693,7 @@ public partial class MainWindow : Window
                 ToolTip = $"테이머 아래에 놓인 카드 {underTamers.Count}장: {names}",
                 Child = new TextBlock
                 {
-                    Text = $"📥 테이머 아래 {underTamers.Count}장",
+                    Text = $"📥 테이머 아래 {underTamers.Count}장{(underFaceDown > 0 ? $" (뒷면 {underFaceDown})" : "")}",
                     Foreground = BrushFromHex("#CBA6F7"),
                     FontWeight = FontWeights.Bold,
                     FontSize = 11
@@ -2877,7 +2883,7 @@ public partial class MainWindow : Window
                     isValidPendingTarget = false;
                     invalidTargetReason = "육성 에어리어의 디지몬은 옵션 효과의 대상으로 지정할 수 없습니다.";
                 }
-                else if (CardScripts.MainTargetOf(_pendingHandCard) == TargetKind.OwnDigimonWithDigimonSource && !instance.EvolutionSources.Any(s => s.Type == CardType.Digimon))
+                else if (CardScripts.MainTargetOf(_pendingHandCard) == TargetKind.OwnDigimonWithDigimonSource && !instance.SourcesAny(s => s.Type == CardType.Digimon))
                 {
                     isValidPendingTarget = false;
                     invalidTargetReason = $"{_pendingHandCard.DisplayName}은(는) 진화원에 디지몬 카드가 있는 디지몬에게만 사용할 수 있습니다.";
@@ -2947,8 +2953,40 @@ public partial class MainWindow : Window
         if (evoSources.Count > 0)
         {
             var evoPeekStack = new StackPanel { Margin = new Thickness(2, 0, 2, -2) };
+            bool ownStack = _gameState.Player.BattleArea.Contains(instance) || ReferenceEquals(_gameState.Player.BreedingArea, instance);
             foreach (var src in evoSources.TakeLast(4))
             {
+                // v0.35.0 뒷면 진화원 (종합 룰 4-7-5 · 4-7-9 · 4-7-10): 실물 카드 뒷면 띠로 겹쳐 보인다. 정보가 없으므로 진화원 효과 · DP를 표시하지 않고,
+                // 주인(자신)만 툴팁으로 카드 내용을 볼 수 있다
+                if (instance.IsFaceDown(src))
+                {
+                    var backStrip = new Border
+                    {
+                        Height = 18,
+                        Background = Theme.GetBrush("Duel.Brush.CardBackArt"),
+                        BorderBrush = BrushFromHex("#585B70"),
+                        BorderThickness = new Thickness(1, 1, 1, 0),
+                        CornerRadius = new CornerRadius(4, 4, 0, 0),
+                        Padding = new Thickness(5, 1, 5, 1),
+                        Margin = new Thickness(0, 0, 0, 1),
+                        Cursor = System.Windows.Input.Cursors.Hand,
+                        ToolTip = ownStack
+                            ? $"뒷면 진화원 (자신만 볼 수 있음): [{src.CardId}] {src.DisplayName}\n뒷면 카드는 정보가 없어 진화원 효과 · DP · 이름 조건에 들어가지 않습니다 (종합 룰 4-7-9)."
+                            : "뒷면 진화원 — 상대만 내용을 볼 수 있습니다 (종합 룰 4-7-10).",
+                        Child = new TextBlock
+                        {
+                            Text = "🂠 뒷면",
+                            Foreground = Brushes.White,
+                            FontWeight = FontWeights.Bold,
+                            FontSize = 9.5,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 2, ShadowDepth = 0, Opacity = 0.9 }
+                        }
+                    };
+                    if (ownStack) backStrip.MouseEnter += (_, _) => UpdateFieldDigimonBreakdown(instance, isPinned: isPinned, isOpponent: false);
+                    evoPeekStack.Children.Add(backStrip);
+                    continue;
+                }
                 string srcBonus = src.InheritedSecurityAttackBonus > 0
                     ? $"💥시큐+{src.InheritedSecurityAttackBonus}"
                     : src.InheritedDpBonus > 0

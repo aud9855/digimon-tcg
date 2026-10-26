@@ -73,6 +73,9 @@ public sealed class EffectContext
     /// <summary>앞 문장에서 고른 대상 ("that Digimon" · "it"이 가리키는 디지몬)</summary>
     public List<CardInstance> LastTargets { get; set; } = new();
 
+    /// <summary>v0.35.0 앞 문장에서 고른 상대의 테이머 ("Suspend 1 of your opponent's Digimon or Tamers. It can't unsuspend ~"의 "It")</summary>
+    internal List<CardData> LastTamers35 { get; set; } = new();
+
     /// <summary>v0.34.0 앞의 비용 · 동작이 옮긴 매수 ("for each card trashed / placed / returned" · "reduce the play cost by 4 for each one")</summary>
     public int PaidCount { get; set; }
 

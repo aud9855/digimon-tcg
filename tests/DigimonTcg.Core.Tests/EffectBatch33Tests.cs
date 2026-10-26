@@ -236,7 +236,8 @@ public class EffectBatch33Tests
         engine.RunEffects(EffectTrigger.StartOfYourMainPhase, state.Player, null, opt, includeInherited: false);
 
         Assert.Empty(state.Player.OptionsInPlay);
-        Assert.Contains(opt, state.Player.UnderTamers);
+        Assert.Contains(state.Player.UnderTamers, x => x.CardId == opt.CardId);   // v0.35.0 뒷면으로 (복사본)
+        Assert.Equal(1, state.Player.FaceDownUnderTamerCount);
         Assert.Equal(hand + 1, state.Player.Hand.Count);
         Assert.Equal(9, state.MemoryGauge);
     }

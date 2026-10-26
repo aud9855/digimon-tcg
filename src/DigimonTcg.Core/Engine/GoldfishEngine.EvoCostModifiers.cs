@@ -89,7 +89,7 @@ public partial class GoldfishEngine
             foreach (var mod in CardScripts.For(d.TopCard)?.EvoCostModifiers ?? Enumerable.Empty<EvoCostModifier>())
                 if (mod.Source == EffectSource.Main && mod.Subject != EvoCostSubject.IntoThisCard)
                     yield return (mod, d, d.TopCard);
-            foreach (var src in d.EvolutionSources)
+            foreach (var src in d.FaceUpSources)
                 foreach (var mod in CardScripts.For(src)?.EvoCostModifiers ?? Enumerable.Empty<EvoCostModifier>())
                     if (mod.Source == EffectSource.Inherited)
                         yield return (mod, d, src);

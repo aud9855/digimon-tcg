@@ -58,7 +58,7 @@ public static class CardScripts
     public static bool HasKeyword(CardInstance digimon, Keyword keyword) =>
         digimon.ActiveKeywords.Contains(keyword)
         || (For(digimon.TopCard)?.Keywords.Contains(keyword) ?? false)
-        || digimon.EvolutionSources.Any(s => For(s)?.InheritedKeywords.Contains(keyword) ?? false)
+        || digimon.SourcesAny(s => For(s)?.InheritedKeywords.Contains(keyword) ?? false)
         || GainedSources(digimon).Any(s => For(s)?.Keywords.Contains(keyword) ?? false);   // v0.31.0 진화원 카드의 효과 전부를 얻는다
 
     /// <summary>
@@ -67,7 +67,7 @@ public static class CardScripts
     /// </summary>
     public static IEnumerable<CardData> GainedSources(CardInstance digimon, IReadOnlyList<CardData>? sources = null)
     {
-        IEnumerable<CardData> stack = sources ?? (IEnumerable<CardData>)digimon.EvolutionSources;   // [소멸 시]: 이미 트래시로 간 진화원
+        IEnumerable<CardData> stack = (sources ?? (IEnumerable<CardData>)digimon.EvolutionSources).Where(s => !digimon.IsFaceDown(s));   // v0.35.0 뒷면 진화원은 정보가 없다 (종합 룰 4-7-9)   // [소멸 시]: 이미 트래시로 간 진화원
         if (!stack.Any()) return Enumerable.Empty<CardData>();
         var whichList = new List<Func<CardData, bool>>();
         if (For(digimon.TopCard) is { GainedSourceEffects.Count: > 0 } top)
@@ -111,7 +111,7 @@ public static class CardScripts
     {
         bool Ok((EffectSource Source, bool YourTurnOnly, Func<CardData, bool> Allowed) r) => (r.YourTurnOnly && !target.IsOwnersTurn) || r.Allowed(evoCard);
         if (For(target.TopCard) is { } top && !top.EvoOnlyInto.Where(r => r.Source == EffectSource.Main).All(Ok)) return false;
-        foreach (var s in target.EvolutionSources)
+        foreach (var s in target.FaceUpSources)
             if (For(s) is { } src && !src.EvoOnlyInto.Where(r => r.Source == EffectSource.Inherited).All(Ok)) return false;
         return true;
     }

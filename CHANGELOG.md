@@ -10,6 +10,37 @@
 
 ---
 
+## v0.35.0 — 2026-10-27
+미지원 효과 문장 9차 묶음 (뒷면 진화원) — 도감 효과 문장 지원 8,733 → 8,828 / 10,366 (84.2% → 85.2%, +95)
+- 모든 절이 동작하는 카드 2,991 → 3,057장 (수정 전 지원되던 문장 중 깨진 것 0). 원래 지원하던 문장의 한글은 그대로이고, 한글이 없던 4문장(ST23-13/14 · ST24-13/14 "테이머 아래에 뒷면으로")에 새로 붙었다. 새로 지원한 95문장 중 91문장에 생성 한글이 붙는다
+- 뒷면 진화원 · 테이머 아래 뒷면 카드 모델 (종합 룰 Ver.4.3)
+  - 4-7-4 아래에 겹쳐진 카드는 지정이 없으면 앞면 — "face down"이라고 적힌 것만 뒷면으로 놓는다 (전에는 모두 앞면으로 놓았다)
+  - 4-7-9 뒷면 카드는 카드의 정보를 갖지 않는다 → 진화원 효과 · 진화원 DP · 키워드 · 이름 · 특징 · 색 · Lv 조건에서 빠지고, 정보를 보지 않는 조건("1 card" · "any 1 digivolution card")과 장 수("진화원 N장 이상" · "진화원이 없는")에는 들어간다
+  - 4-7-10 주인은 자신의 뒷면 카드를 볼 수 있다 · 4-7-5 뒷면 카드는 겹쳐져 있음을 알 수 있도록 — 화면: 필드 진화원 띠가 실물 카드 뒷면(🂠 뒷면)으로 보이고, 툴팁 · 상세에는 자신의 것만 이름이 보인다. 효과로 카드를 고르는 창에서 상대의 뒷면 카드는 카드 뒷면으로 가린다. 테이머 아래 칩 · 상대 상태 줄에 뒷면 장 수
+  - 16-41 ≪트레이닝≫은 덱 위 1장을 진화원 밑에 뒷면으로 · 17-1-3-2-4 에어리어의 뒷면 카드는 룰 처리로 파기 (≪퇴화≫ · ≪아머 퍼지≫ · 맨 위 카드 이동으로 뒷면 진화원이 맨 위가 되면 그 디지몬의 카드 전부를 파기 — 소멸이 아니다)
+  - 엔진: CardInstance.FaceDownSources (뒷면으로 놓을 때 카드를 복사해 참조로 구분) · PlayerZones.FaceDownUnderTamers · GoldfishEngine.FaceDown.cs. DNA 진화 · 테이머에서 진화로 옮겨 가도 뒷면 그대로
+- 새로 지원한 뒷면 문장 (EX9 Ver.N/DM · BT22 · BT26 · ST23/ST24 등)
+  - 비용: "trashing this Digimon's bottom face-down digivolution card" (BT22-038/061/076 · EX9-031/041/063 · EX9-004/006) · "trashing any of your Digimon's bottom face-down digivolution card" (BT26-048) · "trashing 1 of your [DM] trait Digimon's bottom 2 face-down digivolution cards" (EX9-071) · "trashing its bottom 2 face-down or [Cyborg] trait digivolution cards" (EX9-073) · "trashing the bottom face-down card under any of your Tamers" (BT25-029/057) — 테이머 아래 비용은 뒷면 카드만
+  - "A or B" 둘 중 하나를 내는 비용 (BT26-073 · BT26-082 · EX13-032): "by deleting this Digimon or trashing 2 bottom face-down cards from under any of your Tamers" — 둘 다 낼 수 있으면 고른다
+  - 셈: "for each of its / this Digimon's face-down digivolution cards" (EX9-009/011/017/025/039/061/062/064 · BT26-040/043) · "From 1 of your opponent's Digimon, trash any 1 digivolution card for each ~" (EX9-018) · "To 1 of your opponent's Digimon, ＜De-Digivolve 1＞ for each ~" (EX9-043) · "It further gets -2000 DP for each ~" (EX9-030 — 앞 문장의 기간을 이어받는다)
+  - 진화 코스트: "When any of your [Ver.3] trait Digimon would digivolve into this card, for each of their face-down digivolution cards, reduce the digivolution cost by 1" (BT22-038/061 · EX9-031/041/063) · "When this Digimon with face-down digivolution cards would digivolve into ~" (EX9-003) · "This Digimon with face-down digivolution cards may digivolve into ~" (EX9-001)
+  - 시점: "When face-down cards are placed in this Digimon's / any of your Digimon's digivolution cards" (EX9-002 · EX9-069 · BT26-099) · "When effects trash face-down digivolution cards from your Digimon" (BT26-048)
+  - 조건 · 대상: "if you have as many or fewer security cards as this Digimon has face-down digivolution cards" (EX9-029) · "All of your Digimon with face-down digivolution cards gain ＜Reboot＞" (EX9-069)
+  - 놓기: "You may place 1 card from your hand face down as any of your [DM] trait Digimon's bottom digivolution card" (EX9-069) · "Place the top card of your deck face down under any of your [DATA SQUAD] trait Tamers" (ST24-03/09) · "Place your deck's top card face down under this Tamer" (EX13-071)
+  - "[End of Your Turn] By placing 3 [Ver.2] trait Digimon cards from your trash face down as this Digimon's bottom digivolution cards, it may digivolve into ~ in the hand or trash" (BT22-049 · EX9-028/049/050/052) — "it" · "that Digimon" · "any of those Digimon"이 주어인 진화 (EX9-070 · BT26-099 · P-168 · EX11-069 · BT25-054 등)
+  - "This [Glowing Dawn] trait Digimon unsuspends" · "This Digimon with the [Glowing Dawn] trait unsuspends" (ST23-04/08 · BT25-041 진화원 효과)
+  - 카드 조건 "1 6000 DP or lower [Ver.4] trait Digimon card" · "1 play cost of 3 or lower [DM] trait card" (BT26-048 · BT22-052 · BT24-016/050 · BT25-055 · EX11-035 · P-243)
+  - "After, ~" = "Then, ~" (그 후 — BT26-093/095 · EX12-070/071 · EX13-029/068/069 · BT25-080/084 · EX11-054)
+- 그 밖 (3순위): "1 of their Digimon and 1 of their Tamers can't suspend" (BT23-092 · EX10-012 · EX5-067 — 공식 "상대의 디지몬과 테이머 1마리(명)씩은 레스트할 수 없다") · "Players can't gain memory other than by Tamer effects" (BT25-079 · EX13-050 — 양쪽 플레이어)
+- 룰에 맞춘 수정 (기존 카드 동작이 바뀜)
+  - ≪트레이닝≫ (EX9-008~EX9-061 · BT26-023/040 · P-202 등) · "placing ~ face down as this Digimon's bottom digivolution card" 비용 (EX9-010/026/037/038/051/059/060 · BT26-023) · 공개 후 "place 1 card face down as ~" (EX9-007/014/023/035/058) · 테이머 아래 "face down" (ST23-06/10/13/14/15 · ST24-02/04/13/14/15 · BT26-004/025/091/093/094/095 · BT27-095/096/098 · BT25-087 · EX13-026): 이제 실제로 뒷면 — 뒷면 진화원의 진화원 효과 · DP는 들어가지 않고, "the bottom face-down card from under any of your Tamers" 비용에는 앞면(≪세이브≫ · 크로스 하트) 카드를 쓸 수 없다. 9차 이전에 앞면으로 근사하던 ST23-10 · ST24-02 · BT26-004도 뒷면으로
+  - BT19-051: 공식 한글 "자신의 디지몬 1마리는 상대의 효과로 패/덱으로 되돌아가지 않고" — 영어 원문에 빠진 "상대의 효과로"를 따른다 (자신의 효과로는 되돌릴 수 있다)
+  - "Digimon or Tamers"인데 디지몬만 고르던 레스트 문장: "Suspend N of your opponent's Digimon or Tamers" · "N of your opponent's Digimon or Tamers can't suspend / unsuspend until ~" · 그 뒤 "It can't unsuspend ~"가 테이머도 고른다 (BT8-102 · BT9-100 · BT14-053 · BT18-053 · BT19-050/095 · BT20-035/042/044/084 · BT24-095 · BT25-028/053/058 · BT26-032/042/044/046/049 · EX7-022 · EX10-054 · EX11-031/036 · EX12-032/051/063 · EX13-016/040/041 등 약 60장). 테이머의 레스트 · 액티브 불가는 PlayerZones.TamerCannotSuspendUntil / TamerCannotUnsuspendUntil — 액티브 페이즈에도 레스트 그대로, "by suspending this Tamer" 비용도 낼 수 없다 (같은 카드 객체 단위라 같은 테이머 2장은 함께 묶인다)
+  - "When ~ are placed in any of your Digimon's digivolution cards"의 "that Digimon" · "it"은 그 디지몬 (전에는 이 디지몬)
+- 읽지 않고 남긴 것: "Players can't reduce play costs" · "Players can't play Digimon by effects" (효과 등장 · 코스트 감소 경로가 여러 곳이라 등장 출처를 한곳에 모은 뒤) · "1 each of level 3, 4 and 5" 여러 장 등장 (BT22-028 · EX13-071) · 진화할 때 비용으로 코스트 감소 "When digivolving into this card, by suspending up to 5 Tamers ~" (BT17-048 · EX3-054) · BT11-034 (결정 대기) · 테이머를 디지몬으로 취급 (별도 묶음) · BT22-060 · BT26-057 ("their ＜De-Digivolve＞ effects don't affect this Digimon, and it gets ~" 두 술어) · BT26-055 · BT26-077 · EX9-053 (공개 + 상한 늘리기) · BT26-072 · BT27-020 ("or placing it face down ~")
+- 한글이 없는 새 지원 문장 4개: BT26-095 ("non-Digi-Egg card ~ face down under this Tamer") · EX10-009 (육성 에어리어 등장) · EX11-056 (부화) · EX11-068 ("If attacking by ＜Execute＞")
+- 테스트 31개 (EffectBatch35Tests) — 전에 앞면으로 놓는다고 본 테스트 3개를 뒷면 모델로 고쳤다 (CostVariantTests 2 · EffectBatch33Tests 1)
+
 ## v0.34.0 — 2026-10-27
 미지원 효과 문장 8차 묶음 — 도감 효과 문장 지원 8,318 → 8,733 / 10,366 (80.2% → 84.2%, +415)
 - 모든 절이 동작하는 카드 2,696 → 2,991장 (수정 전 지원되던 문장 중 깨진 것 0). 원래 지원하던 문장의 한글은 용어집 보강(이름 조각 「시스터몬」 · 「체스몬」 · 「황제드라몬」 · 「드라몬」 · 「저스티몬」 · 「벨페몬」 · 「기즈몬」 · 「플러그인」 · 「3총사」, 특징 조각 「수생」 — 공식 한글 데이터가 있을 때만)으로 바뀐 113문장 말고는 그대로, 한글이 새로 붙은 것 46문장. 새로 지원한 415문장 중 412문장에 생성 한글이 붙는다 (아래 3문장 제외)

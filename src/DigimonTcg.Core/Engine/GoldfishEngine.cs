@@ -389,8 +389,7 @@ public partial class GoldfishEngine
     {
         State.CurrentPhase = Phase.Active;
         State.TurnSequence++;
-        var wokeTamers = State.Player.SuspendedTamers.ToList();   // v0.31.0 "When this Tamer becomes unsuspended"
-        State.Player.SuspendedTamers.Clear();
+        var wokeTamers = WakeTamers(State.Player);   // v0.31.0 "When this Tamer becomes unsuspended" · v0.35.0 "can't unsuspend"인 테이머는 그대로
         _usedMainAbilities.Clear();
         int awakened = 0;
         var woke = new List<CardInstance>();
@@ -1142,8 +1141,7 @@ public partial class GoldfishEngine
         // 1. AI 액티브 페이즈 (턴 순번 증가 → "다음 상대의 턴 종료 시까지" 같은 기간 효과의 기준)
         State.TurnSequence++;
         State.OpponentAttackedThisTurn = false;
-        var aiWokeTamers = State.DummyOpponent.SuspendedTamers.ToList();
-        State.DummyOpponent.SuspendedTamers.Clear();
+        var aiWokeTamers = WakeTamers(State.DummyOpponent);   // v0.35.0 "can't unsuspend"인 테이머는 그대로
         _usedMainAbilities.Clear();
         var aiWoke = new List<CardInstance>();
         foreach (var d in AllInstances(State.DummyOpponent))

@@ -112,7 +112,7 @@ public partial class GoldfishEngine
         owner.BattleArea.Remove(right);
         TrashLinks(owner, right);
         left.AddBottomSource(right.TopCard);
-        foreach (var s in right.EvolutionSources.ToList()) left.AddBottomSource(s);
+        foreach (var s in right.EvolutionSources.ToList()) { left.AddBottomSource(s); if (right.IsFaceDown(s)) left.FaceDownSources.Add(s); }   // v0.35.0 뒷면 진화원은 뒷면 그대로
         if (ReferenceEquals(CurrentAttacker, right)) CurrentAttacker = null;
         left.Evolve(card);
         left.IsSuspended = false;   // 액티브로 진화

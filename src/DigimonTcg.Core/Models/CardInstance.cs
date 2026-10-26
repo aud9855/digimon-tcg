@@ -62,8 +62,74 @@ public class CardInstance
         TurnPlayed = currentTurn;
     }
 
+    // =====================================================================
+    // v0.35.0 뒷면 진화원 (종합 룰 4-7-4 · 4-7-9 · 4-7-10 · 16-41 ≪트레이닝≫)
+    //  - 아래에 겹쳐진 카드는 지정이 없으면 앞면 (4-7-4). "face down"으로 놓인 카드만 뒷면
+    //  - 뒷면 카드는 카드의 정보를 갖지 않는 카드로 취급하며 정보를 참조할 수 없다 (4-7-9) → 진화원 효과 · DP · 이름 · 특징 · 색 · Lv 조건에서 빠진다.
+    //    장 수("진화원 N장 이상" · "진화원이 없는")에는 들어간다 (카드이므로)
+    //  - 주인은 자신의 뒷면 카드를 볼 수 있다 (4-7-10) — 화면은 상대 것만 카드 뒷면으로 가린다
+    //  - 뒷면으로 놓을 때 엔진이 카드를 복사해 (같은 CardData 객체가 여러 장을 나타낼 수 있다) 그 복사본을 참조로 구분한다
+    // =====================================================================
+
+    /// <summary>뒷면으로 놓인 진화원 (참조로 구분 — 앞면으로 다시 놓이면 지운다)</summary>
+    public HashSet<CardData> FaceDownSources { get; } = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>이 카드가 이 디지몬의 뒷면 진화원(이었던 카드)인지 — 진화원에서 막 떠난 카드도 true (뒷면 진화원 파기 시점용)</summary>
+    public bool IsFaceDown(CardData card) => FaceDownSources.Count > 0 && FaceDownSources.Contains(card);
+
+    /// <summary>앞면 진화원 (위 → 아래) — 정보를 참조하는 곳(진화원 효과 · 이름 · 특징 · 색 · Lv)은 이것을 본다</summary>
+    public IEnumerable<CardData> FaceUpSources => FaceDownSources.Count == 0 ? EvolutionSources : EvolutionSources.Where(s => !FaceDownSources.Contains(s));
+
+    /// <summary>뒷면 진화원 장 수</summary>
+    public int FaceDownSourceCount => FaceDownSources.Count == 0 ? 0 : EvolutionSources.Count(FaceDownSources.Contains);
+
+    /// <summary>정보가 없는 카드 (뒷면 카드를 조건에 비춰 볼 때 — 이름 · 특징 · 색 · 종류가 없고, 수치는 아주 낮은 것 · 높은 것 둘 다 맞아야 한다)</summary>
+    private static readonly CardData BlankLow = new() { CardId = "FACE-DOWN", Name = "", Type = (CardType)(-1), Color = (CardColor)(-1), Level = 0, PlayCost = 0, EvoCost = 0, DP = 0 };
+    private static readonly CardData BlankHigh = new() { CardId = "FACE-DOWN", Name = "", Type = (CardType)(-1), Color = (CardColor)(-1), Level = 99, PlayCost = 99, EvoCost = 99, DP = 999999 };
+
+    /// <summary>뒷면 카드가 이 조건에 맞는지 — 정보를 보지 않는 조건("1 card" · "any 1 digivolution card")만 맞는다 (4-7-9)</summary>
+    public static bool FaceDownMatches(Func<CardData, bool> match)
+    {
+        try { return match(BlankLow) && match(BlankHigh); }
+        catch { return false; }
+    }
+
+    /// <summary>진화원 중 조건에 맞는 카드 (뒷면 카드는 정보 없이 비춰 본다) — 위 → 아래</summary>
+    public IEnumerable<CardData> SourcesWhere(Func<CardData, bool> match)
+    {
+        if (FaceDownSources.Count == 0) return EvolutionSources.Where(match);
+        bool fd = EvolutionSources.Any(FaceDownSources.Contains) && FaceDownMatches(match);
+        return EvolutionSources.Where(s => FaceDownSources.Contains(s) ? fd : match(s));
+    }
+
+    public bool SourcesAny(Func<CardData, bool> match) => SourcesWhere(match).Any();
+    public int SourcesCount(Func<CardData, bool> match) => SourcesWhere(match).Count();
+
+    /// <summary>카드를 진화원 맨 아래에 뒷면으로 놓는다 (복사본을 놓고 반환)</summary>
+    public CardData AddBottomSourceFaceDown(CardData card)
+    {
+        var copy = CopyCard(card);
+        AddBottomSource(copy);
+        FaceDownSources.Add(copy);
+        return copy;
+    }
+
+    /// <summary>진화원 맨 위(맨 위 카드 바로 아래)에 앞면으로 놓는다</summary>
+    public void AddTopSource(CardData card)
+    {
+        FaceDownSources.Remove(card);
+        EvolutionSources.Push(card);
+    }
+
+    /// <summary>맨 위 카드가 뒷면 카드가 되었는지 (≪퇴화≫ 등으로 드러남 — 종합 룰 17-1-3-2-4: 에어리어의 뒷면 카드는 룰 처리로 파기)</summary>
+    public bool TopIsFaceDown => FaceDownSources.Count > 0 && FaceDownSources.Contains(TopCard);
+
+    private static readonly System.Reflection.MethodInfo CloneMethod = typeof(object).GetMethod("MemberwiseClone", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+    internal static CardData CopyCard(CardData card) => (CardData)CloneMethod.Invoke(card, null)!;
+
     public void Evolve(CardData newCard)
     {
+        FaceDownSources.Remove(newCard);
         EvolutionSources.Push(TopCard);
         TopCard = newCard;
     }
@@ -115,6 +181,7 @@ public class CardInstance
     /// <summary>진화원 맨 아래에 카드를 넣는다</summary>
     public void AddBottomSource(CardData card)
     {
+        FaceDownSources.Remove(card);
         var bottomUp = EvolutionSources.Reverse().ToList();
         bottomUp.Insert(0, card);
         EvolutionSources = new Stack<CardData>(bottomUp);
@@ -132,10 +199,10 @@ public class CardInstance
         return found;
     }
 
-    public bool HasSource(string cardId) => EvolutionSources.Any(s => s.CardId == cardId);
+    public bool HasSource(string cardId) => FaceUpSources.Any(s => s.CardId == cardId);
 
     public int GetInheritedDpBonus() =>
-        IsOwnersTurn ? EvolutionSources.Sum(s => s.InheritedDpBonus) : 0;
+        IsOwnersTurn ? FaceUpSources.Sum(s => s.InheritedDpBonus) : 0;
 
     public int GetTotalBonusDP() =>
         GetInheritedDpBonus() + TamerDpBonus + TemporaryDpBonus + EffectDpBonus + AttackDpBonus;
@@ -144,7 +211,7 @@ public class CardInstance
         Math.Max(0, TopCard.DP + GetTotalBonusDP());
 
     public int GetInheritedSecurityAttackBonus() =>
-        EvolutionSources.Sum(s => s.InheritedSecurityAttackBonus);
+        FaceUpSources.Sum(s => s.InheritedSecurityAttackBonus);
 
     public int GetTotalBonusSecurityAttack() =>
         TopCard.SecurityAttackBonus + GetInheritedSecurityAttackBonus() + TamerSecurityAttackBonus + TemporarySecurityAttackBonus + EffectSecurityAttackBonus + AttackSecurityAttackBonus;
@@ -159,4 +226,7 @@ public class CardInstance
     {
         return EvolutionSources.Reverse().ToList();
     }
+
+    /// <summary>앞면 진화원 (아래 → 위)</summary>
+    public IReadOnlyList<CardData> GetFaceUpStackBottomUp() => FaceUpSources.Reverse().ToList();
 }

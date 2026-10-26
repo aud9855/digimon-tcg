@@ -183,7 +183,7 @@ public partial class GoldfishEngine
 
             if (includeInherited && self != null)
             {
-                var sourceCards = (sources ?? self.GetEvolutionStackBottomUp()).GroupBy(s => s.CardId).Select(g => g.First()).ToList();
+                var sourceCards = (sources ?? self.GetEvolutionStackBottomUp()).Where(s => !self.IsFaceDown(s)).GroupBy(s => s.CardId).Select(g => g.First()).ToList();
                 foreach (var source in sourceCards)
                 {
                     if (CardScripts.For(source) is not { } script)
@@ -325,6 +325,7 @@ public partial class GoldfishEngine
             or EffectTrigger.AllyDigimonDigivolved or EffectTrigger.AllyDigimonSuspended or EffectTrigger.OpponentDigimonAttacks
             or EffectTrigger.OpponentDigimonSuspended or EffectTrigger.OpponentDigimonPlayed
             or EffectTrigger.AllyDigimonUnsuspended or EffectTrigger.OpponentDigimonUnsuspended or EffectTrigger.AllyDeletedOpponentInBattle
+            or EffectTrigger.AllySourcesAdded   // v0.35.0 "When face-down cards are placed in any of your Digimon's digivolution cards, any of those Digimon may digivolve ~"
             ? new List<CardInstance> { ctx.Other } : new List<CardInstance>();
         if (effect.Condition != null && !effect.Condition(ctx))
             return;
@@ -472,7 +473,7 @@ public partial class GoldfishEngine
             if (CardScripts.For(gained) is { } gs)
                 foreach (var e in gs.Statics.Where(e => e.Source == EffectSource.Main))
                     yield return e;
-        foreach (var source in inst.EvolutionSources.GroupBy(s => s.CardId).Select(g => g.First()))
+        foreach (var source in inst.FaceUpSources.GroupBy(s => s.CardId).Select(g => g.First()))
         {
             if (CardScripts.For(source) is not { } script) continue;
             foreach (var e in script.Statics.Where(e => e.Source == EffectSource.Inherited))
@@ -686,6 +687,7 @@ public partial class GoldfishEngine
             zones.Trash.Add(top);
             RecalculateFieldBuffs();
             EffectLog(zones, $"[≪아머 퍼지≫] [{top.Name}]을(를) 파기하고 [{inst.TopCard.Name}](으)로 남습니다.");
+            TrashExposedFaceDownTops();   // v0.35.0
             return true;
         }
 
@@ -738,10 +740,10 @@ public partial class GoldfishEngine
         var xrosNames = DigiXrosRequirementNames(instance.TopCard);
         bool IsXrosMaterial(CardData s) => s.Type == CardType.Digimon
             && (xrosNames == null || xrosNames.Any(n => KoreanCardData.DisplayName(s).Contains(n, StringComparison.Ordinal) || s.Name.Contains(n, StringComparison.OrdinalIgnoreCase)));
-        if (materialSave > 0 && zones.Tamers.Count > 0 && instance.EvolutionSources.Any(IsXrosMaterial)
+        if (materialSave > 0 && zones.Tamers.Count > 0 && instance.SourcesAny(IsXrosMaterial)
             && AskYesNo(zones, instance, $"≪머티리얼 세이브 {materialSave}≫ [{instance.TopCard.Name}]의 진화원 {materialSave}장을 테이머 아래에 놓을까요?", recommended: true))
         {
-            var saved = ChooseCards(zones, CardChoiceZone.DigivolutionCards, instance.EvolutionSources.Where(IsXrosMaterial).OrderByDescending(s => s.Level).ToList(),
+            var saved = ChooseCards(zones, CardChoiceZone.DigivolutionCards, instance.SourcesWhere(IsXrosMaterial).OrderByDescending(s => s.Level).ToList(),
                 materialSave, upTo: true, $"≪머티리얼 세이브 {materialSave}≫ 테이머 아래에 놓을 진화원을 고르세요.");
             foreach (var s in saved)
                 if (instance.TakeSource(x => ReferenceEquals(x, s)) != null) zones.UnderTamers.Add(s);
@@ -1048,7 +1050,7 @@ public partial class GoldfishEngine
             return;
         if (!zones.BattleArea.Remove(inst))
             return;
-        ApplyOverflow(zones, inst.GetEvolutionStackBottomUp().Append(inst.TopCard));
+        ApplyOverflow(zones, inst.GetFaceUpStackBottomUp().Append(inst.TopCard));
         TrashLinks(zones, inst);
         while (inst.EvolutionSources.Count > 0)
             zones.Trash.Add(inst.EvolutionSources.Pop());
@@ -1071,6 +1073,7 @@ public partial class GoldfishEngine
             ApplyOverflow(zones, new[] { removed });
             n++;
         }
+        if (n > 0) TrashExposedFaceDownTops();   // v0.35.0 뒷면 진화원이 맨 위가 되면 룰 처리로 파기 (17-1-3-2-4)
         return n;
     }
 
@@ -1138,7 +1141,7 @@ public partial class GoldfishEngine
             return;
         if (!zones.BattleArea.Remove(inst))
             return;
-        ApplyOverflow(zones, inst.GetEvolutionStackBottomUp().Append(inst.TopCard));
+        ApplyOverflow(zones, inst.GetFaceUpStackBottomUp().Append(inst.TopCard));
         TrashLinks(zones, inst);
         zones.MainDeck.Add(inst.TopCard);
         foreach (var s in inst.GetEvolutionStackBottomUp().Reverse())
@@ -1155,7 +1158,7 @@ public partial class GoldfishEngine
             return;
         if (!zones.BattleArea.Remove(inst))
             return;
-        ApplyOverflow(zones, inst.GetEvolutionStackBottomUp().Append(inst.TopCard));
+        ApplyOverflow(zones, inst.GetFaceUpStackBottomUp().Append(inst.TopCard));
         TrashLinks(zones, inst);
         while (inst.EvolutionSources.Count > 0)
             zones.Trash.Add(inst.EvolutionSources.Pop());
@@ -1439,7 +1442,7 @@ public partial class GoldfishEngine
                 if (HasMainAbility(gained) && !_usedMainAbilities.ContainsKey((d, gained.CardId, "gained")))
                     list.Add(new MainAbility(d, gained, Gained: true));
             // 진화원의 [메인] 기동 효과 (v0.29.0 — "[Main] [Once Per Turn] By placing this Digimon's top stacked card ~"): 진화원 카드마다
-            foreach (var source in d.GetEvolutionStackBottomUp().GroupBy(s => s.CardId).Select(g => g.First()))
+            foreach (var source in d.GetFaceUpStackBottomUp().GroupBy(s => s.CardId).Select(g => g.First()))
                 if (HasInheritedMainAbility(source) && !_usedMainAbilities.ContainsKey((d, source.CardId)))
                     list.Add(new MainAbility(d, source, Inherited: true));
         }
@@ -1668,7 +1671,7 @@ public partial class GoldfishEngine
     /// <summary>테이머를 레스트시킨다 (비용 "이 테이머를 레스트시켜") + "자신의 테이머가 레스트했을 때" 효과</summary>
     internal void SuspendTamer(PlayerZones owner, CardData tamer)
     {
-        if (!owner.HasActiveTamer(tamer))
+        if (!owner.HasActiveTamer(tamer) || TamerSuspendLocked(owner, tamer))   // v0.35.0 "can't suspend until ~"
             return;
         owner.SuspendedTamers.Add(tamer);
         WithSuspendCause(() =>   // v0.32.0 "When one of your effects suspends a Tamer"
@@ -1821,7 +1824,7 @@ public partial class GoldfishEngine
     private static bool HasCounterEffect(CardInstance d) =>
         CardScripts.For(d.TopCard)?.Effects.Any(e => e.Trigger == EffectTrigger.Counter && e.Source == EffectSource.Main
                                                     && !(e.OncePerTurn && d.UsedOncePerTurn.Contains(d.TopCard.CardId))) == true
-        || d.EvolutionSources.Any(s => CardScripts.For(s)?.Effects.Any(e => e.Trigger == EffectTrigger.Counter && e.Source == EffectSource.Inherited
+        || d.SourcesAny(s => CardScripts.For(s)?.Effects.Any(e => e.Trigger == EffectTrigger.Counter && e.Source == EffectSource.Inherited
                                                                       && !(e.OncePerTurn && d.UsedOncePerTurn.Contains(s.CardId + "#I"))) == true);
 
     /// <summary>≪디지버스트 N≫ 비용: 진화원 아래에서 N장 파기 → 그 카드들의 "디지버스트로 트래시되었을 때" 효과 → "디지버스트를 발휘했을 때"</summary>
@@ -2178,6 +2181,7 @@ public partial class GoldfishEngine
         zones.Trash.AddRange(zones.UnderTamers);
         EffectLog(zones, $"테이머가 없어져 테이머 아래 카드 {zones.UnderTamers.Count}장을 트래시로 보냅니다.");
         zones.UnderTamers.Clear();
+        zones.FaceDownUnderTamers.Clear();
     }
 
     /// <summary>옵션 카드를 배틀 에어리어에 놓는다 (≪딜레이≫: 놓은 다음 턴부터 [메인]으로 파기해 효과를 발휘)</summary>

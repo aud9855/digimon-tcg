@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DigimonTcg.Core.Models;
 
@@ -53,6 +54,31 @@ public class PlayerZones
 
     // 자신의 테이머 아래에 놓인 카드 (≪세이브≫ 등 — 어느 테이머 아래인지는 구분하지 않는다)
     public List<CardData> UnderTamers { get; set; } = new List<CardData>();
+
+    // v0.35.0 테이머 아래에 뒷면으로 놓인 카드 (참조로 구분 — 놓을 때 엔진이 카드를 복사한다). 종합 룰 4-7-4 · 4-7-9: 지정이 없으면 앞면, 뒷면 카드는 정보를 참조할 수 없다
+    public HashSet<CardData> FaceDownUnderTamers { get; set; } = new HashSet<CardData>(ReferenceEqualityComparer.Instance);
+
+    // v0.35.0 테이머의 "can't suspend / can't unsuspend until ~" (값 = GameState.TurnSequence 기준 끝나는 턴). 같은 카드 객체로 구분한다
+    public Dictionary<CardData, int> TamerCannotSuspendUntil { get; } = new(ReferenceEqualityComparer.Instance);
+    public Dictionary<CardData, int> TamerCannotUnsuspendUntil { get; } = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>테이머 아래 카드가 뒷면인지</summary>
+    public bool IsFaceDownUnderTamer(CardData card) => FaceDownUnderTamers.Count > 0 && FaceDownUnderTamers.Contains(card);
+
+    /// <summary>테이머 아래 뒷면 카드 장 수</summary>
+    public int FaceDownUnderTamerCount => FaceDownUnderTamers.Count == 0 ? 0 : UnderTamers.Count(FaceDownUnderTamers.Contains);
+
+    /// <summary>테이머 아래 앞면 카드 (정보를 참조하는 곳 — ≪세이브≫ · 디지크로스 · 등장)</summary>
+    public IEnumerable<CardData> FaceUpUnderTamers => FaceDownUnderTamers.Count == 0 ? UnderTamers : UnderTamers.Where(c => !FaceDownUnderTamers.Contains(c));
+
+    /// <summary>카드를 테이머 아래에 뒷면으로 놓는다 (복사본을 놓고 반환 — 맨 아래 = 목록의 끝)</summary>
+    public CardData AddUnderTamerFaceDown(CardData card)
+    {
+        var copy = CardInstance.CopyCard(card);
+        UnderTamers.Add(copy);
+        FaceDownUnderTamers.Add(copy);
+        return copy;
+    }
 
     // 배틀 에어리어에 놓인 옵션 카드 (≪딜레이≫ — 놓은 다음 턴부터 파기해서 효과를 발휘한다)
     public List<PlacedOption> OptionsInPlay { get; set; } = new List<PlacedOption>();

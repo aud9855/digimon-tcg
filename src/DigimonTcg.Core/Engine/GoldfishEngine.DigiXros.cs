@@ -59,11 +59,11 @@ public partial class GoldfishEngine
             pool.AddRange(owner.Trash.Where(c => c.Type == CardType.Digimon).Select(c => new XrosCandidate(c, null, owner.Trash)));
         // 테이머: "by suspending this Tamer, you may place cards from under your Tamers as digivolution cards for a DigiXros"
         var underTamer = owner.Tamers.Distinct().FirstOrDefault(t => owner.HasActiveTamer(t) && CardScripts.For(t)?.XrosUnderTamersFor is { } f && f(card));
-        if (underTamer != null && owner.UnderTamers.Any(c => c.Type == CardType.Digimon && req.Slots.Any(s => s.Match(c)))
+        if (underTamer != null && owner.FaceUpUnderTamers.Any(c => c.Type == CardType.Digimon && req.Slots.Any(s => s.Match(c)))
             && AskYesNo(owner, null, $"[{underTamer.Name}]을(를) 레스트시켜 테이머 아래 카드도 [{card.Name}]의 디지크로스에 쓸까요?", recommended: true))
         {
             SuspendTamer(owner, underTamer);
-            pool.AddRange(owner.UnderTamers.Where(c => c.Type == CardType.Digimon).Select(c => new XrosCandidate(c, null, owner.UnderTamers)));
+            pool.AddRange(owner.FaceUpUnderTamers.Where(c => c.Type == CardType.Digimon).Select(c => new XrosCandidate(c, null, owner.UnderTamers)));
         }
 
         var used = new HashSet<XrosCandidate>();

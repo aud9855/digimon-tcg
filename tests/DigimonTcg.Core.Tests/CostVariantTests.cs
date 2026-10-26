@@ -88,7 +88,11 @@ public class CostVariantTests
         Play(state, engine, digi);
 
         var played = state.Player.BattleArea.Single(d => ReferenceEquals(d.TopCard, digi));
-        Assert.Contains(spare, played.EvolutionSources);
+        // v0.35.0 뒷면으로 놓는다 (종합 룰 4-7-4 · 4-7-9) — 엔진이 카드를 복사해 뒷면 표시
+        var placed = Assert.Single(played.EvolutionSources);
+        Assert.Equal(spare.CardId, placed.CardId);
+        Assert.True(played.IsFaceDown(placed));
+        Assert.DoesNotContain(spare, state.Player.Hand);
         Assert.Equal(8 - 3 + 1, state.MemoryGauge);
     }
 
@@ -97,10 +101,9 @@ public class CostVariantTests
     {
         var (state, engine) = NewMainPhase();
         state.Player.Tamers.Add(Card("CV-TAMER", type: CardType.Tamer, level: 0));
-        var first = Card("CV-UNDER-1");
-        var last = Card("CV-UNDER-2");
-        state.Player.UnderTamers.Add(first);
-        state.Player.UnderTamers.Add(last);
+        // v0.35.0 "face-down" 비용은 뒷면으로 놓인 카드만 (앞면 ≪세이브≫ 카드는 아니다)
+        var first = state.Player.AddUnderTamerFaceDown(Card("CV-UNDER-1"));
+        var last = state.Player.AddUnderTamerFaceDown(Card("CV-UNDER-2"));
 
         Play(state, engine, Card("CV-OPT-3", "[Main] By trashing the bottom face-down card from under any of your Tamers, gain 2 memory.", CardType.Option, level: 0));
 

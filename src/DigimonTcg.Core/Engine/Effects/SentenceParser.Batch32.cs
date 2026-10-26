@@ -254,7 +254,7 @@ internal static partial class SentenceParser
         {
             // 후보: Lv.마다 2장 이상인 묶음 (추천 = 이 효과의 카드를 남기는 묶음 · 낮은 Lv.부터). 묶음 안에서는 이 효과의 카드를 뒤로
             static List<List<CardData>> Pairs(EffectContext c) => c.Self == null ? new List<List<CardData>>()
-                : c.Self.EvolutionSources.Where(x => x.Level > 0).GroupBy(x => x.Level).Where(g => g.Count() >= 2)
+                : c.Self.SourcesWhere(x => x.Level > 0).GroupBy(x => x.Level).Where(g => g.Count() >= 2)
                     .Select(g => g.OrderBy(x => ReferenceEquals(x, c.Card) ? 1 : 0).Take(2).ToList())
                     .OrderBy(p => p.Any(x => ReferenceEquals(x, c.Card)) ? 1 : 0).ThenBy(p => p[0].Level).ToList();
             return (c => c.Self != null && c.Owner.BattleArea.Contains(c.Self) && Pairs(c).Count > 0,
@@ -283,7 +283,7 @@ internal static partial class SentenceParser
         {
             var (n, match) = srcPick;
             bool toDeck = m.Groups["deck"].Success;
-            List<CardData> Able(EffectContext c) => c.Self == null || !c.Owner.BattleArea.Contains(c.Self) ? new List<CardData>() : c.Self.EvolutionSources.Where(match).ToList();
+            List<CardData> Able(EffectContext c) => c.Self == null || !c.Owner.BattleArea.Contains(c.Self) ? new List<CardData>() : c.Self.SourcesWhere(match).ToList();
             return (c => Able(c).Count >= n,
                     c =>
                     {
@@ -318,7 +318,7 @@ internal static partial class SentenceParser
                         { var x = z.SecurityStack[0]; z.SecurityStack.RemoveAt(0); z.Trash.Add(x); c.Engine.NotifySecurityRemoved(z, x, trashed: true); }
                     },
                     c => c.Owner.SecurityStack.Count > 1, "서로의 시큐리티를 위에서부터 1장 파기하여");
-        return ParseCost33(cost, card) ?? ParseCost34(cost, card);   // v0.33.0 (SentenceParser.Batch33.cs) · v0.34.0
+        return ParseCost33(cost, card) ?? ParseCost34(cost, card) ?? ParseCost35(cost, card);   // v0.35.0 (SentenceParser.Batch35.cs)   // v0.33.0 (SentenceParser.Batch33.cs) · v0.34.0
     }
 
     /// <summary>v0.32.0 동작 (앞의 ParseAction보다 먼저 본다 — 지금까지 읽지 못하던 표기만)</summary>
@@ -490,7 +490,7 @@ internal static partial class SentenceParser
             var cm = Regex.Match(two.Groups["cond"].Value, @"^this Digimon has (?<c>\d+) or more cards with different names in its digivolution cards$", RegexOptions.IgnoreCase);
             if (!cm.Success) return $"미지원 조건 (등장 코스트 감소: {two.Groups["cond"].Value})";
             int need = int.Parse(cm.Groups["c"].Value), alt = int.Parse(two.Groups["m"].Value);
-            amount = c => c.Self != null && c.Self.EvolutionSources.Select(CardNames.MatchName).Distinct(StringComparer.OrdinalIgnoreCase).Count() >= need ? alt : n;
+            amount = c => c.Self != null && c.Self.FaceUpSources.Select(CardNames.MatchName).Distinct(StringComparer.OrdinalIgnoreCase).Count() >= need ? alt : n;
         }
         def?.FieldPlayCostModifier(new FieldPlayCostModifier(inherited ? EffectSource.Inherited : EffectSource.Main, which, n, null,
             Optional: fpc.Groups["may"].Success,
@@ -508,7 +508,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, $@"^you have (?:a|an|1) Digimon with (?<x>{TargetSpec.NameList}) in (?:its|their) digivolution cards(?: in play| on the field)?$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return z => z.BattleArea.Any(d => d.EvolutionSources.Any(s => xs.Any(x => TargetSpec.NameHas(s, x))));
+            return z => z.BattleArea.Any(d => d.SourcesAny(s => xs.Any(x => TargetSpec.NameHas(s, x))));
         }
         // "you have 2 or more suspended green Digimon in play" (BT10-103)
         if ((m = Regex.Match(cond, $@"^you have (?<n>\d+) or more (?<sus>suspended )?(?:(?<color>{Colors}) )?Digimon(?: in play| on the field)?$", RegexOptions.IgnoreCase)).Success)
