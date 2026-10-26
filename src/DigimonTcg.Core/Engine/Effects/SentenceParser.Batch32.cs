@@ -31,7 +31,7 @@ internal static partial class SentenceParser
         {
             var cols = Regex.Matches(m.Groups["col"].Value, Colors, RegexOptions.IgnoreCase).Select(x => Enum.Parse<CardColor>(x.Value, ignoreCase: true)).ToList();
             var inner = colored.Condition;
-            return (colored.Triggers, c => c.Self != null && c.Self.TopCard.AllColors.Any(cols.Contains) && (inner == null || inner(c)));
+            return (colored.Triggers, c => c.Self != null && c.Self.Colors.Any(cols.Contains) && (inner == null || inner(c)));
         }
 
         // "this Digimon with the [Night Claw], [Light Fang] or [Galaxy] trait would be deleted" — 주어 안의 쉼표 목록 (원래 규칙은 쉼표 앞까지만 본다)
@@ -515,7 +515,7 @@ internal static partial class SentenceParser
         {
             int n = int.Parse(m.Groups["n"].Value); bool sus = m.Groups["sus"].Success;
             CardColor? color = m.Groups["color"].Success ? Enum.Parse<CardColor>(m.Groups["color"].Value, ignoreCase: true) : null;
-            return z => z.BattleArea.Count(d => (!sus || d.IsSuspended) && (color == null || d.TopCard.AllColors.Contains(color.Value))) >= n;
+            return z => z.BattleArea.Count(d => (!sus || d.IsSuspended) && (color == null || d.Colors.Contains(color.Value))) >= n;
         }
         // "you have a Digimon with [Huckmon], [Jesmon] or [Sistermon] in its name" (BT20-057 — 이름 목록)
         if ((m = Regex.Match(cond, $@"^you have (?:a|an) (?<kind>Digimon|Tamer) with (?<x>{TargetSpec.NameList}) in (?:its|their) names?(?: on the field| in play)?$", RegexOptions.IgnoreCase)).Success)

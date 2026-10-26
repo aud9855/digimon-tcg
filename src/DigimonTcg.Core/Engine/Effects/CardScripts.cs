@@ -243,6 +243,13 @@ public sealed class CardScriptDefinition
     /// <summary>등장할 때 비용을 내면 코스트 -N ("When this card would be played, by ~ing, reduce the play cost by N")</summary>
     /// <summary>v0.34.0 진화할 수 있는 카드를 제한한다 ("This Digimon can only digivolve into [Apocalymon]")</summary>
     /// <summary>v0.36.0 "All of your [X]s are also treated as N DP Digimon" — 이 카드의 지속 효과(Keyword.TamerAsDigimonAura가 켜진 동안)</summary>
+    /// <summary>v0.37.0 "This Digimon is also treated as Lv.6 [Slayerdramon] for [Examon]'s DNA digivolution"</summary>
+    public CardScriptDefinition DnaAlias(string forName, string asName, int level)
+    {
+        _script.DnaAliases.Add((forName, asName, level));
+        return this;
+    }
+
     public CardScriptDefinition TamerAura(TamerAura aura)
     {
         _script.TamerAuras.Add(aura);

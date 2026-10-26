@@ -282,11 +282,11 @@ public static partial class KoreanEffectRenderer
         if (mult.Success && CounterKo(mult.Groups["cnt"].Value) is { } mc && Action(Cap(mult.Groups["core"].Value) + mult.Groups["dur"].Value, may ? Form.May : Form.Plain) is { } ma)
             return $"{mc} {ma}";
 
-        var direct = Action(s, may ? Form.May : Form.Plain) ?? (may ? null : SentenceKo33(s, false));   // v0.33.0
+        var direct = PlaceThisCardKo37(s, may) ?? Action(s, may ? Form.May : Form.Plain) ?? (may ? null : SentenceKo33(s, false));   // v0.37.0 · v0.33.0
         // "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ ~" — 주어 뒤의 may (SentenceParser.ParseStep과 같은 읽기)
         if (direct == null && !may && Regex.Match(s, @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } sm)
             return Action($"{sm.Groups["t"].Value} {sm.Groups["v"].Value}s{sm.Groups["rest"].Value}", Form.May);
-        return direct ?? (may ? SentenceKo33(s, true) : null) ?? SentenceKo34(s, may) ?? SentenceKo35(may ? "you may " + s : s) ?? SentenceKo36(s, may);   // v0.36.0 (Batch36) · v0.35.0 (Batch35)   // v0.33.0 (KoreanEffectRenderer.Batch33.cs) · v0.34.0 (Batch34)
+        return direct ?? (may ? SentenceKo33(s, true) : null) ?? SentenceKo34(s, may) ?? SentenceKo35(may ? "you may " + s : s) ?? SentenceKo36(s, may) ?? SentenceKo37(s, may);   // v0.37.0 (Batch37) · v0.36.0 (Batch36) · v0.35.0 (Batch35)   // v0.33.0 (KoreanEffectRenderer.Batch33.cs) · v0.34.0 (Batch34)
     }
 
     // =====================================================================
@@ -1143,7 +1143,7 @@ public static partial class KoreanEffectRenderer
             return Have("이 디지몬과 같은 명칭의 자신의 다른 디지몬이");
         if (Regex.IsMatch(cond, @"^(?:DNA digivolving|DigiXrosing|it DNA digivolved|this Digimon DNA digivolved)$", RegexOptions.IgnoreCase))
             return new(cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화했을 때,", "조그레스 진화한 동안,");
-        return CondKo32(cond) ?? CondKo33(cond) ?? CondKo34(cond) ?? CondKo35(cond);   // v0.32.0 · v0.33.0
+        return CondKo32(cond) ?? CondKo33(cond) ?? CondKo34(cond) ?? CondKo35(cond) ?? CondKo37(cond);   // v0.37.0 · v0.32.0 · v0.33.0
     }
 
     /// <summary>"When ~," 사건 → "~했을 때,"</summary>

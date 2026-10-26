@@ -85,7 +85,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(c0, $@"^this Digimon is (?<c>{Colors}) and has (?<n>\d+) DP or (?<dir>more|less)$", RegexOptions.IgnoreCase)).Success)
         {
             var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); int n = int.Parse(m.Groups["n"].Value); bool more = m.Groups["dir"].Value.Equals("more", StringComparison.OrdinalIgnoreCase);
-            return d => d != null && d.TopCard.AllColors.Contains(col) && (more ? d.GetCurrentDP() >= n : d.GetCurrentDP() <= n);
+            return d => d != null && d.Colors.Contains(col) && (more ? d.GetCurrentDP() >= n : d.GetCurrentDP() <= n);
         }
         // "this Digimon has the [Bagra Army] or [Twilight] trait and is level 5 or higher"
         if ((m = Regex.Match(c0, $@"^this Digimon has (?:the )?(?<x>{TargetSpec.NameList}) traits? and is level (?<n>\d+) or (?<dir>higher|lower)$", RegexOptions.IgnoreCase)).Success)
@@ -292,16 +292,16 @@ internal static partial class SentenceParser
         // "you have a purple Digimon or (purple) Tamer (in play)" · "a yellow Digimon or yellow Tamer" · "a green Digimon or Tamer"
         if ((m = Regex.Match(c0, $@"^you have an? (?<c>{Colors}) Digimon or (?:(?<c2>{Colors}) )?Tamer(?: in play| on the field)?$", RegexOptions.IgnoreCase)).Success
             && (!m.Groups["c2"].Success || m.Groups["c2"].Value.Equals(m.Groups["c"].Value, StringComparison.OrdinalIgnoreCase)))
-        { var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); return (o, _) => o.BattleArea.Any(d => d.TopCard.AllColors.Contains(col)) || o.Tamers.Any(t => t.AllColors.Contains(col)); }
+        { var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); return (o, _) => o.BattleArea.Any(d => d.Colors.Contains(col)) || o.Tamers.Any(t => t.AllColors.Contains(col)); }
         // "you have a Digimon that's black or has the [Legend-Arms] trait (in play)" · "you have a Digimon with the [Legend-Arms] trait or a black Digimon in play"
         if ((m = Regex.Match(c0, $@"^you have an? Digimon that's (?<c>{Colors}) or has the (?<x>{TargetSpec.NameList}) traits?(?: in play)?$|^you have an? Digimon with the (?<x>{TargetSpec.NameList}) traits? or an? (?<c>{Colors}) Digimon(?: in play)?$", RegexOptions.IgnoreCase)).Success)
         {
             var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return (o, _) => o.BattleArea.Any(d => d.TopCard.AllColors.Contains(col) || xs.Any(x => TargetSpec.HasTrait(d.TopCard, x)));
+            return (o, _) => o.BattleArea.Any(d => d.Colors.Contains(col) || xs.Any(x => TargetSpec.HasTrait(d.TopCard, x)));
         }
         // "you have a Digimon in play with 2 or more colors"
         if ((m = Regex.Match(c0, @"^you have an? Digimon(?: in play)? with (?<n>\d+) or more colou?rs(?: in play)?$", RegexOptions.IgnoreCase)).Success)
-        { int n = int.Parse(m.Groups["n"].Value); return (o, _) => o.BattleArea.Any(d => d.TopCard.AllColors.Count >= n); }
+        { int n = int.Parse(m.Groups["n"].Value); return (o, _) => o.BattleArea.Any(d => d.Colors.Count >= n); }
         // "you have a Digimon in play with [Jellymon] in its name or with [Jellymon] in its digivolution cards"
         if ((m = Regex.Match(c0, $@"^you have an? Digimon(?: in play)? with (?<x>{TargetSpec.NameList}) in its name or (?:with )?(?<y>{TargetSpec.NameList}) in its digivolution cards(?: in play)?$", RegexOptions.IgnoreCase)).Success)
         {
@@ -320,7 +320,7 @@ internal static partial class SentenceParser
             return (o, e) => xs.Any(x => o.BattleArea.Any(d => CardNames.Is(d.TopCard, x)) || o.Tamers.Any(t => CardNames.Is(t, x))) || orRest(o, e);
         }
         if ((m = Regex.Match(c0, $@"^you have an? yellow Digimon with (?<x>{TargetSpec.NameList})$", RegexOptions.IgnoreCase)).Success)   // BT17-089 "a yellow Digimon with [Agumon] or [Greymon]" (명칭)
-        { var xs = TargetSpec.Names(m.Groups["x"].Value); return (o, _) => o.BattleArea.Any(d => d.TopCard.AllColors.Contains(CardColor.Yellow) && xs.Any(x => TargetSpec.NameHas(d.TopCard, x))); }
+        { var xs = TargetSpec.Names(m.Groups["x"].Value); return (o, _) => o.BattleArea.Any(d => d.Colors.Contains(CardColor.Yellow) && xs.Any(x => TargetSpec.NameHas(d.TopCard, x))); }
         // "you have a Digimon with the [Free] trait or a Tamer with [Ken Ichijoji] in its name in play"
         if ((m = Regex.Match(c0, @"^you have an? (?<a>Digimon with .+?) or an? (?<b>Tamer with .+?)(?: in play)?$", RegexOptions.IgnoreCase)).Success
             && ParseSideCondition("you have a " + m.Groups["a"].Value) is { } dA && ParseSideCondition33("you have a " + m.Groups["b"].Value) is { } tB)
@@ -340,7 +340,7 @@ internal static partial class SentenceParser
         }
         // "you have a yellow [Data] or [Witchelny] trait Digimon"
         if ((m = Regex.Match(c0, $@"^you have an? (?<c>{Colors}) (?<x>{TargetSpec.NameList}) traits? Digimon$", RegexOptions.IgnoreCase)).Success)
-        { var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); var xs = TargetSpec.Names(m.Groups["x"].Value); return (o, _) => o.BattleArea.Any(d => d.TopCard.AllColors.Contains(col) && xs.Any(x => TargetSpec.HasTrait(d.TopCard, x))); }
+        { var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); var xs = TargetSpec.Names(m.Groups["x"].Value); return (o, _) => o.BattleArea.Any(d => d.Colors.Contains(col) && xs.Any(x => TargetSpec.HasTrait(d.TopCard, x))); }
         // "you have a Digimon or Tamer with [Pulsemon] in its text (on the field)" · "a Tamer or [Hybrid] trait Digimon" · "a Tamer with inherited effects"
         if ((m = Regex.Match(c0, $@"^you have an? Digimon or Tamer with (?<x>{TargetSpec.NameList}) in its text(?: on the field| in play)?$", RegexOptions.IgnoreCase)).Success)
         { var xs = TargetSpec.Names(m.Groups["x"].Value); return (o, _) => o.BattleArea.Any(d => xs.Any(x => TargetSpec.TextHas(d.TopCard, x))) || o.Tamers.Any(t => xs.Any(x => TargetSpec.TextHas(t, x))); }
@@ -350,7 +350,7 @@ internal static partial class SentenceParser
             return (o, _) => o.Tamers.Any(t => t.InheritedEffectText.Trim().Length > 0);
         // "your opponent has a white Digimon or Tamer" · "your opponent has a level 6 or higher Digimon"
         if ((m = Regex.Match(c0, $@"^your opponent has an? (?<c>{Colors}) Digimon or Tamer$", RegexOptions.IgnoreCase)).Success)
-        { var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); return (_, e) => e.BattleArea.Any(d => d.TopCard.AllColors.Contains(col)) || e.Tamers.Any(t => t.AllColors.Contains(col)); }
+        { var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); return (_, e) => e.BattleArea.Any(d => d.Colors.Contains(col)) || e.Tamers.Any(t => t.AllColors.Contains(col)); }
         return null;
     }
 
@@ -428,14 +428,14 @@ internal static partial class SentenceParser
         // 사건의 디지몬: "any of them are red" · "any of them have [Vemmon] in their texts" · "any of them have [Aqua] or [Sea Animal] in any of their traits" ·
         // "it has the [Free] trait or is yellow" · "that Digimon is level 5 or higher" · "that Digimon is [Jesmon GX]" · "the attacking Digimon is [Beelzemon]" · "the Digimon that played is [MarineAngemon]"
         if ((m = Regex.Match(c0, $@"^(?:any of them|it|that Digimon) (?:are|is) (?<c>{Colors})$", RegexOptions.IgnoreCase)).Success)
-        { var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); return c => c.Other != null && c.Other.TopCard.AllColors.Contains(col); }
+        { var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); return c => c.Other != null && c.Other.Colors.Contains(col); }
         if ((m = Regex.Match(c0, @"^(?:any of them|it|that Digimon) (?:have|has) (?<rest>(?:the )?\[.+)$", RegexOptions.IgnoreCase)).Success
             && TargetSpec.Parse("all of your Digimon with " + Regex.Replace(Regex.Replace(m.Groups["rest"].Value, @"\btheir\b", "its", RegexOptions.IgnoreCase), @"\bor is (?=" + Colors + ")", "or ", RegexOptions.IgnoreCase)) is { } themSpec)
             return c => c.Other != null && themSpec.Filters.All(f => f(c.Other));
         if ((m = Regex.Match(c0, $@"^(?:it|that Digimon) has the (?<x>{TargetSpec.NameList}) trait or is (?<c>{Colors})$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true);
-            return c => (c.Other ?? c.LastTargets.FirstOrDefault()) is { } d && (xs.Any(x => TargetSpec.HasTrait(d.TopCard, x)) || d.TopCard.AllColors.Contains(col));
+            return c => (c.Other ?? c.LastTargets.FirstOrDefault()) is { } d && (xs.Any(x => TargetSpec.HasTrait(d.TopCard, x)) || d.Colors.Contains(col));
         }
         if ((m = Regex.Match(c0, @"^(?:that Digimon|it) is level (?<n>\d+) or (?<dir>higher|lower)$", RegexOptions.IgnoreCase)).Success)
         {

@@ -94,6 +94,7 @@ public partial class GoldfishEngine
         State.Player.Hand.Remove(card);
         State.MemoryGauge -= cost;
         State.TotalMemorySpent += cost;
+        RecalculateFieldBuffs();   // v0.37.0
         Log($"링크: [{card.Name}] → [{target.TopCard.Name}] (코스트 {cost})");
         LinkCard(State.Player, target, card);
         CheckTurnEndAndAutoReset();

@@ -539,6 +539,7 @@ internal static partial class SentenceParser
             return null;
         }
         if (ParseStatic36(s, inherited, card, cond, pending) is { } static36) return static36.Length == 0 ? null : static36;   // v0.36.0 플레이어 제한 (SentenceParser.Batch36.cs)
+        if (ParseStatic37(s, inherited, card, cond, pending) is { } static37) return static37.Length == 0 ? null : static37;   // v0.37.0 (SentenceParser.Batch37.cs)
         s = NormalizeSubjectForms34(NormalizeProtection34(s));
         if (SplitSubject34(s) is not { } split) return "주어";
         var preds = ParsePreds34(split.Preds);
@@ -1000,7 +1001,7 @@ internal static partial class SentenceParser
         if (!m.Success) return null;
         if (card.Type != CardType.Option) return "미지원: 옵션이 아닌 카드의 색 조건";
         var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true);
-        def?.IgnoreColorRequirementWhen(z => z.BattleArea.Any(d => d.TopCard.AllColors.Contains(col)) || (z.BreedingArea is { } b && b.TopCard.AllColors.Contains(col)) || z.Tamers.Any(t => t.AllColors.Contains(col)));
+        def?.IgnoreColorRequirementWhen(z => z.BattleArea.Any(d => d.Colors.Contains(col)) || (z.BreedingArea is { } b && b.Colors.Contains(col)) || z.Tamers.Any(t => t.AllColors.Contains(col)));
         return "";
     }
 

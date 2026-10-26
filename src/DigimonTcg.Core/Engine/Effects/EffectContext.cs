@@ -70,6 +70,9 @@ public sealed class EffectContext
     /// <summary>시큐리티 디지몬: 배틀이 끝난 뒤 트래시 대신 코스트 없이 등장 ("At the end of the battle, play this card")</summary>
     public bool PlayAfterBattle { get; set; }
 
+    /// <summary>v0.37.0 [시큐리티] "Play this card without battling and without paying the cost" — 배틀하지 않고 이 시큐리티 디지몬을 등장시킨다</summary>
+    public bool PlayWithoutBattle { get; set; }
+
     /// <summary>앞 문장에서 고른 대상 ("that Digimon" · "it"이 가리키는 디지몬)</summary>
     public List<CardInstance> LastTargets { get; set; } = new();
 
@@ -108,6 +111,9 @@ public sealed class EffectContext
 
     /// <summary>옵션: "place this card face up as the top/bottom security card" — 사용 뒤 트래시 대신 시큐리티에 앞면으로 (true = 맨 위)</summary>
     public bool? ThisCardToSecurityTop { get; set; }
+
+    /// <summary>v0.37.0 "place this card as the bottom digivolution card of 1 of your ~" · "place this card at the bottom of your security stack" — 이 카드를 다른 곳에 놓았으므로 사용 뒤 트래시로 보내지 않는다</summary>
+    public bool ThisCardMoved { get; set; }
 
     /// <summary>문장 파서의 문장을 하나라도 처리하려 했는지 · 그중 하나라도 실제로 처리했는지 — [메인] 기동 효과가 아무것도 하지 않았으면 사용으로 치지 않는다</summary>
     public bool StepsRan { get; set; }

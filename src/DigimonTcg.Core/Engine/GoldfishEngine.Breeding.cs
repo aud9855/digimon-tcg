@@ -30,6 +30,11 @@ public partial class GoldfishEngine
     {
         if (owner.BreedingArea is not { } moving || moving.TopCard.Type != CardType.Digimon)
             return null;
+        if (EffectRules.MoveDpBlocked(State, owner, moving))   // v0.37.0 "can't play or move Digimon with N DP or less" (EX7-014)
+        {
+            EffectLog(owner, $"[{moving.TopCard.Name}] 상대의 효과로 배틀 에어리어로 이동할 수 없습니다.");
+            return null;
+        }
         owner.BreedingArea = null;
         moving.TurnPlayed = Math.Min(moving.TurnPlayed, State.CurrentTurn - 1);
         owner.BattleArea.Add(moving);

@@ -58,6 +58,12 @@ public class CardInstance
     /// <summary>v0.36.0 디지몬으로도 취급하는 테이머 (이 디지몬이 그 테이머를 나타낸다 — 테이머 카드는 테이머 존에 그대로). 보통 디지몬이면 null</summary>
     public CardData? TamerProxyOf { get; set; }
 
+    /// <summary>v0.37.0 지속 효과로 더해진 색 ("This Digimon is also treated as yellow" · "~ treated as also having the color of its digivolution cards") — 엔진이 지속 효과를 계산할 때마다 다시 채운다</summary>
+    public HashSet<CardColor> ExtraColors { get; } = new();
+
+    /// <summary>v0.37.0 이 디지몬의 지금 색 (맨 위 카드의 색 + 효과로 더해진 색)</summary>
+    public IReadOnlyList<CardColor> Colors => ExtraColors.Count == 0 ? TopCard.AllColors : TopCard.AllColors.Concat(ExtraColors.Where(c => !TopCard.AllColors.Contains(c))).ToList();
+
     public CardInstance(CardData baseCard, int currentTurn)
     {
         InstanceId = Guid.NewGuid().ToString();

@@ -68,6 +68,12 @@ public class PlayerZones
     public int CannotPlayFromTrashByEffectsUntil { get; set; }
     public int CannotUseOptionsUntil { get; set; }
 
+    /// <summary>v0.37.0 "can't play (or move) Digimon with N DP or less until ~" (EX3-012 · EX7-014): (DP 상한, 끝나는 TurnSequence, 육성 에어리어에서 이동도 막는지)</summary>
+    public List<(int Dp, int Until, bool Move)> PlayDpLocks { get; } = new();
+
+    /// <summary>v0.37.0 상대 필드의 지속 효과 "they can't play Digimon with N DP or less" (BT14-017) — 엔진이 지속 효과를 계산할 때 채운다 (0 = 없음)</summary>
+    public int StaticPlayDpLock { get; set; }
+
     /// <summary>테이머 아래 카드가 뒷면인지</summary>
     public bool IsFaceDownUnderTamer(CardData card) => FaceDownUnderTamers.Count > 0 && FaceDownUnderTamers.Contains(card);
 

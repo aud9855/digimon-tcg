@@ -27,7 +27,7 @@ internal static partial class SentenceParser
             return (_, _, self) => self == null ? 0 : self.FaceUpSources.SelectMany(s => s.AllColors).Distinct().Count();
         // "of its colors" · "of this Digimon's colors"
         if (Regex.IsMatch(c0, @"^of (?:its|this Digimon's) colou?rs$", I))
-            return (_, _, self) => self == null ? 0 : self.TopCard.AllColors.Distinct().Count();
+            return (_, _, self) => self == null ? 0 : self.Colors.Distinct().Count();
         // "of its digivolution cards"
         if (Regex.IsMatch(c0, @"^of its digivolution cards$", I))
             return (_, _, self) => self?.EvolutionSources.Count ?? 0;

@@ -10,6 +10,41 @@
 
 ---
 
+## v0.37.0 — 2026-10-27
+미지원 효과 문장 11차 묶음 (메모리 조건 · DP 소멸 상한 · 등장 제한 · 색 · 시큐리티) — 도감 효과 문장 지원 8,872 → 8,956 / 10,366 (85.6% → 86.4%, +84)
+- 모든 절이 동작하는 카드 3,092 → 3,155장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 원래 지원하던 문장 중 한글이 없던 3문장(BT8-001 · BT8-008 · BT10-011 "이 디지몬의 DP가 N 이상일 때")에 새로 붙었다. 새로 지원한 84문장 모두 생성 한글이 붙는다
+- 메모리 조건 지속 효과 (StaticContext.Engine — 효과 주인 기준 메모리, 메모리가 바뀌면 지속 효과를 바로 다시 계산)
+  - "[Your Turn] While you have 3 or more memory, this Digimon gains ＜Security A. +1＞" (BT1-018) · "While you have 0 or less memory, this Digimon isn't affected by ~" (BT17-016 · EX8-073)
+  - "[All Turns] While you have 1 or more memory, none of your opponent's Digimon can suspend" (EX8-026 — 공식 Q&A: 자신 쪽의 1 이상, 레스트할 수 없으니 어택도 할 수 없다) · "~ can activate [When Digivolving] effects" (EX8-035) · "While ~. While you have 1 or less, none of your opponent's Digimon can activate [On Play] effects" (EX8-029 — 지속 효과 문장 여럿)
+  - 줄인 메모리 조건 "If they have 4 or more, ~" · "Then, if you have 1 or less, ~" (BT15-016 · BT25-019 · LM-041)
+- DP 소멸 효과의 상한 (공식 Q&A BT12-001: "DP 소멸 효과에 기술된 수치의 상한을 플러스") — 소멸 효과를 처리하는 동안만 "with N DP or less"의 N에 더한다 (되돌리기 · 레스트 등 다른 효과는 그대로)
+  - "add 2000 to this Digimon's DP-based deletion effects' maximums" (이 디지몬의 효과만 — BT17-008/010 · BT19-007/009 "While you have 0 or less memory" · EX13-007/010)
+  - "Add 1000 to the maximum DP you can choose with DP-based deletion effects" (자신이 발휘하는 효과 전부 — BT12-001 · BT9-011 · EX2-010 · EX2-011 "While you have a red Tamer")
+- "can't play (or move) Digimon with N DP or less" — 보통 등장 · 효과로 등장 모두 (Q&A EX3-012), 이동은 육성 에어리어에서 배틀 에어리어로 (Q&A EX7-014). 화면 · AI도 막는다
+  - "While your opponent has 1 or more memory, they can't play Digimon with 6000 DP or less, and this Digimon gets +4000 DP" (BT14-017 — 지속 효과) · "your opponent can't play Digimon with 5000 DP or less until the end of their turn" (EX3-012) · "~ can't play or move ~" (EX7-014)
+- 색 · 이름 취급
+  - "[Your Turn] This Digimon is also treated as yellow" (BT3-014 · BT3-040 · BT4-017 · BT6-013 · BT6-061 · BT6-077 · EX1-005 — Q&A BT3-014: 진화 조건 「옐로 Lv.5」로도 진화할 수 있다). 색 조건 대상 · 옵션 사용 색 조건에도 들어간다 (CardInstance.Colors)
+  - "This Digimon is treated as also having the color of its digivolution cards. While this Digimon has 4 or more color, it gets +4000 DP" (BT8-084 — 앞면 진화원의 색)
+  - "This Digimon is also treated as Lv.6 [Slayerdramon] for [Examon]'s DNA digivolution" (BT20-025 · BT20-042 · EX13-021 · EX13-041 — Q&A BT20-025: 배틀 에어리어에 있는 동안만)
+  - "it doesn't activate [Security] effects on Option cards it checks" (BT7-014 · BT17-014 · BT20-015 · BT20-071 · BT20-074 · ST13-05 — 조건 · 특징이 붙은 표기)
+  - "While this Digimon has 10000 DP or more, it gains ~" (BT17-079 · BT7-085 — 지속 효과 문장 여럿)
+- 진화원 · 이 카드를 진화원에
+  - "Trash the top or bottom digivolution card of 1 of your opponent's Digimon" (BT27-020 진화원 효과 — 디지몬마다 위 · 아래를 고른다, 추천: 진화원 효과 · DP가 큰 쪽)
+  - 옵션 【메인】 "Then, place this card as the bottom digivolution card of 1 of your [Three Musketeers] trait Digimon" (EX7-070 · P-180 · BT9-109 · BT20-099) — 사용 뒤 트래시 대신 진화원
+  - [패] 【메인】 "If you have a Digimon with [Justimon] or [Raidenmon] in its name in play, you may pay 1 memory to place this card under that Digimon as its bottom digivolution card" (BT9-029 · BT9-042 · BT9-054 · BT10-025 — 공식 "1코스트 지불하는 것으로, 이 카드를 그 디지몬 1마리의 진화원 아래에 놓는다". 놓을 디지몬이 없으면 메모리를 내지 않는다)
+- 시큐리티
+  - "Place 1 of your opponent's Digimon face down at the bottom of their security stack" · "~ as their top security card" · "~ at the top or bottom of ~" (RB1-019 · BT14-094 · BT14-102 · BT10-101 · BT27-099 · ST10-14 · EX11-016 — 위 또는 아래는 고른다, 추천: 아래)
+  - "1 of your opponent's Digimon and all of your opponent's Security Digimon get -3000 DP for the turn" (BT7-098 · EX1-030 · EX4-009 · P-053 · ST17-06 · LM-040)
+  - "[On Deletion] Place this card at the bottom of your security stack" (BT14-038 · BT14-102 · LM-042) · 옵션 "Then, ~ place this card at the bottom of your security stack" (BT16-100 · BT18-098 · BT15-092)
+  - "[Security] Play this card without battling and without paying the cost" (BT5-112 · EX2-054 · "If your opponent has a level 6 or higher Digimon, ~" BT24-015 · BT24-039 — 공식 "배틀을 진행하지 않고 등장시킨다". 조건이 맞지 않거나 등장시킬 수 없으면 보통 배틀)
+- 등장 제한: "This effect can't play [Plutomon]" (BT26-059) · "This effect can't play cards of the same level" (P-220 — 1장씩 고르며 같은 Lv.은 후보에서 뺀다)
+- 원문 오타 "＜Security A. +1}＞" (BT24-072 · BT24-075)
+- 룰에 맞춘 수정 (기존 카드 동작이 바뀜)
+  - 메모리가 바뀔 때(효과로 얻기 · 잃기 · 진화 · 옵션 · 링크 코스트)마다 지속 효과를 다시 계산한다 (전에는 다음 행동 때)
+  - 효과로 사용 중인 옵션이 자신을 다른 곳에 놓을 때 같은 카드가 트래시 · 패에 더 있어도 그 카드를 빼지 않는다 (시뮬레이션에서 찾음)
+- 읽지 않고 남긴 것: 토큰 이름 제한 (BT19-091 · BT23-013 — 같은 문장의 "≪연계≫를 2번 얻고 어택" · "토큰 또는 카드 중 하나" 등장이 아직) · EX4-013 (턴 종료 시 패로 되돌리기) · "[Security] [End of Opponent's Turn] Play this card" (BT20-052/055 · BT26-082 · EX11-041/043) · BT12-043 · EX7-066 (상한 · DP의 "for each") · EX13-077 (색 수만큼 DP) · EX9-062 (어셈블) · BT15-060 · BT17-068 (공개 중의 이름 · Lv. 취급) · BT14-081 · BT17-069 (턴 종료 조건) · BT17-100 · 진화원 "top or bottom"에 놓기 (AD1-007 · EX12-018 · EX12-077) · BT11-034 (결정 대기)
+- 테스트 29개 (EffectBatch37Tests) — KoreanEffectRendererTests의 "한글이 없는 문장" 예시를 아직 한글이 없는 문장으로 바꿨다
+
 ## v0.36.0 — 2026-10-27
 미지원 효과 문장 10차 묶음 (효과로 등장 한 곳 · 플레이어 제한 · 테이머를 디지몬으로 취급) — 도감 효과 문장 지원 8,828 → 8,872 / 10,366 (85.2% → 85.6%, +44)
 - 모든 절이 동작하는 카드 3,057 → 3,092장 (수정 전 지원되던 문장 중 깨진 것 0). 원래 지원하던 문장의 한글은 용어집 보강으로 바뀐 20문장과 BT14-090("이 디지몬을" → "그 디지몬을") 말고는 그대로. 새로 지원한 44문장 모두 생성 한글이 붙는다

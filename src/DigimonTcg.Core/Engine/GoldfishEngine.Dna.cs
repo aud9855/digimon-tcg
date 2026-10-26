@@ -36,8 +36,12 @@ public partial class GoldfishEngine
     internal bool IsDnaDigivolving(CardInstance? d) => d != null && ReferenceEquals(_dnaDigivolving, d);
 
     /// <summary>a · b로 card에 DNA 진화할 수 있는지 (순서는 상관없다 — 왼쪽 · 오른쪽 조건에 하나씩)</summary>
-    private static bool DnaPairOk(DnaRequirement req, CardInstance a, CardInstance b) =>
-        !ReferenceEquals(a, b) && ((req.Left(a.TopCard) && req.Right(b.TopCard)) || (req.Left(b.TopCard) && req.Right(a.TopCard)));
+    private static bool DnaPairOk(DnaRequirement req, CardData card, CardInstance a, CardInstance b) =>
+        !ReferenceEquals(a, b) && ((DnaLeft(req, card, a) && DnaRight(req, card, b)) || (DnaLeft(req, card, b) && DnaRight(req, card, a)));
+
+    /// <summary>v0.37.0 조건 왼쪽 / 오른쪽에 맞는지 — "also treated as Lv.6 [X] for [Y]'s DNA digivolution"의 모습도 본다 (GoldfishEngine.Batch37.cs)</summary>
+    private static bool DnaLeft(DnaRequirement req, CardData card, CardInstance d) => DnaFacets(d, card).Any(req.Left);
+    private static bool DnaRight(DnaRequirement req, CardData card, CardInstance d) => DnaFacets(d, card).Any(req.Right);
 
     /// <summary>owner의 배틀 에어리어에서 card로 DNA 진화할 수 있는 두 마리 조합 (left = 조건 왼쪽)</summary>
     internal List<(CardInstance Left, CardInstance Right)> DnaPairs(PlayerZones owner, CardData card, Func<CardInstance, bool>? must = null)
@@ -45,8 +49,8 @@ public partial class GoldfishEngine
         var list = new List<(CardInstance, CardInstance)>();
         if (DnaOf(card) is not { } req) return list;
         var field = owner.BattleArea.Where(d => !IsToken(d.TopCard)).ToList();
-        foreach (var l in field.Where(d => req.Left(d.TopCard)))
-            foreach (var r in field.Where(d => !ReferenceEquals(d, l) && req.Right(d.TopCard)))
+        foreach (var l in field.Where(d => DnaLeft(req, card, d)))
+            foreach (var r in field.Where(d => !ReferenceEquals(d, l) && DnaRight(req, card, d)))
                 if (must == null || must(l) || must(r))
                     list.Add((l, r));
         return list;
@@ -64,7 +68,7 @@ public partial class GoldfishEngine
     private bool AiDnaEvolve(AiDnaEvolution dna)
     {
         var opp = State.DummyOpponent;
-        if (DnaOf(dna.Card) is not { } req || !opp.Hand.Contains(dna.Card) || !opp.BattleArea.Contains(dna.A) || !opp.BattleArea.Contains(dna.B) || !DnaPairOk(req, dna.A, dna.B))
+        if (DnaOf(dna.Card) is not { } req || !opp.Hand.Contains(dna.Card) || !opp.BattleArea.Contains(dna.A) || !opp.BattleArea.Contains(dna.B) || !DnaPairOk(req, dna.Card, dna.A, dna.B))
             return false;
         string names = $"{dna.A.TopCard.Name} + {dna.B.TopCard.Name}";
         int before = _aiTurn?.Memory ?? 0;
@@ -87,7 +91,7 @@ public partial class GoldfishEngine
             return ActionResult.Fail("DNA 진화할 카드나 디지몬이 없습니다.");
         if (DnaOf(card) is not { } req)
             return ActionResult.Fail($"[{card.Name}]의 조그레스 조건을 알 수 없습니다 (공식 한글 데이터가 필요합니다).");
-        if (!DnaPairOk(req, a, b))
+        if (!DnaPairOk(req, card, a, b))
             return ActionResult.Fail($"[{a.TopCard.Name}] · [{b.TopCard.Name}]은(는) [{card.Name}]의 조그레스 조건({req.Text})에 맞지 않습니다.");
         State.CanMulligan = false;
         var result = DnaDigivolveCore(State.Player, card, a, b, req.Cost, State.Player.Hand);
@@ -99,7 +103,7 @@ public partial class GoldfishEngine
     internal string DnaDigivolveCore(PlayerZones owner, CardData card, CardInstance a, CardInstance b, int cost, List<CardData> from)
     {
         var req = DnaOf(card)!;
-        var (left, right) = req.Left(a.TopCard) && req.Right(b.TopCard) ? (a, b) : (b, a);
+        var (left, right) = DnaLeft(req, card, a) && DnaRight(req, card, b) ? (a, b) : (b, a);
         // "When this Digimon would DNA digivolve into ~" (두 마리 모두)
         RunEffects(EffectTrigger.ThisDigimonWouldDnaDigivolve, owner, left, left.TopCard, triggerCard: card);
         if (owner.BattleArea.Contains(right)) RunEffects(EffectTrigger.ThisDigimonWouldDnaDigivolve, owner, right, right.TopCard, triggerCard: card);

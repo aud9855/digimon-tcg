@@ -33,6 +33,9 @@ public static class ActionValidator
         if (card.Type == CardType.Digitama)
             return ActionResult.Fail("디지타마 카드는 패에서 등장시킬 수 없으며 육성 페이즈에 부화해야 합니다.");
 
+        if (EffectRules.PlayDpBlocked(state, state.Player, card))   // v0.37.0 "your opponent can't play Digimon with 6000 DP or less"
+            return ActionResult.Fail($"상대의 효과로 지금은 DP {card.DP} 디지몬 [{card.Name}]을(를) 등장시킬 수 없습니다.");
+
         // 공식 룰: 옵션 카드는 자신의 배틀 에어리어 · 육성 에어리어의 디지몬 또는 테이머 중
         // 그 옵션의 색(여러 색이면 모든 색)을 가진 카드가 있어야 [메인]으로 사용할 수 있다. ([시큐리티] 발휘에는 조건 없음)
         // 듀얼 카드(종합 룰 4-6-2)는 패에서 등장하지 않는다 — 디지몬 쪽으로 진화하거나 옵션 쪽으로 사용한다. 이 경로 = 옵션 쪽 사용
@@ -73,6 +76,8 @@ public static class ActionValidator
             fieldColors.Add(zones.BreedingArea.TopCard.Color);
         foreach (var t in zones.Tamers)
             fieldColors.Add(t.Color);
+        foreach (var d in zones.BattleArea)   // v0.37.0 "This Digimon is also treated as yellow"
+            fieldColors.UnionWith(d.ExtraColors);
         // 여러 색 카드는 두 번째 색도 그 카드의 색으로 친다
         foreach (var c in zones.BattleArea.Select(d => d.TopCard).Concat(zones.Tamers).Append(zones.BreedingArea?.TopCard))
         {
@@ -97,7 +102,7 @@ public static class ActionValidator
 
     private static bool MeetsNormalEvolution(CardInstance target, CardData evoCard) =>
         target.TopCard.Level == evoCard.EvoRequirementLevel
-        && (target.TopCard.Color == evoCard.EvoRequirementColor || CardScripts.MeetsAlternativeEvolution(evoCard, target));
+        && (target.TopCard.Color == evoCard.EvoRequirementColor || target.ExtraColors.Contains(evoCard.EvoRequirementColor) || CardScripts.MeetsAlternativeEvolution(evoCard, target));
 
     /// <summary>target에서 evoCard로 진화하는 코스트 — 보통 진화와 카드 효과의 진화 중 싼 쪽 (진화할 수 없으면 카드의 진화 코스트)</summary>
     public static int EvolutionCost(CardInstance target, CardData evoCard)
@@ -129,7 +134,7 @@ public static class ActionValidator
         if (target.TopCard.Level != evoCard.EvoRequirementLevel)
             return ActionResult.Fail($"Lv.{evoCard.EvoRequirementLevel} 디지몬 위에만 진화할 수 있습니다. (현재 대상: Lv.{target.TopCard.Level})");
 
-        bool colorMatches = target.TopCard.Color == evoCard.EvoRequirementColor
+        bool colorMatches = target.TopCard.Color == evoCard.EvoRequirementColor || target.ExtraColors.Contains(evoCard.EvoRequirementColor)   // v0.37.0 색 추가 (Q&A BT3-014)
             || CardScripts.MeetsAlternativeEvolution(evoCard, target);   // 카드에 적힌 다른 진화 조건 (예: 오메가몬 = Lv.6 레드 · 블루에서)
 
         if (!colorMatches)
@@ -306,6 +311,9 @@ public static class ActionValidator
 
         if (state.Player.BreedingArea.TopCard.Level < 3)
             return ActionResult.Fail("Lv.3(성장기) 이상으로 진화한 디지몬만 배틀 에어리어로 이동할 수 있습니다.");
+
+        if (EffectRules.MoveDpBlocked(state, state.Player, state.Player.BreedingArea))   // v0.37.0 "can't play or move Digimon with 6000 DP or less" (EX7-014)
+            return ActionResult.Fail("상대의 효과로 지금은 이 디지몬을 배틀 에어리어로 이동할 수 없습니다.");
 
         return ActionResult.Success($"육성 에어리어의 {state.Player.BreedingArea.TopCard.Name}(Lv.{state.Player.BreedingArea.TopCard.Level})을 배틀 에어리어로 이동합니다. (이동한 디지몬은 소환 멀미 없이 바로 공격 가능)");
     }

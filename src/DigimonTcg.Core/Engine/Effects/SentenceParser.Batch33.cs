@@ -83,7 +83,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(p, $@"^(?:any|1|one) of your (?<other>other )?Digimon that's (?<c>{Colors}) or has the (?<x>{TargetSpec.NameList}) traits?$", RegexOptions.IgnoreCase)).Success)
         {
             var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return d => d.TopCard.AllColors.Contains(col) || xs.Any(x => TargetSpec.HasTrait(d.TopCard, x));
+            return d => d.Colors.Contains(col) || xs.Any(x => TargetSpec.HasTrait(d.TopCard, x));
         }
         // "1 of your [Eosmon]" — 같은 명칭 (OwnDigimonFilter는 이름을 포함하는 디지몬)
         p = Regex.Replace(p, @"^(?:any|one) of your\b", "1 of your", RegexOptions.IgnoreCase);
@@ -613,7 +613,7 @@ internal static partial class SentenceParser
             bool fromHand = from.Contains("hand"), fromTrash = from.Contains("trash");
             // 진화 조건을 무시하면 Lv. · 색을 보지 않는다. "ignoring its level"(BT12-089)은 Lv.만 — 색 조건은 본다
             bool Can(CardInstance d, CardData x) => x.Type == CardType.Digimon && !EffectRules.IsDigivolveLocked(null, d)
-                && (!levelOnly || d.TopCard.AllColors.Contains(x.EvoRequirementColor) || CardScripts.MeetsAlternativeEvolution(x, d));
+                && (!levelOnly || d.Colors.Contains(x.EvoRequirementColor) || CardScripts.MeetsAlternativeEvolution(x, d));
             return (c =>
             {
                 var bases = target != null ? Pick(target, c, security) : c.Owner.BattleArea.Where(nameFilter!).ToList();

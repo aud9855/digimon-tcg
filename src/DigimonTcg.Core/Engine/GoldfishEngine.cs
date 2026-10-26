@@ -597,6 +597,7 @@ public partial class GoldfishEngine
         target.Evolve(evoCard);
         State.MemoryGauge -= evoCost;
         State.TotalMemorySpent += evoCost;
+        RecalculateFieldBuffs();   // v0.37.0 메모리 조건 지속 효과
         State.TotalEvolutionsCount++;
         RecalculateFieldBuffs();
 
@@ -908,6 +909,17 @@ public partial class GoldfishEngine
                 RecalculateFieldBuffs();
                 attackerDp = attacker.GetCurrentDP();
             }
+            if (SecurityPlayWithoutBattle && PlaySecurityDigimonWithoutBattle(opp, securityCard))   // v0.37.0 "[Security] Play this card without battling ~"
+            {
+                string msg = $"✨ [시큐리티 디지몬 {securityCard.Name}] 배틀하지 않고 코스트 없이 상대 필드에 등장! 내 [{attacker.TopCard.Name}]은(는) 생존합니다. (남은 시큐리티: {opp.SecurityStack.Count}장)";
+                State.LastSecurityBattleResult = $"시큐리티 디지몬 [{securityCard.Name}] 배틀 없이 등장 (내 디지몬 생존)";
+                State.LastSecurityBattleWon = true;
+                State.SecurityCheckHistory.Add(new SecurityCheckHistoryItem(
+                    securityCard, attacker.TopCard.Name, attackerDp, IsBattleWon: true, OutcomeSummary: "✨ [시큐리티] 배틀 없이 등장"));
+                battleSummaries.Add(msg);
+                Log(msg);
+                continue;
+            }
             attackerDp += BattleDpBonus(attacker, opponentHasSources: false);
             int securityDp = securityCard.DP + SecurityDigimonDpBonus(opp, ownersTurn: false);
             if (playAfterBattle)
@@ -1198,7 +1210,7 @@ public partial class GoldfishEngine
                 AddEffectEvent(egg, CaptureEffectLogs(() => Hatch(State.DummyOpponent)));
             }
         }
-        else if (aiBreeding.TopCard.Type == CardType.Digimon && aiBreeding.TopCard.Level >= 3)
+        else if (aiBreeding.TopCard.Type == CardType.Digimon && aiBreeding.TopCard.Level >= 3 && !EffectRules.MoveDpBlocked(State, State.DummyOpponent, aiBreeding))   // v0.37.0 EX7-014
         {
             // 육성 에어리어에서 이동한 디지몬은 등장한 것이 아니므로 이번 턴에 바로 공격 가능 (플레이어와 동일 — MoveBreedingToBattle)
             Log($"🤖 [AI 육성] 육성 에어리어 이동: [{aiBreeding.TopCard.Name}(Lv.{aiBreeding.TopCard.Level})] -> 배틀 에어리어");
@@ -1542,6 +1554,14 @@ public partial class GoldfishEngine
                 break;
             RecalculateFieldBuffs();
             aiDp = aiAttacker.GetCurrentDP();
+            if (SecurityPlayWithoutBattle && PlaySecurityDigimonWithoutBattle(State.Player, mySec))   // v0.37.0 "[Security] Play this card without battling ~"
+            {
+                State.PlayerSecurityCheckHistory.Add(new SecurityCheckHistoryItem(
+                    mySec, aiAttacker.TopCard.Name, aiDp, IsBattleWon: false, OutcomeSummary: "✨ [시큐리티] 배틀 없이 등장"));
+                Log($"✨ 내 시큐리티 디지몬 [{mySec.Name}]이(가) 배틀하지 않고 코스트 없이 등장했습니다. (내 남은 시큐리티: {State.Player.SecurityStack.Count}장)");
+                AddOpponentEvent(OpponentActionKind.SecurityResult, "내 시큐리티 디지몬 등장", $"{mySec.Name} — 배틀 없이 등장 · 남은 시큐리티 {State.Player.SecurityStack.Count}장", aiAttacker.TopCard, mySec);
+                continue;
+            }
             aiDp += BattleDpBonus(aiAttacker, opponentHasSources: false);
             int mySecDp = mySec.DP + SecurityDigimonDpBonus(State.Player, ownersTurn: false);
             if (mySecResult.PlayAfterBattle)
@@ -1625,7 +1645,7 @@ public partial class GoldfishEngine
 
             // 4) 패에서 디지몬 등장 (메모리가 0 미만이 되어 플레이어에게 메모리가 넘어가도록 코스트 지불!)
             var playCandidate = AiPolicy.ChooseDigimonToPlay(this, ctx.Memory);
-            if (playCandidate != null && State.DummyOpponent.Hand.Contains(playCandidate))
+            if (playCandidate != null && State.DummyOpponent.Hand.Contains(playCandidate) && !EffectRules.PlayDpBlocked(State, State.DummyOpponent, playCandidate))   // v0.37.0
             {
                 AiPlayDigimon(ctx, playCandidate);
                 acted = true;
@@ -1789,6 +1809,7 @@ public partial class GoldfishEngine
             return;
         int beforeMem = ctx.Memory;
         ctx.Memory -= CardScripts.EffectivePlayCost(opp, use.Card, State.Player);
+        RecalculateFieldBuffs();   // v0.37.0 메모리 조건 지속 효과
         Log($"🤖 [AI 옵션 사용] [{use.Card.Name}(코스트 {use.Card.PlayCost})] (AI 메모리: +{beforeMem} → {ctx.Memory})");
         AddOpponentEvent(OpponentActionKind.Play, "옵션 사용", $"{use.Card.Name} · 메모리 {beforeMem} → {ctx.Memory}", use.Card);
         var target = use.Target != null && (State.Player.BattleArea.Contains(use.Target) || opp.BattleArea.Contains(use.Target)) ? use.Target : null;

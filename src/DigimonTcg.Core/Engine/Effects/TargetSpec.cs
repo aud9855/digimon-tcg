@@ -106,7 +106,7 @@ public sealed class TargetSpec
         var colors = Regex.Matches(Regex.Replace(m.Groups["adj"].Value, @"\[[^\]]*\]", ""), @"\b(red|blue|yellow|green|black|purple|white)\b", RegexOptions.IgnoreCase)
             .Select(x => Enum.Parse<CardColor>(x.Value, ignoreCase: true)).ToList();
         if (colors.Count > 0)
-            spec.Filters.Add(d => d.TopCard.AllColors.Any(colors.Contains));
+            spec.Filters.Add(d => d.Colors.Any(colors.Contains));
 
         string rest = m.Groups["rest"].Value.Trim();
         if (!ParseFilters(rest, spec))
@@ -148,7 +148,7 @@ public sealed class TargetSpec
             {
                 int n = int.Parse(m.Groups["n"].Value);
                 bool less = m.Groups["dir"].Value.Equals("less", StringComparison.OrdinalIgnoreCase);
-                spec.Filters.Add(less ? d => d.GetCurrentDP() <= n : d => d.GetCurrentDP() >= n);
+                spec.Filters.Add(less ? d => d.GetCurrentDP() <= n + DeletionCap.Bonus : d => d.GetCurrentDP() >= n);   // v0.37.0 DP 소멸 효과의 상한 +N (소멸 효과를 처리하는 동안만 0이 아니다)
             }
             else if ((m = Regex.Match(rest, @"^(?:with |and )?(?:a |the )?play costs? of (?<n>\d+) or (?<dir>less|more)", RegexOptions.IgnoreCase)).Success)
             {
@@ -314,7 +314,7 @@ public sealed class TargetSpec
         if ((m = Regex.Match(rest, $@"^(?:with |and )?(?<n>\d+) or more (?<x>{NameList}) (?:digivolution cards|in (?:its|their) digivolution cards)", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => d.SourcesCount(s => xs.Any(x => CardNames.Is(s, x))) >= n); return m; }
         if ((m = Regex.Match(rest, @"^(?:with |and )?(?<n>\d+) or more colors", RegexOptions.IgnoreCase)).Success)
-        { int n = int.Parse(m.Groups["n"].Value); spec.Filters.Add(d => d.TopCard.AllColors.Distinct().Count() >= n); return m; }
+        { int n = int.Parse(m.Groups["n"].Value); spec.Filters.Add(d => d.Colors.Distinct().Count() >= n); return m; }
         if ((m = Regex.Match(rest, $@"^(?<neg>with|without|and|or|that has|that have)?\s*(?<x>{NameList}) in (?:its|their) digivolution cards", RegexOptions.IgnoreCase)).Success)
         {
             var xs = Names(m.Groups["x"].Value);

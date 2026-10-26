@@ -103,14 +103,14 @@ public static partial class EffectRules
     public static bool CanAttackPlayer(CardInstance attacker) => !CardScripts.HasKeyword(attacker, Keyword.CannotAttackPlayers);
 
     public static bool IsAttackLocked(GameState state, CardInstance digimon) =>
-        IsActive(digimon.CannotAttackUntil, state) || IsActive(digimon.CannotSuspendUntil, state) || CardScripts.HasKeyword(digimon, Keyword.CannotAttack);   // 어택하면 레스트가 되므로 레스트 불가 = 어택 불가
+        IsActive(digimon.CannotAttackUntil, state) || IsSuspendLocked(state, digimon) || CardScripts.HasKeyword(digimon, Keyword.CannotAttack);   // 어택하면 레스트가 되므로 레스트 불가 = 어택 불가
 
     /// <summary>"This Digimon can't digivolve" (지속) · "~ can't digivolve until their turn ends" (기간) — 패 · 효과 · DNA 진화 모두 (v0.29.0)</summary>
     public static bool IsDigivolveLocked(GameState? state, CardInstance digimon) =>
         CardScripts.HasKeyword(digimon, Keyword.CannotDigivolve) || state != null && IsActive(digimon.CannotDigivolveUntil, state);
 
     /// <summary>"can't suspend" — 레스트가 될 수 없으면 블록(레스트해서 막기)도 할 수 없다</summary>
-    public static bool IsSuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.CannotSuspendUntil, state);
+    public static bool IsSuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.CannotSuspendUntil, state) || CardScripts.HasKeyword(digimon, Keyword.CannotSuspend);   // v0.37.0 지속 효과 (EX8-026)
 
     /// <summary>"can't unsuspend" — 액티브 페이즈 · 효과로 액티브가 되지 않는다</summary>
     public static bool IsUnsuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.CannotUnsuspendUntil, state);
@@ -419,7 +419,7 @@ public partial class GoldfishEngine
         foreach (var inst in owner.BattleArea)
         {
             bool ownTurn = inst.IsOwnersTurn;
-            var ctx = new StaticContext { State = State, Owner = owner, Enemy = enemy, Digimon = inst, OwnersTurn = ownTurn };
+            var ctx = new StaticContext { Engine = this, State = State, Owner = owner, Enemy = enemy, Digimon = inst, OwnersTurn = ownTurn };
 
             // 효과로 얻은 키워드: 기간 효과 + 조건부 지속 효과 (먼저 계산해야 ≪블로커≫ 판정에 들어간다)
             inst.TimedKeywords.RemoveAll(t => t.Until < State.TurnSequence);
@@ -428,6 +428,8 @@ public partial class GoldfishEngine
             inst.ActiveKeywords.Clear();
             foreach (var (k, _) in inst.TimedKeywords) inst.ActiveKeywords.Add(k);
             var statics = StaticEffectsOf(inst).ToList();
+            ApplyExtraColors37(inst, statics, ctx);   // v0.37.0 "This Digimon is also treated as yellow" (색 조건보다 먼저)
+            ApplyEnemyKeywordAuras37(inst, owner, enemy);   // v0.37.0 "none of your opponent's Digimon can suspend"
             foreach (var effect in statics.Where(e => e.Stat == StaticStat.Keyword && e.Keyword != null))
                 if (effect.Value(ctx) != 0) inst.ActiveKeywords.Add(effect.Keyword!.Value);
             // 다른 카드가 주는 키워드 ("All of your level 4 or lower Digimon gain ＜Jamming＞") — 효과를 가진 카드 기준으로 조건 판단
@@ -461,6 +463,8 @@ public partial class GoldfishEngine
             inst.TamerDpBonus = TamerStatics(owner, StaticStat.AllyDigimonDp).Where(e => e.Subject == null || e.Subject(inst)).Sum(e => e.Value(ctx));
             inst.TamerSecurityAttackBonus = 0;
         }
+
+        enemy.StaticPlayDpLock = StaticPlayDpLock37(owner, enemy);   // v0.37.0 "they can't play Digimon with 6000 DP or less" (BT14-017)
 
         if (owner.BreedingArea != null)
         {
@@ -498,7 +502,7 @@ public partial class GoldfishEngine
         var owner = OwnerOf(digimon);
         var ctx = new StaticContext
         {
-            State = State, Owner = owner, Enemy = EnemyOf(owner), Digimon = digimon,
+            Engine = this, State = State, Owner = owner, Enemy = EnemyOf(owner), Digimon = digimon,
             OwnersTurn = digimon.IsOwnersTurn, BattleOpponentHasSources = opponentHasSources,
         };
         return StaticEffectsOf(digimon).Where(e => e.Stat == StaticStat.DpInBattle).Sum(e => e.Value(ctx));
@@ -542,13 +546,13 @@ public partial class GoldfishEngine
     private int SecurityDigimonDpBonus(PlayerZones owner, bool ownersTurn)
     {
         int bonus = SecurityDpBuffsOf(owner).Where(b => b.Until >= State.TurnSequence).Sum(b => b.Dp);
-        var ctx = new StaticContext { State = State, Owner = owner, Enemy = EnemyOf(owner), OwnersTurn = ownersTurn };
+        var ctx = new StaticContext { Engine = this, State = State, Owner = owner, Enemy = EnemyOf(owner), OwnersTurn = ownersTurn };
         bonus += TamerStatics(owner, StaticStat.SecurityDigimonDp).Sum(e => e.Value(ctx));
         bonus += DigimonAuras(owner, EnemyOf(owner), StaticStat.SecurityDigimonDp).Sum(a => a.Effect.Value(a.Context));   // "all of your Security Digimon get +1000 DP" (디지몬 효과)
 
         // 상대 쪽 효과: "All of your opponent's Security Digimon get -1000 DP"
         var enemy = EnemyOf(owner);
-        var enemyCtx = new StaticContext { State = State, Owner = enemy, Enemy = owner, OwnersTurn = !ownersTurn };
+        var enemyCtx = new StaticContext { Engine = this, State = State, Owner = enemy, Enemy = owner, OwnersTurn = !ownersTurn };
         bonus += TamerStatics(enemy, StaticStat.EnemySecurityDigimonDp).Sum(e => e.Value(enemyCtx));
         bonus += DigimonAuras(enemy, owner, StaticStat.EnemySecurityDigimonDp).Sum(a => a.Effect.Value(a.Context));
         return bonus;
@@ -558,7 +562,7 @@ public partial class GoldfishEngine
     private IEnumerable<(StaticEffect Effect, StaticContext Context)> TamerAuras(PlayerZones side, PlayerZones enemy, StaticStat stat)
     {
         bool ownersTurn = IsTurnOf(side);
-        var ctx = new StaticContext { State = State, Owner = side, Enemy = enemy, OwnersTurn = ownersTurn };
+        var ctx = new StaticContext { Engine = this, State = State, Owner = side, Enemy = enemy, OwnersTurn = ownersTurn };
         foreach (var e in TamerStatics(side, stat))
             yield return (e, ctx);
     }
@@ -568,7 +572,7 @@ public partial class GoldfishEngine
     {
         foreach (var source in side.BattleArea)
         {
-            var ctx = new StaticContext { State = State, Owner = side, Enemy = enemy, Digimon = source, OwnersTurn = source.IsOwnersTurn };
+            var ctx = new StaticContext { Engine = this, State = State, Owner = side, Enemy = enemy, Digimon = source, OwnersTurn = source.IsOwnersTurn };
             foreach (var e in StaticEffectsOf(source).Where(e => e.Stat == stat))
                 yield return (e, ctx);
         }
@@ -606,6 +610,7 @@ public partial class GoldfishEngine
             _aiTurn.Memory += player ? -amount : amount;
         else
             State.MemoryGauge += player ? amount : -amount;
+        if (amount != 0) RecalculateFieldBuffs();   // v0.37.0 메모리 조건 지속 효과 ("While you have 0 or less memory")
     }
 
     /// <summary>[이 턴 종료 시] 메모리 -amount — 턴 플레이어의 효과만 의미가 있다</summary>
@@ -950,9 +955,10 @@ public partial class GoldfishEngine
     private (string Message, bool PlayAfterBattle) ResolveSecurityDigimonEffect(CardData securityCard, PlayerZones owner, CardInstance attacker)
     {
         if (!(CardScripts.For(securityCard)?.Effects.Any(e => e.Trigger == EffectTrigger.Security) ?? false))
-            return (string.Empty, false);
+            { SecurityPlayWithoutBattle = false; return (string.Empty, false); }
         var ctx = RunEffects(EffectTrigger.Security, owner, null, securityCard, other: attacker, chosenTarget: attacker, includeInherited: false);
         RecalculateFieldBuffs();
+        SecurityPlayWithoutBattle = ctx.PlayWithoutBattle;   // v0.37.0
         string msg = $"[{SideName(owner)} 시큐리티 디지몬 {securityCard.Name}의 [시큐리티] 효과] {ctx.Message}";
         Log(msg);
         return (msg, ctx.PlayAfterBattle);
@@ -1169,7 +1175,7 @@ public partial class GoldfishEngine
     }
 
     /// <summary>디지몬을 주인의 시큐리티 맨 위에 뒷면으로 (맨 위 카드만 — 진화원은 트래시)</summary>
-    internal void PlaceOnSecurity(PlayerZones zones, CardInstance inst)
+    internal void PlaceOnSecurity(PlayerZones zones, CardInstance inst, bool top = true)   // v0.37.0 top = false: 맨 아래
     {
         if (TryPreventLeave(zones, inst, deletion: false, inBattle: false, destination: LeaveDestination.Security))
             return;
@@ -1181,7 +1187,7 @@ public partial class GoldfishEngine
             zones.Trash.Add(inst.EvolutionSources.Pop());
         if (!IsToken(inst.TopCard))
         {
-            zones.SecurityStack.Insert(0, inst.TopCard);
+            if (top) zones.SecurityStack.Insert(0, inst.TopCard); else zones.SecurityStack.Add(inst.TopCard);
             NotifySecurityAdded(zones, inst.TopCard);
         }
         PurgeTokens(zones);
@@ -2023,7 +2029,14 @@ public partial class GoldfishEngine
     internal string ApplyOnPlayEffects(PlayerZones owner, CardInstance instance)
     {
         var card = instance.TopCard;
-        string summary = RunEffects(EffectTrigger.OnPlay, owner, instance, card, includeInherited: false).Message;
+        string summary;
+        if (OnPlayBlocked37(owner, instance))   // v0.37.0 "none of your opponent's Digimon can activate [On Play] effects" (EX8-029)
+        {
+            EffectLog(owner, $"[{card.Name}]의 【등장 시】 효과는 상대의 효과로 발휘하지 않습니다.");
+            summary = string.Empty;
+        }
+        else
+            summary = RunEffects(EffectTrigger.OnPlay, owner, instance, card, includeInherited: false).Message;
 
         foreach (var other in owner.BattleArea.Where(d => !ReferenceEquals(d, instance)).ToList())
             RunEffects(EffectTrigger.AllySameNamePlayed, owner, other, null, other: instance);
@@ -2088,12 +2101,13 @@ public partial class GoldfishEngine
             Log("[효과] " + msg);
         // 〈아츠 진화〉 (종합 룰 4-20): 사용 뒤 트래시하는 대신 자신의 카드를 이 듀얼 카드로 코스트 없이 진화 (치환 처리).
         // 효과 처리 중에 일어난 [소멸 시] 등은 그 뒤에 — 공식 Q&A BT25-043 (Q6313): 아츠 진화 뒤 룰 처리로 소멸하고, 그 [소멸 시]는 이 카드의 [진화 시]와 함께 유발
-        LastOptionArtsDigivolved = !optionCtx.LinkedThisCard && optionCtx.ThisCardToSecurityTop == null && !optionCtx.PlaceInBattleArea
+        LastOptionArtsDigivolved = !optionCtx.LinkedThisCard && optionCtx.ThisCardToSecurityTop == null && !optionCtx.PlaceInBattleArea && !optionCtx.ThisCardMoved
             && TryArtsDigivolve(owner, optionCard);
         if (_effectDepth == 0)
             FlushPendingTriggers();
         if (LastOptionArtsDigivolved) { }
         else if (optionCtx.LinkedThisCard) { }   // "link this card to ~" — 링크 카드가 되었다
+        else if (optionCtx.ThisCardMoved) { }   // v0.37.0 "place this card as the bottom digivolution card of ~" — 진화원이 되었다
         else if (optionCtx.ThisCardToSecurityTop is bool secTop) PlaceSecurityFaceUp(owner, optionCard, secTop);   // "place this card face up as the bottom security card"
         else if (optionCtx.PlaceInBattleArea) PlaceOption(owner, optionCard);
         else owner.Trash.Add(optionCard);

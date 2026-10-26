@@ -30,6 +30,8 @@ public partial class GoldfishEngine
             return "상대의 효과로 효과로 테이머를 등장시킬 수 없습니다";
         if (origin == PlayOrigin.Trash && EffectRules.IsActive(owner.CannotPlayFromTrashByEffectsUntil, State))
             return "상대의 효과로 트래시에서 효과로 등장시킬 수 없습니다";
+        if (EffectRules.PlayDpBlocked(State, owner, card))   // v0.37.0 "can't play Digimon with N DP or less" (Q&A EX3-012: 효과로도)
+            return $"상대의 효과로 DP {card.DP} 이하의 디지몬을 등장시킬 수 없습니다";
         return null;
     }
 

@@ -55,7 +55,7 @@ public sealed class LegacyAiPolicy : IAiPolicy
     {
         var ai = engine.State.DummyOpponent;
         return ai.Hand
-            .Where(c => c.Type == CardType.Digimon && !c.IsDual && CardScripts.EffectivePlayCost(ai, c) <= memory + MaxMemoryHandOver)
+            .Where(c => c.Type == CardType.Digimon && !c.IsDual && !EffectRules.PlayDpBlocked(engine.State, ai, c) && CardScripts.EffectivePlayCost(ai, c) <= memory + MaxMemoryHandOver)
             .OrderByDescending(c => c.Level <= 4 ? c.PlayCost : 0)
             .ThenBy(c => c.PlayCost)
             .FirstOrDefault();

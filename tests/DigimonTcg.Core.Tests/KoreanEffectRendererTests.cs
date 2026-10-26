@@ -72,13 +72,13 @@ public class KoreanEffectRendererTests
         var card = new CardData
         {
             CardId = "KO-MIXED", Name = "KO-MIXED", Type = CardType.Digimon, Color = CardColor.Red, Level = 5, DP = 7000,
-            EffectText = "[On Play] Gain 1 memory.\n[Your Turn] This Digimon is also treated as yellow.",
+            EffectText = "[On Play] Gain 1 memory.\n[Your Turn] Your turn end condition is the opponent having 3 or more memory.",
         };
         var lines = KoreanEffectRenderer.Render(card, inherited: false)!.Split('\n');
         Assert.Equal("【등장 시】 메모리를 +1 한다.", lines[0]);
         Assert.StartsWith(KoreanEffectRenderer.UntranslatedMark, lines[1]);
-        Assert.Contains("also treated as yellow", lines[1]);
-        Assert.Null(KoreanEffectRenderer.RenderClause("[Your Turn] This Digimon is also treated as yellow."));
+        Assert.Contains("turn end condition", lines[1]);
+        Assert.Null(KoreanEffectRenderer.RenderClause("[Your Turn] Your turn end condition is the opponent having 3 or more memory."));
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class KoreanEffectRendererTests
             Assert.Equal(builtIn.EffectText, builtIn.DisplayEffectText);
 
             // 번역할 수 없는 문장뿐이면 영어 원문
-            var english = new CardData { CardId = "KO-ENGLISH", Name = "KO-ENGLISH", Type = CardType.Digimon, EffectText = "[Your Turn] This Digimon is also treated as yellow." };
+            var english = new CardData { CardId = "KO-ENGLISH", Name = "KO-ENGLISH", Type = CardType.Digimon, EffectText = "[Your Turn] Your turn end condition is the opponent having 3 or more memory." };
             Assert.Equal(english.EffectText, english.DisplayEffectText);
         }
         finally

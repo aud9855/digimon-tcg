@@ -168,6 +168,9 @@ public enum Keyword
     TamerAsDigimonAura,                // (지속 효과) 이 카드의 TamerAuras가 켜져 있다 ("All of your [Marcus Damon]s are also treated as ~ Digimon")
     UnaffectedByOpponentDeDigivolve,   // 상대의 ≪퇴화≫ 효과를 받지 않는다 ("their ＜De-Digivolve＞ effects don't affect this Digimon")
     OpponentTamersCannotUnsuspend,     // 상대의 테이머 전부는 액티브가 되지 않는다 ("None of your opponent's Tamers can unsuspend")
+    // v0.37.0
+    CannotSuspend,                     // 레스트할 수 없다 (지속 효과 — "none of your opponent's Digimon can suspend" EX8-026, 어택도 할 수 없다)
+    CannotActivateOnPlay,              // 【등장 시】 효과를 발휘할 수 없다 ("none of your opponent's Digimon can activate [On Play] effects" EX8-029)
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>
@@ -183,6 +186,12 @@ public enum StaticStat
     AllyKeyword,        // 자신의 디지몬 전부(Subject 조건)가 키워드를 얻는다 (StaticEffect.Keyword) — "All of your level 4 or lower Digimon gain ＜Jamming＞"
     AllySecurityAttack, // 자신의 디지몬 전부(Subject 조건)의 ≪시큐리티 어택 ±N≫
     EnemySecurityAttack, // 상대의 디지몬 전부(Subject 조건)의 ≪시큐리티 어택 ±N≫
+    // v0.37.0
+    DeleteCapSelf,      // 이 디지몬의 DP 소멸 효과의 상한 +N ("add 2000 to this Digimon's DP-based deletion effects' maximums" BT17-008)
+    DeleteCapAll,       // 자신이 발휘하는 DP 소멸 효과의 상한 +N ("Add 1000 to the maximum DP you can choose with DP-based deletion effects" BT12-001)
+    ExtraColors,        // 이 디지몬의 색에 더한다 (값 = 색 비트 1<<CardColor — "This Digimon is also treated as yellow")
+    EnemyKeyword,       // 상대의 디지몬 전부(Subject 조건)가 키워드를 얻는다 (StaticEffect.Keyword — "none of your opponent's Digimon can suspend")
+    OpponentPlayDpLock, // 상대는 DP N 이하의 디지몬을 등장시킬 수 없다 (값 = N, 0이면 없음 — BT14-017)
 }
 
 /// <summary>옵션 [메인] 효과를 쓸 때 UI가 고르게 할 대상</summary>
@@ -220,6 +229,12 @@ public sealed record StaticEffect(StaticStat Stat, EffectSource Source, Func<Sta
 /// <summary>지속 효과 계산에 필요한 정보</summary>
 public sealed class StaticContext
 {
+    /// <summary>v0.37.0 메모리 조건 ("While you have 0 or less memory") — 효과 주인 기준 메모리를 엔진에서 읽는다 (없으면 0)</summary>
+    public GoldfishEngine? Engine { get; init; }
+
+    /// <summary>효과 주인의 메모리 (주인 쪽이 +)</summary>
+    public int OwnerMemory => Engine?.MemoryOf(Owner) ?? 0;
+
     public required GameState State { get; init; }
     public required PlayerZones Owner { get; init; }
     public required PlayerZones Enemy { get; init; }
@@ -328,6 +343,9 @@ public sealed class CardScript
     /// (적힌 곳, 진화원 카드 조건). 조건에 맞는 진화원 카드의 메인 효과(시점 효과 · 지속 효과 · 키워드 · [메인])를 이 디지몬이 얻는다
     /// </summary>
     public List<(EffectSource Source, Func<CardData, bool> Which)> GainedSourceEffects { get; } = new();
+
+    /// <summary>v0.37.0 "This Digimon is also treated as Lv.6 [Slayerdramon] for [Examon]'s DNA digivolution" — (DNA 진화할 카드 이름, 취급 이름, 취급 Lv.) — 배틀 에어리어에 있을 때만 (Q&A BT20-025)</summary>
+    public List<(string ForName, string AsName, int Level)> DnaAliases { get; } = new();
 }
 
 /// <summary>

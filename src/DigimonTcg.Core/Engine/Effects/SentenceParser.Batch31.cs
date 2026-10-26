@@ -412,14 +412,14 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(s, @"^Digimon with (?<n>\d+) or more colors$", RegexOptions.IgnoreCase)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);
-            return (_, d) => d.TopCard.AllColors.Distinct().Count() >= n;
+            return (_, d) => d.Colors.Distinct().Count() >= n;
         }
         // "2-color blue and green Digimon"
         if ((m = Regex.Match(s, $@"^(?<n>\d+)-colou?r (?<a>{Colors}) and (?<b>{Colors}) Digimon$", RegexOptions.IgnoreCase)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);
             var a = Enum.Parse<CardColor>(m.Groups["a"].Value, ignoreCase: true); var b = Enum.Parse<CardColor>(m.Groups["b"].Value, ignoreCase: true);
-            return (_, d) => d.TopCard.AllColors.Distinct().Count() == n && d.TopCard.AllColors.Contains(a) && d.TopCard.AllColors.Contains(b);
+            return (_, d) => d.Colors.Distinct().Count() == n && d.Colors.Contains(a) && d.Colors.Contains(b);
         }
         // "Digimon with [Aqua] or [Sea Animal] in any of its traits"
         s = Regex.Replace(s, @"\bin any of their traits\b", "in any of its traits", RegexOptions.IgnoreCase);

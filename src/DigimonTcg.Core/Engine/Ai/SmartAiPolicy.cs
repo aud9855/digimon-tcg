@@ -231,7 +231,7 @@ public sealed class SmartAiPolicy : IAiPolicy
         var ai = state.DummyOpponent;
         CardData? best = null;
         double bestScore = 0.5;
-        foreach (var card in ai.Hand.Where(c => c.Type == CardType.Digimon && !c.IsDual).Distinct())   // 듀얼 카드는 등장하지 않는다
+        foreach (var card in ai.Hand.Where(c => c.Type == CardType.Digimon && !c.IsDual && !EffectRules.PlayDpBlocked(state, ai, c)).Distinct())   // 듀얼 카드는 등장하지 않는다
         {
             int cost = engine.PreviewPlayCostWithOptions(ai, card);   // "비용을 내면 -N" 선택형 감소까지 (엔진이 AI 등장 때 추천대로 내는 것과 같은 기준)
             if (cost > memory + MaxMemoryHandOver)
