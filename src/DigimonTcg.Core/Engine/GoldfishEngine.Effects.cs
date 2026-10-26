@@ -250,6 +250,7 @@ public partial class GoldfishEngine
         ctx.LastTargets = ctx.Other != null && effect.Trigger is EffectTrigger.AllyDigimonAttacks or EffectTrigger.AllyDigimonPlayed
             or EffectTrigger.AllyDigimonDigivolved or EffectTrigger.AllyDigimonSuspended or EffectTrigger.OpponentDigimonAttacks
             or EffectTrigger.OpponentDigimonSuspended or EffectTrigger.OpponentDigimonPlayed
+            or EffectTrigger.AllyDigimonUnsuspended or EffectTrigger.OpponentDigimonUnsuspended or EffectTrigger.AllyDeletedOpponentInBattle
             ? new List<CardInstance> { ctx.Other } : new List<CardInstance>();
         if (effect.Condition != null && !effect.Condition(ctx))
             return;
@@ -1065,6 +1066,7 @@ public partial class GoldfishEngine
             owner.Tamers.Add(card);
             EffectLog(owner, $"[효과] 테이머 [{card.Name}] 코스트 없이 등장");
             if (triggerOnPlay) RunEffects(EffectTrigger.OnPlay, owner, null, card, includeInherited: false);
+            FireForSide(EffectTrigger.AllyTamerPlayed, owner, null, triggerCard: card);
             FireForSide(EffectTrigger.OpponentTamerPlayed, EnemyOf(owner), null, triggerCard: card);
             RecalculateFieldBuffs();
             return;
@@ -1450,6 +1452,8 @@ public partial class GoldfishEngine
     {
         foreach (var d in woke.Where(owner.BattleArea.Contains).ToList())
             RunEffects(EffectTrigger.ThisDigimonUnsuspendedInUnsuspendPhase, owner, d, d.TopCard);
+        foreach (var d in woke.Where(owner.BattleArea.Contains).ToList())
+            FireUnsuspended(owner, d);
         RecalculateFieldBuffs();
     }
 
@@ -1463,6 +1467,15 @@ public partial class GoldfishEngine
         bool mainPhase = ReferenceEquals(owner, State.Player) ? State.CurrentPhase == Phase.Main && _aiTurn == null : _aiTurn != null;
         if (owner.BattleArea.Contains(inst) && IsTurnOf(owner) && mainPhase)
             RunEffects(EffectTrigger.ThisDigimonUnsuspendedInMain, owner, inst, inst.TopCard);
+        if (owner.BattleArea.Contains(inst))
+            FireUnsuspended(owner, inst);
+    }
+
+    /// <summary>"When this Digimon becomes unsuspended" · "When a Digimon becomes unsuspended" — 액티브 페이즈 · 효과 모두 (Other = 액티브가 된 디지몬)</summary>
+    private void FireUnsuspended(PlayerZones owner, CardInstance inst)
+    {
+        FireForSide(EffectTrigger.AllyDigimonUnsuspended, owner, inst);
+        FireForSide(EffectTrigger.OpponentDigimonUnsuspended, EnemyOf(owner), inst);
     }
 
     /// <summary>[상대의 턴 종료 시] 효과 — owner = 턴을 마친 쪽의 상대</summary>
@@ -1580,6 +1593,11 @@ public partial class GoldfishEngine
 
         if (defenderDeleted && !attackerDeleted)
             RunEffects(EffectTrigger.DeletedOpponentInBattle, atkZones, attacker, null);
+        // "When one of your Digimon deletes an opponent's Digimon in battle (and survives)" — 어택 · 블록 쪽 모두 (함께 소멸했으면 "and survives"가 아닌 효과만)
+        if (defenderDeleted)
+            FireForSide(EffectTrigger.AllyDeletedOpponentInBattle, atkZones, attacker, triggerCard: defender.TopCard);
+        if (attackerDeleted)
+            FireForSide(EffectTrigger.AllyDeletedOpponentInBattle, defZones, defender, triggerCard: attacker.TopCard);
         if (defenderDeleted && !attackerDeleted)
             RunEffects(EffectTrigger.WonBattle, atkZones, attacker, attacker.TopCard, other: defender);
         else if (attackerDeleted && !defenderDeleted)

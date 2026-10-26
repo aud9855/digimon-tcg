@@ -558,6 +558,7 @@ public partial class GoldfishEngine
                 : $" [🎖️테이머 효과: {card.EffectText.Split('\n')[0]}]";
             Log($"테이머 등장: [{card.Name}] (코스트 {cost} 지불){effectSummary}");
             RunEffects(EffectTrigger.OnPlay, State.Player, null, card, includeInherited: false);
+            FireForSide(EffectTrigger.AllyTamerPlayed, State.Player, null, triggerCard: card);
             FireForSide(EffectTrigger.OpponentTamerPlayed, State.DummyOpponent, null, triggerCard: card);
             RecalculateFieldBuffs();
         }
@@ -1592,6 +1593,7 @@ public partial class GoldfishEngine
                 AddEffectEvent(tamerCandidate, CaptureEffectLogs(() =>
                 {
                     RunEffects(EffectTrigger.OnPlay, State.DummyOpponent, null, tamerCandidate, includeInherited: false);
+                    FireForSide(EffectTrigger.AllyTamerPlayed, State.DummyOpponent, null, triggerCard: tamerCandidate);
                     FireForSide(EffectTrigger.OpponentTamerPlayed, State.Player, null, triggerCard: tamerCandidate);
                 }));
                 acted = true;

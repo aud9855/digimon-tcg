@@ -115,6 +115,7 @@ public sealed class TargetSpec
         while (rest.Length > 0)
         {
             Match m;
+            int before = spec.Filters.Count;
             if ((m = Regex.Match(rest, @"^(?:with |that has |that have |and |or )?(?:(?:a|an) )?(?:(?<n>\d+) DP or (?<dir>less|more))", RegexOptions.IgnoreCase)).Success)
             {
                 int n = int.Parse(m.Groups["n"].Value);
@@ -223,6 +224,13 @@ public sealed class TargetSpec
             else
             {
                 return false;
+            }
+            // "with [Imperialdramon] in its name or [Free] trait" — "or"로 이어진 조건은 앞 조건과 둘 중 하나 (v0.27.0 전에는 둘 다로 읽었다)
+            if (Regex.IsMatch(m.Value, @"^or\s", RegexOptions.IgnoreCase) && spec.Filters.Count == before + 1 && before >= 1)
+            {
+                var (a, b) = (spec.Filters[before - 1], spec.Filters[before]);
+                spec.Filters.RemoveRange(before - 1, 2);
+                spec.Filters.Add(d => a(d) || b(d));
             }
             rest = rest[m.Length..].Trim().TrimStart(',').Trim();
         }

@@ -10,6 +10,29 @@
 
 ---
 
+## v0.27.0 — 2026-10-26
+미지원 효과 문장 1차 묶음 — 도감 효과 문장 지원 6,778 → 7,017 / 10,279 (65.9% → 68.3%, +239)
+- 모든 절이 동작하는 카드 1,860 → 1,976장, 미지원 절이 남은 카드 2,433 → 2,317장 (수정 전 지원되던 문장 중 깨진 것 0)
+- 새 발동 시점 (엔진)
+  - 자신의 테이머 등장: "When you play a blue Tamer" · "~ a Tamer with [Tai Kamiya] in its name" · "When any of your Tamers are played" · "When your Digimon or Tamers are played or digivolve" · "When you play [Hina Kurihara]" (패 · 효과 등장 모두)
+  - 진화한 카드 조건: "When one of your Digimon digivolves into a red or yellow Digimon" · "~ into a Digimon with [Greymon] in its name" · "~ into a [Puppet] trait Digimon" · "~ into [Diaboromon]"
+  - 액티브가 되었을 때 (액티브 페이즈 · 효과 모두, 이미 액티브면 아님 — 공식 Q&A BT2-021 · BT11-069): "When this Digimon becomes unsuspended" · "When a Digimon becomes unsuspended" · "When one of your blue Digimon becomes unsuspended"
+  - 자신의 디지몬이 배틀에서 소멸시켰을 때 (어택 · 블록 모두): "When one of your green or blue Digimon deletes an opponent's Digimon in battle (and survives)"
+  - 레스트 표기 보강: "any of your opponent's Digimon (or Tamers) suspend" · "a / another Digimon becomes suspended" · "an effect suspends a / another Digimon" · "When any of your [Yao Qinglan] suspend" · 색 · 특징 주어
+  - 색 · 텍스트 조건 주어의 등장 ("When any of your white Digimon are played") · "When you play (another) Digimon by an effect" · "When other Digimon are deleted (in battle)" · "When a / another Digimon attacks"
+- 동작 · 조건
+  - 주어 뒤의 may: "1 of your Digimon may unsuspend" · "This Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞" (해로운 키워드만 줄 때는 상대 디지몬을 먼저 고름)
+  - 키워드 + DP: "gains ＜Piercing＞ and +3000 DP" · "gains ＜Raid＞, ＜Piercing＞, ＜Blocker＞ and +3000 DP" · "Give ~ ＜Security A. -1＞ and -3000 DP" · 지속 효과 "All of your [Iliad] trait Digimon gain ＜Alliance＞, ＜Reboot＞ and +2000 DP"
+  - "If this effect didn't delete / suspend" (대상이 있으면 반드시 소멸 — 공식 Q&A BT21-068 · P-186, 효과를 받지 않아 소멸하지 않음도 포함 — BT18-082)
+  - "Trash the top 2 cards of both players' decks" · "~ of your opponent's deck" (공식 Q&A EX4-008)
+  - "Suspend all of your opponent's Digimon and Tamers" · "Suspend 1 of your opponent's Digimon and 1 of their Tamers" · "Delete 1 of your opponent's Tamers" (테이머 대상 규칙이 디지몬 대상 규칙 뒤에 있어 읽히지 않던 것)
+  - 이름 조건 "If / While this Digimon is [Alphamon: Ouryuken]" · "~ is [Titamon] or has the [Titan] trait"
+  - 생략된 조건 "If you have 3 or more security cards, ~. If you have 3 or fewer, ~"
+- 버그 수정: 대상 조건의 "or" — "with [Huckmon] in its name or [Royal Knight] trait"를 둘 다 만족해야 하는 것으로 읽던 것을 둘 중 하나로 (ST12-13 · BT10-092 · BT4-114 · BT13-087 등, 화면 한글도 "~을 포함하거나 특징으로 ~를 가진")
+- 생성 한글 (공식 표기): 새 시점 · 동작 239문장 중 223문장 — "블루인 자신의 테이머가 등장했을 때," · "자신의 디지몬이 레드/옐로인 디지몬으로 진화했을 때," · "디지몬이 액티브가 되었을 때," · "~ 자신의 디지몬이 배틀에서 상대 디지몬만을 소멸시켰을 때," · "이 효과로 소멸하지 않았다면," · "서로의 덱 위에서부터 2장 파기한다." · "이 디지몬은 《관통》을 얻고, DP +3000." · "디지몬 1마리에게 《S 어택 -1》을 줄 수 있다" 등. 생성 한글이 붙는 절 6,766 → 6,952
+- 읽지 않고 남긴 것: 비용 뒤 "If this effect didn't delete ~" (BT16-081 · BT23-069 — 비용을 내지 않았을 때 뒷문장을 처리하는지 Q&A 없음)
+- 테스트 35개 (EffectBatch27Tests)
+
 ## v0.26.2 — 2026-10-25
 효과 버그 수정: 내장 한글 카드가 영어 효과 문장의 이름 조건에 맞지 않던 문제 · 장한솔(BT1-088) [메인] 조건 미충족
 - 내장 카드 120장(ST1~ST6 · BT1~BT5)은 엔진 안의 이름이 한글(예: ST1-07 "그레이몬")이라, 영어 효과 문장의 "[Greymon]" · "with [X] in its name" · "named X" · 같은 명칭 판정에 걸리지 않았다

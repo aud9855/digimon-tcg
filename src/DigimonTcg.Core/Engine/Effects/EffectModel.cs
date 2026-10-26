@@ -70,6 +70,10 @@ public enum EffectTrigger
     OpponentHandAddedByEffect,      // 효과로 상대의 패에 카드가 들어갔을 때 (패로 되돌리기 등, TriggerCard)
     HandMain,                       // [패] [메인]: 패의 이 카드로 쓰는 기동 효과 (플레이어 · AI가 메인 페이즈에 고른다)
     TrashMain,                      // [트래시] [메인]: 트래시의 이 카드로 쓰는 기동 효과
+    AllyTamerPlayed,                // 자신이 테이머를 등장시켰을 때 (TriggerCard = 그 테이머 — 패 · 효과 모두)
+    AllyDigimonUnsuspended,         // 자신의 디지몬이 액티브 상태가 되었을 때 (Other = 그 디지몬 — 액티브 페이즈 · 효과 모두)
+    OpponentDigimonUnsuspended,     // 상대의 디지몬이 액티브 상태가 되었을 때 (Other)
+    AllyDeletedOpponentInBattle,    // 자신의 디지몬이 배틀에서 상대 디지몬을 소멸시켰을 때 (Other = 이긴 자신의 디지몬, 어택 · 블록 모두 — 함께 소멸해도)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>

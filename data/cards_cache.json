@@ -642,6 +642,7 @@
   {
     "CardId": "BT1-001",
     "Name": "\uC5B4\uB2C8\uBAAC",
+    "EnglishName": "Yokomon",
     "Type": "Digitama",
     "Color": "Red",
     "SecondaryColor": null,
@@ -692,6 +693,7 @@
   {
     "CardId": "BT1-003",
     "Name": "\uC6B0\uD30C\uBAAC",
+    "EnglishName": "Upamon",
     "Type": "Digitama",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -842,6 +844,7 @@
   {
     "CardId": "BT1-009",
     "Name": "\uBAA8\uB178\uB4DC\uB77C\uBAAC",
+    "EnglishName": "Monodramon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -868,6 +871,7 @@
   {
     "CardId": "BT1-010",
     "Name": "\uC544\uAD6C\uBAAC",
+    "EnglishName": "Agumon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -998,6 +1002,7 @@
   {
     "CardId": "BT1-015",
     "Name": "\uADF8\uB808\uC774\uBAAC",
+    "EnglishName": "Greymon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -1128,6 +1133,7 @@
   {
     "CardId": "BT1-020",
     "Name": "\uADF8\uB77C\uC6B4\uB4DC\uB77C\uBAAC",
+    "EnglishName": "Groundramon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -1154,6 +1160,7 @@
   {
     "CardId": "BT1-021",
     "Name": "\uBA54\uD0C8\uADF8\uB808\uC774\uBAAC",
+    "EnglishName": "MetalGreymon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -1258,6 +1265,7 @@
   {
     "CardId": "BT1-025",
     "Name": "\uC6CC\uADF8\uB808\uC774\uBAAC",
+    "EnglishName": "WarGreymon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -1362,6 +1370,7 @@
   {
     "CardId": "BT1-029",
     "Name": "\uD30C\uD53C\uBAAC",
+    "EnglishName": "Gabumon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -1492,6 +1501,7 @@
   {
     "CardId": "BT1-034",
     "Name": "\uC6D0\uBFD4\uBAAC",
+    "EnglishName": "Ikkakumon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -1648,6 +1658,7 @@
   {
     "CardId": "BT1-040",
     "Name": "\uC6CC\uAC00\uB8E8\uBAAC",
+    "EnglishName": "WereGarurumon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -1856,6 +1867,7 @@
   {
     "CardId": "BT1-048",
     "Name": "\uD30C\uB2E5\uBAAC",
+    "EnglishName": "Patamon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -2168,6 +2180,7 @@
   {
     "CardId": "BT1-060",
     "Name": "\uD640\uB9AC\uC5D4\uC824\uBAAC",
+    "EnglishName": "MagnaAngemon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -2351,6 +2364,7 @@
   {
     "CardId": "BT1-067",
     "Name": "\uD314\uBAAC",
+    "EnglishName": "Palmon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -2533,6 +2547,7 @@
   {
     "CardId": "BT1-074",
     "Name": "\uB2C8\uB4DC\uBAAC",
+    "EnglishName": "Togemon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -2663,6 +2678,7 @@
   {
     "CardId": "BT1-079",
     "Name": "\uB9B4\uB9AC\uBAAC",
+    "EnglishName": "Lillymon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -2793,6 +2809,7 @@
   {
     "CardId": "BT1-084",
     "Name": "\uC624\uBA54\uAC00\uBAAC",
+    "EnglishName": "Omnimon",
     "Type": "Digimon",
     "Color": "White",
     "SecondaryColor": null,
@@ -30193,6 +30210,7 @@
   {
     "CardId": "BT2-009",
     "Name": "\uAE38\uBAAC",
+    "EnglishName": "Guilmon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -30479,6 +30497,7 @@
   {
     "CardId": "BT2-020",
     "Name": "\uB4C0\uD06C\uBAAC",
+    "EnglishName": "Gallantmon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -30506,6 +30525,7 @@
   {
     "CardId": "BT2-021",
     "Name": "\uBE0C\uC774\uBAAC",
+    "EnglishName": "Veemon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -30791,6 +30811,7 @@
   {
     "CardId": "BT2-032",
     "Name": "\uC54C\uD3EC\uC2A4\uBE0C\uC774\uB4DC\uB77C\uBAAC",
+    "EnglishName": "UlforceVeedramon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -30973,6 +30994,7 @@
   {
     "CardId": "BT2-039",
     "Name": "\uD640\uB9AC\uB4DC\uB77C\uBAAC",
+    "EnglishName": "Magnadramon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -31313,6 +31335,7 @@
   {
     "CardId": "BT2-052",
     "Name": "\uD1B1\uB2C8\uBAAC",
+    "EnglishName": "Hagurumon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -31495,6 +31518,7 @@
   {
     "CardId": "BT2-059",
     "Name": "\uD06C\uB9AC\uC0AC\uB9AC\uBAAC",
+    "EnglishName": "Kurisarimon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -31651,6 +31675,7 @@
   {
     "CardId": "BT2-065",
     "Name": "\uC6CC\uADF8\uB808\uC774\uBAAC",
+    "EnglishName": "WarGreymon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -31729,6 +31754,7 @@
   {
     "CardId": "BT2-068",
     "Name": "\uC784\uD504\uBAAC",
+    "EnglishName": "Impmon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -31885,6 +31911,7 @@
   {
     "CardId": "BT2-074",
     "Name": "\uB370\uBE14\uBAAC",
+    "EnglishName": "Devimon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -32041,6 +32068,7 @@
   {
     "CardId": "BT2-080",
     "Name": "\uD53C\uC5D0\uBAAC",
+    "EnglishName": "Piedmon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -52597,6 +52625,7 @@
   {
     "CardId": "BT3-031",
     "Name": "\uD669\uC81C\uB4DC\uB77C\uBAAC: \uB4DC\uB798\uACE4 \uBAA8\uB4DC",
+    "EnglishName": "Imperialdramon Dragon Mode",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -54638,6 +54667,7 @@
   {
     "CardId": "BT3-112",
     "Name": "\uC624\uBA54\uAC00\uBAAC Alter-S",
+    "EnglishName": "Omnimon Alter-S",
     "Type": "Digimon",
     "Color": "White",
     "SecondaryColor": null,
@@ -59780,6 +59810,7 @@
   {
     "CardId": "BT5-086",
     "Name": "\uC624\uBA54\uAC00\uBAAC",
+    "EnglishName": "Omnimon",
     "Type": "Digimon",
     "Color": "White",
     "SecondaryColor": null,
@@ -104716,6 +104747,7 @@
   {
     "CardId": "ST1-01",
     "Name": "\uCF54\uB85C\uBAAC",
+    "EnglishName": "Koromon",
     "Type": "Digitama",
     "Color": "Red",
     "SecondaryColor": null,
@@ -104741,6 +104773,7 @@
   {
     "CardId": "ST1-02",
     "Name": "\uD53C\uC694\uBAAC",
+    "EnglishName": "Biyomon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -104767,6 +104800,7 @@
   {
     "CardId": "ST1-03",
     "Name": "\uC544\uAD6C\uBAAC",
+    "EnglishName": "Agumon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -104793,6 +104827,7 @@
   {
     "CardId": "ST1-04",
     "Name": "\uB4DC\uB77C\uCF54\uBAAC",
+    "EnglishName": "Dracomon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -104819,6 +104854,7 @@
   {
     "CardId": "ST1-05",
     "Name": "\uBC84\uB4DC\uB77C\uBAAC",
+    "EnglishName": "Birdramon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -104845,6 +104881,7 @@
   {
     "CardId": "ST1-06",
     "Name": "\uCF54\uC5B4\uB4DC\uB77C\uBAAC",
+    "EnglishName": "Coredramon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -104871,6 +104908,7 @@
   {
     "CardId": "ST1-07",
     "Name": "\uADF8\uB808\uC774\uBAAC",
+    "EnglishName": "Greymon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -104897,6 +104935,7 @@
   {
     "CardId": "ST1-08",
     "Name": "\uAC00\uB8E8\uB2E4\uBAAC",
+    "EnglishName": "Garudamon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -104923,6 +104962,7 @@
   {
     "CardId": "ST1-09",
     "Name": "\uBA54\uD0C8\uADF8\uB808\uC774\uBAAC",
+    "EnglishName": "MetalGreymon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -104949,6 +104989,7 @@
   {
     "CardId": "ST1-10",
     "Name": "\uD398\uB2C9\uC2A4\uBAAC",
+    "EnglishName": "Phoenixmon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -104975,6 +105016,7 @@
   {
     "CardId": "ST1-11",
     "Name": "\uC6CC\uADF8\uB808\uC774\uBAAC",
+    "EnglishName": "WarGreymon",
     "Type": "Digimon",
     "Color": "Red",
     "SecondaryColor": null,
@@ -105001,6 +105043,7 @@
   {
     "CardId": "ST1-12",
     "Name": "\uC2E0\uD0DC\uC77C",
+    "EnglishName": "Tai Kamiya",
     "Type": "Tamer",
     "Color": "Red",
     "SecondaryColor": null,
@@ -105023,6 +105066,7 @@
   {
     "CardId": "ST1-13",
     "Name": "\uC100\uB3C4 \uC719",
+    "EnglishName": "Shadow Wing",
     "Type": "Option",
     "Color": "Red",
     "SecondaryColor": null,
@@ -105045,6 +105089,7 @@
   {
     "CardId": "ST1-14",
     "Name": "\uC2A4\uD0C0\uB77C\uC774\uD2B8 \uC775\uC2A4\uD50C\uB85C\uC804",
+    "EnglishName": "Starlight Explosion",
     "Type": "Option",
     "Color": "Red",
     "SecondaryColor": null,
@@ -105067,6 +105112,7 @@
   {
     "CardId": "ST1-15",
     "Name": "\uAE30\uAC00 \uB514\uC2A4\uD2B8\uB85C\uC774\uC5B4",
+    "EnglishName": "Giga Destroyer",
     "Type": "Option",
     "Color": "Red",
     "SecondaryColor": null,
@@ -105089,6 +105135,7 @@
   {
     "CardId": "ST1-16",
     "Name": "\uAC00\uC774\uC544 \uD3EC\uC2A4",
+    "EnglishName": "Gaia Force",
     "Type": "Option",
     "Color": "Red",
     "SecondaryColor": null,
@@ -108467,6 +108514,7 @@
   {
     "CardId": "ST2-01",
     "Name": "\uBFD4\uBAAC",
+    "EnglishName": "Tsunomon",
     "Type": "Digitama",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108492,6 +108540,7 @@
   {
     "CardId": "ST2-02",
     "Name": "\uC26C\uB77C\uBAAC",
+    "EnglishName": "Gomamon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108518,6 +108567,7 @@
   {
     "CardId": "ST2-03",
     "Name": "\uD30C\uD53C\uBAAC",
+    "EnglishName": "Gabumon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108544,6 +108594,7 @@
   {
     "CardId": "ST2-04",
     "Name": "\uBCA0\uC5B4\uBAAC",
+    "EnglishName": "Bearmon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108570,6 +108621,7 @@
   {
     "CardId": "ST2-05",
     "Name": "\uC6D0\uBFD4\uBAAC",
+    "EnglishName": "Ikkakumon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108596,6 +108648,7 @@
   {
     "CardId": "ST2-06",
     "Name": "\uAC00\uB8E8\uBAAC",
+    "EnglishName": "Garurumon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108622,6 +108675,7 @@
   {
     "CardId": "ST2-07",
     "Name": "\uADF8\uB9AC\uC988\uBAAC",
+    "EnglishName": "Grizzlymon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108648,6 +108702,7 @@
   {
     "CardId": "ST2-08",
     "Name": "\uC6CC\uAC00\uB8E8\uBAAC",
+    "EnglishName": "WereGarurumon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108674,6 +108729,7 @@
   {
     "CardId": "ST2-09",
     "Name": "\uC96C\uB4DC\uBAAC",
+    "EnglishName": "Zudomon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108700,6 +108756,7 @@
   {
     "CardId": "ST2-10",
     "Name": "\uD50C\uB808\uC2DC\uC624\uBAAC",
+    "EnglishName": "Plesiomon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108726,6 +108783,7 @@
   {
     "CardId": "ST2-11",
     "Name": "\uBA54\uD0C8\uAC00\uB8E8\uBAAC",
+    "EnglishName": "MetalGarurumon",
     "Type": "Digimon",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108752,6 +108810,7 @@
   {
     "CardId": "ST2-12",
     "Name": "\uB9E4\uD29C",
+    "EnglishName": "Matt Ishida",
     "Type": "Tamer",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108774,6 +108833,7 @@
   {
     "CardId": "ST2-13",
     "Name": "\uD574\uBA38 \uC2A4\uD30C\uD06C",
+    "EnglishName": "Hammer Spark",
     "Type": "Option",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108796,6 +108856,7 @@
   {
     "CardId": "ST2-14",
     "Name": "\uC18C\uB85C \uBE14\uB8E8",
+    "EnglishName": "Sorrow Blue",
     "Type": "Option",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108818,6 +108879,7 @@
   {
     "CardId": "ST2-15",
     "Name": "\uCE74\uC774\uC800 \uB124\uC77C",
+    "EnglishName": "Kaiser Nail",
     "Type": "Option",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -108840,6 +108902,7 @@
   {
     "CardId": "ST2-16",
     "Name": "\uCF54\uD050\uD1A0\uC2A4 \uBE0C\uB808\uC2A4",
+    "EnglishName": "Cocytus Breath",
     "Type": "Option",
     "Color": "Blue",
     "SecondaryColor": null,
@@ -110754,6 +110817,7 @@
   {
     "CardId": "ST3-01",
     "Name": "\uD1A0\uCF54\uBAAC",
+    "EnglishName": "Tokomon",
     "Type": "Digitama",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -110779,6 +110843,7 @@
   {
     "CardId": "ST3-02",
     "Name": "\uD50C\uB86F\uD2B8\uBAAC",
+    "EnglishName": "Salamon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -110805,6 +110870,7 @@
   {
     "CardId": "ST3-03",
     "Name": "\uD14C\uC774\uD30C\uBAAC",
+    "EnglishName": "Tapirmon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -110831,6 +110897,7 @@
   {
     "CardId": "ST3-04",
     "Name": "\uD30C\uB2E5\uBAAC",
+    "EnglishName": "Patamon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -110857,6 +110924,7 @@
   {
     "CardId": "ST3-05",
     "Name": "\uC5D4\uC824\uBAAC",
+    "EnglishName": "Angemon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -110883,6 +110951,7 @@
   {
     "CardId": "ST3-06",
     "Name": "\uAC00\uD2B8\uBAAC",
+    "EnglishName": "Gatomon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -110909,6 +110978,7 @@
   {
     "CardId": "ST3-07",
     "Name": "\uC720\uB2C8\uBAAC",
+    "EnglishName": "Unimon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -110935,6 +111005,7 @@
   {
     "CardId": "ST3-08",
     "Name": "\uD640\uB9AC\uC5D4\uC824\uBAAC",
+    "EnglishName": "MagnaAngemon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -110961,6 +111032,7 @@
   {
     "CardId": "ST3-09",
     "Name": "\uC5D4\uC824\uC6B0\uBAAC",
+    "EnglishName": "Angewomon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -110987,6 +111059,7 @@
   {
     "CardId": "ST3-10",
     "Name": "\uD640\uB9AC\uB4DC\uB77C\uBAAC",
+    "EnglishName": "Magnadramon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -111014,6 +111087,7 @@
   {
     "CardId": "ST3-11",
     "Name": "\uC138\uB77C\uD53C\uBAAC",
+    "EnglishName": "Seraphimon",
     "Type": "Digimon",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -111041,6 +111115,7 @@
   {
     "CardId": "ST3-12",
     "Name": "\uB9AC\uD0A4",
+    "EnglishName": "T.K. Takaishi",
     "Type": "Tamer",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -111063,6 +111138,7 @@
   {
     "CardId": "ST3-13",
     "Name": "\uCC9C\uAD6D\uC758 \uBB38",
+    "EnglishName": "Heaven\u0027s Gate",
     "Type": "Option",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -111129,6 +111205,7 @@
   {
     "CardId": "ST3-16",
     "Name": "\uC138\uBE10 \uD5E4\uBE10\uC988",
+    "EnglishName": "Seven Heavens",
     "Type": "Option",
     "Color": "Yellow",
     "SecondaryColor": null,
@@ -111151,6 +111228,7 @@
   {
     "CardId": "ST4-01",
     "Name": "\uBAA8\uD2F0\uBAAC",
+    "EnglishName": "Motimon",
     "Type": "Digitama",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111176,6 +111254,7 @@
   {
     "CardId": "ST4-02",
     "Name": "\uD50C\uB85C\uB77C\uBAAC",
+    "EnglishName": "Floramon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111202,6 +111281,7 @@
   {
     "CardId": "ST4-03",
     "Name": "\uD150\uD0C0\uBAAC",
+    "EnglishName": "Tentomon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111228,6 +111308,7 @@
   {
     "CardId": "ST4-04",
     "Name": "\uD314\uBAAC",
+    "EnglishName": "Palmon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111254,6 +111335,7 @@
   {
     "CardId": "ST4-05",
     "Name": "\uCFE0\uB124\uBAAC",
+    "EnglishName": "Kunemon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111280,6 +111362,7 @@
   {
     "CardId": "ST4-06",
     "Name": "\uB2C8\uB4DC\uBAAC",
+    "EnglishName": "Togemon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111306,6 +111389,7 @@
   {
     "CardId": "ST4-07",
     "Name": "\uCFE0\uAC00\uBAAC",
+    "EnglishName": "Kuwagamon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111332,6 +111416,7 @@
   {
     "CardId": "ST4-08",
     "Name": "\uCE85\uD14C\uB9AC\uBAAC",
+    "EnglishName": "Kabuterimon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111358,6 +111443,7 @@
   {
     "CardId": "ST4-09",
     "Name": "\uC655\uCFE0\uAC00\uBAAC",
+    "EnglishName": "Okuwamon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111384,6 +111470,7 @@
   {
     "CardId": "ST4-10",
     "Name": "\uB9B4\uB9AC\uBAAC",
+    "EnglishName": "Lillymon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111410,6 +111497,7 @@
   {
     "CardId": "ST4-11",
     "Name": "\uC544\uD2B8\uB77C\uCE85\uD14C\uB9AC\uBAAC",
+    "EnglishName": "MegaKabuterimon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111436,6 +111524,7 @@
   {
     "CardId": "ST4-12",
     "Name": "\uB85C\uC81C\uBAAC",
+    "EnglishName": "Rosemon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111462,6 +111551,7 @@
   {
     "CardId": "ST4-13",
     "Name": "\uD5E4\uB77C\uD074\uB808\uC2A4\uCE85\uD14C\uB9AC\uBAAC",
+    "EnglishName": "HerculesKabuterimon",
     "Type": "Digimon",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111488,6 +111578,7 @@
   {
     "CardId": "ST4-14",
     "Name": "\uC7A5\uD55C\uC194",
+    "EnglishName": "Izzy Izumi",
     "Type": "Tamer",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111532,6 +111623,7 @@
   {
     "CardId": "ST4-16",
     "Name": "\uC804\uAE30 \uCDA9\uACA9",
+    "EnglishName": "Electro Shocker",
     "Type": "Option",
     "Color": "Green",
     "SecondaryColor": null,
@@ -111554,6 +111646,7 @@
   {
     "CardId": "ST5-01",
     "Name": "\uCE74\uD504\uB9AC\uBAAC",
+    "EnglishName": "Kapurimon",
     "Type": "Digitama",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111579,6 +111672,7 @@
   {
     "CardId": "ST5-02",
     "Name": "\uC7C8\uC790\uBAAC",
+    "EnglishName": "Jazamon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111605,6 +111699,7 @@
   {
     "CardId": "ST5-03",
     "Name": "\uC544\uAD6C\uBAAC",
+    "EnglishName": "Agumon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111631,6 +111726,7 @@
   {
     "CardId": "ST5-04",
     "Name": "\uD1A0\uC774\uC544\uAD6C\uBAAC",
+    "EnglishName": "ToyAgumon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111657,6 +111753,7 @@
   {
     "CardId": "ST5-05",
     "Name": "\uCF54\uB9CC\uB4DC\uB77C\uBAAC",
+    "EnglishName": "Commandramon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111684,6 +111781,7 @@
   {
     "CardId": "ST5-06",
     "Name": "\uADF8\uB808\uC774\uBAAC",
+    "EnglishName": "Greymon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111710,6 +111808,7 @@
   {
     "CardId": "ST5-07",
     "Name": "\uC7C8\uC790\uB4DC\uBAAC",
+    "EnglishName": "Jazardmon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111736,6 +111835,7 @@
   {
     "CardId": "ST5-08",
     "Name": "\uB2E4\uD06C\uD2F0\uB77C\uB178\uBAAC",
+    "EnglishName": "DarkTyrannomon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111762,6 +111862,7 @@
   {
     "CardId": "ST5-09",
     "Name": "\uBA54\uD0C8\uADF8\uB808\uC774\uBAAC",
+    "EnglishName": "MetalGreymon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111814,6 +111915,7 @@
   {
     "CardId": "ST5-11",
     "Name": "\uBA54\uAC00\uB4DC\uB77C\uBAAC",
+    "EnglishName": "Megadramon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111840,6 +111942,7 @@
   {
     "CardId": "ST5-12",
     "Name": "\uD30C\uC6CC\uB4DC\uB77C\uBAAC",
+    "EnglishName": "Machinedramon",
     "Type": "Digimon",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111892,6 +111995,7 @@
   {
     "CardId": "ST5-14",
     "Name": "\uC2E0\uD0DC\uC77C",
+    "EnglishName": "Tai Kamiya",
     "Type": "Tamer",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111914,6 +112018,7 @@
   {
     "CardId": "ST5-15",
     "Name": "\uB808\uC774\uC800 \uC544\uC774",
+    "EnglishName": "Laser Eye",
     "Type": "Option",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111936,6 +112041,7 @@
   {
     "CardId": "ST5-16",
     "Name": "\uC81C\uB178\uC0AC\uC774\uB4DC \uC5B4\uD0DD",
+    "EnglishName": "Dark Side Attack",
     "Type": "Option",
     "Color": "Black",
     "SecondaryColor": null,
@@ -111958,6 +112064,7 @@
   {
     "CardId": "ST6-01",
     "Name": "\uD37C\uADF8\uBAAC",
+    "EnglishName": "Pagumon",
     "Type": "Digitama",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -111983,6 +112090,7 @@
   {
     "CardId": "ST6-02",
     "Name": "\uD53C\uCF54\uB370\uBE14\uBAAC",
+    "EnglishName": "DemiDevimon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112009,6 +112117,7 @@
   {
     "CardId": "ST6-03",
     "Name": "\uD30C\uD53C\uBAAC",
+    "EnglishName": "Gabumon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112035,6 +112144,7 @@
   {
     "CardId": "ST6-04",
     "Name": "\uB4DC\uB77C\uD050\uBAAC",
+    "EnglishName": "Dracmon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112061,6 +112171,7 @@
   {
     "CardId": "ST6-05",
     "Name": "\uC5D0\uB809\uBAAC",
+    "EnglishName": "Elecmon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112087,6 +112198,7 @@
   {
     "CardId": "ST6-06",
     "Name": "\uAC00\uB8E8\uBAAC",
+    "EnglishName": "Garurumon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112113,6 +112225,7 @@
   {
     "CardId": "ST6-07",
     "Name": "\uC694\uC6B0\uCF54\uBAAC",
+    "EnglishName": "Youkomon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112139,6 +112252,7 @@
   {
     "CardId": "ST6-08",
     "Name": "\uB370\uBE14\uBAAC",
+    "EnglishName": "Devimon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112165,6 +112279,7 @@
   {
     "CardId": "ST6-09",
     "Name": "\uD050\uC6B0\uD0A4\uBAAC",
+    "EnglishName": "Kyukimon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112191,6 +112306,7 @@
   {
     "CardId": "ST6-10",
     "Name": "\uC2A4\uCEEC\uC0AC\uD0C4\uBAAC",
+    "EnglishName": "SkullSatamon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112217,6 +112333,7 @@
   {
     "CardId": "ST6-11",
     "Name": "\uC6CC\uAC00\uB8E8\uBAAC",
+    "EnglishName": "WereGarurumon",
     "Type": "Digimon",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112295,6 +112412,7 @@
   {
     "CardId": "ST6-14",
     "Name": "\uB9E4\uD29C",
+    "EnglishName": "Matt Ishida",
     "Type": "Tamer",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112317,6 +112435,7 @@
   {
     "CardId": "ST6-15",
     "Name": "\uB370\uC2A4 \uD074\uB85C",
+    "EnglishName": "Death Claw",
     "Type": "Option",
     "Color": "Purple",
     "SecondaryColor": null,
@@ -112339,6 +112458,7 @@
   {
     "CardId": "ST6-16",
     "Name": "\uC5B4\uB460\uC758 \uC800\uC8FC",
+    "EnglishName": "Nail Bone",
     "Type": "Option",
     "Color": "Purple",
     "SecondaryColor": null,
