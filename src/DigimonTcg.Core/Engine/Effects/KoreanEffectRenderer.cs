@@ -46,6 +46,7 @@ public static partial class KoreanEffectRenderer
     {
         _mentionedTarget = false;
         string clause = SentenceParser.NormalizeForRender(rawClause);
+        _leaveKind = LeaveKindOf(clause);   // v0.32.0 "Prevent it"의 한글 (벗어나지 / 소멸하지 / 소멸하지 않고, 패/덱으로 되돌아가지)
         clause = Regex.Replace(clause, @"^(?:Inherited|Security) Effect\s*", "", RegexOptions.IgnoreCase).Trim();
         clause = Regex.Replace(clause, @"\byou have don't have\b", "you don't have", RegexOptions.IgnoreCase);   // API 원문 오타
         // API 원문의 짝 없는 괄호: "…cost.))" · "＜Security A. +1}＞"
@@ -89,7 +90,7 @@ public static partial class KoreanEffectRenderer
         if (Regex.Match(clause, @"^(?:For (?:each|every) (?<c1>[^,]+), add (?<n1>\d+) to this card's (?:use |play )?cost|Add (?<n2>\d+) to this card's (?:use |play )?cost for (?:each|every) (?<c2>.+?))\.?$", RegexOptions.IgnoreCase) is { Success: true } addc
             && CounterKo(addc.Groups["c1"].Success ? addc.Groups["c1"].Value : addc.Groups["c2"].Value) is { } addPer)
             return $"{addPer} 지불하는 사용 코스트를 +{(addc.Groups["n1"].Success ? addc.Groups["n1"].Value : addc.Groups["n2"].Value)} 한다.";
-        if (Regex.Match(clause, @"^When (?:(?<play>this card would be played|you would play this card(?: from your hand)?)|you would use this card|this card would be used), (?:if (?<cond>[^,]+), )?(?:by (?<cost>[^,]+), |you may (?<cverb>suspend|trash|delete|return|place)\b(?<cobj>[^,]*?) to )?reduce (?:the|its|this card's) (?:play |use |memory )?cost by (?<n>\d+)(?: for (?:each|every) (?<cnt>[^,]+?))?(?: if (?<cond2>[^,]+?))?\.?$", RegexOptions.IgnoreCase) is { Success: true } red)
+        if (Regex.Match(clause, @"^When (?:(?<play>this card would be played|you would play this card(?: from your hand)?)|you would use this card|this card would be used), (?:if (?<cond>(?:[^,]|,\s*(?=\[))+), )?(?:by (?<cost>[^,]+), |you may (?<cverb>suspend|trash|delete|return|place)\b(?<cobj>[^,]*?) to )?reduce (?:the|its|this card's) (?:play |use |memory )?cost by (?<n>\d+)(?: for (?:each|every) (?<cnt>[^,]+?))?(?: if (?<cond2>[^,]+?))?\.?$", RegexOptions.IgnoreCase) is { Success: true } red)
         {
             bool play = red.Groups["play"].Success;
             // 조건이 앞("if ~, reduce") 또는 뒤("reduce ~ if ~") — 공식은 "~있다면 지불하는"
@@ -103,6 +104,7 @@ public static partial class KoreanEffectRenderer
         }
 
         if (ClauseKo31(clause) is { } clause31) return clause31;   // v0.31.0 (KoreanEffectRenderer.Batch31.cs)
+        if (ClauseKo32(clause) is { } clause32) return clause32;   // v0.32.0 (KoreanEffectRenderer.Batch32.cs)
 
         var prefix = Regex.Match(clause, @"^((?:\s*\[[^\]]+\])*)\s*(.*)$");
         var labels = new List<string>();
@@ -167,6 +169,7 @@ public static partial class KoreanEffectRenderer
         if ((m = Regex.Match(s, @"^Then,?\s+(?<rest>.+)$", RegexOptions.IgnoreCase)).Success)
             return Sentence(Cap(m.Groups["rest"].Value)) is { } then ? "그 후, " + then : null;
         if (SentenceKo31(s) is { } sentence31) return sentence31;   // v0.31.0
+        if (SentenceKo32(s) is { } sentence32) return sentence32;   // v0.32.0
 
         // v0.30.0 — 공식 (BT18-029 · BT19-052 · ST21-06 · BT21-078): "다른 자신의 디지몬 1마리마다 이 효과의 Lv. 상한 +1" · "~ 이 효과의 등장 코스트 상한 +2" ·
         // "~ 이 효과의 DP 상한 +2000" · "자신의 테이머의 색 합계가 2색 이상이라면, 이 효과의 Lv. 상한 +1"
@@ -906,7 +909,7 @@ public static partial class KoreanEffectRenderer
             if (Core(verb + m.Groups["rest"].Value) is { } p)
                 return p.Render(Form.By) + ",";
         }
-        return null;
+        return CostKo32(cost);   // v0.32.0 (KoreanEffectRenderer.Batch32.cs)
     }
 
     // =====================================================================
@@ -1108,7 +1111,7 @@ public static partial class KoreanEffectRenderer
             return Have("이 디지몬과 같은 명칭의 자신의 다른 디지몬이");
         if (Regex.IsMatch(cond, @"^(?:DNA digivolving|DigiXrosing|it DNA digivolved|this Digimon DNA digivolved)$", RegexOptions.IgnoreCase))
             return new(cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화했을 때,", "조그레스 진화한 동안,");
-        return null;
+        return CondKo32(cond);   // v0.32.0
     }
 
     /// <summary>"When ~," 사건 → "~했을 때,"</summary>
@@ -1216,7 +1219,7 @@ public static partial class KoreanEffectRenderer
             if (who == null) return null;
             if (!m.Groups["into"].Success) return $"{who} 진화할 때,";
             if (m.Groups["into"].Value.StartsWith("this card", StringComparison.OrdinalIgnoreCase)) return $"{who} 패의 이 카드로 진화할 때,";
-            if (PickKo("1 " + Regex.Replace(m.Groups["into"].Value, @"^(?:an?|1) ", "", RegexOptions.IgnoreCase)) is not { } ik) return null;
+            if (PickKo("1 " + Regex.Replace(m.Groups["into"].Value, @"^(?:an?|1) ", "", RegexOptions.IgnoreCase)) is not { } ik) return EventKo32(ev);   // v0.32.0 "into a 2-color black Digimon"
             ik = Regex.Replace(ik, @" 1장(?= 또는 |$)", "");
             return $"{who} {ik}{J(ik, "으로", "로")} 진화할 때,";
         }
@@ -1461,7 +1464,7 @@ public static partial class KoreanEffectRenderer
                 return m.Groups["mine"].Success ? $"자신의 효과로 {host}의 진화원이 늘어났을 때," : $"{host}의 진화원이 효과로 늘어났을 때,";
             return $"{(m.Groups["mine"].Success ? "자신의 효과로 " : "")}{host}의 진화원에 {card}{J(card, "이", "가")} {(byEffect && !m.Groups["mine"].Success ? "효과로 " : "")}놓였을 때,";
         }
-        return EventKo31(ev);   // v0.31.0 (KoreanEffectRenderer.Batch31.cs)
+        return EventKo31(ev) ?? EventKo32(ev);   // v0.31.0 (KoreanEffectRenderer.Batch31.cs) · v0.32.0 (Batch32)
     }
 
     /// <summary>벗어날 때 · 소멸할 때의 단서 → "자신의 효과 이외로 " · "배틀 이외로 " · "배틀에서 " · "상대의 효과로 " (빈 단서 = "", 모르면 null)</summary>
@@ -1469,7 +1472,7 @@ public static partial class KoreanEffectRenderer
     {
         q = q.Trim();
         if (q.Length == 0) return "";
-        if (Regex.IsMatch(q, @"^other than (?:by )?(?:your (?:own )?effects|one of your effects) (?:or|and) (?:in|by) battle$|^other than (?:in|by) battle (?:or|and) (?:by )?your (?:own )?effects$", RegexOptions.IgnoreCase)) return "자신의 효과와 배틀 이외로 ";
+        if (Regex.IsMatch(q, @"^other than (?:by )?(?:your (?:own )?effects|one of your effects) (?:or|and) (?:a |in |by )battles?$|^other than (?:in|by) battle (?:or|and) (?:by )?your (?:own )?effects$", RegexOptions.IgnoreCase)) return "자신의 효과와 배틀 이외로 ";
         if (Regex.IsMatch(q, @"^other than (?:by )?(?:your (?:own )?effects?|one of your effects)$", RegexOptions.IgnoreCase)) return "자신의 효과 이외로 ";
         if (Regex.IsMatch(q, @"^other than (?:in|by) battle$", RegexOptions.IgnoreCase)) return "배틀 이외로 ";
         if (Regex.IsMatch(q, @"^other than by DigiXros$", RegexOptions.IgnoreCase)) return "디지크로스 이외로 ";
@@ -1540,7 +1543,7 @@ public static partial class KoreanEffectRenderer
             return $"서로의 시큐리티 {Per(m)}장마다";
         if ((m = Regex.Match(counter, $@"^(?<x>{TargetSpec.NameList}) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
             return $"이 디지몬의 진화원의 {NamesKo(m.Groups["x"].Value)} 1장마다";
-        return null;
+        return CounterKo32(counter);   // v0.32.0
     }
 
     // =====================================================================

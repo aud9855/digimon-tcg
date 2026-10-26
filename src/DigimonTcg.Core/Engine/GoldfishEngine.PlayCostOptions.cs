@@ -64,7 +64,8 @@ public partial class GoldfishEngine
     private readonly Dictionary<(FieldPlayCostModifier, object), int> _fieldPlayCostUsedTurn = new();
 
     private static int FieldReduce(FieldPlayCostModifier mod, EffectContext ctx) =>
-        mod.Times == null ? mod.Reduce : mod.Reduce * Math.Max(0, Math.Min(mod.Times(ctx), 20));
+        mod.Amount != null ? Math.Max(0, mod.Amount(ctx))
+        : mod.Times == null ? mod.Reduce : mod.Reduce * Math.Max(0, Math.Min(mod.Times(ctx), 20));
 
     /// <summary>패에서 등장하는 card에 지금 걸리는 필드 · 육성의 등장 코스트 감소 (조건 · [턴에 1회]까지 — 비용을 낼 수 있는지는 보지 않는다)</summary>
     private IEnumerable<(FieldPlayCostModifier Mod, EffectContext Ctx)> ApplicableFieldPlayCostModifiers(PlayerZones owner, CardData card)

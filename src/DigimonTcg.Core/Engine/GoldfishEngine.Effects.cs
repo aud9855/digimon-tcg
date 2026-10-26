@@ -145,6 +145,17 @@ public partial class GoldfishEngine
                     Resolve(ctx, mainCard, effect);
             }
 
+            // v0.32.0 효과로 받은 효과 (기간 안 · 효과를 받을 수 있을 때 — 공식 Q&A EX10-034)
+            if (self != null && mainCard != null && !optionSide && ReferenceEquals(mainCard, self.TopCard) && self.GrantedEffects.Count > 0)
+            {
+                foreach (var granted in ActiveGrantedEffects(self))
+                {
+                    if (CardScripts.For(granted) is not { } grantedScript) continue;
+                    foreach (var effect in grantedScript.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Main).ToList())
+                        Resolve(ctx, granted, effect);
+                }
+            }
+
             // v0.31.0 "This Digimon gains all effects of ~ in this Digimon's digivolution cards" — 얻은 진화원 카드의 메인 효과 (맨 위 카드의 시점으로)
             if (self != null && mainCard != null && !optionSide && ReferenceEquals(mainCard, self.TopCard) && trigger != EffectTrigger.ActivateMain)
             {
@@ -206,19 +217,23 @@ public partial class GoldfishEngine
     internal PlayerZones? CurrentEffectOwner { get; private set; }
 
     /// <summary>지금 배틀 에어리어를 떠나려는 디지몬의 사정 ("would leave the battle area / be deleted" 효과의 조건이 본다)</summary>
-    internal sealed record LeaveInfo(CardInstance Digimon, bool Deletion, bool InBattle, bool ByOwnEffect, bool CanPrevent = true);
+    internal sealed record LeaveInfo(CardInstance Digimon, bool Deletion, bool InBattle, bool ByOwnEffect, bool CanPrevent = true, LeaveDestination Destination = LeaveDestination.Other);
+
+    /// <summary>v0.32.0 떠나는 곳 ("would be deleted or returned to your hand or deck" 같은 조건이 본다)</summary>
+    internal enum LeaveDestination { Other, Deleted, Hand, Deck, Security }
     internal LeaveInfo? CurrentLeave { get; private set; }
 
     /// <summary>
     /// "When ~ would leave the battle area / would be deleted" 효과를 발휘하고, 그중 하나라도 떠나는 것을 막았으면 true.
     /// deletion = 소멸로 떠나는지, inBattle = 배틀로 소멸하는지. 자신의 효과로 떠나는지는 지금 처리 중인 효과의 주인으로 판단한다.
     /// </summary>
-    internal bool TryPreventLeave(PlayerZones zones, CardInstance inst, bool deletion, bool inBattle, bool canPrevent = true)
+    internal bool TryPreventLeave(PlayerZones zones, CardInstance inst, bool deletion, bool inBattle, bool canPrevent = true, LeaveDestination destination = LeaveDestination.Other)
     {
         if (!zones.BattleArea.Contains(inst))
             return false;
         var outer = CurrentLeave;
-        CurrentLeave = new LeaveInfo(inst, deletion, inBattle, !inBattle && ReferenceEquals(CurrentEffectOwner, zones), canPrevent);
+        CurrentLeave = new LeaveInfo(inst, deletion, inBattle, !inBattle && ReferenceEquals(CurrentEffectOwner, zones), canPrevent,
+            deletion ? LeaveDestination.Deleted : destination);
         bool prevented = false;
         try
         {
@@ -1000,7 +1015,7 @@ public partial class GoldfishEngine
 
     internal void ReturnToHand(PlayerZones zones, CardInstance inst)
     {
-        if (TryPreventLeave(zones, inst, deletion: false, inBattle: false))
+        if (TryPreventLeave(zones, inst, deletion: false, inBattle: false, destination: LeaveDestination.Hand))
             return;
         if (!zones.BattleArea.Remove(inst))
             return;
@@ -1082,7 +1097,7 @@ public partial class GoldfishEngine
     /// <summary>디지몬을 덱 아래로 (맨 위 카드와 진화원 모두)</summary>
     internal void BottomDeck(PlayerZones zones, CardInstance inst)
     {
-        if (TryPreventLeave(zones, inst, deletion: false, inBattle: false))
+        if (TryPreventLeave(zones, inst, deletion: false, inBattle: false, destination: LeaveDestination.Deck))
             return;
         if (!zones.BattleArea.Remove(inst))
             return;
@@ -1098,7 +1113,7 @@ public partial class GoldfishEngine
     /// <summary>디지몬을 주인의 시큐리티 맨 위에 뒷면으로 (맨 위 카드만 — 진화원은 트래시)</summary>
     internal void PlaceOnSecurity(PlayerZones zones, CardInstance inst)
     {
-        if (TryPreventLeave(zones, inst, deletion: false, inBattle: false))
+        if (TryPreventLeave(zones, inst, deletion: false, inBattle: false, destination: LeaveDestination.Security))
             return;
         if (!zones.BattleArea.Remove(inst))
             return;
@@ -1472,9 +1487,13 @@ public partial class GoldfishEngine
         var owner = OwnerOf(inst);
         if (!owner.BattleArea.Contains(inst))
             return;
-        RunEffects(EffectTrigger.ThisDigimonSuspends, owner, inst, inst.TopCard);
-        FireForSide(EffectTrigger.AllyDigimonSuspended, owner, inst);
-        FireForSide(EffectTrigger.OpponentDigimonSuspended, EnemyOf(owner), inst);
+        WithSuspendCause(() =>   // v0.32.0 "When an effect suspends ~"
+        {
+            RunEffects(EffectTrigger.ThisDigimonSuspends, owner, inst, inst.TopCard);
+            FireForSide(EffectTrigger.AllyDigimonSuspended, owner, inst);
+            FireForSide(EffectTrigger.OpponentDigimonSuspended, EnemyOf(owner), inst);
+            return true;
+        });
     }
 
     /// <summary>
@@ -1580,8 +1599,12 @@ public partial class GoldfishEngine
         if (!owner.HasActiveTamer(tamer))
             return;
         owner.SuspendedTamers.Add(tamer);
-        FireForSide(EffectTrigger.AllyTamerSuspended, owner, null, triggerCard: tamer);
-        FireForSide(EffectTrigger.OpponentTamerSuspended, EnemyOf(owner), null, triggerCard: tamer);
+        WithSuspendCause(() =>   // v0.32.0 "When one of your effects suspends a Tamer"
+        {
+            FireForSide(EffectTrigger.AllyTamerSuspended, owner, null, triggerCard: tamer);
+            FireForSide(EffectTrigger.OpponentTamerSuspended, EnemyOf(owner), null, triggerCard: tamer);
+            return true;
+        });
     }
 
     /// <summary>

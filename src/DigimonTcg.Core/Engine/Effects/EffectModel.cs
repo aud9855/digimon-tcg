@@ -300,6 +300,9 @@ public sealed record FieldPlayCostModifier(
 {
     /// <summary>"~ by 1 for each of this Digimon's digivolution cards" — Reduce × 셈 (효과 상황)</summary>
     public Func<EffectContext, int>? Times { get; init; }
+
+    /// <summary>v0.32.0 줄이는 양을 직접 정한다 (Reduce · Times 대신) — "~ -4. 이 디지몬의 진화원 1장마다 이 코스트 경감 효과의 수치 -1" (BT13-007) · "~ 대신 -4" (EX6-006)</summary>
+    public Func<EffectContext, int>? Amount { get; init; }
 }
 
 /// <summary>진화 코스트 감소가 걸리는 진화: 이 디지몬이 진화할 때 · 자신의 디지몬이 진화할 때 · (패의) 이 카드로 진화할 때</summary>

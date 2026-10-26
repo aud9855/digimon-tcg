@@ -45,6 +45,8 @@ public class CardInstance
     public int GrantedBlockerUntil { get; set; }   // ≪블로커≫를 얻음 (메탈그레이몬 ST5-09)
     public int GrantedRebootUntil { get; set; }    // ≪재기동≫을 얻음 (파워드라몬 ST5-12)
     public int UnblockableUntil { get; set; }      // 블록당하지 않음 (오메가몬 Alter-S BT3-112)
+    /// <summary>v0.32.0 효과로 받은 효과 ("gains \"[On Deletion] Lose 1 memory.\"") — 효과 문장만 든 카드, 끝나는 턴, 준 쪽 (엔진이 맨 위 카드 효과처럼 발휘)</summary>
+    public List<(CardData Effect, int Until, PlayerZones? Granter)> GrantedEffects { get; } = new();
 
     /// <summary>이번 턴에 사용한 [턴에 1회] 효과 (카드 번호 기준) — 액티브 페이즈에 비운다</summary>
     public HashSet<string> UsedOncePerTurn { get; } = new();

@@ -119,6 +119,12 @@ public sealed class TargetSpec
     {
         phrase = Regex.Replace(phrase, @"(?<x>\[[^\]]+\](?:,?\s+(?:or\s+|and/or\s+)?\[[^\]]+\])+) traits? Digimon\b(?<rest>.*)$", m => "Digimon with the " + m.Groups["x"].Value + " trait" + (m.Groups["rest"].Value.Trim().Length > 0 ? " and " + Regex.Replace(m.Groups["rest"].Value.Trim(), @"^with ", "", RegexOptions.IgnoreCase) : ""), RegexOptions.IgnoreCase);
         phrase = Regex.Replace(phrase, @"\b(?<n>\d+) DP or (?<d>lower|less|higher|more) Digimon\b(?<rest>.*)$", m => $"Digimon with {m.Groups["n"].Value} DP or {(m.Groups["d"].Value.ToLowerInvariant() is "lower" or "less" ? "less" : "more")}" + (m.Groups["rest"].Value.Trim().Length > 0 ? " and " + Regex.Replace(m.Groups["rest"].Value.Trim(), @"^with ", "", RegexOptions.IgnoreCase) : ""), RegexOptions.IgnoreCase);
+        // v0.32.0 다른 표기: "with as much DP as this Digimon or less" · "with as much or less DP than this Digimon" · "play cost 5 or lower Digimon" · "with a play cost 5 or less" · "with the 6000 DP or less"(원문 오타)
+        phrase = Regex.Replace(phrase, @"\bwith as much DP as (?<w>this|that) Digimon or less$", "with as much or less DP as ${w} Digimon", RegexOptions.IgnoreCase);
+        phrase = Regex.Replace(phrase, @"\bwith as much or less DP than (?<w>this|that) Digimon$", "with as much or less DP as ${w} Digimon", RegexOptions.IgnoreCase);
+        phrase = Regex.Replace(phrase, @"(?<pre>\bof (?:your opponent's|their|your) )play cost (?:of )?(?<n>\d+) or (?<d>lower|less|higher|more) Digimon$", m => $"{m.Groups["pre"].Value}Digimon with a play cost of {m.Groups["n"].Value} or {(m.Groups["d"].Value.ToLowerInvariant() is "lower" or "less" ? "less" : "more")}", RegexOptions.IgnoreCase);
+        phrase = Regex.Replace(phrase, @"\bwith a play cost (?<n>\d+) or (?<d>less|lower|more|higher)$", "with a play cost of ${n} or ${d}", RegexOptions.IgnoreCase);
+        phrase = Regex.Replace(phrase, @"\bwith the (?<n>\d+) DP or less$", "with ${n} DP or less", RegexOptions.IgnoreCase);
         return phrase;
     }
 
