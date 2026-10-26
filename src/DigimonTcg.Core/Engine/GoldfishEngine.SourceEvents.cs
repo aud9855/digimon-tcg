@@ -20,7 +20,9 @@ public partial class GoldfishEngine
 
     private List<SourceSnapshot>? _sourceWatch;
     private Dictionary<PlayerZones, CardData[]>? _sourceWatchTrash;
+    private Dictionary<PlayerZones, CardData[]>? _sourceWatchHand;   // "When an effect adds a card to your hand" (v0.29.0)
     private int _sourceNotifyTurn = -1, _sourceNotifyCount;
+    private int _handAddNotifyTurn = -1, _handAddNotifyCount;
 
     /// <summary>진화원 시점을 알리는 동안: 파기되었거나 놓인 카드 (조건 "Tamer cards are placed ~" 등이 본다)</summary>
     internal IReadOnlyList<CardData> CurrentSourceCards { get; private set; } = new List<CardData>();
@@ -35,11 +37,13 @@ public partial class GoldfishEngine
             return false;
         _sourceWatch = new List<SourceSnapshot>();
         _sourceWatchTrash = new Dictionary<PlayerZones, CardData[]>();
+        _sourceWatchHand = new Dictionary<PlayerZones, CardData[]>();
         foreach (var zones in new[] { State.Player, State.DummyOpponent })
         {
             foreach (var d in zones.BattleArea)
                 _sourceWatch.Add(new SourceSnapshot(d, zones, d.TopCard, d.EvolutionSources.ToArray()));
             _sourceWatchTrash[zones] = zones.Trash.ToArray();
+            _sourceWatchHand[zones] = zones.Hand.ToArray();
         }
         return true;
     }
@@ -49,10 +53,29 @@ public partial class GoldfishEngine
     {
         var snaps = _sourceWatch;
         var trashBefore = _sourceWatchTrash;
+        var handBefore = _sourceWatchHand;
         _sourceWatch = null;
         _sourceWatchTrash = null;
+        _sourceWatchHand = null;
         if (snaps == null || trashBefore == null)
             return;
+
+        // 효과로 패에 카드가 들어갔다 (드로우 포함 — 종합 룰 4-14-1 "드로우 = 덱에서 뽑아 패에 더하는 것"). 효과 하나가 끝난 뒤 쪽마다 1번
+        if (handBefore != null)
+            foreach (var (zones, before) in handBefore)
+            {
+                var addedToHand = Diff(zones.Hand, before);
+                if (addedToHand.Count == 0) continue;
+                var zonesOfHand = zones;
+                var firstAdded = addedToHand[0];
+                RunOrDefer(() =>
+                {
+                    if (State.IsGameOver) return;
+                    if (_handAddNotifyTurn != State.TurnSequence) { _handAddNotifyTurn = State.TurnSequence; _handAddNotifyCount = 0; }
+                    if (++_handAddNotifyCount > 100) return;   // 서로 부르며 끝없이 이어지는 것을 막는다
+                    FireForSide(EffectTrigger.AllyHandAddedByEffect, zonesOfHand, null, triggerCard: firstAdded);
+                });
+            }
 
         // 트래시에 새로 들어간 카드 (같은 카드 데이터가 여러 장일 수 있어 장수로 센다)
         var trashGain = new Dictionary<PlayerZones, Dictionary<CardData, int>>();
@@ -71,8 +94,10 @@ public partial class GoldfishEngine
             var after = snap.Digimon.EvolutionSources.ToList();
             var removed = Diff(snap.Sources, after);
             var added = Diff(after, snap.Sources);
-            if (!ReferenceEquals(snap.Digimon.TopCard, snap.Top))
-                added.Remove(snap.Top);   // 진화로 겹친 카드 (Q&A BT7-005)
+            // 진화로 겹친 카드 (Q&A BT7-005) — 새 맨 위 카드가 원래 진화원이었다면 진화가 아니라
+            // "겹쳐져 있는 카드를 위에서부터 1장 진화원 아래에 놓았다" (Q&A EX5-007, v0.29.0) → 효과로 진화원에 놓인 것
+            if (!ReferenceEquals(snap.Digimon.TopCard, snap.Top) && !snap.Sources.Contains(snap.Digimon.TopCard))
+                added.Remove(snap.Top);
             var gain = trashGain[snap.Zones];
             var trashed = new List<CardData>();
             foreach (var x in removed)

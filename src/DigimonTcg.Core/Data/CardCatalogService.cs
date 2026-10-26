@@ -476,6 +476,7 @@ public class CardCatalogService
             DP = Int(e, "dp") ?? 0,
             EffectText = mainEffect,
             InheritedEffectText = sourceEffect,
+            IsDual = string.Equals(Str(e, "type"), "Dual", StringComparison.OrdinalIgnoreCase),   // 듀얼 카드 (옵션 쪽 = source_effect)
             ImageUrl = $"https://images.digimoncard.io/images/cards/{id}.jpg",
             Rarity = NormalizeRarity(Str(e, "rarity")),
             // 특징: 유형(digi_type ~ digi_type5) · 세대(form) · 속성(attribute) — 효과 문장의 "[X] trait" 판정에 쓴다

@@ -35,18 +35,21 @@ public static class ActionValidator
 
         // 공식 룰: 옵션 카드는 자신의 배틀 에어리어 · 육성 에어리어의 디지몬 또는 테이머 중
         // 그 옵션의 색(여러 색이면 모든 색)을 가진 카드가 있어야 [메인]으로 사용할 수 있다. ([시큐리티] 발휘에는 조건 없음)
-        if (card.Type == CardType.Option)
+        // 듀얼 카드(종합 룰 4-6-2)는 패에서 등장하지 않는다 — 디지몬 쪽으로 진화하거나 옵션 쪽으로 사용한다. 이 경로 = 옵션 쪽 사용
+        if (card.Type == CardType.Option || card.IsDual)
         {
+            if (card.IsDual && CardScripts.OptionSideFor(card)?.Effects.Any(e => e.Trigger == EffectTrigger.Main) != true)
+                return ActionResult.Fail($"[{card.Name}]은(는) 듀얼 카드입니다 — 디지몬 쪽으로 진화하거나 옵션 쪽으로 사용합니다 (이 카드의 옵션 쪽 효과는 아직 지원하지 않습니다).");
             var missing = MissingOptionColors(state.Player, card);
             if (missing.Count > 0)
-                return ActionResult.Fail($"[{card.Name}]을(를) 사용하려면 내 필드에 {string.Join(" · ", missing.Select(ColorName))} 디지몬 또는 테이머가 있어야 합니다.");
+                return ActionResult.Fail($"[{card.Name}]을(를) {(card.IsDual ? "옵션 쪽으로 " : "")}사용하려면 내 필드에 {string.Join(" · ", missing.Select(ColorName))} 디지몬 또는 테이머가 있어야 합니다{(card.IsDual ? " (또는 옵션 쪽의 사용 조건)" : "")}.");
         }
 
         // 공식 룰: 10을 넘는 코스트도 지불할 수 있다 (메모리는 상대 쪽 10에서 멈춘다)
         int cost = CardScripts.EffectivePlayCost(state.Player, card, state.DummyOpponent);   // 카드의 코스트 감소 효과 반영
         int projectedMemory = Math.Max(state.MemoryGauge - cost, -10);
 
-        string guide = $"[{card.Name}] 등장 코스트 {cost}를 사용합니다.";
+        string guide = card.IsDual ? $"[{card.Name}] 옵션 쪽 사용 코스트 {cost}를 사용합니다." : $"[{card.Name}] 등장 코스트 {cost}를 사용합니다.";
 
         if (projectedMemory < 0)
             guide += $" (주의: 메모리가 {projectedMemory}가 되어 카드 처리 후 턴이 종료됩니다)";
@@ -60,7 +63,7 @@ public static class ActionValidator
     public static List<CardColor> MissingOptionColors(PlayerZones zones, CardData option)
     {
         // 카드에 적힌 사용 조건 ("While you have a Tamer, you can ignore this card's color requirements")
-        if (CardScripts.For(option)?.IgnoreColorRequirement is { } ignore && ignore(zones))
+        if (CardScripts.ForUse(option)?.IgnoreColorRequirement is { } ignore && ignore(zones))
             return new List<CardColor>();
 
         var fieldColors = new HashSet<CardColor>(zones.BattleArea.Select(d => d.TopCard.Color));
@@ -111,6 +114,9 @@ public static class ActionValidator
         if (evoCard.Type != CardType.Digimon)
             return ActionResult.Fail("디지몬 카드만 진화에 사용할 수 있습니다.");
 
+        if (EffectRules.IsDigivolveLocked(null, target))
+            return ActionResult.Fail($"[{target.TopCard.Name}]은(는) 진화할 수 없습니다 (카드 효과).");
+
         // 진화 조건을 무시하는 다른 진화 ("Your [Shoutmon] can digivolve into this card ~ for a memory cost of 4")
         if (!MeetsNormalEvolution(target, evoCard) && CardScripts.SpecialEvolutionCost(evoCard, target) is int special)
             return ActionResult.Success($"진화 코스트 {special} 지불 (카드 효과의 진화). 진화 성공 시 카드 1장을 추가로 드로우합니다.");
@@ -146,6 +152,8 @@ public static class ActionValidator
         var baseCheck = ValidateEvolution(target, evoCard);
         if (!baseCheck.CanExecute)
             return baseCheck;
+        if (target != null && EffectRules.IsDigivolveLocked(state, target))
+            return ActionResult.Fail($"[{target.TopCard.Name}]은(는) 이번 턴에 진화할 수 없습니다 (카드 효과).");
 
         int projectedMemory = Math.Max(state.MemoryGauge - EvolutionCost(target!, evoCard), -10);
 

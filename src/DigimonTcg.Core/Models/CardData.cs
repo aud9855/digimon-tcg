@@ -25,7 +25,19 @@ public class CardData
     public CardColor EvoRequirementColor { get; set; }
     public int DP { get; set; }                                     // 기본 전투력
     public string EffectText { get; set; } = string.Empty;          // 메인 효과 설명
-    public string InheritedEffectText { get; set; } = string.Empty; // 진화원 효과 설명
+    public string InheritedEffectText { get; set; } = string.Empty; // 진화원 효과 설명 (듀얼 카드는 옵션 쪽 — IsDual)
+
+    /// <summary>
+    /// 듀얼 카드 (API type "Dual", 종합 룰 4-6): 디지몬 쪽(EffectText) + 옵션 쪽(InheritedEffectText 칸에 들어 있다).
+    /// 패에서는 디지몬 쪽으로 진화하거나 옵션 쪽으로 사용한다 (등장하지 않는다). PlayCost = 옵션 쪽 사용 코스트.
+    /// 진화원이 되어도 옵션 쪽은 진화원 효과가 아니다
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool IsDual { get; set; }
+
+    /// <summary>진화원 효과 칸의 문장 (듀얼 카드의 옵션 쪽은 진화원 효과가 아니므로 빈 문자열)</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string SourceEffectText => IsDual ? string.Empty : InheritedEffectText;
     public List<string> Traits { get; set; } = new();               // 특징 (API의 유형 · 세대 · 속성, 예: "Royal Knight", "Ultimate", "Vaccine")
 
     // 인게임 자동 계산을 위한 보조 수치

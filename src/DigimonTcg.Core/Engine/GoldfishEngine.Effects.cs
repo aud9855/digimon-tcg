@@ -94,6 +94,10 @@ public static class EffectRules
     public static bool IsAttackLocked(GameState state, CardInstance digimon) =>
         IsActive(digimon.CannotAttackUntil, state) || IsActive(digimon.CannotSuspendUntil, state) || CardScripts.HasKeyword(digimon, Keyword.CannotAttack);   // 어택하면 레스트가 되므로 레스트 불가 = 어택 불가
 
+    /// <summary>"This Digimon can't digivolve" (지속) · "~ can't digivolve until their turn ends" (기간) — 패 · 효과 · DNA 진화 모두 (v0.29.0)</summary>
+    public static bool IsDigivolveLocked(GameState? state, CardInstance digimon) =>
+        CardScripts.HasKeyword(digimon, Keyword.CannotDigivolve) || state != null && IsActive(digimon.CannotDigivolveUntil, state);
+
     /// <summary>"can't suspend" — 레스트가 될 수 없으면 블록(레스트해서 막기)도 할 수 없다</summary>
     public static bool IsSuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.CannotSuspendUntil, state);
 
@@ -125,7 +129,8 @@ public partial class GoldfishEngine
         CardInstance? chosenTarget = null,
         bool includeInherited = true,
         IReadOnlyList<CardData>? sources = null,
-        CardData? triggerCard = null)
+        CardData? triggerCard = null,
+        bool optionSide = false)
     {
         var ctx = new EffectContext(this, owner, self, other, chosenTarget) { TriggerCard = triggerCard };
 
@@ -134,7 +139,7 @@ public partial class GoldfishEngine
         CurrentEffectOwner = owner;
         try
         {
-            if (mainCard != null && CardScripts.For(mainCard) is { } main)
+            if (mainCard != null && (optionSide ? CardScripts.OptionSideFor(mainCard) : CardScripts.For(mainCard)) is { } main)
             {
                 foreach (var effect in main.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Main).ToList())
                     Resolve(ctx, mainCard, effect);
@@ -254,9 +259,11 @@ public partial class GoldfishEngine
             ? new List<CardInstance> { ctx.Other } : new List<CardInstance>();
         if (effect.Condition != null && !effect.Condition(ctx))
             return;
-        if (effect.OncePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(card.CardId))
+        // [턴에 1회] 기록: 같은 카드의 메인 효과와 진화원 효과는 다른 효과다 (v0.29.0 — 진화원 [메인]과 맨 위가 된 그 카드의 메인 효과, BT22-043)
+        string onceKey = effect.Source == EffectSource.Inherited ? card.CardId + "#I" : card.CardId;
+        if (effect.OncePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey))
             return;
-        if (effect.TwicePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(card.CardId) && !ctx.Self.UsedOncePerTurn.Add(card.CardId + "#2"))
+        if (effect.TwicePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey) && !ctx.Self.UsedOncePerTurn.Add(onceKey + "#2"))
             return;
         int logsBefore = ctx.State.ActionLogs.Count;
         string messageBefore = ctx.Message;
@@ -565,9 +572,10 @@ public partial class GoldfishEngine
         if (cause == DeletionCause.Battle && CardScripts.HasKeyword(inst, Keyword.Barrier) && zones.SecurityStack.Count > 0
             && AskYesNo(zones, inst, $"≪방벽≫ [{name}]이(가) 배틀에서 소멸합니다. 시큐리티를 위에서 1장 파기하고 소멸을 막을까요?", recommended: zones.SecurityStack.Count >= 2))
         {
-            zones.Trash.Add(zones.SecurityStack[0]);
+            var barrierCard = zones.SecurityStack[0];
+            zones.Trash.Add(barrierCard);
             zones.SecurityStack.RemoveAt(0);
-            NotifySecurityRemoved(zones);
+            NotifySecurityRemoved(zones, barrierCard, trashed: true);   // ≪방벽≫도 효과 — "효과로 시큐리티에서 파기되었을 때"
             EffectLog(zones, $"[≪방벽≫] [{name}]: 시큐리티를 위에서 1장 파기하고 소멸하지 않습니다. (남은 시큐리티 {zones.SecurityStack.Count}장)");
             return true;
         }
@@ -665,6 +673,17 @@ public partial class GoldfishEngine
             FireForSide(EffectTrigger.AllyDigimonDeleted, zones, instance);
             FireForSide(EffectTrigger.OpponentDigimonDeleted, EnemyOf(zones), instance);
             CurrentDeletionCause = outerCause;
+
+            // ≪천승≫ (종합 룰 16-43, 임의): 이 디지몬이 소멸했을 때, 이 카드를 시큐리티 위에 놓을 수 있다 (트래시에 있을 때만 — 다른 효과로 옮겨졌으면 못 한다)
+            var top = instance.TopCard;
+            if (!IsToken(top) && CardScripts.For(top)?.Keywords.Contains(Keyword.Ascension) == true && zones.Trash.Contains(top) && !State.IsGameOver
+                && AskYesNo(zones, null, $"≪천승≫ [{top.Name}]을(를) 시큐리티 맨 위에 놓을까요?", recommended: true))
+            {
+                zones.Trash.Remove(top);
+                zones.SecurityStack.Insert(0, top);
+                EffectLog(zones, $"[≪천승≫] [{top.Name}]을(를) 시큐리티 맨 위에 놓았습니다.");
+                NotifySecurityAdded(zones, top);
+            }
 
             if (fortitude != null && zones.Trash.Remove(fortitude))
             {
@@ -881,6 +900,7 @@ public partial class GoldfishEngine
         {
             Log($"[효과] {reason}: {SideName(zones)} 덱 위에서 {n}장 파기");
             FireForSide(EffectTrigger.AllyDeckTrashed, zones, null, triggerCard: first);   // "When a card is trashed from your deck"
+            FireThisCardTrashed(zones, zones.Trash.Skip(zones.Trash.Count - n).ToList(), EffectTrigger.ThisTrashedFromDeck);   // "When this card is trashed from your deck" (덱에서 직접)
         }
     }
 
@@ -1145,6 +1165,11 @@ public partial class GoldfishEngine
     /// </summary>
     internal void EvolveByEffect(PlayerZones owner, CardInstance target, CardData evoCard, int cost, List<CardData>? from = null)
     {
+        if (EffectRules.IsDigivolveLocked(State, target))
+        {
+            EffectLog(owner, $"[{target.TopCard.Name}]은(는) 진화할 수 없습니다 (카드 효과).");
+            return;
+        }
         if (!(from ?? owner.Hand).Remove(evoCard))
             return;
         cost = ApplyEvoCostModifiers(owner, target, evoCard, cost);   // "When this Digimon would digivolve, reduce the digivolution cost" (코스트 없는 진화는 그대로 0)
@@ -1210,6 +1235,7 @@ public partial class GoldfishEngine
         var first = trashed.First();
         FireForSide(EffectTrigger.AllyHandTrashed, zones, null, triggerCard: first);
         FireForSide(EffectTrigger.OpponentHandTrashed, EnemyOf(zones), null, triggerCard: first);
+        FireThisCardTrashed(zones, trashed, EffectTrigger.ThisTrashedFromHand);   // "When this card is trashed from your hand"
     }
 
     // 효과로 등장시키는 중 ("When an effect plays one of your Digimon")
@@ -1247,7 +1273,7 @@ public partial class GoldfishEngine
     // =====================================================================
 
     /// <summary>쓸 수 있는 [메인] 기동 효과 1건 (Digimon = 효과를 가진 디지몬, 테이머 · 패 · 트래시면 null, Zone = 효과를 쓰는 곳)</summary>
-    public sealed record MainAbility(CardInstance? Digimon, CardData Card, MainAbilityZone Zone = MainAbilityZone.Field);
+    public sealed record MainAbility(CardInstance? Digimon, CardData Card, MainAbilityZone Zone = MainAbilityZone.Field, bool Inherited = false);
 
     // 이번 턴에 쓴 기동 효과 (같은 효과를 한 턴에 여러 번 쓰지 않도록 — 비용이 없는 효과의 무한 반복 방지)
     // 테이머는 같은 카드가 여러 장일 수 있어(같은 CardData 참조) 쓴 횟수를 센다 — 장수만큼 쓸 수 있다
@@ -1258,8 +1284,14 @@ public partial class GoldfishEngine
     {
         var list = new List<MainAbility>();
         foreach (var d in owner.BattleArea)
+        {
             if (HasMainAbility(d.TopCard) && !_usedMainAbilities.ContainsKey(d))
                 list.Add(new MainAbility(d, d.TopCard));
+            // 진화원의 [메인] 기동 효과 (v0.29.0 — "[Main] [Once Per Turn] By placing this Digimon's top stacked card ~"): 진화원 카드마다
+            foreach (var source in d.GetEvolutionStackBottomUp().GroupBy(s => s.CardId).Select(g => g.First()))
+                if (HasInheritedMainAbility(source) && !_usedMainAbilities.ContainsKey((d, source.CardId)))
+                    list.Add(new MainAbility(d, source, Inherited: true));
+        }
         // ≪트레이닝≫처럼 육성 에어리어에서도 쓸 수 있는 기동 효과
         if (owner.BreedingArea is { } breeding && CardScripts.For(breeding.TopCard)?.ActivateInBreeding == true
             && HasMainAbility(breeding.TopCard) && !_usedMainAbilities.ContainsKey(breeding))
@@ -1274,6 +1306,9 @@ public partial class GoldfishEngine
         return list;
     }
 
+    private static bool HasInheritedMainAbility(CardData card) =>
+        CardScripts.For(card)?.Effects.Any(e => e.Trigger == EffectTrigger.ActivateMain && e.Source == EffectSource.Inherited) ?? false;
+
     private static bool HasMainAbility(CardData card) =>
         CardScripts.For(card)?.Effects.Any(e => e.Trigger == EffectTrigger.ActivateMain && e.Source == EffectSource.Main) ?? false;
 
@@ -1282,9 +1317,10 @@ public partial class GoldfishEngine
     {
         if (State.IsGameOver || State.CurrentPhase != Phase.Main || State.PendingBlock != null || State.BlitzAttacker != null)
             return ActionResult.Fail("지금은 [메인] 효과를 쓸 수 없습니다.");
-        if (!GetMainAbilities(State.Player).Any(a => ReferenceEquals(a.Digimon, digimon) && ReferenceEquals(a.Card, card)))
+        var ability = GetMainAbilities(State.Player).FirstOrDefault(a => ReferenceEquals(a.Digimon, digimon) && ReferenceEquals(a.Card, card));
+        if (ability == null)
             return ActionResult.Fail($"[{card.Name}]의 [메인] 효과는 지금 쓸 수 없습니다 (이번 턴에 이미 썼거나 효과가 없음).");
-        bool used = UseMainAbility(State.Player, digimon, card);
+        bool used = UseMainAbility(State.Player, digimon, card, ability.Inherited);
         CheckTurnEndAndAutoReset();
         // 패 · 트래시 [메인] 효과(ActivateZoneEffect)와 같이: 조건 · 비용이 맞지 않아 아무것도 안 했으면 "썼다"가 아니라 실패로 알린다
         if (!used)
@@ -1293,15 +1329,18 @@ public partial class GoldfishEngine
     }
 
     /// <summary>[메인] 기동 효과를 쓴다. 반환: 실제로 효과를 발휘했는지 (아니면 이번 턴에 쓴 것으로 치지 않는다)</summary>
-    private bool UseMainAbility(PlayerZones owner, CardInstance? digimon, CardData card)
+    private bool UseMainAbility(PlayerZones owner, CardInstance? digimon, CardData card, bool inherited = false)
     {
-        EffectLog(owner, $"[메인] {card.Name}의 효과 사용");
-        var ctx = RunEffects(EffectTrigger.ActivateMain, owner, digimon, card, includeInherited: false);
+        EffectLog(owner, inherited ? $"[메인] {digimon?.TopCard.Name}의 진화원 {card.Name}의 효과 사용" : $"[메인] {card.Name}의 효과 사용");
+        // 진화원의 [메인]: 그 진화원 카드의 진화원 효과만 (디지몬 = Self)
+        var ctx = inherited && digimon != null
+            ? RunEffects(EffectTrigger.ActivateMain, owner, digimon, null, includeInherited: true, sources: new[] { card })
+            : RunEffects(EffectTrigger.ActivateMain, owner, digimon, card, includeInherited: false);
         // 발동 조건("If ~")이 맞지 않았거나, 비용을 내지 않았거나 조건이 맞지 않아 아무 문장도 처리하지 않았으면 사용으로 치지 않는다
         bool used = ctx.AnyEffectRan && !(ctx.StepsRan && !ctx.AnyStepResolved);
         if (used)
         {
-            object key = (object?)digimon ?? card;
+            object key = inherited && digimon != null ? (digimon, card.CardId) : (object?)digimon ?? card;
             _usedMainAbilities[key] = _usedMainAbilities.GetValueOrDefault(key) + 1;
         }
         else
@@ -1321,10 +1360,12 @@ public partial class GoldfishEngine
             if (State.IsGameOver || (_aiTurn?.Memory ?? 0) < 0) break;
             if (ability.Zone != MainAbilityZone.Field && !GetZoneAbilities(State.DummyOpponent, ability.Zone).Any(a => ReferenceEquals(a.Card, ability.Card)))
                 continue;   // 앞의 효과로 패 · 트래시를 떠났거나 이미 썼다
+            if (ability.Inherited && (ability.Digimon == null || !State.DummyOpponent.BattleArea.Contains(ability.Digimon) || !ability.Digimon.HasSource(ability.Card.CardId)))
+                continue;   // 앞의 효과로 그 디지몬이 떠났거나 그 카드가 진화원이 아니게 되었다
             if (!AiPolicy.ShouldUseMainAbility(this, ability, _aiTurn?.Memory ?? 0)) continue;
             AddEffectEvent(ability.Card, CaptureEffectLogs(() =>
             {
-                if (ability.Zone == MainAbilityZone.Field) UseMainAbility(State.DummyOpponent, ability.Digimon, ability.Card);
+                if (ability.Zone == MainAbilityZone.Field) UseMainAbility(State.DummyOpponent, ability.Digimon, ability.Card, ability.Inherited);
                 else UseZoneAbility(State.DummyOpponent, ability.Card, ability.Zone);
             }));
         }
@@ -1360,11 +1401,43 @@ public partial class GoldfishEngine
     /// 주인 쪽 "When your security stack is removed from", 상대 쪽 "When your opponent's security stack is removed from".
     /// 시큐리티를 빼는 곳에서 빼고 난 뒤 부른다.
     /// </summary>
-    internal void NotifySecurityRemoved(PlayerZones zones, CardData? card = null)
+    internal void NotifySecurityRemoved(PlayerZones zones, CardData? card = null, bool trashed = false)
     {
         FireForSide(EffectTrigger.AllySecurityRemoved, zones, null, triggerCard: card);
         FireForSide(EffectTrigger.OpponentSecurityRemoved, EnemyOf(zones), null, triggerCard: card);
+        // 효과가 시큐리티에서 직접 파기한 카드 자신의 "When an effect trashes this card from the security stack" (v0.29.0)
+        if (trashed && card != null)
+            FireThisCardTrashed(zones, new[] { card }, EffectTrigger.ThisTrashedFromSecurity);
     }
+
+    /// <summary>
+    /// 이 카드가 시큐리티 · 덱 · 패에서 (직접) 파기되었을 때 — 트래시에 있는 그 카드 자신의 효과 (v0.29.0).
+    /// 효과 처리 중이면 그 효과가 끝난 뒤에 (공식 Q&amp;A ST22-10: 같은 때 유발한 효과는 턴 플레이어부터)
+    /// </summary>
+    internal void FireThisCardTrashed(PlayerZones zones, IEnumerable<CardData> cards, EffectTrigger trigger)
+    {
+        var owner = CurrentEffectOwner;
+        foreach (var card in cards.Distinct().ToList())
+        {
+            if (CardScripts.For(card)?.Effects.Any(e => e.Trigger == trigger) != true)
+                continue;
+            RunOrDefer(() =>
+            {
+                if (State.IsGameOver || !zones.Trash.Contains(card)) return;
+                var outer = ThisTrashedByOwner;
+                ThisTrashedByOwner = owner;
+                try
+                {
+                    var ctx = RunEffects(trigger, zones, null, card, includeInherited: false, triggerCard: card);
+                    if (ctx.PlaceInBattleArea && zones.Trash.Remove(card)) PlaceOption(zones, card);   // "place this card in the battle area" (옵션)
+                }
+                finally { ThisTrashedByOwner = outer; }
+            });
+        }
+    }
+
+    /// <summary>이 카드를 파기한 효과의 주인 ("When this card is trashed from your hand by one of your effects") — 효과 밖이면 null</summary>
+    internal PlayerZones? ThisTrashedByOwner { get; private set; }
 
     /// <summary>zones의 시큐리티에 카드가 놓였다 (≪리커버리≫ 등) — "When a card is added to your security stack"</summary>
     internal void NotifySecurityAdded(PlayerZones zones, CardData? card = null) =>
@@ -1664,7 +1737,7 @@ public partial class GoldfishEngine
         // 옵션 효과를 모두 처리하고 그 결과를 남긴 뒤에, 처리 중에 일어난 [소멸 시] 등을 발휘한다
         EffectContext optionCtx;
         _effectDepth++;
-        try { optionCtx = RunEffects(EffectTrigger.Main, owner, null, optionCard, chosenTarget: target, includeInherited: false); }
+        try { optionCtx = RunEffects(EffectTrigger.Main, owner, null, optionCard, chosenTarget: target, includeInherited: false, optionSide: optionCard.IsDual); }
         finally { _effectDepth--; }
         string msg = optionCtx.Message;
         if (msg.Length > 0)

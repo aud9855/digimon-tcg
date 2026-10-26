@@ -63,6 +63,8 @@ public static class KeywordDictionary
         ["Scapegoat"] = Keyword.Scapegoat, ["스케이프고트"] = Keyword.Scapegoat,
         ["Iceclad"] = Keyword.Iceclad, ["빙장"] = Keyword.Iceclad,
         ["Progress"] = Keyword.Progress, ["프로그레스"] = Keyword.Progress,
+        ["Engage"] = Keyword.Engage, ["급습"] = Keyword.Engage,
+        ["Ascension"] = Keyword.Ascension, ["천승"] = Keyword.Ascension,
     };
 
     private static readonly Dictionary<string, EffectTrigger> Triggers = new(StringComparer.OrdinalIgnoreCase)
@@ -184,7 +186,7 @@ public static class KeywordDictionary
     public static void ApplyDataKeywords(CardData card)
     {
         var main = SplitClauses(card.EffectText).Select(Parse).ToList();
-        var inherited = SplitClauses(card.InheritedEffectText).Select(Parse).ToList();
+        var inherited = SplitClauses(card.SourceEffectText).Select(Parse).ToList();   // 듀얼 카드의 옵션 쪽은 진화원 효과가 아니다
         card.IsBlocker = main.Any(p => p.Keywords.Contains(Keyword.Blocker));
         card.SecurityAttackBonus = main.Sum(p => p.SecurityAttack);
         card.InheritedSecurityAttackBonus = inherited.Sum(p => p.SecurityAttack);
@@ -197,6 +199,8 @@ public static class KeywordDictionary
         var def = new CardScriptDefinition(script);
         foreach (var (inherited, clause, options) in ClausesOf(card))
         {
+            if (card.IsDual && inherited)
+                continue;   // 듀얼 카드의 옵션 쪽 → OptionSideScript
             if (options != null)
             {
                 SentenceParser.TryParseChoice(clause, options, inherited, card, def);   // "Activate 1 of the effects below:" + "・~"
@@ -210,9 +214,24 @@ public static class KeywordDictionary
         }
         bool any = script.Keywords.Count + script.InheritedKeywords.Count + script.Effects.Count + script.Statics.Count > 0
                    || script.OverflowMemory > 0 || script.DigisorptionReduction > 0 || script.BlastDigivolve || script.MaterialSave > 0 || script.LinkRequirement != null || script.SpecialEvolutions.Count > 0 || script.IgnoreColorRequirement != null || script.PlayCostReduction != null || script.PlayCostOptions.Count > 0 || script.EvoCostModifiers.Count > 0
-                   || script.XrosAliases.Count > 0 || script.XrosFromTrash != null || script.XrosUnderTamersFor != null;
+                   || script.XrosAliases.Count > 0 || script.XrosFromTrash != null || script.XrosUnderTamersFor != null || script.OverclockSpecified != null;
         return any ? script : null;
     }
+
+    /// <summary>
+    /// 듀얼 카드의 옵션 쪽 (종합 룰 4-6-6: 옵션 쪽의 효과는 옵션 카드의 효과) — 옵션 카드로 보고 읽는 대리 카드.
+    /// 이름 · 색 · 특징 · 사용 코스트(PlayCost)는 같고, 효과 칸 = 옵션 쪽 문장
+    /// </summary>
+    public static CardData OptionSideCard(CardData dual) => new()
+    {
+        CardId = dual.CardId, Name = dual.Name, EnglishName = dual.EnglishName, Type = CardType.Option,
+        Color = dual.Color, SecondaryColor = dual.SecondaryColor, PlayCost = dual.PlayCost,
+        EffectText = dual.InheritedEffectText, Traits = dual.Traits, ImageUrl = dual.ImageUrl, Rarity = dual.Rarity,
+    };
+
+    /// <summary>듀얼 카드의 옵션 쪽 스크립트 ([메인] · 사용 조건 · 사용 코스트 증감). 듀얼 카드가 아니거나 읽은 것이 없으면 null</summary>
+    public static CardScript? GenerateOptionSideScript(CardData card) =>
+        card.IsDual && !string.IsNullOrWhiteSpace(card.InheritedEffectText) ? GenerateScript(OptionSideCard(card)) : null;
 
     /// <summary>"~ Activate 1 of the effects below:" 다음에 오는 "・~" 줄들을 선택지로 묶는다 (그 밖의 절은 options = null)</summary>
     private static IEnumerable<(string Clause, List<string>? Options)> GroupChoices(IEnumerable<string> clauses)
@@ -323,30 +342,36 @@ public static class KeywordDictionary
     public static List<EffectClause> Analyze(CardData card)
     {
         var result = new List<EffectClause>();
-        foreach (var (inherited, clause, options) in ClausesOf(card))
+        var optionSide = card.IsDual ? OptionSideCard(card) : null;
+        foreach (var (field, clause, options) in ClausesOf(card))
         {
+            // 듀얼 카드의 옵션 쪽(진화원 효과 칸에 들어 있다)은 옵션 카드의 효과로 읽는다 — 목록에서는 그 칸 그대로 (Inherited = true)
+            bool inherited = field;
+            var parseCard = card;
+            if (optionSide != null && field) { inherited = false; parseCard = optionSide; }
+            EffectClause Clause(string text, ClauseSupport support, string note) => new(field, text, support, note);
             if (options != null)
             {
-                string? choiceError = SentenceParser.TryParseChoice(clause, options, inherited, card, def: null);
+                string? choiceError = SentenceParser.TryParseChoice(clause, options, inherited, parseCard, def: null);
                 foreach (var line in options.Prepend(clause))
-                    result.Add(new EffectClause(inherited, line, choiceError == null ? ClauseSupport.Supported : ClauseSupport.Unsupported, choiceError ?? "고르는 효과"));
+                    result.Add(Clause(line, choiceError == null ? ClauseSupport.Supported : ClauseSupport.Unsupported, choiceError ?? "고르는 효과"));
                 continue;
             }
-            if (IsRuleHandledClause(card, StripLabel(clause)))
+            if (IsRuleHandledClause(parseCard, StripLabel(clause)))
             {
-                result.Add(new EffectClause(inherited, clause, ClauseSupport.Supported, "규칙으로 처리"));
+                result.Add(Clause(clause, ClauseSupport.Supported, "규칙으로 처리"));
                 continue;
             }
             var parsed = Parse(StripLabel(clause));
             if (parsed.Unsupported == null)
             {
-                result.Add(new EffectClause(inherited, clause, ClauseSupport.Supported, "키워드"));
+                result.Add(Clause(clause, ClauseSupport.Supported, "키워드"));
                 continue;
             }
-            string? sentenceError = SentenceParser.TryParse(clause, inherited, card, def: null);
+            string? sentenceError = SentenceParser.TryParse(clause, inherited, parseCard, def: null);
             result.Add(sentenceError == null
-                ? new EffectClause(inherited, clause, ClauseSupport.Supported, "문장")
-                : new EffectClause(inherited, clause, ClauseSupport.Unsupported, IsKeywordShapedClause(StripLabel(clause)) ? parsed.Unsupported : sentenceError));
+                ? Clause(clause, ClauseSupport.Supported, "문장")
+                : Clause(clause, ClauseSupport.Unsupported, IsKeywordShapedClause(StripLabel(clause)) ? parsed.Unsupported : sentenceError));
         }
         return result;
     }

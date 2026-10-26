@@ -251,7 +251,9 @@ public partial class MainWindow : Window
             : $"{KoreanLabels.Colors(card)} {KoreanLabels.Type(card.Type)}") + (string.IsNullOrEmpty(card.Rarity) ? "" : $" · {card.Rarity}");
 
         TxtInspectorName.Text = card.DisplayName;
-        TxtInspectorStats.Text = card.Type == CardType.Digimon
+        TxtInspectorStats.Text = card.IsDual
+            ? $"듀얼 카드 — 옵션 쪽 사용 코스트: {card.PlayCost} | 진화: {card.EvoCost} (Lv.{card.EvoRequirementLevel})\n기본 DP: {card.DP:N0}"
+            : card.Type == CardType.Digimon
             ? $"등장 코스트: {card.PlayCost} | 진화: {card.EvoCost} (Lv.{card.EvoRequirementLevel})\n기본 DP: {card.DP:N0}"
             : card.Type == CardType.Digitama
                 ? "육성 에어리어 전용 Lv.2 디지타마"
@@ -260,6 +262,7 @@ public partial class MainWindow : Window
             TxtInspectorStats.Text += $"\n특징: {string.Join(" · ", card.DisplayTraits)}";
 
         TxtInspectorEffect.Text = string.IsNullOrWhiteSpace(card.DisplayEffectText) ? "없음 (바닐라)" : card.DisplayEffectText;
+        TxtInspectorInheritedHeader.Text = card.IsDual ? "[옵션 쪽] (패에서 배틀 에어리어 빈 곳에 놓으면 사용)" : "[진화원 효과]";
         TxtInspectorInherited.Text = string.IsNullOrWhiteSpace(card.DisplayInheritedEffectText) ? "없음" : card.DisplayInheritedEffectText;
 
         // 대전 엔진이 효과를 구현하지 않은 카드 안내
@@ -1360,7 +1363,7 @@ public partial class MainWindow : Window
     {
         var res = _engine.PlayCard(card, target);
         ApplyActionResult(res);
-        if (res.CanExecute && card.Type == CardType.Digimon && card.Level >= 6)
+        if (res.CanExecute && card.Type == CardType.Digimon && !card.IsDual && card.Level >= 6)
         {
             var spawned = _gameState.Player.BattleArea.LastOrDefault(d => d.TopCard.CardId == card.CardId);
             if (spawned != null)
@@ -2962,7 +2965,7 @@ public partial class MainWindow : Window
                     Padding = new Thickness(5, 1, 5, 1),
                     Margin = new Thickness(0, 0, 0, 1),
                     Cursor = System.Windows.Input.Cursors.Hand,
-                    ToolTip = $"진화원: [{src.CardId}] Lv.{src.Level} {src.DisplayName} — {src.DisplayInheritedEffectText}",
+                    ToolTip = $"진화원: [{src.CardId}] Lv.{src.Level} {src.DisplayName} — {(src.IsDual ? "(듀얼 카드: 옵션 쪽은 진화원 효과가 아님)" : src.DisplayInheritedEffectText)}",
                     Child = new DockPanel
                     {
                         Children =
@@ -3288,13 +3291,19 @@ public partial class MainWindow : Window
             }
         };
 
+        // 진화원의 [메인] 효과를 지금 쓸 수 있으면 안내 (v0.29.0 — 우클릭으로 쓴다)
+        if (!isBreedingArea && _gameState.CurrentPhase == Phase.Main
+            && _engine.GetMainAbilities(_gameState.Player).Where(a => ReferenceEquals(a.Digimon, instance)).ToList() is { Count: > 0 } usable
+            && usable.Any(a => a.Inherited))
+            fieldCardBorder.ToolTip = "우클릭: [메인] 효과 쓰기 — " + string.Join(", ", usable.Select(a => a.Inherited ? $"진화원 [{a.Card.DisplayName}]" : $"[{a.Card.DisplayName}]"));
+
         // 우클릭: 이 디지몬의 [메인] 기동 효과 사용 (≪디지버스트≫ 등, 육성 에어리어에서는 ≪트레이닝≫ — 쓸 수 있는지는 엔진이 확인)
         fieldCardBorder.MouseRightButtonUp += (_, e) =>
         {
             if (isPendingAllyTargetMode)
                 return;
             e.Handled = true;
-            TryActivateMainAbility(instance, instance.TopCard);
+            TryActivateDigimonMainAbility(instance);
         };
 
         // 클릭 시: 대상 지정 모드면 즉시 진화/버프 실행, 일반 모드면 우측 DP 증가치 인스펙터 고정/해제!
@@ -3363,7 +3372,7 @@ public partial class MainWindow : Window
         if (!string.IsNullOrWhiteSpace(card.DisplayEffectText))
             return ((card.Type == CardType.Tamer ? "🎖️ " : card.Type == CardType.Option ? "✨ " : "⚡ ") + Shorten(card.DisplayEffectText), color);
         if (!string.IsNullOrWhiteSpace(card.DisplayInheritedEffectText))
-            return ("🧬 " + Shorten(card.DisplayInheritedEffectText), "#A6E3A1");
+            return card.IsDual ? ("⚡ 옵션 쪽: " + Shorten(card.DisplayInheritedEffectText), "#89DCEB") : ("🧬 " + Shorten(card.DisplayInheritedEffectText), "#A6E3A1");
         return ("⚔️ 효과 없음 (바닐라)", "#9399B2");
     }
 
@@ -3480,6 +3489,10 @@ public partial class MainWindow : Window
             // 우클릭: 패의 이 카드로 쓰는 [Hand] [Main] 효과
             if (handAbilities.Any(a => ReferenceEquals(a.Card, card)))
                 wrapper.ToolTip = "우클릭: 이 카드의 패 [메인] 효과 쓰기";
+            else if (card.IsDual)
+                wrapper.ToolTip = CardScripts.IsUsableAsOption(card)
+                    ? "듀얼 카드 — 내 디지몬 위에 놓으면 진화, 배틀 에어리어 빈 곳에 놓으면 옵션 쪽 사용"
+                    : "듀얼 카드 — 내 디지몬 위에 놓으면 진화 (옵션 쪽 사용은 아직 지원하지 않음)";
             wrapper.MouseRightButtonUp += (_, e) =>
             {
                 e.Handled = true;
@@ -3850,13 +3863,15 @@ public partial class MainWindow : Window
                     HighlightDropZone(BattleAreaZoneBorder, playCheck.CanExecute ? "#89B4FA" : "#F38BA8");
                     if (playCheck.CanExecute)
                     {
-                        _dragGhostBadgeText.Text = $"✨ 배틀 에어리어에 바로 등장! (코스트 {DigimonPlayCostLabel(card)})";
+                        _dragGhostBadgeText.Text = card.IsDual
+                            ? $"⚡ 듀얼 카드 옵션 쪽 사용! (사용 코스트 {DigimonPlayCostLabel(card)})"
+                            : $"✨ 배틀 에어리어에 바로 등장! (코스트 {DigimonPlayCostLabel(card)})";
                         _dragGhostBadgeBorder.Background = BrushFromHex("#89B4FA");
                         ShowToast(true, playCheck.GuideMessage);
                     }
                     else
                     {
-                        _dragGhostBadgeText.Text = "⚠️ 등장 불가";
+                        _dragGhostBadgeText.Text = card.IsDual ? "⚠️ 옵션 쪽 사용 불가" : "⚠️ 등장 불가";
                         _dragGhostBadgeBorder.Background = BrushFromHex("#F38BA8");
                         ShowToast(false, playCheck.Reason);
                     }
@@ -3864,7 +3879,9 @@ public partial class MainWindow : Window
                 }
 
                 ResetDropZoneHighlights();
-                _dragGhostBadgeText.Text = $"🖱️ 디지몬 위에 놓으면 [진화({card.EvoCost})] / 배틀존에 놓으면 [등장({card.PlayCost})]";
+                _dragGhostBadgeText.Text = card.IsDual
+                    ? $"🖱️ 디지몬 위에 놓으면 [진화({card.EvoCost})] / 배틀존 빈 곳에 놓으면 [옵션 쪽 사용({card.PlayCost})]"
+                    : $"🖱️ 디지몬 위에 놓으면 [진화({card.EvoCost})] / 배틀존에 놓으면 [등장({card.PlayCost})]";
                 _dragGhostBadgeBorder.Background = BrushFromHex("#F9E2AF");
             }
             else if (card.Type == CardType.Option)
@@ -4071,7 +4088,9 @@ public partial class MainWindow : Window
                 if (intent.IsEvolve && intent.EvoTarget != null && ActionValidator.ValidateEvolution(_gameState, intent.EvoTarget, card).CanExecute)
                     return $"🧬 [{intent.EvoTarget.TopCard.DisplayName}] 위에 진화 (코스트 {EvoCostNow(intent.EvoTarget, card)})";
                 if (intent.IsPlay && ActionValidator.ValidatePlay(_gameState, card).CanExecute)
-                    return $"✨ 배틀 에어리어에 등장 (코스트 {DigimonPlayCostLabel(card)})";
+                    return card.IsDual
+                        ? $"⚡ [{card.DisplayName}] 옵션 쪽 사용 (코스트 {DigimonPlayCostLabel(card)})"
+                        : $"✨ 배틀 에어리어에 등장 (코스트 {DigimonPlayCostLabel(card)})";
                 return null;
             case CardType.Option:
                 return ActionValidator.ValidatePlay(_gameState, card).CanExecute ? $"⚡ [{card.DisplayName}] 사용 (코스트 {PlayCostNow(card)})" : null;
@@ -4426,6 +4445,26 @@ public partial class MainWindow : Window
     /// 테이머 · 디지몬의 [메인] 기동 효과 사용 (테이머 칩 클릭 · 필드 디지몬 우클릭). 내 메인 페이즈이고
     /// 블록 선택 · 멀리건 · 상대 턴 리플레이 화면이 없을 때만 열린다.
     /// </summary>
+    /// <summary>
+    /// 필드 디지몬 우클릭: 이 디지몬이 지금 쓸 수 있는 [메인] 기동 효과 — 맨 위 카드 · 진화원 카드의 [메인] (v0.29.0).
+    /// 1개면 바로 확인 창, 여러 개면 고른다 (엔진 GoldfishEngine.GetMainAbilities)
+    /// </summary>
+    private void TryActivateDigimonMainAbility(CardInstance instance)
+    {
+        var mine = _gameState.CurrentPhase == Phase.Main
+            ? _engine.GetMainAbilities(_gameState.Player).Where(a => ReferenceEquals(a.Digimon, instance)).ToList()
+            : new List<GoldfishEngine.MainAbility>();
+        if (mine.Count <= 1)
+        {
+            TryActivateMainAbility(instance, mine.Count == 1 ? mine[0].Card : instance.TopCard);
+            return;
+        }
+        var labels = mine.Select(a => a.Inherited ? $"🧬 진화원 [{a.Card.DisplayName}]의 [메인] 효과" : $"⚡ [{a.Card.DisplayName}]의 [메인] 효과").ToList();
+        int pick = _engine.PlayerChoices?.ChooseOption(_gameState, $"[{instance.TopCard.DisplayName}] 어느 [메인] 효과를 쓸까요?", labels, 0) ?? 0;
+        if (pick >= 0 && pick < mine.Count)
+            TryActivateMainAbility(instance, mine[pick].Card);
+    }
+
     private void TryActivateMainAbility(CardInstance? digimon, CardData card)
     {
         if (_gameState.IsGameOver || _gameState.CurrentPhase != Phase.Main || _gameState.PendingBlock != null || IsReplayRunning)
@@ -4438,7 +4477,10 @@ public partial class MainWindow : Window
             ShowToast(false, $"[{card.DisplayName}]은(는) 지금 쓸 수 있는 [메인] 효과가 없습니다. (효과가 없거나 이번 턴에 이미 썼습니다)");
             return;
         }
-        string effectText = string.Join("\n", card.EffectText.Split('\n').Where(l => l.Contains("[Main]") || l.Contains("[메인]") || l.Contains("Digi-Burst")));
+        bool inherited = digimon != null && _engine.GetMainAbilities(_gameState.Player).Any(a => a.Inherited && ReferenceEquals(a.Digimon, digimon) && ReferenceEquals(a.Card, card));
+        string effectText = inherited
+            ? $"(진화원 [{card.DisplayName}]의 효과)\n{card.DisplayInheritedEffectText}"
+            : string.Join("\n", card.EffectText.Split('\n').Where(l => l.Contains("[Main]") || l.Contains("[메인]") || l.Contains("Digi-Burst")));
         bool go = _engine.PlayerChoices?.Confirm(_gameState, digimon, $"[{card.DisplayName}]의 [메인] 효과를 쓸까요?\n\n{effectText}", true) ?? true;
         if (go)
             ApplyActionResult(_engine.ActivateMainAbility(digimon, card));

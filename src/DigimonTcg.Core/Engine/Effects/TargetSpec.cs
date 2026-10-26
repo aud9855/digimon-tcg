@@ -45,6 +45,19 @@ public sealed class TargetSpec
         if (Regex.IsMatch(phrase, @"^(?:it|they|that Digimon|those Digimon|them|that card|the Digimon)$", RegexOptions.IgnoreCase))
             return new TargetSpec { IsThat = true, Count = 0, Text = phrase };
 
+        // "1 of your Tokens or other [Puppet] trait Digimon" · "your Tokens or Digimon with the [Puppet] trait" (v0.29.0) — 토큰이거나 뒤의 조건
+        var tokens = Regex.Match(phrase, @"^(?<pre>(?:(?:\d+|all|up to \d+|any) of )?(?:your|their|your opponent's) )Tokens? or (?<other>other )?(?<body>.*\bDigimon\b.*)$", RegexOptions.IgnoreCase);
+        if (tokens.Success)
+        {
+            string pre = Regex.Replace(tokens.Groups["pre"].Value, @"^any of ", "", RegexOptions.IgnoreCase);
+            if (Parse(pre + tokens.Groups["other"].Value + tokens.Groups["body"].Value) is not { IsThis: false, IsThat: false } inner)
+                return null;
+            var orToken = new TargetSpec { Opponent = inner.Opponent, Count = inner.Count, UpTo = inner.UpTo, Text = phrase, Selector = inner.Selector };
+            var innerFilters = inner.Filters.ToList();
+            orToken.Filters.Add(d => GoldfishEngine.IsToken(d.TopCard) || innerFilters.All(f => f(d)));
+            orToken.ContextFilters.AddRange(inner.ContextFilters);
+            return orToken;
+        }
         // "1 Digimon" · "up to 2 level 4 or lower Digimon" — 주인이 없으면 양쪽 디지몬 (읽기는 "of your ~"로)
         var anySide = Regex.Match(phrase, @"^(?<count>\d+|up to \d+|all) (?!of )(?<body>(?:other )?(?:[^,]*? )?Digimon\b.*)$", RegexOptions.IgnoreCase);
         if (anySide.Success && Parse($"{anySide.Groups["count"].Value} of your {anySide.Groups["body"].Value}") is { } own && !own.IsThis && !own.IsThat)
@@ -254,7 +267,7 @@ public sealed class TargetSpec
         ["Barrier"] = Keyword.Barrier, ["Evade"] = Keyword.Evade,
         ["Armor Purge"] = Keyword.ArmorPurge, ["Fortitude"] = Keyword.Fortitude, ["Collision"] = Keyword.Collision, ["Scapegoat"] = Keyword.Scapegoat,
         ["Iceclad"] = Keyword.Iceclad, ["Progress"] = Keyword.Progress,
-        ["Link +1"] = Keyword.LinkPlusOne, ["Vortex"] = Keyword.Vortex, ["Execute"] = Keyword.Execute,
+        ["Link +1"] = Keyword.LinkPlusOne, ["Vortex"] = Keyword.Vortex, ["Execute"] = Keyword.Execute, ["Engage"] = Keyword.Engage,
     };
 
     /// <summary>"[A]" · "[A] or [B]" · "[A], [B] or [C]" · "[A] and/or [B]" — 이름 / 특징 목록</summary>

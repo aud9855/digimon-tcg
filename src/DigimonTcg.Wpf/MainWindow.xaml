@@ -708,7 +708,7 @@
 
                                     <Border Background="#0E111B" CornerRadius="4" Padding="6">
                                         <StackPanel>
-                                            <TextBlock Text="[진화원 효과]" Foreground="#A6E3A1" FontWeight="Bold" FontSize="10"/>
+                                            <TextBlock x:Name="TxtInspectorInheritedHeader" Text="[진화원 효과]" Foreground="#A6E3A1" FontWeight="Bold" FontSize="10"/>
                                             <TextBlock x:Name="TxtInspectorInherited" Text="-" Foreground="#CDD6F4" FontSize="10.5" TextWrapping="Wrap"/>
                                         </StackPanel>
                                     </Border>

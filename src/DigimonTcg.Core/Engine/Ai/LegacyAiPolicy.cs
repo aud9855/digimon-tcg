@@ -23,7 +23,7 @@ public sealed class LegacyAiPolicy : IAiPolicy
         int limit = beforeAttacks ? memory : memory + MaxMemoryHandOver;
         foreach (var field in EvolutionBases(ai))
         {
-            var card = ai.Hand.FirstOrDefault(c => ActionValidator.EvolutionCost(field, c) <= limit && ActionValidator.ValidateEvolution(field, c).CanExecute);
+            var card = EffectRules.IsDigivolveLocked(engine.State, field) ? null : ai.Hand.FirstOrDefault(c => ActionValidator.EvolutionCost(field, c) <= limit && ActionValidator.ValidateEvolution(field, c).CanExecute);
             if (card != null)
                 return new AiEvolution(field, card);
         }
@@ -43,7 +43,7 @@ public sealed class LegacyAiPolicy : IAiPolicy
     }
 
     public bool ShouldUseMainAbility(GoldfishEngine engine, GoldfishEngine.MainAbility ability, int memory) =>
-        AiEvaluator.EstimateSentenceValue(ability.Card.EffectText) > 0;
+        AiEvaluator.EstimateSentenceValue(ability.Inherited ? ability.Card.InheritedEffectText : ability.Card.EffectText) > 0;
 
     public CardData? ChooseTamerToPlay(GoldfishEngine engine, int memory)
     {
@@ -55,7 +55,7 @@ public sealed class LegacyAiPolicy : IAiPolicy
     {
         var ai = engine.State.DummyOpponent;
         return ai.Hand
-            .Where(c => c.Type == CardType.Digimon && CardScripts.EffectivePlayCost(ai, c) <= memory + MaxMemoryHandOver)
+            .Where(c => c.Type == CardType.Digimon && !c.IsDual && CardScripts.EffectivePlayCost(ai, c) <= memory + MaxMemoryHandOver)
             .OrderByDescending(c => c.Level <= 4 ? c.PlayCost : 0)
             .ThenBy(c => c.PlayCost)
             .FirstOrDefault();

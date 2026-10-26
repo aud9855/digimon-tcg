@@ -19,7 +19,7 @@ public partial class GoldfishEngine
     public int PreviewPlayCostWithOptions(PlayerZones owner, CardData card)
     {
         int cost = CardScripts.EffectivePlayCost(owner, card, EnemyOf(owner));
-        foreach (var option in CardScripts.For(card)?.PlayCostOptions ?? new List<PlayCostOption>())
+        foreach (var option in CardScripts.ForUse(card)?.PlayCostOptions ?? new List<PlayCostOption>())
         {
             if (cost <= 0)
                 break;
@@ -32,7 +32,7 @@ public partial class GoldfishEngine
 
     private int ApplyPlayCostOptions(PlayerZones owner, CardData card, int cost)
     {
-        var options = CardScripts.For(card)?.PlayCostOptions;
+        var options = CardScripts.ForUse(card)?.PlayCostOptions;
         if (options == null || options.Count == 0)
             return cost;
         foreach (var option in options)
@@ -41,7 +41,7 @@ public partial class GoldfishEngine
                 break;
             var ctx = new EffectContext(this, owner, null, null, null) { Card = card };
             if (!option.CanPay(ctx)
-                || !AskYesNo(owner, null, $"[{card.Name}] {option.Describe} 등장 코스트를 {option.Reduce} 줄일까요?", option.Recommend(ctx)))
+                || !AskYesNo(owner, null, $"[{card.Name}] {option.Describe} {(CardScripts.IsUsableAsOption(card) ? "사용" : "등장")} 코스트를 {option.Reduce} 줄일까요?", option.Recommend(ctx)))
                 continue;
             option.Pay(ctx);
             int reduced = Math.Min(option.Reduce, cost);

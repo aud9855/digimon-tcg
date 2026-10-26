@@ -78,6 +78,10 @@ public enum EffectTrigger
     AllySourcesTrashed,             // 자신의 디지몬의 진화원이 효과로 파기되었을 때 (Other = 그 디지몬, GoldfishEngine.CurrentSourceCards = 파기된 카드)
     OpponentSourcesTrashed,         // 상대 디지몬의 진화원이 효과로 파기되었을 때 (Other = 그 디지몬)
     AllySourcesAdded,               // 효과로 자신의 디지몬의 진화원에 카드가 놓였을 때 (Other = 그 디지몬, CurrentSourceCards = 놓인 카드 — 진화로 겹친 것은 아님)
+    ThisTrashedFromSecurity,        // 효과가 이 카드를 시큐리티에서 (직접) 파기했을 때 — 카드 자신의 효과 (공식 Q&A BT13-098: 오픈 · 체크 뒤 파기는 아님, v0.29.0)
+    ThisTrashedFromDeck,            // 이 카드가 덱에서 (직접) 파기되었을 때 — 카드 자신의 효과 (공식 Q&A P-077: 오픈 · 확인 중인 카드는 아님)
+    ThisTrashedFromHand,            // 이 카드가 패에서 파기되었을 때 — 카드 자신의 효과 (Q&A BT10-080)
+    AllyHandAddedByEffect,          // 효과로 자신의 패에 카드가 들어갔을 때 (드로우 포함 — 종합 룰 4-14-1, TriggerCard = 들어간 카드 중 1장)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
@@ -111,6 +115,9 @@ public enum Keyword
     Scapegoat,               // ≪스케이프고트≫: 자신의 효과 이외로 소멸할 때 다른 자신의 디지몬 1마리를 소멸시키는 것으로 소멸하지 않는다
     Iceclad,                 // ≪빙장≫: 시큐리티 디지몬 이외와의 배틀에서는 DP가 아니라 진화원 매수를 비교한다
     Progress,                // ≪프로그레스≫: 어택 중인 이 디지몬은 상대의 효과를 받지 않는다
+    CannotDigivolve,         // (지속 효과) 이 디지몬은 진화할 수 없다 ("[All Turns] This Digimon can't digivolve")
+    Engage,                  // ≪급습≫ (종합 룰 16-44): 자신의 턴 종료 시, 이 디지몬으로 어택할 수 있다
+    Ascension,               // ≪천승≫ (종합 룰 16-43): 이 디지몬이 소멸했을 때, 이 카드를 시큐리티 위에 놓을 수 있다
     AttackTargetLocked,      // (지속 효과) 이 디지몬의 어택 대상은 바뀌지 않는다 ("[Your Turn] This Digimon's attack target can't change")
 }
 
@@ -205,6 +212,9 @@ public sealed class CardScript
     public List<(Func<CardInstance, bool> From, int Cost)> SpecialEvolutions { get; } = new();
 
     public StartOfTurnMemoryEffect? StartOfTurnMemory { get; set; }
+
+    /// <summary>≪오버클럭≫의 지정 (토큰 외에 소멸시킬 수 있는 다른 자신의 디지몬 — 맨 위 카드 기준). 없으면 null</summary>
+    public Func<CardData, bool>? OverclockSpecified { get; set; }
 
     /// <summary>ACE ≪오버플로우 -N≫ — 이 카드가 배틀 에어리어 · 진화원에서 다른 곳으로 가면 주인의 메모리 -N (0이면 없음)</summary>
     public int OverflowMemory { get; set; }

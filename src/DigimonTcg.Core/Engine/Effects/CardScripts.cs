@@ -38,6 +38,20 @@ public static class CardScripts
         return Generated.GetOrAdd(card.CardId, _ => KeywordDictionary.GenerateScript(card));
     }
 
+    // 듀얼 카드의 옵션 쪽 스크립트 (카드 번호 → 스크립트)
+    private static readonly ConcurrentDictionary<string, CardScript?> OptionSides = new(StringComparer.Ordinal);
+
+    /// <summary>듀얼 카드의 옵션 쪽 효과 (옵션 카드로 읽은 것). 듀얼 카드가 아니면 null</summary>
+    public static CardScript? OptionSideFor(CardData card) =>
+        card.IsDual ? OptionSides.GetOrAdd(card.CardId, _ => KeywordDictionary.GenerateOptionSideScript(card)) : null;
+
+    /// <summary>패에서 "사용"할 때 보는 스크립트 — 옵션은 그 카드, 듀얼 카드는 옵션 쪽</summary>
+    public static CardScript? ForUse(CardData card) => card.IsDual ? OptionSideFor(card) : For(card);
+
+    /// <summary>패에서 옵션으로 사용하는 카드인지 (옵션 카드 · 옵션 쪽 [메인] 효과를 읽은 듀얼 카드)</summary>
+    public static bool IsUsableAsOption(CardData card) =>
+        card.Type == CardType.Option || card.IsDual && OptionSideFor(card)?.Effects.Any(e => e.Trigger == EffectTrigger.Main) == true;
+
     public static IReadOnlyCollection<CardScript> All => Registry.Value.Values;
 
     /// <summary>디지몬이 키워드를 가졌는지 (맨 위 카드의 키워드 + 진화원 효과로 얻는 키워드)</summary>
@@ -67,7 +81,7 @@ public static class CardScripts
     /// enemy = 상대의 필드 ("if your opponent has ~" · "for each of your opponent's Digimon"). 모르면 빈 필드로 본다
     /// </summary>
     public static int EffectivePlayCost(PlayerZones owner, CardData card, PlayerZones? enemy = null) =>
-        Math.Max(0, card.PlayCost - (For(card)?.PlayCostReduction?.Invoke(owner, enemy ?? NoZones) ?? 0));
+        Math.Max(0, card.PlayCost - (ForUse(card)?.PlayCostReduction?.Invoke(owner, enemy ?? NoZones) ?? 0));
 
     private static readonly PlayerZones NoZones = new();
 
@@ -181,6 +195,13 @@ public sealed class CardScriptDefinition
     public CardScriptDefinition SpecialEvolution(Func<CardInstance, bool> from, int cost)
     {
         _script.SpecialEvolutions.Add((from, cost));
+        return this;
+    }
+
+    /// <summary>≪오버클럭 (지정)≫ — 자신의 턴 종료 시, 토큰 또는 지정된 다른 자신의 디지몬 1마리를 소멸시켜 레스트하지 않고 플레이어에게 어택</summary>
+    public CardScriptDefinition Overclock(Func<CardData, bool> specified)
+    {
+        _script.OverclockSpecified = specified;
         return this;
     }
 

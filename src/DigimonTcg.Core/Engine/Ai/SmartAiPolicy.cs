@@ -43,7 +43,7 @@ public sealed class SmartAiPolicy : IAiPolicy
             bool inBattle = ai.BattleArea.Contains(field);
             foreach (var card in ai.Hand.Distinct())
             {
-                if (!ActionValidator.ValidateEvolution(field, card).CanExecute)
+                if (!ActionValidator.ValidateEvolution(field, card).CanExecute || EffectRules.IsDigivolveLocked(engine.State, field))
                     continue;
                 int cost = engine.PreviewEvoCost(ai, field, card);   // 진화 코스트 감소 반영 (엔진이 실제로 받는 값)
                 if (cost > limit)
@@ -76,12 +76,12 @@ public sealed class SmartAiPolicy : IAiPolicy
         int limit = beforeAttacks ? memory : memory + MaxMemoryHandOver;
         CardData? best = null;
         double bestScore = Tuning.OptionMinScore;
-        foreach (var card in ai.Hand.Where(c => c.Type == CardType.Option).Distinct())
+        foreach (var card in ai.Hand.Where(CardScripts.IsUsableAsOption).Distinct())
         {
             int cost = CardScripts.EffectivePlayCost(ai, card, engine.State.Player);
             if (cost > limit || ActionValidator.MissingOptionColors(ai, card).Count > 0)
                 continue;
-            string main = AiBoard.MainPart(card.EffectText);
+            string main = AiBoard.MainPart(card.IsDual ? card.InheritedEffectText : card.EffectText);   // 듀얼 카드 = 옵션 쪽 문장
             if (!AiBoard.HasUsefulTarget(state, ai, main))
                 continue;
             if (Tuning.SituationalOptions && (cost > memory || !AiBoard.OptionRemovesKeyThreat(state, ai, main)))
@@ -124,9 +124,9 @@ public sealed class SmartAiPolicy : IAiPolicy
 
         AiOptionUse? best = null;
         double bestGain = 0;
-        foreach (var card in ai.Hand.Where(c => c.Type == CardType.Option).Distinct())
+        foreach (var card in ai.Hand.Where(CardScripts.IsUsableAsOption).Distinct())
         {
-            if (BuffThisTurn.Match(AiBoard.MainPart(card.EffectText)) is not { Success: true } m)
+            if (BuffThisTurn.Match(AiBoard.MainPart(card.IsDual ? card.InheritedEffectText : card.EffectText)) is not { Success: true } m)
                 continue;
             int cost = CardScripts.EffectivePlayCost(ai, card, state.Player);
             if (cost > memory || ActionValidator.MissingOptionColors(ai, card).Count > 0)
@@ -188,9 +188,14 @@ public sealed class SmartAiPolicy : IAiPolicy
     {
         if (!Tuning.SmartMainAbility)
             return Legacy.ShouldUseMainAbility(engine, ability, memory);
-        string text = ability.Zone == MainAbilityZone.Field
+        string text = ability.Inherited
+            ? AiBoard.MainPart(ability.Card.InheritedEffectText)   // 진화원의 [메인]
+            : ability.Zone == MainAbilityZone.Field
             ? AiBoard.MainPart(ability.Card.EffectText)
             : ZoneClause(ability.Card.EffectText, ability.Zone) ?? AiBoard.MainPart(ability.Card.EffectText);
+        // 맨 위 카드를 진화원 아래로 내리는 비용(진화원 [메인] — 레벨 · DP가 내려간다)은 어택을 마쳐 레스트 상태일 때만 (블록할 디지몬을 약하게 만들지 않는다)
+        if (Regex.IsMatch(text, @"top stacked card|top card of this Digimon", RegexOptions.IgnoreCase) && ability.Digimon is { IsSuspended: false })
+            return false;
         // 패의 카드로 쓰는 효과는 그 카드를 내지 못하게 되므로 이득이 조금 더 커야 쓴다 (트래시는 이미 쓴 카드라 그대로)
         double minValue = ability.Zone == MainAbilityZone.Hand ? 1.0 : 0;
         return AiBoard.TextValue(text) > minValue && AiBoard.HasUsefulTarget(engine.State, engine.State.DummyOpponent, text);
@@ -225,7 +230,7 @@ public sealed class SmartAiPolicy : IAiPolicy
         var ai = state.DummyOpponent;
         CardData? best = null;
         double bestScore = 0.5;
-        foreach (var card in ai.Hand.Where(c => c.Type == CardType.Digimon).Distinct())
+        foreach (var card in ai.Hand.Where(c => c.Type == CardType.Digimon && !c.IsDual).Distinct())   // 듀얼 카드는 등장하지 않는다
         {
             int cost = engine.PreviewPlayCostWithOptions(ai, card);   // "비용을 내면 -N" 선택형 감소까지 (엔진이 AI 등장 때 추천대로 내는 것과 같은 기준)
             if (cost > memory + MaxMemoryHandOver)

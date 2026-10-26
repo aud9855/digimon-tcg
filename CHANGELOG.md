@@ -10,6 +10,34 @@
 
 ---
 
+## v0.29.0 — 2026-10-26
+미지원 효과 문장 3차 묶음 — 도감 효과 문장 지원 7,279 → 7,404 / 10,366 (70.2% → 71.4%, +125)
+- 모든 절이 동작하는 카드 2,100 → 2,140장 (수정 전 지원되던 문장 중 깨진 것 0 · 한글이 사라진 것 0). API 동기화로 새로 받은 카드 없음 (도감 4,526장 그대로)
+- 진화원의 【메인】 (공식 Q&A EX5-007 · EX5-016): "[Main] [Once Per Turn] By placing this [CS] trait Digimon's top stacked card as its bottom digivolution card, ~" · "By placing the top card of this Digimon with the [Light Fang] or [Night Claw] trait as this Digimon's bottom digivolution card, gain 2 memory" · "By placing this Digimon's top stacked card as its bottom digivolution card, ~" (BT22-043 · BT22-044 · BT22-054 · BT22-069 · BT23-008 · BT23-018 · EX5-007 · EX5-016)
+  - 엔진: `GetMainAbilities`가 배틀 에어리어 디지몬의 진화원 카드 [메인]도 돌려준다 (`MainAbility.Inherited`). 디지몬 · 진화원 카드마다 턴에 1번, 육성 에어리어는 아님. 조건 · 비용이 안 맞으면 Fail(쓴 것으로 치지 않음)
+  - 맨 위 카드를 진화원 맨 아래로 놓는 것은 "효과로 진화원에 카드가 놓였다" (BT22-043 메인 효과와 이어진다). 같은 카드의 메인 효과와 진화원 효과의 [턴에 1회]를 따로 센다
+  - 화면: 필드 디지몬 우클릭 = [메인] 효과 (맨 위 카드 · 진화원 중 여러 개면 고르기), 쓸 수 있으면 마우스 오버에 "우클릭: [메인] 효과 쓰기 — 진화원 [이름]"
+  - AI: 맨 위 카드를 내리는 비용은 어택을 마쳐 레스트 상태인 디지몬에서만 쓴다
+- 듀얼 카드 (종합 룰 4-6 · 2-7, API type "Dual" 31장): 지금까지 "진화원 [메인]"으로 보이던 BT25~BT27 · EX12~EX14 · LM · ST23 · ST24 카드의 아래 칸은 진화원 효과가 아니라 **옵션 쪽**
+  - 카드 데이터에 `IsDual` (영어 API의 카드 종류). 진화원이 되어도 옵션 쪽은 진화원 효과가 아니다
+  - 패에서: 내 디지몬 위에 놓으면 디지몬 쪽으로 진화, 배틀 에어리어 빈 곳에 놓으면 옵션 쪽으로 사용 (등장하지 않는다). 사용 코스트 = 카드의 코스트, 색 조건 또는 "Use Requirement: ~ trait" (≪사용 조건≫ — 공식 공지 2026-10-16), 쓰고 나면 트래시
+  - 디지몬 쪽의 "Activate 1 [Main] effect on this card's Option side" (BT25-104 · BT27-035 · BT27-082 · LM-068)
+  - 사용 코스트 증감: "For each of your security cards, add 1 to this card's use cost" (BT26-033 · BT26-097) · "When this card would be used, by ~, reduce the (use) cost by 2" (LM-066 · BT25-096 · BT26-098 · BT27-101) · "~ if ~, reduce the use cost by 3" (P-219)
+  - AI: 듀얼 카드를 디지몬으로 등장시키지 않고, 옵션 쪽 문장으로 사용을 판단한다
+- ≪오버클럭≫ (종합 룰 16-34, 12장): 자신의 턴 종료 시, 토큰 또는 지정된 다른 자신의 디지몬 1마리를 소멸시키는 것으로(임의) 레스트하지 않고 플레이어에게 어택 — "([Puppet] Trait)" · "([Chuumon]/[Sukamon] in name)". AI는 토큰이면 쓰고, 지정 디지몬이면 훨씬 약하고 상대 시큐리티가 적을 때만
+- 토큰 또는 [퍼펫형]: "by deleting 1 of your Tokens or other [Puppet] trait Digimon" (비용) · "When any of your Tokens or other [Puppet] trait Digimon are deleted" · "When any of your Tokens or [Puppet] trait Digimon are played" (EX7-027 · EX9-032 · ST19-11 · BT22-002 · BT22-036 · BT22-088 · EX7-063 · EX11-022)
+- ≪급습≫ (Engage, 16-44, 8장): 자신의 턴 종료 시 보통 어택 (레스트 · 등장한 턴은 ≪속공≫ 필요) · ≪천승≫ (Ascension, 16-43, 7장): 소멸했을 때 이 카드를 시큐리티 맨 위에 (임의)
+- 진화할 수 없다: "[All Turns] This Digimon can't digivolve" (BT13-080 · BT27-075 등 6장) · "1 of your opponent's Digimon (or Tamers) can't digivolve until their turn ends" (BT19-073 · BT22-062 · BT25-072 · BT25-074 · EX11-045 · EX13-034) — 패 · 효과 · DNA 진화 모두 막는다 (공식 Q&A BT13-080: 효과로 진화원에 넣는 것은 진화가 아니므로 된다)
+- 이 카드가 시큐리티 · 덱 · 패에서 파기되었을 때 (트래시의 이 카드로)
+  - "When an effect trashes this card from the security stack, ~" · "activate this card's [Main] / [Security] effects" · "you may play this card" (BT13-098 · BT13-106 · BT15-037 · BT15-084 · BT15-092 · BT18-098 · BT22-034 · BT27-099 · ST22-10 등) — 공식 Q&A BT13-098: 체크 · 오픈 뒤 파기는 아니고 직접 파기만 (≪방벽≫ 포함)
+  - "When this card is trashed from your deck, ~" (P-077 · EX2-071 · EX2-074 · EX10-037 · BT10-108 · BT19-097 · ST14-12) — 공식 Q&A P-077: 공개 · 확인 중인 카드는 아님
+  - "When this card is trashed from your hand by one of your effects, ~" (BT10-080, Q&A)
+- "When an effect adds a card to your hand" (BT7-029 · BT9-002 · BT9-021 · BT17-083): 효과로 드로우 · 패에 추가 (종합 룰 4-14-1 "드로우 = 덱에서 뽑아 패에 더하는 것") — 효과 하나가 끝난 뒤 1번
+- 생성 한글 (공식 표기): 새로 지원한 125문장 중 122문장 — "특징으로 「CS」를 가진 이 디지몬에 겹쳐져 있는 카드를 위에서부터 1장 이 디지몬의 진화원 아래에 놓는 것으로," · "이 카드가 시큐리티에서 효과로 파기되었을 때," · "이 카드가 덱에서 파기되었을 때," · "효과로 자신의 패가 늘어났을 때," · "이 디지몬은 진화할 수 없다" · "자신의 토큰 또는 특징으로 「퍼펫형」을 가진 다른 자신의 디지몬 1마리" · "이 카드의 옵션 쪽의 【메인】 효과를 1개 발휘한다" 등. 나머지 3문장(BT10-080 · BT23-008 · BT23-018)은 공식 한글 데이터가 화면에 나온다
+  - 키워드 이름을 종합 룰 Ver.4.3대로: 《인게이지》 → 《급습》 · 《어센션》 → 《천승》 · 《가드》 → 《수호》 · 《디태치》 → 《분리》, ≪오버클럭≫ 설명 "특징으로 「퍼펫형」을 가진 다른 자신의 디지몬"
+- 읽지 않고 남긴 것 (공식 근거 부족): 듀얼 카드의 〈아츠 진화〉(카드에 아이콘이 있는 카드만 — API 데이터에 없음) · 효과로 "등장"시킬 때 듀얼 카드를 디지몬 카드로 볼지 · ≪오버클럭≫ 어택이 등장한 턴에도 되는지 · "When one of your Digimon's effects adds cards to your hand"(효과의 주인 종류) · 비용 "by deleting 1 of your opponent's ~"
+- 테스트 32개 (EffectBatch29Tests)
+
 ## v0.28.0 — 2026-10-26
 미지원 효과 문장 2차 묶음 — 도감 효과 문장 지원 7,017 → 7,279 / 10,366 (68.3% → 70.2%)
 - 같은 도감(4,497장) 기준 7,017 → 7,228 / 10,279 (+211, 수정 전 지원되던 문장 중 깨진 것 0). 모든 절이 동작하는 카드 1,976 → 2,093장

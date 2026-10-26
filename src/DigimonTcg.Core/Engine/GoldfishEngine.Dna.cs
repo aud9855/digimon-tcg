@@ -104,6 +104,7 @@ public partial class GoldfishEngine
         RunEffects(EffectTrigger.ThisDigimonWouldDnaDigivolve, owner, left, left.TopCard, triggerCard: card);
         if (owner.BattleArea.Contains(right)) RunEffects(EffectTrigger.ThisDigimonWouldDnaDigivolve, owner, right, right.TopCard, triggerCard: card);
         if (!owner.BattleArea.Contains(left) || !owner.BattleArea.Contains(right)) return "DNA 진화할 디지몬이 없습니다.";
+        if (EffectRules.IsDigivolveLocked(State, left) || EffectRules.IsDigivolveLocked(State, right)) return "진화할 수 없는 디지몬이 있어 DNA 진화할 수 없습니다.";
         if (!from.Remove(card)) return "DNA 진화할 카드가 없습니다.";
         AddMemory(owner, -cost);
         if (ReferenceEquals(owner, State.Player)) { State.TotalMemorySpent += cost; State.TotalEvolutionsCount++; }

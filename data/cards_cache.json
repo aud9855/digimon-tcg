@@ -47124,6 +47124,7 @@
     "DP": 12000,
     "EffectText": "[When Digivolving] [When Attacking] [Once Per Turn] \uFF1CRecovery \u002B1\uFF1E (Place the top card of your deck as your top security card.) Then, by trashing the top security card of 1 player with the most security cards, this Digimon unsuspends.\r\n[All Turns] [Once Per Turn] When any of your [Glowing Dawn]\u00A0trait Digimon would leave the battle area, by trashing your top security card, they don\u0027t leave.",
     "InheritedEffectText": "Use Requirement: Glowing Dawn trait\r\n[Main] 1 of your opponent\u0027s Digimon gets -8000 DP for the turn. Then, by trashing your top security card, all of your opponent\u0027s Digimon get -5000 DP for the turn.",
+    "IsDual": true,
     "Traits": [
       "Shaman",
       "Glowing Dawn",
@@ -47500,6 +47501,7 @@
     "DP": 8000,
     "EffectText": "[When Digivolving] [When Attacking] [Once Per Turn] By trashing the bottom face-down card under any of your Tamers, \uFF1CDe-Digivolve 1\uFF1E 1 of your opponent\u0027s Digimon. (Trash the top card. You can\u0027t trash past level 3 cards.)\r\n[When Digivolving] This Digimon may battle 1 of your opponent\u0027s Digimon.",
     "InheritedEffectText": "Use Requirement: Glowing Dawn trait\r\n[Main] 1 of your Digimon gains , and \u002B5000 DP until your opponent\u0027s turn ends. Then, it may attack.",
+    "IsDual": true,
     "Traits": [
       "Cyborg",
       "Glowing Dawn",
@@ -48250,6 +48252,7 @@
     "DP": 12000,
     "EffectText": "\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n[When Digivolving] [When Attacking] [Once Per Turn] You may use 1 [Three Musketeers] or [TS]\u00A0trait Option card from your hand or this Digimon\u0027s digivolution cards without paying the cost.\r\n[When Digivolving] [When Attacking] [Counter] [Once Per Turn] By trashing 1 Option card from any of your Digimon\u0027s digivolution cards or link cards, this Digimon unsuspends.",
     "InheritedEffectText": "[Main] Delete 1 of your opponent\u0027s highest level Digimon. Then, you may place 1 card from your hand or trash as any of your Digimon\u0027s bottom digivolution card.",
+    "IsDual": true,
     "Traits": [
       "Wizard",
       "Three Musketeers",
@@ -48721,6 +48724,7 @@
     "DP": 15000,
     "EffectText": "\uFF1CRaid\uFF1E (When this Digimon attacks, you may switch the target of attack to 1 of your opponent\u0027s unsuspended Digimon with the highest DP.)\r\n\uFF1CPiercing\uFF1E (When this Digimon attacks and deletes an opponent\u0027s Digimon in battle, it checks security before the attack ends.)\r\n\uFF1CSecurity A. \u002B1\uFF1E (This Digimon checks 1 additional security card.)\r\n\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n\uFF1CBarrier\uFF1E (When this Digimon would be deleted in battle, by trashing your top security card, it isn\u0027t deleted.)\r\n[When Digivolving] [When Attacking] [Once Per Turn] Activate 1 [Main] effect on this card\u0027s Option side.\r\n[Your Turn] All of your [Marcus Damon]s are also treated as 12000 DP Digimon and gain \uFF1CRush\uFF1E (This Digimon can attack the turn it comes into play.)",
     "InheritedEffectText": "Use Requirement: DATA SQUAD trait\r\n[Main] 1 of your opponent\u0027s Digimon gets -15000 DP for the turn. Then, you may play 1 Tamer card from your hand without paying the cost.",
+    "IsDual": true,
     "Traits": [
       "Light Dragon",
       "DATA SQUAD",
@@ -49546,6 +49550,7 @@
     "DP": 8000,
     "EffectText": "[When Digivolving] By trashing the top security card of 1 player with the most security cards, 1 of your opponent\u0027s Digimon or Tamers can\u0027t suspend until their turn ends.\r\n[When Digivolving] [When Attacking] [Once Per Turn] By trashing the bottom face-down card from under any of your Tamers, \uFF1CRecovery \u002B1\uFF1E (Place the top card of your deck as your top security card.)",
     "InheritedEffectText": "Use Requirement: GlowingDawn trait\r\n[Main] 1 of your opponent\u0027s Digimon gets -8000 DP until their turn ends. By trashing your top security card, it further gets -5000 DP.",
+    "IsDual": true,
     "Traits": [
       "Beastkin",
       "Glowing Dawn",
@@ -49573,6 +49578,7 @@
     "DP": 13000,
     "EffectText": "\uFF1CAlliance\uFF1E (When this Digimon attacks, by suspending 1 of your other Digimon, add the suspended Digimon\u0027s DP to this Digimon and it gains \uFF1CSecurity A. \u002B1\uFF1E for the attack.)\r\n\uFF1CSuccession ([Ceresmon])\uFF1E (This Digimon gains all effects other than \uFF1CSuccession\uFF1E on its topmost specified digivolution card.)\r\n[When Digivolving] All of your opponent\u0027s suspended Digimon get -5000 DP until their turn ends. Then, by suspending 1 Digimon, if it\u0027s your turn, you may play or use 1 [Vegetation] or [TS]\u00A0trait card from your hand with the cost reduced by 5.",
     "InheritedEffectText": "Use Requirement: TS trait\r\n[Main] You may suspend 2 of your opponent\u0027s Digimon or Tamers. Then, 3 of their Digimon or Tamers can\u0027t unsuspend until their turn ends.",
+    "IsDual": true,
     "Traits": [
       "Shaman",
       "Olympos XII",
@@ -49601,6 +49607,7 @@
     "DP": 13000,
     "EffectText": "\uFF1CRaid\uFF1E (When this Digimon attacks, you may switch the target of attack to 1 of your opponent\u0027s unsuspended Digimon with the highest DP.)\r\n\uFF1CAlliance\uFF1E (When this Digimon attacks, by suspending 1 of your other Digimon, add the suspended Digimon\u0027s DP to this Digimon and it gains \uFF1CSecurity A. \u002B1\uFF1E for the attack.)\r\n\uFF1CEngage\uFF1E (At the end of your turn, this Digimon may attack.)\r\n[When Digivolving] Add your top security card to the hand. Then, if it\u0027s your turn, you may play or use 1 [Iliad] card from your hand with the cost reduced by 5.\r\n[All Turns] When any of your [TS]\u00A0trait Digimon or Tamers would leave the battle area, by placing this Digimon\u0027s top stacked card as the bottom security card, they don\u0027t leave.",
     "InheritedEffectText": "For each of your security cards, add 1 to this card\u0027s use cost.\r\nUse Requirement: TS trait\r\n[Main] Delete all of your opponent\u0027s Digimon with the lowest DP. Then,",
+    "IsDual": true,
     "Traits": [
       "Shaman",
       "Olympos XII",
@@ -50055,6 +50062,7 @@
     "DP": 15000,
     "EffectText": "[When Digivolving] You may suspend 2 Digimon or Tamers. Then, 2 of your opponent\u0027s Digimon or Tamers can\u0027t unsuspend until their turn ends.\r\n[When Digivolving] [When Attacking] By returning 1 other suspended Digimon to the bottom of the deck, trash your opponent\u0027s top security card.",
     "InheritedEffectText": "Use Requirement: DATA SQUAD trait\r\n[Main] Suspend 2 of your opponent\u0027s Digimon or Tamers. Then, until their turn ends, none of their suspended Digimon or Tamers can digivolve or unsuspend.",
+    "IsDual": true,
     "Traits": [
       "Fairy",
       "DATA SQUAD",
@@ -50215,6 +50223,7 @@
     "DP": 8000,
     "EffectText": "\uFF1CJamming\uFF1E (This Digimon can\u0027t be deleted in battles against Security Digimon.)\r\n\uFF1CReboot\uFF1E (This Digimon also unsuspends in your opponent\u0027s unsuspend phase.)\r\n\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n[On Deletion] You may play 1 level 4 or lower Digimon card with the [Titan]\u00A0trait from your trash without paying the cost.",
     "InheritedEffectText": "Use Requirement: TS trait\r\n[Main] Trash 1 card in your hand. Then,",
+    "IsDual": true,
     "Traits": [
       "Wizard",
       "Titan",
@@ -50242,6 +50251,7 @@
     "DP": 8000,
     "EffectText": "[When Digivolving] By trashing the bottom face-down card under card from under any of your Tamers, until your opponent\u0027s turn ends, their Digimon effects don\u0027t affect this Digimon, and it gets \u002B3000 DP. \r\n[All Turns] [Once Per Turn] When attack targets change or effects trash cards from under your Tamers, this Digimon may unsuspend.",
     "InheritedEffectText": "Use Requirement: GlowingDawn trait\r\n[Main] Then, until their turn ends, 1 of their Digimon gets \u0027\u0027\u0022 This Digimon attacks.\u0022\u0027\u0027",
+    "IsDual": true,
     "Traits": [
       "Beastkin",
       "Glowing Dawn",
@@ -50725,6 +50735,7 @@
     "DP": 8000,
     "EffectText": "\uFF1CExecute\uFF1E (At the end of your turn, this Digimon may attack. At the end of that attack, delete this Digimon. Your opponent\u0027s unsuspended Digimon can also be attacked with this effect.)\r\n\uFF1CAscension\uFF1E (When this Digimon is deleted, you may place this card as the top security card.)\r\n[Security] [On Deletion] By trashing the bottom face-down card from under any of your Tamers, you may play 1 [Glowing Dawn]\u00A0trait card with a play cost of 5 or less from your trash without paying the cost.",
     "InheritedEffectText": "Use Requirement: Glowing Dawn trait\r\n[Main] Delete 1 of your opponent\u2019s Digimon with the lowest level.",
+    "IsDual": true,
     "Traits": [
       "Machine",
       "Glowing Dawn",
@@ -50859,6 +50870,7 @@
     "DP": 0,
     "EffectText": "Option Card Colour Requirements Purple",
     "InheritedEffectText": "Use Requirement: TS trait",
+    "IsDual": true,
     "Traits": [
       "Shaman",
       "Olympos XII",
@@ -51751,6 +51763,7 @@
     "DP": 15000,
     "EffectText": "\uFF1CReboot\uFF1E (This Digimon also unsuspends in your opponent\u0027s unsuspend phase.)\r\n\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n\uFF1CEvade\uFF1E (When this Digimon would be deleted, you may suspend it to prevent that deletion.)\r\n[When Digivolving] [When Attacking] [Once Per Turn] You may activate 1 [Main] effect on this card\u0027s Option side.\r\n[When Digivolving] [When Attacking] If your opponent\u0027s hand has 8 or more cards, by returning cards without looking to the bottom of the deck so that it has 7 left, return their top security card to the bottom of the deck.",
     "InheritedEffectText": "Use Requirement: DATA SQUAD trait\r\n[Main] Return 1 of your opponent\u0027s Digimon to the hand. Then, if their hand has 8 or more cards, 1 of your Digimon may unsuspend.",
+    "IsDual": true,
     "Traits": [
       "Beast Knight",
       "DATA SQUAD",
@@ -51802,6 +51815,7 @@
     "DP": 13000,
     "EffectText": "\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n\uFF1CBarrier\uFF1E (When this Digimon would be deleted in battle, by trashing your top security card, it isn\u0027t deleted.)\r\n\uFF1CAscension\uFF1E (When this Digimon is deleted, you may place this card as the top security card.)\r\n[When Digivolving] [When Attacking] [Once Per Turn] By trashing your top security card, this Digimon unsuspends.\r\n[All Turns] [Once Per Turn] When your security stack is removed from, by placing 1 [Kentaurosmon] or [X Antibody] from this Digimon\u0027s digivolution cards as the bottom security card, activate 1 [Main] effect on this card\u0027s Option side.",
     "InheritedEffectText": "[Main] 1 of your opponent\u0027s Digimon gets -20000 DP until their turn ends. For each card in both players\u0027 security stacks, add 1000 to this effect\u0027s DP reduction.",
+    "IsDual": true,
     "Traits": [
       "Holy Warrior",
       "X Antibody",
@@ -51988,6 +52002,7 @@
     "DP": 12000,
     "EffectText": "\uFF1CRaid\uFF1E (When this Digimon attacks, you may switch the target of attack to 1 of your opponent\u0027s unsuspended Digimon with the highest DP.)\r\n\uFF1CPiercing\uFF1E (When this Digimon deletes your opponent\u0027s Digimon in battle while attacking, it checks security before the attack ends.)\r\n\uFF1CEngage\uFF1E (At the end of your turn, this Digimon may attack.)\r\n[All Turns] [Once Per Turn] When this Digimon would leave the battle area, by trashing 2 bottom face-down cards from under any of your Tamers, it doesn\u0027t leave.\r\n[All Turns] [Once Per Turn] When attack targets change or effects trash cards from under your Tamers, you may activate 1 [Main] effect on this card\u0027s Option side.",
     "InheritedEffectText": "Use Requirement: Glowing Dawn trait\r\n[Main] Then, 1 of your Digimon unsuspends and gets \u002B5000 DP until your turn ends.",
+    "IsDual": true,
     "Traits": [
       "Beastkin",
       "Glowing Dawn",
@@ -52015,6 +52030,7 @@
     "DP": 13000,
     "EffectText": "\uFF1CReboot\uFF1E (This Digimon also unsuspends in your opponent\u0027s unsuspend phase.)\r\n\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n[All Turns] When any of your Digimon would leave the battle area, by suspending this Digimon, they don\u0027t leave.\r\n[All Turns] [Once Per Turn] When this Digimon suspends, you may delete all of your opponent\u0027s lowest DP Digimon. Then, by trashing 1 [Craniamon] or [X Antibody] from this Digimon\u0027s digivolution cards, activate 1 [Main] effect on this card\u0027s Option side.",
     "InheritedEffectText": "[Main] Until your opponent\u0027s turn ends, 1 of your Digimon with isn\u0027t affected by their Digimon effects and gets \u002B5000 DP. Then, 1 of your Digimon may unsuspend.",
+    "IsDual": true,
     "Traits": [
       "Holy Warrior",
       "X Antibody",
@@ -52276,6 +52292,7 @@
     "DP": 12000,
     "EffectText": "\uFF1CExecute\uFF1E (At the end of your turn, this Digimon may attack. At the end of that attack, delete this Digimon. Your opponent\u0027s unsuspended Digimon can also be attacked with this effect.)\r\n\uFF1CAscension\uFF1E (When this Digimon is deleted, you may place this card as the top security card.)\r\n[Security] [On Deletion] Delete 1 of your opponent\u0027s Digimon with the lowest level. If this effect didn\u0027t delete, Trash their top security card.\r\n[When Digivolving] [When Attacking] [Once Per Turn] By trashing 2 bottom face-down cards from under any of your Tamers, activate 1 [Main] effect on this card\u0027s Option side.",
     "InheritedEffectText": "Use Requirement: Glowing Dawn trait\r\n[Main] Delete 1 of your opponent\u0027s level 6 or higher Digimon. Then, you may play 1 play cost 4 or lower [BEATBREAK] trait card from your trash without paying the cost.",
+    "IsDual": true,
     "Traits": [
       "Undead",
       "Glowing Dawn",
@@ -52328,6 +52345,7 @@
     "DP": 12000,
     "EffectText": "\uFF1CAlliance\uFF1E (When this Digimon attacks, by suspending 1 of your other Digimon, this Digimon gains \uFF1CSecurity A. \u002B1\uFF1E and the suspended Digimon\u0027s DP for the attack.)\r\n\uFF1CCollision\uFF1E (During this Digimon\u0027s attack, all of your opponent\u0027s Digimon gain \uFF1CBlocker\uFF1E, and must block if possible.)\r\n\uFF1CPiercing\uFF1E (When this Digimon deletes your opponent\u0027s Digimon in battle while attacking, it checks security before the attack ends.)\r\n\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n[When Digivolving] You may play up to 8 play cost\u0027s total worth of cards with [Knightmon]\u00A0in their texts from your hand without paying the cost.\r\n[All Turns] [Once Per Turn] When any of your other Digimon are played or deleted, by trashing 1 [Knightmon] or [X Antibody] from this Digimon\u0027s digivolution cards, activate 1 [Main] effect on this card\u0027s Option side.",
     "InheritedEffectText": "[Main] Delete 1 of your opponent\u0027s lowest level Digimon. If this effect didn\u0027t delete, until your turn ends, all of your Digimon with gain , your opponent\u0027s Digimon effects don\u0027t affect them and they get \u002B3000 DP.",
+    "IsDual": true,
     "Traits": [
       "Holy Warrior",
       "X Antibody",
@@ -52355,6 +52373,7 @@
     "DP": 0,
     "EffectText": "Option Card Colour Requirements Purple",
     "InheritedEffectText": "|applinkdp =",
+    "IsDual": true,
     "Traits": [
       "Cyborg",
       "DATA SQUAD",
@@ -52576,6 +52595,7 @@
     "DP": 16000,
     "EffectText": "\uFF1CPiercing\uFF1E (When this Digimon deletes your opponent\u0027s Digimon in battle while attacking, it checks security before the attack ends.)\r\n\uFF1CSecurity A. \u002B1\uFF1E (This Digimon checks 1 additional security card.)\r\n\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n\uFF1CPartition ([Alphamon] \u0026 [Ouryumon])\uFF1E (When this Digimon with each of the specified digivolution cards would leave the battle area other than by your own effects or by battle, you may play 1 each of the specified cards without paying the costs.)\r\n[When Digivolving] [When Attacking] [Once Per Turn] You may delete 1 of your opponent\u0027s Digimon. Then, if DNA digivolving, \uFF1CRecovery \u002B2\uFF1E (Place the top 2 cards of your deck as your top 2 security cards.)\r\n[All Turns] During attacks, your opponent\u0027s effects don\u0027t affect this Digimon.",
     "InheritedEffectText": "[Main] Delete 1 of your opponent\u0027s Digimon. Then, 2 of your Digimon may DNA digivolve into this card.",
+    "IsDual": true,
     "Traits": [
       "NO DATA",
       "X Antibody",
@@ -78233,6 +78253,7 @@
     "DP": 12000,
     "EffectText": "\uFF1CProgress\uFF1E (While attacking, your opponent\u0027s effects don\u0027t affect this Digimon.)\r\n\uFF1CPiercing\uFF1E (When this Digimon attacks and deletes an opponent\u0027s Digimon in battle, it checks security before the attack ends.)\r\n\uFF1CSecurity A. \u002B1\uFF1E (This Digimon checks 1 additional security card.)\r\n[When Digivolving] [When Attacking] [Once Per Turn] You may place up to 2 Digimon cards with [Gammamon]\u00A0in its text or the [VB]\u00A0trait from your hand or trash as this Digimon\u0027s top or bottom digivolution cards. If this effect placed, to 1 of your opponent\u0027s Digimon, give -2000 DP until their turn ends for each of this Digimon\u0027s digivolution cards.",
     "InheritedEffectText": "Use Requirement: VB trait\r\n[Main] Delete 1 of your opponent\u0027s highest DP Digimon. Then, 1 of your Digimon may attack.",
+    "IsDual": true,
     "Traits": [
       "Light Dragon",
       "VB",
@@ -78634,6 +78655,7 @@
     "DP": 12000,
     "EffectText": "[When Digivolving] [When Attacking] [Counter] You may trash up to 3 cards in your hand. Then, to 1 of your opponent\u0027s Digimon, give -4000 DP until your turn ends for each card this effect trashed.\r\n[All Turns] [Once Per Turn] When any of your Digimon with [Jellymon]\u00A0in their texts or the [DS]\u00A0trait would leave the battle area, by returning 3 cards from your trash to the bottom of the deck, they don\u0027t leave.",
     "InheritedEffectText": "Use Requirement: DS trait\r\n[Main] Trash any 4 cards under your opponent\u0027s Digimon or Tamers. Then, you may return 1 of your opponent\u0027s Digimon or Tamers without cards under it to the hand.",
+    "IsDual": true,
     "Traits": [
       "Cyborg",
       "DS",
@@ -79147,6 +79169,7 @@
     "DP": 12000,
     "EffectText": "\uFF1CPiercing\uFF1E (When this Digimon attacks and deletes an opponent\u0027s Digimon in battle, it checks security before the attack ends.)\r\n\uFF1CVortex\uFF1E (At the end of your turn, this Digimon may attack an opponent\u0027s Digimon. With this effect, it can attack the turn it was played.)\r\n[When Digivolving] Your opponent\u0027s Digimon effects don\u0027t affect 1 of your Digimon until their turn ends.\r\n[When Digivolving] [When Attacking] [Counter] [Once Per Turn] 1 of your Digimon gets \u002B3000 DP until your opponent\u0027s turn ends, then it may battle 1 of their Digimon.",
     "InheritedEffectText": "Use Requirement: NSp trait\r\n[Main] 1 of your Digimon may unsuspend. Then, suspend 2 of your opponent\u0027s Digimon. 2 of their Digimon or Tamers can\u0027t unsuspend until their turn ends.",
+    "IsDual": true,
     "Traits": [
       "Beast Knight",
       "NSp",
@@ -81454,6 +81477,7 @@
     "DP": 5000,
     "EffectText": "\uFF1CDecode ([Sistermon Blanc])\uFF1E (When this Digimon would leave the battle area other than in battle, you may play 1 specified Digimon card from its digivolution cards without paying the cost.)\r\n\uFF1CGuard\uFF1E (When any of your other Digimon would leave the battle area by your opponent\u0027s effects, by deleting this Digimon, they don\u0027t leave.)",
     "InheritedEffectText": "[Main] You may play 1 play cost 4 or lower card with from your hand or trash without paying the cost. Then, to 1 of your opponent\u0027s Digimon, give -3000 DP for the turn for each of your Digimon.",
+    "IsDual": true,
     "Traits": [
       "Puppet",
       "Vaccine"
@@ -81479,6 +81503,7 @@
     "DP": 6000,
     "EffectText": "\uFF1CDecode ([Sistermon Noir]/[Sistermon Ciel])\uFF1E (When this Digimon would leave the battle area other than in battle, you may play 1 specified Digimon card from its digivolution cards without paying the cost.)\r\n[When Digivolving] Delete 1 of your opponent\u0027s Digimon with a play cost of 4 or less.",
     "InheritedEffectText": "[Main] You may play 1 play cost 4 or lower card with from your hand or trash without paying the cost. Then, to 1 of your opponent\u0027s Digimon, for each of your Digimon.",
+    "IsDual": true,
     "Traits": [
       "Puppet",
       "Virus"
@@ -81765,6 +81790,7 @@
     "DP": 12000,
     "EffectText": "\uFF1CSecurity A. \u002B1\uFF1E (This Digimon checks 1 additional security card.)\r\n\uFF1CEngage\uFF1E (At the end of your turn, this Digimon may attack.)\r\n[When Digivolving] [When Attacking] [Once Per Turn] 1 of your Digimon gets \u002B3000 DP until your opponent\u0027s turn ends. Then, by trashing the bottom face-down card from under any of your Tamers, delete 1 of their Digimon with as much DP as this Digimon or less.\r\n[Security] [On Deletion] You may use this card without paying the cost.",
     "InheritedEffectText": "Use Requirement: TERMINAL trait\r\n[Main] Delete up to 15000 DP total worth of your opponent\u0027s Digimon.",
+    "IsDual": true,
     "Traits": [
       "Dragonkin",
       "TWIN",
@@ -98262,6 +98288,7 @@
     "DP": 13000,
     "EffectText": "\uFF1CPiercing\uFF1E (When this Digimon attacks and deletes an opponent\u0027s Digimon in battle, it checks security before the attack ends.)\r\n\uFF1CVortex\uFF1E (At the end of your turn, this Digimon may attack an opponent\u0027s Digimon. With this effect, it can attack the turn it was played.)\r\n\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n[When Digivolving] [When Attacking] [Once Per Turn] You may unsuspend 1 Digimon. Then, this Digimon may battle 1 of your opponent\u0027s Digimon.\r\n[All Turns] [Once Per Turn] When this Digimon would leave the battle area other than by your effects, by suspending 1 Digimon, it doesn\u0027t leave.",
     "InheritedEffectText": "When this card would be used, by suspending 2 Digimon, reduce the cost by 2.\r\n[Main] 1 of your opponent\u0027s Digimon or Tamers can\u0027t unsuspend until their turn ends. Then, for every 2 suspended Digimon, return 1 of their Digimon to the bottom of the deck.",
+    "IsDual": true,
     "Traits": [
       "Magic Knight",
       "Vortex Warriors",
@@ -98289,6 +98316,7 @@
     "DP": 13000,
     "EffectText": "\uFF1CReboot\uFF1E (This Digimon also unsuspends in your opponent\u0027s unsuspend phase.)\r\n\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n\uFF1CFragment (3)\uFF1E (When this Digimon would be deleted, by trashing any 3 of its digivolution cards, it isn\u0027t deleted.)\r\n[When Digivolving] [Counter] [Once Per Turn] Reveal the top 6 cards of your deck. You may play or use 1 play or use cost 6 or lower [Three Musketeers]\u00A0text card among them without paying the cost. Return the rest to the bottom of the deck.\r\n[When Digivolving] [When Attacking] By trashing up to 3 [Three Musketeers]\u00A0text cards from any of your Digimon\u0027s digivolution cards, for each one trashed, delete 1 of your opponent\u0027s play cost 7 or lower Digimon.",
     "InheritedEffectText": "[Main] Then, you may place 1 [Three Musketeers] trait card from your hand or trash as any of your Digimon\u0027s bottom digivolution card.",
+    "IsDual": true,
     "Traits": [
       "Machine",
       "Three Musketeers",
@@ -98317,6 +98345,7 @@
     "DP": 13000,
     "EffectText": "\uFF1CSecurity A. \u002B1\uFF1E (This Digimon checks 1 additional security card.)\r\n[When Digivolving] [End of Attack] If your hand has 4 or fewer cards, you may play 1 level 4 or lower Digimon card with the [Evil], [Dark Dragon] or [Evil Dragon]\u00A0trait from your trash to the field without paying the cost.\r\n[When Digivolving] [On Deletion] Trash 2 cards in your hand. Then, you may activate 1 [Main] effect on this card\u0027s Option side.",
     "InheritedEffectText": "When one of your [Evil|Dark Dragon|Evil Dragon] trait Digimon attacks, if your hand has 4 or fewer cards, you may use this card with the cost reduced by 3.\r\n[Main] Delete 1 of your opponent\u0027s Digimon with a level as high as the number of cards in your hand or higher.",
+    "IsDual": true,
     "Traits": [
       "Evil Dragon",
       "LIBERATOR",
@@ -111010,6 +111039,7 @@
     "DP": 12000,
     "EffectText": "\uFF1CSecurity A. \u002B1\uFF1E (This Digimon checks 1 additional security card.)\r\n\uFF1CReboot\uFF1E (This Digimon also unsuspends in your opponent\u0027s unsuspend phase.)\r\n\uFF1CBlocker\uFF1E (This Digimon can block in the blocker timing.)\r\n[When Digivolving] [When Attacking] [Once Per Turn] Your opponent\u0027s Digimon effects don\u0027t affect this Digimon until their turn ends. Then, delete 1 of your opponent\u0027s Digimon with the lowest DP.",
     "InheritedEffectText": "Use Requirement: BEATBREAK trait\r\n[Main] Suspend 1 of your opponent\u0027s Digimon. Then, return 1 of your opponent\u0027s suspended Digimon with the highest DP to the bottom of the deck.",
+    "IsDual": true,
     "Traits": [
       "Mutant",
       "Glowing Dawn",
@@ -111348,6 +111378,7 @@
     "DP": 12000,
     "EffectText": "\uFF1CRaid\uFF1E (When this Digimon attacks, you may switch the target of attack to 1 of your opponent\u0027s unsuspended Digimon with the highest DP.)\r\n\uFF1CPiercing\uFF1E (When this Digimon attacks and deletes an opponent\u0027s Digimon in battle, it checks security before the attack ends.)\r\n\uFF1CSecurity A. \u002B1\uFF1E (This Digimon checks 1 additional security card.)\r\n[When Digivolving] [When Attacking] [Once Per Turn] You may play 1 Tamer card with a play cost of 5 or less from your hand or trash without paying the cost. Then, 1 of your opponent\u0027s Digimon gets -9000 DP for the turn.",
     "InheritedEffectText": "Use Requirement: DATA SQUAD trait\r\n[Main] 1 of your opponent\u0027s Digimon gets -6000 DP for the turn. Then, delete 1 of your opponent\u0027s Digimon with 7000 DP or less.",
+    "IsDual": true,
     "Traits": [
       "Light Dragon",
       "DATA SQUAD",

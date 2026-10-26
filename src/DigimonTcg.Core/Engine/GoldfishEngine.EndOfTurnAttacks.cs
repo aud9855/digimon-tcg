@@ -26,7 +26,79 @@ public partial class GoldfishEngine
 
     private bool CanEndOfTurnAttack(PlayerZones owner, CardInstance d) =>
         owner.BattleArea.Contains(d) && !d.IsSuspended && !_endOfTurnAttacked.Contains(d) && !EffectRules.IsAttackLocked(State, d)
-        && (CardScripts.HasKeyword(d, Keyword.Vortex) || CardScripts.HasKeyword(d, Keyword.Execute));
+        && (CardScripts.HasKeyword(d, Keyword.Vortex) || CardScripts.HasKeyword(d, Keyword.Execute) || CanEngage(owner, d));
+
+    // ---- ≪급습≫ (종합 룰 16-44, v0.29.0): 자신의 턴 종료 시, 이 디지몬으로 어택할 수 있다 (보통 어택 — 레스트하고, 등장한 턴에는 ≪속공≫이 있어야 한다) ----
+    private bool CanEngage(PlayerZones owner, CardInstance d) =>
+        CardScripts.HasKeyword(d, Keyword.Engage) && (d.TurnPlayed < State.CurrentTurn || CardScripts.HasKeyword(d, Keyword.Rush));
+
+    private bool IsEngageOnly(CardInstance d) => !CardScripts.HasKeyword(d, Keyword.Vortex) && !CardScripts.HasKeyword(d, Keyword.Execute);
+
+    // ---- ≪오버클럭≫ (종합 룰 16-34, v0.29.0): 자신의 턴 종료 시, 자신의 토큰 또는 지정된 다른 자신의 디지몬 1마리를 소멸시키는 것으로(임의),
+    //      이 디지몬으로 레스트하지 않고 플레이어에게 어택한다(강제). 디지몬마다 턴 종료 시 1번 ----
+    private readonly HashSet<CardInstance> _overclocked = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>≪오버클럭≫으로 소멸시킬 수 있는 자신의 디지몬 (토큰 · 지정된 다른 디지몬) — 가치가 낮은 순</summary>
+    internal List<CardInstance> OverclockFodder(PlayerZones owner, CardInstance attacker)
+    {
+        if (CardScripts.For(attacker.TopCard)?.OverclockSpecified is not { } spec)
+            return new List<CardInstance>();
+        return owner.BattleArea.Where(d => !ReferenceEquals(d, attacker) && (IsToken(d.TopCard) || spec(d.TopCard)))
+            .OrderByDescending(d => IsToken(d.TopCard)).ThenBy(d => d.TopCard.Level).ThenBy(d => d.GetCurrentDP()).ToList();
+    }
+
+    /// <summary>≪오버클럭≫ 어택을 할 수 있는지 (레스트하지 않으므로 레스트 상태여도 된다. 어택 조건은 효과 어택과 같게 — 등장한 턴은 ≪속공≫)</summary>
+    private bool CanOverclock(PlayerZones owner, CardInstance d) =>
+        owner.BattleArea.Contains(d) && !_overclocked.Contains(d) && CardScripts.For(d.TopCard)?.OverclockSpecified != null
+        && !EffectRules.IsAttackLocked(State, d) && (d.TurnPlayed < State.CurrentTurn || CardScripts.HasKeyword(d, Keyword.Rush))
+        && OverclockFodder(owner, d).Count > 0;
+
+    /// <summary>≪오버클럭≫ 비용: 고른 디지몬을 소멸시킨다 (소멸을 막았으면 어택하지 않는다)</summary>
+    private bool PayOverclock(PlayerZones owner, CardInstance attacker, CardInstance fodder)
+    {
+        _overclocked.Add(attacker);
+        EffectLog(owner, $"[≪오버클럭≫] [{fodder.TopCard.Name}]을(를) 소멸시켜 [{attacker.TopCard.Name}]으로 레스트하지 않고 플레이어에게 어택합니다.");
+        DeleteFrom(owner, fodder, DeletionCause.Cost);
+        return !owner.BattleArea.Contains(fodder) && owner.BattleArea.Contains(attacker) && !State.IsGameOver;
+    }
+
+    /// <summary>플레이어 턴 종료: ≪오버클럭≫ 디지몬마다 소멸시킬 디지몬을 골라 어택할지 묻는다</summary>
+    private void RunPlayerOverclocks()
+    {
+        var owner = State.Player;
+        foreach (var attacker in owner.BattleArea.ToList())
+        {
+            if (State.IsGameOver) return;
+            if (!CanOverclock(owner, attacker)) continue;
+            var fodder = OverclockFodder(owner, attacker);
+            bool recommended = IsToken(fodder[0].TopCard) || EnemyOf(owner).SecurityStack.Count <= 1;
+            if (!AskYesNo(owner, attacker, $"≪오버클럭≫ [{attacker.TopCard.Name}]: 토큰 또는 지정된 디지몬 1마리를 소멸시켜, 레스트하지 않고 플레이어에게 어택할까요?", recommended))
+                continue;
+            var pick = ChooseTargets(owner, fodder, 1, "≪오버클럭≫ 소멸시킬 디지몬을 고르세요.", optional: true, preselected: null).FirstOrDefault();
+            if (pick == null || !PayOverclock(owner, attacker, pick)) continue;
+            _nextAttackWithoutSuspending = true;
+            PlayerSecurityAttackCore(attacker);
+            _nextAttackWithoutSuspending = false;
+        }
+    }
+
+    /// <summary>AI 턴 종료: ≪오버클럭≫ (토큰이면 하고, 지정 디지몬이면 어택하는 디지몬보다 훨씬 약하고 상대 시큐리티가 적을 때) — 비용을 내고 어택할 디지몬</summary>
+    private CardInstance? NextAiOverclock(AiTurnContext ctx)
+    {
+        var owner = State.DummyOpponent;
+        foreach (var attacker in owner.BattleArea.ToList())
+        {
+            if (!CanOverclock(owner, attacker)) continue;
+            var fodder = OverclockFodder(owner, attacker)[0];
+            bool worth = IsToken(fodder.TopCard) || State.Player.SecurityStack.Count == 0
+                         || AiBoard.Value(fodder) * 2 < AiBoard.Value(attacker) && State.Player.SecurityStack.Count <= 3;
+            if (!worth) { _overclocked.Add(attacker); continue; }
+            if (!PayOverclock(owner, attacker, fodder)) continue;
+            ctx.NoSuspendAttackers.Add(attacker);
+            return attacker;
+        }
+        return null;
+    }
 
     /// <summary>턴 종료 시 어택의 대상 후보: ≪볼텍스≫ = 어택할 수 있는(레스트) 상대 디지몬, ≪에그제큐트≫ = 액티브도</summary>
     private List<CardInstance> EndOfTurnTargets(PlayerZones owner, bool execute) =>
@@ -41,11 +113,17 @@ public partial class GoldfishEngine
     private void RunPlayerEndOfTurnAttacks()
     {
         _endOfTurnAttacked.Clear();
+        _overclocked.Clear();
         var owner = State.Player;
         foreach (var attacker in owner.BattleArea.ToList())
         {
             if (State.IsGameOver) return;
             if (!CanEndOfTurnAttack(owner, attacker)) continue;
+            if (IsEngageOnly(attacker))
+            {
+                RunPlayerEngage(owner, attacker);
+                continue;
+            }
             bool execute = CardScripts.HasKeyword(attacker, Keyword.Execute) && !CardScripts.HasKeyword(attacker, Keyword.Vortex)
                            || (CardScripts.HasKeyword(attacker, Keyword.Execute) && EndOfTurnTargets(owner, execute: false).Count == 0);
             var targets = EndOfTurnTargets(owner, execute);
@@ -68,15 +146,42 @@ public partial class GoldfishEngine
             if (defender != null) PlayerAttackOnDigimonCore(attacker, defender);
             else PlayerSecurityAttackCore(attacker);
         }
+        RunPlayerOverclocks();
+    }
+
+    /// <summary>≪급습≫: 보통 어택처럼 시큐리티 또는 레스트 상태인 상대 디지몬에게 (어택할지 · 대상을 고른다)</summary>
+    private void RunPlayerEngage(PlayerZones owner, CardInstance attacker)
+    {
+        var targets = EndOfTurnTargets(owner, execute: false);
+        var best = BestWinningTarget(attacker, targets);
+        if (!AskYesNo(owner, attacker, $"≪급습≫ [{attacker.TopCard.Name}]으로 턴 종료 시 어택할까요?", recommended: true))
+            return;
+        CardInstance? defender = null;
+        if (targets.Count > 0)
+            defender = ChooseTargets(owner, AiEvaluator.Rank(targets, best), 1, $"≪급습≫ [{attacker.TopCard.Name}]의 어택 대상을 고르세요. (고르지 않으면 시큐리티)",
+                optional: true, preselected: best).FirstOrDefault();
+        _endOfTurnAttacked.Add(attacker);
+        Log($"[≪급습≫] [{attacker.TopCard.Name}] 턴 종료 시 어택!");
+        if (defender != null) PlayerAttackOnDigimonCore(attacker, defender);
+        else PlayerSecurityAttackCore(attacker);
     }
 
     /// <summary>AI 턴 종료: 다음 턴 종료 시 어택 (정책이 고른 것 — Target null = 시큐리티). 없으면 null</summary>
-    private (CardInstance Attacker, CardInstance? Target, bool Execute)? NextAiEndOfTurnAttack()
+    private (CardInstance Attacker, CardInstance? Target, bool Execute, string Label)? NextAiEndOfTurnAttack(AiTurnContext ctx)
     {
         var owner = State.DummyOpponent;
         foreach (var attacker in owner.BattleArea.ToList())
         {
             if (!CanEndOfTurnAttack(owner, attacker)) continue;
+            if (IsEngageOnly(attacker))
+            {
+                // ≪급습≫: 보통 어택과 같은 점수로 (시큐리티 · 레스트 상태인 상대 디지몬)
+                var engageTargets = EndOfTurnTargets(owner, execute: false);
+                _endOfTurnAttacked.Add(attacker);
+                if (AiPolicy.ChooseEffectAttack(this, attacker, engageTargets, canAttackSecurity: true) is not { } ec) continue;
+                if (ec.Target != null && !engageTargets.Contains(ec.Target)) continue;
+                return (attacker, ec.Target, false, "≪급습≫");
+            }
             // 정책(IAiPolicy.ChooseEndOfTurnAttack)에 묻는다 — ≪볼텍스≫로 먼저, 고르지 않으면 ≪에그제큐트≫로
             EndOfTurnAttack? choice = null;
             bool execute = false;
@@ -93,8 +198,10 @@ public partial class GoldfishEngine
             if (c.Target != null && !targets.Contains(c.Target)) continue;   // 후보에 없는 대상은 무시
             _endOfTurnAttacked.Add(attacker);
             if (execute) _executingAttacker = attacker;
-            return (attacker, c.Target, execute);
+            return (attacker, c.Target, execute, execute ? "≪에그제큐트≫" : "≪볼텍스≫");
         }
+        if (NextAiOverclock(ctx) is { } oc)
+            return (oc, null, false, "≪오버클럭≫");
         return null;
     }
 

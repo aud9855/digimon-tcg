@@ -525,7 +525,7 @@ public partial class GoldfishEngine
 
         State.CanMulligan = false;
         State.Player.Hand.Remove(card);
-        var xros = card.Type == CardType.Digimon ? TakeXrosMaterials(State.Player, card) : new List<CardData>();   // 디지크로스 재료 (1장마다 코스트 -N)
+        var xros = card.Type == CardType.Digimon && !card.IsDual ? TakeXrosMaterials(State.Player, card) : new List<CardData>();   // 디지크로스 재료 (1장마다 코스트 -N)
         int cost = Math.Max(0, CardScripts.EffectivePlayCost(State.Player, card, State.DummyOpponent) - XrosReduction(card, xros.Count));   // 카드의 코스트 감소 효과 반영
         cost = ApplyPlayCostOptions(State.Player, card, cost);   // "by ~ing, reduce the play cost" — 비용을 낼지 묻는다
         State.MemoryGauge -= cost;
@@ -533,7 +533,7 @@ public partial class GoldfishEngine
 
         string effectSummary = string.Empty;
 
-        if (card.Type == CardType.Digimon)
+        if (card.Type == CardType.Digimon && !card.IsDual)
         {
             var instance = new CardInstance(card, State.CurrentTurn);
             PlaceXrosMaterials(instance, xros);
@@ -562,10 +562,10 @@ public partial class GoldfishEngine
             FireForSide(EffectTrigger.OpponentTamerPlayed, State.DummyOpponent, null, triggerCard: card);
             RecalculateFieldBuffs();
         }
-        else if (card.Type == CardType.Option)
+        else if (card.Type == CardType.Option || card.IsDual)   // 듀얼 카드 = 옵션 쪽으로 사용 (종합 룰 4-6-2)
         {
             effectSummary = " " + ApplyOptionEffect(State.Player, card, target);
-            Log($"옵션 사용: [{card.Name}] (코스트 {cost} 지불 후 {(State.Player.OptionsInPlay.Any(p => ReferenceEquals(p.Card, card)) ? "배틀 에어리어에 놓음" : "트래시 이동")})");
+            Log($"{(card.IsDual ? "듀얼 카드 옵션 쪽 사용" : "옵션 사용")}: [{card.Name}] (코스트 {cost} 지불 후 {(State.Player.OptionsInPlay.Any(p => ReferenceEquals(p.Card, card)) ? "배틀 에어리어에 놓음" : "트래시 이동")})");
         }
 
         CheckTurnEndAndAutoReset();
@@ -1639,6 +1639,7 @@ public partial class GoldfishEngine
         {
             ctx.EndPhase = true;
             _endOfTurnAttacked.Clear();
+            _overclocked.Clear();
             AddEffectEvent(endLabel, CaptureEffectLogs(() => TriggerEndOfTurn(State.DummyOpponent)));
         }
         if (!State.IsGameOver && ctx.Attackers.Count > 0)
@@ -1646,9 +1647,9 @@ public partial class GoldfishEngine
             RunAiTurn();   // [자신의 턴 종료 시] "~ may attack" 효과로 큐에 들어온 어택 → 끝나면 다시 여기로
             return;
         }
-        if (!State.IsGameOver && NextAiEndOfTurnAttack() is { } eot)
+        if (!State.IsGameOver && NextAiEndOfTurnAttack(ctx) is { } eot)
         {
-            Log($"🤖 [{(eot.Execute ? "≪에그제큐트≫" : "≪볼텍스≫")}] AI [{eot.Attacker.TopCard.Name}]이(가) 턴 종료 시 어택합니다!");
+            Log($"🤖 [{eot.Label}] AI [{eot.Attacker.TopCard.Name}]이(가) 턴 종료 시 어택합니다!");
             ctx.AttackTarget = eot.Target;
             ctx.Attackers.Enqueue(eot.Attacker);
             RunAiTurn();

@@ -37,6 +37,7 @@ public class CardInstance
     public int CannotAttackUntil { get; set; }     // 어택할 수 없음 (소로 블루 · 로제몬 등)
     public int CannotBlockUntil { get; set; }      // 블록할 수 없음
     public int SkipUnsuspendUntil { get; set; }   // 다음 액티브 페이즈에 액티브가 되지 않음 ("doesn't unsuspend during ~ next unsuspend phase")
+    public int CannotDigivolveUntil { get; set; } // 진화할 수 없음 ("1 of their Digimon can't digivolve until their turn ends", v0.29.0)
     public int CannotUnsuspendUntil { get; set; } // 액티브가 될 수 없음 — 액티브 페이즈 · 효과 모두 ("can't unsuspend until the end of their turn")
     public int CannotSuspendUntil { get; set; }   // 레스트가 될 수 없음 — 어택 · 블록 · 효과로 레스트 불가 ("can't suspend until their turn ends")
     public bool AttackTargetLocked { get; set; }  // 이 어택 동안 어택 대상이 바뀌지 않음 ("This Digimon's attack target can't be switched") — 어택 종료 시 해제
@@ -83,6 +84,20 @@ public class CardInstance
         var removed = TopCard;
         TopCard = EvolutionSources.Pop();
         return removed;
+    }
+
+    /// <summary>
+    /// 이 디지몬에 겹쳐져 있는 카드를 위에서부터 1장 진화원 맨 아래에 놓는다 (공식 Q&amp;A EX5-007: 맨 위 카드를 진화원 맨 밑에 넣는다 —
+    /// 바로 아래 진화원이 맨 위 카드가 된다). 진화원이 없으면 false
+    /// </summary>
+    public bool MoveTopToBottom()
+    {
+        if (EvolutionSources.Count == 0)
+            return false;
+        var oldTop = TopCard;
+        TopCard = EvolutionSources.Pop();
+        AddBottomSource(oldTop);
+        return true;
     }
 
     /// <summary>진화원을 아래(가장 먼저 깔린 카드)에서부터 최대 count장 제거해 반환한다</summary>
