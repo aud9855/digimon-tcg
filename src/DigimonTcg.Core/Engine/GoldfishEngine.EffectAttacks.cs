@@ -39,10 +39,10 @@ public partial class GoldfishEngine
     {
         if (!CanEffectAttack(owner, attacker, withoutSuspending))
             return false;
-        bool canSecurity = allowed != EffectAttackTarget.DigimonOnly;
+        bool canSecurity = allowed != EffectAttackTarget.DigimonOnly && EffectRules.CanAttackPlayer(attacker);   // v0.34.0 "can't attack players"
         var targets = allowed == EffectAttackTarget.PlayerOnly
             ? new List<CardInstance>()
-            : EnemyOf(owner).BattleArea.Where(EffectRules.CanBeAttackTarget).ToList();
+            : EnemyOf(owner).BattleArea.Where(t => EffectRules.CanBeAttackTargetFor(attacker, t)).ToList();
         if (!canSecurity && targets.Count == 0)
             return false;
 

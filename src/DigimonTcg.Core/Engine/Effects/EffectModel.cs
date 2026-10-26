@@ -141,6 +141,25 @@ public enum Keyword
     Engage,                  // ≪급습≫ (종합 룰 16-44): 자신의 턴 종료 시, 이 디지몬으로 어택할 수 있다
     Ascension,               // ≪천승≫ (종합 룰 16-43): 이 디지몬이 소멸했을 때, 이 카드를 시큐리티 위에 놓을 수 있다
     AttackTargetLocked,      // (지속 효과) 이 디지몬의 어택 대상은 바뀌지 않는다 ("[Your Turn] This Digimon's attack target can't change")
+    // v0.34.0 제한 · 보호 (기간 효과 "~ until ~" · 지속 효과 모두 키워드처럼 얻는다)
+    CannotAttackPlayers,     // 플레이어에게 어택할 수 없다 ("can't attack players")
+    CannotAttackDigimon,     // 디지몬에게 어택할 수 없다 ("can't attack your opponent's Digimon")
+    CanAttackUnsuspended,    // 액티브 상태의 상대 디지몬에게도 어택할 수 있다 ("can also attack your opponent's unsuspended Digimon")
+    CanAttackUnsuspendedSourceless, // 진화원을 갖지 않은 액티브 상태의 상대 디지몬에게도 어택할 수 있다
+    CannotBeDeletedInBattle, // 배틀로 소멸하지 않는다 ("can't be deleted in battle")
+    CannotBeDeletedByOpponentEffects, // 상대의 효과로 소멸하지 않는다
+    CannotBeDeletedByEffects, // 효과로 소멸하지 않는다 (자신의 효과도)
+    CannotBeReturnedByOpponentEffects, // 상대의 효과로 패 · 덱으로 되돌아가지 않는다
+    UnaffectedByOpponentEffects,        // 상대의 효과를 받지 않는다
+    UnaffectedByOpponentDigimonEffects, // 상대의 디지몬의 효과를 받지 않는다
+    UnaffectedByOpponentOptionEffects,  // 상대의 옵션 카드의 효과를 받지 않는다
+    DpCannotBeReduced,       // DP가 마이너스되지 않는다 (효과 전부)
+    DpCannotBeReducedByOpponent, // 상대의 효과로 DP가 마이너스되지 않는다
+    CannotActivateWhenDigivolving, // 【진화 시】 효과를 발휘할 수 없다
+    CannotActivateWhenAttacking,   // 【어택 시】 효과를 발휘할 수 없다
+    CannotBeReturnedByEffects,     // 효과로 패 · 덱으로 되돌아가지 않는다 (자신의 효과도)
+    CannotBlock,                   // (지속 효과) 블록할 수 없다 ("[All Turns] This Digimon can't attack or block")
+    OpponentMemoryTamerOnly,       // (지속 효과) 상대는 테이머의 효과 이외로 메모리를 얻을 수 없다
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>
@@ -185,6 +204,9 @@ public sealed record StaticEffect(StaticStat Stat, EffectSource Source, Func<Sta
 
     /// <summary>AllyDigimonDp: 효과를 받는 디지몬 조건 (예: "All of your black Digimon") — null이면 전부</summary>
     public Func<CardInstance, bool>? Subject { get; init; }
+
+    /// <summary>v0.34.0 "All of your other ~" — 효과를 가진 디지몬 자신은 받지 않는다</summary>
+    public bool ExcludeSource { get; init; }
 }
 
 /// <summary>지속 효과 계산에 필요한 정보</summary>
@@ -281,6 +303,9 @@ public sealed class CardScript
     /// <summary>"When this card would be played, by deleting 1 of your Digimon, reduce the play cost by 4." — 등장할 때 비용을 낼지 묻는 코스트 감소</summary>
     public List<PlayCostOption> PlayCostOptions { get; } = new();
 
+    /// <summary>v0.34.0 "This Digimon can only digivolve into white Digimon" — (출처, 자신의 턴에만, 진화할 수 있는 카드)</summary>
+    public List<(EffectSource Source, bool YourTurnOnly, Func<CardData, bool> Allowed)> EvoOnlyInto { get; } = new();
+
     /// <summary>"When this Digimon would digivolve (into ~), reduce the digivolution cost by N" — 진화하기 직전에 진화 코스트를 바꾸는 효과</summary>
     public List<EvoCostModifier> EvoCostModifiers { get; } = new();
 
@@ -342,4 +367,9 @@ public sealed record EvoCostModifier(
 }
 
 /// <summary>등장할 때 고르는 코스트 감소: 비용(낼 수 있는지 · 내기 · 추천 · 설명)을 내면 Reduce만큼 줄인다. CostText = 원문 비용 구절 (예: "deleting 1 of your Digimon" — AI가 비용 종류를 가늠)</summary>
-public sealed record PlayCostOption(int Reduce, Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe, string CostText = "");
+public sealed record PlayCostOption(int Reduce, Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe, string CostText = "")
+{
+    /// <summary>v0.34.0 "reduce the play cost by 4 for each one" — 낸 매수(EffectContext.PaidCount)만큼 곱한다. 미리보기는 PreviewCount</summary>
+    public Func<EffectContext, int>? PreviewCount { get; init; }
+    public bool PerCount { get; init; }
+}

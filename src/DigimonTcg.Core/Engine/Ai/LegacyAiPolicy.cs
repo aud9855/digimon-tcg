@@ -36,7 +36,7 @@ public sealed class LegacyAiPolicy : IAiPolicy
     {
         var ai = engine.State.DummyOpponent;
         var attacker = ai.BattleArea
-            .Where(d => engine.CanAttackThisTurn(d) && (!d.HasBlocker || ai.BattleArea.Count >= 2))
+            .Where(d => engine.CanAttackThisTurn(d) && EffectRules.CanAttackPlayer(d) && (!d.HasBlocker || ai.BattleArea.Count >= 2))
             .OrderByDescending(d => d.GetCurrentDP())
             .FirstOrDefault();
         return attacker == null ? null : new AiAttack(attacker, null);

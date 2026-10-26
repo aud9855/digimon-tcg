@@ -534,6 +534,7 @@ public partial class GoldfishEngine
         cost = ApplyPlayCostOptions(State.Player, card, cost);   // "by ~ing, reduce the play cost" — 비용을 낼지 묻는다
         State.MemoryGauge -= cost;
         State.TotalMemorySpent += cost;
+        if (card.Type != CardType.Digimon || card.IsDual) DropPendingUnderPlayed(State.Player);
 
         string effectSummary = string.Empty;
 
@@ -541,6 +542,7 @@ public partial class GoldfishEngine
         {
             var instance = new CardInstance(card, State.CurrentTurn);
             PlaceXrosMaterials(instance, xros);
+            PlacePendingUnderPlayed(instance);   // v0.34.0 "by placing ~ under it, reduce the play cost"
             State.Player.BattleArea.Add(instance);
             RecalculateFieldBuffs();
             if (card.Level == 3)
@@ -650,7 +652,8 @@ public partial class GoldfishEngine
         _playerAttackRedirect = null;
         defender = ApplyAttackKeywords(attacker, defender) ?? defender;
 
-        string resultMsg = ResolvePlayerAttackOnDigimon(attacker, defender);
+        // v0.34.0 "End the attack" — 배틀 없이 어택 종료
+        string resultMsg = ConsumeAttackEnd(attacker) ? $"[{attacker.TopCard.Name}]의 어택이 효과로 종료되었습니다." : ResolvePlayerAttackOnDigimon(attacker, defender);
         Log(resultMsg);
         EndAttack(attacker);
         return resultMsg;
@@ -721,7 +724,14 @@ public partial class GoldfishEngine
         _playerAttackRedirect = null;
 
         ActionResult result;
-        if ((ApplyAttackKeywords(attacker, redirected) ?? redirected) is { } raidTarget)
+        var raid = ApplyAttackKeywords(attacker, redirected) ?? redirected;
+        if (ConsumeAttackEnd(attacker))   // v0.34.0 "End the attack" — 시큐리티 체크 없이 어택 종료
+        {
+            string endMsg = $"[{attacker.TopCard.Name}]의 어택이 효과로 종료되었습니다.";
+            Log(endMsg);
+            result = ActionResult.Success(endMsg);
+        }
+        else if (raid is { } raidTarget)
         {
             string msg = ResolvePlayerAttackOnDigimon(attacker, raidTarget);
             Log(msg);
@@ -1245,7 +1255,7 @@ public partial class GoldfishEngine
                 ctx.AttacksDeclared++;
                 ctx.Attackers.Enqueue(next.Attacker);
                 // 정책이 고른 대상이 어택할 수 없는 디지몬(액티브 · 어택당하지 않음)이면 시큐리티로
-                ctx.AttackTarget = next.Target != null && State.Player.BattleArea.Contains(next.Target) && EffectRules.CanBeAttackTarget(next.Target) ? next.Target : null;
+                ctx.AttackTarget = next.Target != null && State.Player.BattleArea.Contains(next.Target) && EffectRules.CanBeAttackTargetFor(next.Attacker, next.Target) ? next.Target : null;
             }
 
             // 공격 도중 내 시큐리티 해머 스파크 등으로 AI 메모리가 0 미만이 되면 즉시 AI 턴 종료! (≪진격≫ 어택은 예외)
@@ -1261,10 +1271,14 @@ public partial class GoldfishEngine
                 ctx.BlitzAttacker = null;
             // 효과 어택 ("may attack"): 큐에 넣을 때 고른 대상 (그사이 사라졌거나 어택할 수 없게 됐으면 시큐리티)
             if (ctx.QueuedTargets.Remove(aiAttacker, out var queuedTarget))
-                ctx.AttackTarget = queuedTarget != null && State.Player.BattleArea.Contains(queuedTarget) && EffectRules.CanBeAttackTarget(queuedTarget) ? queuedTarget : null;
+                ctx.AttackTarget = queuedTarget != null && State.Player.BattleArea.Contains(queuedTarget) && EffectRules.CanBeAttackTargetFor(aiAttacker, queuedTarget) ? queuedTarget : null;
             bool noSuspend = ctx.NoSuspendAttackers.Remove(aiAttacker);
-            if (!State.DummyOpponent.BattleArea.Contains(aiAttacker) || (aiAttacker.IsSuspended && !noSuspend) || EffectRules.IsAttackLocked(State, aiAttacker))
+            if (!State.DummyOpponent.BattleArea.Contains(aiAttacker) || (aiAttacker.IsSuspended && !noSuspend) || EffectRules.IsAttackLocked(State, aiAttacker)
+                || (ctx.AttackTarget == null && !EffectRules.CanAttackPlayer(aiAttacker)))   // v0.34.0 "can't attack players"
+            {
+                ctx.AttackTarget = null;
                 continue;
+            }
 
             if (!noSuspend) SuspendAsAttacker(aiAttacker);
             State.OpponentAttackedThisTurn = true;
@@ -1291,7 +1305,8 @@ public partial class GoldfishEngine
                 _aiTurn = null;
                 return;
             }
-            if (!State.DummyOpponent.BattleArea.Contains(aiAttacker))
+            // v0.34.0 "End the attack" — [어택 시] · "어택했을 때" 효과가 어택을 끝냈다 (배틀 · 시큐리티 체크 없이)
+            if (!State.DummyOpponent.BattleArea.Contains(aiAttacker) || ConsumeAttackEnd(aiAttacker))
             {
                 EndAiAttack(ctx, aiAttacker);
                 continue;
@@ -1738,6 +1753,7 @@ public partial class GoldfishEngine
         cost = ApplyPlayCostOptions(opp, card, cost);
         var summoned = new CardInstance(card, State.CurrentTurn) { IsOwnersTurn = true };
         PlaceXrosMaterials(summoned, xros);
+        PlacePendingUnderPlayed(summoned);   // v0.34.0
         opp.BattleArea.Add(summoned);
         ctx.Memory -= cost;
         RecalculateFieldBuffs();

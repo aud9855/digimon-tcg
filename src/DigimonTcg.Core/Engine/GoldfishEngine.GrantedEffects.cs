@@ -25,7 +25,9 @@ public partial class GoldfishEngine
     {
         if (!CanEffectAttack(owner, attacker, withoutSuspending: false))
             return false;
-        var targets = EnemyOf(owner).BattleArea.Where(EffectRules.CanBeAttackTarget).ToList();
+        var targets = EnemyOf(owner).BattleArea.Where(t => EffectRules.CanBeAttackTargetFor(attacker, t)).ToList();
+        if (targets.Count == 0 && !EffectRules.CanAttackPlayer(attacker))   // v0.34.0 어택할 수 있는 곳이 없다
+            return false;
         if (!ReferenceEquals(owner, State.Player))
         {
             if (_aiTurn is not { } ctx || ctx.Attackers.Contains(attacker)) return false;   // 같은 시점의 두 번째 강제 어택은 어택하지 않는다 (Q&A EX5-048)

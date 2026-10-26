@@ -73,6 +73,15 @@ public sealed class EffectContext
     /// <summary>앞 문장에서 고른 대상 ("that Digimon" · "it"이 가리키는 디지몬)</summary>
     public List<CardInstance> LastTargets { get; set; } = new();
 
+    /// <summary>v0.34.0 앞의 비용 · 동작이 옮긴 매수 ("for each card trashed / placed / returned" · "reduce the play cost by 4 for each one")</summary>
+    public int PaidCount { get; set; }
+
+    /// <summary>v0.34.0 "Your opponent may delete ~"의 결과 ("If this effect didn't delete") — 읽으면 지운다</summary>
+    internal bool? LastDidDelete34 { get; set; }
+
+    /// <summary>v0.34.0 "Choose 1 of your Digimon"으로 고른 디지몬 ("the chosen Digimon")</summary>
+    internal CardInstance? Chosen34 { get; set; }
+
     /// <summary>앞 문장이 옮긴 카드 ("If it's a yellow card, ~" — 시큐리티에서 패에 넣은 카드 등)</summary>
     public CardData? LastCard { get; set; }
 

@@ -106,6 +106,16 @@ public static class CardScripts
     private static readonly PlayerZones NoZones = new();
 
     /// <summary>카드에 적힌 다른 진화 조건을 만족하는지 (예: 오메가몬은 Lv.6 레드 · 블루 디지몬에서 진화)</summary>
+    /// <summary>v0.34.0 "This Digimon can only digivolve into ~" — target이 evoCard로 진화할 수 있는지 (맨 위 카드의 효과 · 진화원 효과)</summary>
+    public static bool EvoAllowed(CardInstance target, CardData evoCard)
+    {
+        bool Ok((EffectSource Source, bool YourTurnOnly, Func<CardData, bool> Allowed) r) => (r.YourTurnOnly && !target.IsOwnersTurn) || r.Allowed(evoCard);
+        if (For(target.TopCard) is { } top && !top.EvoOnlyInto.Where(r => r.Source == EffectSource.Main).All(Ok)) return false;
+        foreach (var s in target.EvolutionSources)
+            if (For(s) is { } src && !src.EvoOnlyInto.Where(r => r.Source == EffectSource.Inherited).All(Ok)) return false;
+        return true;
+    }
+
     public static bool MeetsAlternativeEvolution(CardData evoCard, CardInstance target) =>
         For(evoCard)?.AlternativeEvolution?.Invoke(target) ?? false;
 
@@ -172,9 +182,9 @@ public sealed class CardScriptDefinition
         return On(EffectTrigger.Main, resolve);
     }
 
-    public CardScriptDefinition Static(StaticStat stat, EffectSource source, Func<StaticContext, int> value, Keyword? keyword = null, Func<CardInstance, bool>? subject = null)
+    public CardScriptDefinition Static(StaticStat stat, EffectSource source, Func<StaticContext, int> value, Keyword? keyword = null, Func<CardInstance, bool>? subject = null, bool excludeSource = false)
     {
-        _script.Statics.Add(new StaticEffect(stat, source, value) { Keyword = keyword, Subject = subject });
+        _script.Statics.Add(new StaticEffect(stat, source, value) { Keyword = keyword, Subject = subject, ExcludeSource = excludeSource });
         return this;
     }
 
@@ -224,6 +234,13 @@ public sealed class CardScriptDefinition
     }
 
     /// <summary>등장할 때 비용을 내면 코스트 -N ("When this card would be played, by ~ing, reduce the play cost by N")</summary>
+    /// <summary>v0.34.0 진화할 수 있는 카드를 제한한다 ("This Digimon can only digivolve into [Apocalymon]")</summary>
+    public CardScriptDefinition EvoOnlyInto(EffectSource source, bool yourTurnOnly, Func<CardData, bool> allowed)
+    {
+        _script.EvoOnlyInto.Add((source, yourTurnOnly, allowed));
+        return this;
+    }
+
     public CardScriptDefinition OptionalPlayCostReduction(PlayCostOption option)
     {
         _script.PlayCostOptions.Add(option);

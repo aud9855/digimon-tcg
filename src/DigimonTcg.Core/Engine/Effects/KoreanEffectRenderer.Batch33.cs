@@ -216,7 +216,7 @@ public static partial class KoreanEffectRenderer
         return Regex.Replace(t, @"(자신|상대)의 다른 ", "다른 $1의 ");
     }
 
-    private static bool IsTamerName33(string name) =>
+    internal static bool IsTamerName33(string name) =>
         Regex.IsMatch(name, @"^(?:Takuya Kanbara|Koji Minamoto|Erika Mishima|Analogman|Tai Kamiya|Matt Ishida|Davis Motomiya|Ken Ichijoji|Shu-Chong Wong|Kosuke Kisakata|Kyoko Kuremi|Dan Yuki|Kanan Yuki|Menoa Bellucci|Takato Matsuki|Marcus Damon|Nene Amano|Shuu Yulin|Zoe Orimoto|Tommy Himi|Koichi Kimura)$", RegexOptions.IgnoreCase);
 
     // =====================================================================

@@ -16,7 +16,7 @@ public static class EffectRules
     public static bool IsActive(int until, GameState state) => until > 0 && until >= state.TurnSequence;
 
     public static bool CanBlock(GameState state, CardInstance blocker) =>
-        blocker.HasBlocker && !blocker.IsSuspended && !IsActive(blocker.CannotBlockUntil, state) && !IsSuspendLocked(state, blocker);
+        blocker.HasBlocker && !CardScripts.HasKeyword(blocker, Keyword.CannotBlock) && !blocker.IsSuspended && !IsActive(blocker.CannotBlockUntil, state) && !IsSuspendLocked(state, blocker);
 
     /// <summary>attacker가 blocker에게 블록당하지 않는지</summary>
     public static bool IsUnblockableBy(GameState state, CardInstance attacker, CardInstance blocker) =>
@@ -40,7 +40,7 @@ public static class EffectRules
 
     /// <summary>blocker가 attacker의 어택을 블록할 수 있는지 (≪충돌≫이면 ≪블로커≫가 없어도)</summary>
     public static bool CanBlockAgainst(GameState state, CardInstance blocker, CardInstance attacker) =>
-        (blocker.HasBlocker || ForcesBlock(attacker)) && !blocker.IsSuspended && !IsActive(blocker.CannotBlockUntil, state) && !IsSuspendLocked(state, blocker);
+        (blocker.HasBlocker || ForcesBlock(attacker)) && !CardScripts.HasKeyword(blocker, Keyword.CannotBlock) && !blocker.IsSuspended && !IsActive(blocker.CannotBlockUntil, state) && !IsSuspendLocked(state, blocker);
 
     /// <summary>
     /// 상대(AI · 연습 더미)가 내 어택을 블록할 블로커. null = 블록하지 않음.
@@ -90,6 +90,17 @@ public static class EffectRules
     /// <summary>디지몬 어택의 대상이 될 수 있는지 (레스트 상태 · "어택당하지 않는다" 아님)</summary>
     public static bool CanBeAttackTarget(CardInstance digimon) =>
         digimon.IsSuspended && !CardScripts.HasKeyword(digimon, Keyword.CannotBeAttacked);
+
+    /// <summary>
+    /// v0.34.0 attacker가 이 디지몬에게 어택할 수 있는지 — "can't attack your opponent's Digimon" · "can also attack your opponent's unsuspended Digimon (with no digivolution cards)"
+    /// </summary>
+    public static bool CanBeAttackTargetFor(CardInstance attacker, CardInstance target) =>
+        !CardScripts.HasKeyword(attacker, Keyword.CannotAttackDigimon) && !CardScripts.HasKeyword(target, Keyword.CannotBeAttacked)
+        && (target.IsSuspended || CardScripts.HasKeyword(attacker, Keyword.CanAttackUnsuspended)
+            || (CardScripts.HasKeyword(attacker, Keyword.CanAttackUnsuspendedSourceless) && target.EvolutionSources.Count == 0));
+
+    /// <summary>v0.34.0 attacker가 플레이어(시큐리티)에게 어택할 수 있는지 — "can't attack players"</summary>
+    public static bool CanAttackPlayer(CardInstance attacker) => !CardScripts.HasKeyword(attacker, Keyword.CannotAttackPlayers);
 
     public static bool IsAttackLocked(GameState state, CardInstance digimon) =>
         IsActive(digimon.CannotAttackUntil, state) || IsActive(digimon.CannotSuspendUntil, state) || CardScripts.HasKeyword(digimon, Keyword.CannotAttack);   // 어택하면 레스트가 되므로 레스트 불가 = 어택 불가
@@ -300,7 +311,15 @@ public partial class GoldfishEngine
 
     private static void Resolve(EffectContext ctx, CardData card, CardEffect effect)
     {
+        var outerEffectCard = ctx.Engine.CurrentEffectCard;
+        try { ResolveCore(ctx, card, effect); }
+        finally { ctx.Engine.CurrentEffectCard = outerEffectCard; }
+    }
+
+    private static void ResolveCore(EffectContext ctx, CardData card, CardEffect effect)
+    {
         ctx.Card = card;
+        ctx.Engine.CurrentEffectCard = card;   // v0.34.0 "상대의 디지몬 · 옵션 카드의 효과를 받지 않는다"
         // "When one of your Digimon attacks, ~ give that Digimon +1000 DP" — 사건의 주인공 디지몬이 "that Digimon"
         ctx.LastTargets = ctx.Other != null && effect.Trigger is EffectTrigger.AllyDigimonAttacks or EffectTrigger.AllyDigimonPlayed
             or EffectTrigger.AllyDigimonDigivolved or EffectTrigger.AllyDigimonSuspended or EffectTrigger.OpponentDigimonAttacks
@@ -401,7 +420,7 @@ public partial class GoldfishEngine
                 if (effect.Value(ctx) != 0) inst.ActiveKeywords.Add(effect.Keyword!.Value);
             // 다른 카드가 주는 키워드 ("All of your level 4 or lower Digimon gain ＜Jamming＞") — 효과를 가진 카드 기준으로 조건 판단
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllyKeyword).Concat(TamerAuras(owner, enemy, StaticStat.AllyKeyword)))
-                if (aura.Keyword != null && (aura.Subject == null || aura.Subject(inst)) && aura.Value(auraCtx) != 0)
+                if (aura.Keyword != null && (aura.Subject == null || aura.Subject(inst)) && !(aura.ExcludeSource && ReferenceEquals(inst, auraCtx.Digimon)) && aura.Value(auraCtx) != 0)
                     inst.ActiveKeywords.Add(aura.Keyword.Value);
 
             inst.HasGrantedBlocker = EffectRules.IsActive(inst.GrantedBlockerUntil, State) || CardScripts.HasKeyword(inst, Keyword.Blocker);
@@ -416,14 +435,14 @@ public partial class GoldfishEngine
 
             // 다른 디지몬이 주는 효과 ("All of your black Digimon get +1000 DP") — 효과를 가진 디지몬 기준으로 조건 판단
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllyDigimonDp))
-                if (aura.Subject == null || aura.Subject(inst)) dp += aura.Value(auraCtx);
+                if ((aura.Subject == null || aura.Subject(inst)) && !(aura.ExcludeSource && ReferenceEquals(inst, auraCtx.Digimon))) dp += aura.Value(auraCtx);
             foreach (var link in inst.LinkedCards)   // 〈링크 중〉 이 디지몬의 DP +N
                 dp += LinkDp(link);
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllySecurityAttack).Concat(TamerAuras(owner, enemy, StaticStat.AllySecurityAttack)))
-                if (aura.Subject == null || aura.Subject(inst)) sec += aura.Value(auraCtx);
+                if ((aura.Subject == null || aura.Subject(inst)) && !(aura.ExcludeSource && ReferenceEquals(inst, auraCtx.Digimon))) sec += aura.Value(auraCtx);
             // 상대 카드가 주는 효과 ("All of your opponent's Digimon with no digivolution cards gain ＜Security A. -1＞")
             foreach (var (aura, auraCtx) in DigimonAuras(enemy, owner, StaticStat.EnemySecurityAttack).Concat(TamerAuras(enemy, owner, StaticStat.EnemySecurityAttack)))
-                if (aura.Subject == null || aura.Subject(inst)) sec += aura.Value(auraCtx);
+                if ((aura.Subject == null || aura.Subject(inst)) && !(aura.ExcludeSource && ReferenceEquals(inst, auraCtx.Digimon))) sec += aura.Value(auraCtx);
 
             inst.EffectDpBonus = dp;
             inst.EffectSecurityAttackBonus = sec;
@@ -569,6 +588,7 @@ public partial class GoldfishEngine
     /// <summary>side의 메모리 +amount (상대 쪽에서 보면 -amount)</summary>
     internal void AddMemory(PlayerZones side, int amount)
     {
+        if (amount > 0 && MemoryGainBlocked34(side)) return;   // v0.34.0 "Your opponent can't gain memory other than by Tamer effects"
         bool player = ReferenceEquals(side, State.Player);
         if (_aiTurn != null)
             _aiTurn.Memory += player ? -amount : amount;
@@ -634,6 +654,8 @@ public partial class GoldfishEngine
     {
         if (cause is DeletionCause.ZeroDp or DeletionCause.Cost)
             return false;
+        if (DeletionBlocked34(zones, inst, cause))   // v0.34.0 "can't be deleted in battle / by your opponent's effects"
+            return true;
         string name = inst.TopCard.Name;
 
         if (cause == DeletionCause.Battle && CardScripts.HasKeyword(inst, Keyword.Barrier) && zones.SecurityStack.Count > 0
@@ -1020,6 +1042,8 @@ public partial class GoldfishEngine
 
     internal void ReturnToHand(PlayerZones zones, CardInstance inst)
     {
+        if (ReturnBlocked34(zones, inst))   // v0.34.0 "can't be returned to the hand or deck by your opponent's effects"
+            return;
         if (TryPreventLeave(zones, inst, deletion: false, inBattle: false, destination: LeaveDestination.Hand))
             return;
         if (!zones.BattleArea.Remove(inst))
@@ -1054,6 +1078,8 @@ public partial class GoldfishEngine
     internal bool ApplyDpMinus(CardInstance target, int amount, string source)
     {
         var zones = OwnerOf(target);
+        if (DpReductionBlocked34(target))   // v0.34.0 "can't have its DP reduced"
+            return false;
         target.TemporaryDpBonus -= amount;
         target.ActiveSkillBuffLabels.Add($"🔻{source} (DP -{amount:N0})");
         Log($"[효과] {source}: {SideName(zones)} [{target.TopCard.Name}] DP -{amount:N0}");
@@ -1088,6 +1114,8 @@ public partial class GoldfishEngine
         }
 
         var zones = OwnerOf(target);
+        if (dp < 0 && DpReductionBlocked34(target))   // v0.34.0
+            return false;
         target.TimedDpBuffs.Add((dp, until));
         RecalculateFieldBuffs();
         if (dp >= 0 || target.TopCard.DP + target.GetTotalBonusDP() > 0)
@@ -1104,6 +1132,8 @@ public partial class GoldfishEngine
     /// <summary>디지몬을 덱 아래로 (맨 위 카드와 진화원 모두)</summary>
     internal void BottomDeck(PlayerZones zones, CardInstance inst)
     {
+        if (ReturnBlocked34(zones, inst))   // v0.34.0
+            return;
         if (TryPreventLeave(zones, inst, deletion: false, inBattle: false, destination: LeaveDestination.Deck))
             return;
         if (!zones.BattleArea.Remove(inst))
@@ -1244,7 +1274,7 @@ public partial class GoldfishEngine
     /// </summary>
     internal void EvolveByEffect(PlayerZones owner, CardInstance target, CardData evoCard, int cost, List<CardData>? from = null)
     {
-        if (EffectRules.IsDigivolveLocked(State, target))
+        if (EffectRules.IsDigivolveLocked(State, target) || !CardScripts.EvoAllowed(target, evoCard))   // v0.34.0 "can only digivolve into ~"
         {
             EffectLog(owner, $"[{target.TopCard.Name}]은(는) 진화할 수 없습니다 (카드 효과).");
             return;
@@ -1989,6 +2019,11 @@ public partial class GoldfishEngine
     /// <summary>[진화 시] 효과 (진화한 카드의 메인 효과)</summary>
     private void ApplyWhenDigivolvingEffects(PlayerZones owner, CardInstance target, CardData evoCard)
     {
+        if (CardScripts.HasKeyword(target, Keyword.CannotActivateWhenDigivolving))   // v0.34.0 "can't activate [When Digivolving] effects"
+        {
+            EffectLog(owner, $"[{evoCard.Name}]의 【진화 시】 효과는 효과로 발휘하지 않습니다.");
+            return;
+        }
         RunEffects(EffectTrigger.WhenDigivolving, owner, target, evoCard, includeInherited: false);
         RecalculateFieldBuffs();
     }
@@ -1999,11 +2034,16 @@ public partial class GoldfishEngine
 
     /// <summary>≪프로그레스≫: 어택 중인 이 디지몬은 상대의 효과를 받지 않는다 (effectOwner = 효과 주인)</summary>
     internal bool IsUnaffectedBy(PlayerZones effectOwner, CardInstance target) =>
-        ReferenceEquals(CurrentAttacker, target) && !OwnerOf(target).Equals(effectOwner) && CardScripts.HasKeyword(target, Keyword.Progress);
+        (ReferenceEquals(CurrentAttacker, target) && !OwnerOf(target).Equals(effectOwner) && CardScripts.HasKeyword(target, Keyword.Progress))
+        || UnaffectedByKeyword34(effectOwner, target);   // v0.34.0 "isn't affected by your opponent's (Digimon's) effects"
 
     private void TriggerWhenAttackingEffects(CardInstance attacker, CardInstance? defender)
     {
         CurrentAttacker = attacker;   // 어택 종료(EndAttack)까지 — ≪프로그레스≫ 판단
+        _attackEndRequested = null;   // v0.34.0 "End the attack"
+        if (CardScripts.HasKeyword(attacker, Keyword.CannotActivateWhenAttacking))   // v0.34.0 "can't activate [When Attacking] effects"
+            EffectLog(OwnerOf(attacker), $"[{attacker.TopCard.Name}]의 【어택 시】 효과는 효과로 발휘하지 않습니다.");
+        else
         RunEffects(EffectTrigger.WhenAttacking, OwnerOf(attacker), attacker, attacker.TopCard, other: defender);
         RecalculateFieldBuffs();
     }

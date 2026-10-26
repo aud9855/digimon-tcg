@@ -117,6 +117,9 @@ public static class ActionValidator
         if (EffectRules.IsDigivolveLocked(null, target))
             return ActionResult.Fail($"[{target.TopCard.Name}]은(는) 진화할 수 없습니다 (카드 효과).");
 
+        if (!CardScripts.EvoAllowed(target, evoCard))   // v0.34.0 "can only digivolve into ~"
+            return ActionResult.Fail($"[{target.TopCard.Name}]은(는) 카드 효과로 [{evoCard.Name}](으)로는 진화할 수 없습니다.");
+
         // 진화 조건을 무시하는 다른 진화 ("Your [Shoutmon] can digivolve into this card ~ for a memory cost of 4")
         if (!MeetsNormalEvolution(target, evoCard) && CardScripts.SpecialEvolutionCost(evoCard, target) is int special)
             return ActionResult.Success($"진화 코스트 {special} 지불 (카드 효과의 진화). 진화 성공 시 카드 1장을 추가로 드로우합니다.");
@@ -191,11 +194,19 @@ public static class ActionValidator
         if (state.BlitzAttacker != null && !ReferenceEquals(state.BlitzAttacker, attacker))
             return ActionResult.Fail($"≪진격≫으로는 [{state.BlitzAttacker.TopCard.Name}]만 어택할 수 있습니다.");
 
-        if (defenderTarget != null && !defenderTarget.IsSuspended)
-            return ActionResult.Fail("상대의 스탠드(Active) 상태 디지몬은 공격할 수 없습니다.");
-
         if (defenderTarget != null && CardScripts.HasKeyword(defenderTarget, Keyword.CannotBeAttacked))
             return ActionResult.Fail("이 디지몬은 카드 효과로 어택당하지 않습니다.");
+
+        // v0.34.0 "can't attack your opponent's Digimon" · "can also attack your opponent's unsuspended Digimon"
+        if (defenderTarget != null && CardScripts.HasKeyword(attacker, Keyword.CannotAttackDigimon))
+            return ActionResult.Fail("이 디지몬은 카드 효과로 상대의 디지몬에게 어택할 수 없습니다.");
+
+        if (defenderTarget != null && !EffectRules.CanBeAttackTargetFor(attacker, defenderTarget))
+            return ActionResult.Fail("상대의 스탠드(Active) 상태 디지몬은 공격할 수 없습니다.");
+
+        // v0.34.0 "can't attack players"
+        if (defenderTarget == null && !EffectRules.CanAttackPlayer(attacker))
+            return ActionResult.Fail("이 디지몬은 카드 효과로 플레이어에게 어택할 수 없습니다.");
 
         string guide;
         if (defenderTarget == null)

@@ -28,7 +28,7 @@ public partial class GoldfishEngine
                 break;
             var ctx = new EffectContext(this, owner, null, null, null) { Card = card };
             if (option.CanPay(ctx) && option.Recommend(ctx))
-                cost = Math.Max(0, cost - option.Reduce);
+                cost = Math.Max(0, cost - (option.PerCount ? option.Reduce * Math.Max(0, option.PreviewCount?.Invoke(ctx) ?? 1) : option.Reduce));
         }
         foreach (var (mod, ctx) in ApplicableFieldPlayCostModifiers(owner, card))
         {
@@ -52,8 +52,9 @@ public partial class GoldfishEngine
             if (!option.CanPay(ctx)
                 || !AskYesNo(owner, null, $"[{card.Name}] {option.Describe} {(CardScripts.IsUsableAsOption(card) ? "사용" : "등장")} 코스트를 {option.Reduce} 줄일까요?", option.Recommend(ctx)))
                 continue;
+            ctx.PaidCount = 0;
             option.Pay(ctx);
-            int reduced = Math.Min(option.Reduce, cost);
+            int reduced = Math.Min(option.PerCount ? option.Reduce * Math.Max(0, ctx.PaidCount) : option.Reduce, cost);   // v0.34.0 "for each one"
             cost -= reduced;
             EffectLog(owner, $"[{card.Name}] 비용을 내고 등장 코스트 -{reduced} (코스트 {cost})");
         }

@@ -160,15 +160,16 @@ public sealed class SmartAiPolicy : IAiPolicy
         if (attackers.Count == 0)
             return null;
 
-        var targets = new List<CardInstance?> { null };
-        targets.AddRange(state.Player.BattleArea.Where(EffectRules.CanBeAttackTarget));
-
         AiAttack? best = null;
         double bestScore = Tuning.AttackThreshold;
         foreach (var attacker in attackers)
         {
             // 혼자 남은 ≪블로커≫는 시큐리티를 지키도록 남겨 둔다 (다이렉트 어택 기회는 예외)
             bool loneBlocker = attacker.HasBlocker && ai.BattleArea.Count == 1;
+            // v0.34.0 어택 대상은 어택하는 디지몬마다 ("can't attack players" · "can also attack your opponent's unsuspended Digimon")
+            var targets = new List<CardInstance?>();
+            if (EffectRules.CanAttackPlayer(attacker)) targets.Add(null);
+            targets.AddRange(state.Player.BattleArea.Where(t => EffectRules.CanBeAttackTargetFor(attacker, t)));
             foreach (var target in targets)
             {
                 double score = AiBoard.AttackScore(state, attacker, target, Tuning);

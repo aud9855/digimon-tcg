@@ -47,6 +47,7 @@ public static partial class KoreanEffectRenderer
         _mentionedTarget = false;
         _eventOther = false;
         _tamerSubject = false;
+        _oppVerb34 = null;
         string clause = SentenceParser.NormalizeForRender(rawClause);
         _leaveKind = LeaveKindOf(clause);   // v0.32.0 "Prevent it"의 한글 (벗어나지 / 소멸하지 / 소멸하지 않고, 패/덱으로 되돌아가지)
         clause = Regex.Replace(clause, @"^(?:Inherited|Security) Effect\s*", "", RegexOptions.IgnoreCase).Trim();
@@ -92,6 +93,7 @@ public static partial class KoreanEffectRenderer
         if (Regex.Match(clause, @"^(?:For (?:each|every) (?<c1>[^,]+), add (?<n1>\d+) to this card's (?:use |play )?cost|Add (?<n2>\d+) to this card's (?:use |play )?cost for (?:each|every) (?<c2>.+?))\.?$", RegexOptions.IgnoreCase) is { Success: true } addc
             && CounterKo(addc.Groups["c1"].Success ? addc.Groups["c1"].Value : addc.Groups["c2"].Value) is { } addPer)
             return $"{addPer} 지불하는 사용 코스트를 +{(addc.Groups["n1"].Success ? addc.Groups["n1"].Value : addc.Groups["n2"].Value)} 한다.";
+        if (SentenceParser.PlayCostClause34.Match(clause) is { Success: true } pc34 && pc34.Groups["each"].Success && ClauseKo34(clause) is { } each34) return each34;   // v0.34.0 "~ for each one"
         if (Regex.Match(clause, @"^When (?:(?<play>this card would be played|you would play this card(?: from your hand)?)|you would use this card|this card would be used), (?:if (?<cond>(?:[^,]|,\s*(?=\[))+), )?(?:by (?<cost>[^,]+), |you may (?<cverb>suspend|trash|delete|return|place)\b(?<cobj>[^,]*?) to )?reduce (?:the|its|this card's) (?:play |use |memory )?cost by (?<n>\d+)(?: for (?:each|every) (?<cnt>[^,]+?))?(?: if (?<cond2>[^,]+?))?\.?$", RegexOptions.IgnoreCase) is { Success: true } red)
         {
             bool play = red.Groups["play"].Success;
@@ -107,6 +109,7 @@ public static partial class KoreanEffectRenderer
 
         if (ClauseKo31(clause) is { } clause31) return clause31;   // v0.31.0 (KoreanEffectRenderer.Batch31.cs)
         if (ClauseKo32(clause) is { } clause32) return clause32;   // v0.32.0 (KoreanEffectRenderer.Batch32.cs)
+        if (ClauseKo34(clause) is { } clause34) return clause34;   // v0.34.0 (KoreanEffectRenderer.Batch34.cs)
 
         var prefix = Regex.Match(clause, @"^((?:\s*\[[^\]]+\])*)\s*(.*)$");
         var labels = new List<string>();
@@ -170,6 +173,7 @@ public static partial class KoreanEffectRenderer
         Match m;
         if ((m = Regex.Match(s, @"^Then,?\s+(?<rest>.+)$", RegexOptions.IgnoreCase)).Success)
             return Sentence(Cap(m.Groups["rest"].Value)) is { } then ? "그 후, " + then : null;
+        if (PreSentenceKo34(s) is { } pre34) return pre34;   // v0.34.0 (KoreanEffectRenderer.Batch34.cs) — 1장씩 놓기 · "~ don't affect this Digimon and it gets ~"
         if (SentenceKo31(s) is { } sentence31) return sentence31;   // v0.31.0
         if (SentenceKo32(s) is { } sentence32) return sentence32;   // v0.32.0
 
@@ -280,7 +284,7 @@ public static partial class KoreanEffectRenderer
         // "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ ~" — 주어 뒤의 may (SentenceParser.ParseStep과 같은 읽기)
         if (direct == null && !may && Regex.Match(s, @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } sm)
             return Action($"{sm.Groups["t"].Value} {sm.Groups["v"].Value}s{sm.Groups["rest"].Value}", Form.May);
-        return direct ?? (may ? SentenceKo33(s, true) : null);   // v0.33.0 (KoreanEffectRenderer.Batch33.cs)
+        return direct ?? (may ? SentenceKo33(s, true) : null) ?? SentenceKo34(s, may);   // v0.33.0 (KoreanEffectRenderer.Batch33.cs) · v0.34.0 (Batch34)
     }
 
     // =====================================================================
@@ -323,6 +327,14 @@ public static partial class KoreanEffectRenderer
             string left = s[..and.Index].Trim(), right = s[(and.Index + and.Length)..].Trim();
             if (left.Length == 0 || right.Length == 0) continue;
             if (Act(left, Form.And) is { } a && Act(Cap(right), form) is { } b)
+                return $"{a}, {b}";
+        }
+        // v0.34.0 오른쪽이 제한 · 보호 문장 ("Trash ~ and this Digimon isn't affected by your opponent's effects until ~") — 원래 규칙이 읽지 못할 때만
+        foreach (Match and in Regex.Matches(s, @"\s+and\s+", RegexOptions.IgnoreCase))
+        {
+            string left = s[..and.Index].Trim(), right = s[(and.Index + and.Length)..].Trim();
+            if (left.Length == 0 || right.Length == 0) continue;
+            if (Act(left, Form.And) is { } a && RestrictionKo34(Cap(right), form == Form.May) is { } b)
                 return $"{a}, {b}";
         }
         return null;
@@ -837,6 +849,7 @@ public static partial class KoreanEffectRenderer
     {
         cost = cost.Trim().TrimEnd('.');
         Match m;
+        if (CostKoPre34(cost) is { } pre34) return pre34;   // v0.34.0 "returning up to 5 ~ from your trash ~"
         if (CostKo31(cost) is { } cost31) return cost31;   // v0.31.0
         // 공식 (BT21-083): "자신의 패에서 특징 「크로스 하트」/「블루 플레어」/「히어로」를 가진 디지몬 카드 1장을 이 테이머 아래에 놓는 것으로,"
         if ((m = Regex.Match(cost, @"^placing (?<pick>.+?) from your hand (?:face down )?under (?<who>this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success && PickKo(m.Groups["pick"].Value) is { } underK)
@@ -923,7 +936,7 @@ public static partial class KoreanEffectRenderer
             if (Core(verb + m.Groups["rest"].Value) is { } p)
                 return p.Render(Form.By) + ",";
         }
-        return CostKo32(cost) ?? CostKo33(cost);   // v0.32.0 (KoreanEffectRenderer.Batch32.cs) · v0.33.0 (Batch33)
+        return CostKo32(cost) ?? CostKo33(cost) ?? CostKo34(cost);   // v0.32.0 (KoreanEffectRenderer.Batch32.cs) · v0.33.0 (Batch33)
     }
 
     // =====================================================================
@@ -1125,7 +1138,7 @@ public static partial class KoreanEffectRenderer
             return Have("이 디지몬과 같은 명칭의 자신의 다른 디지몬이");
         if (Regex.IsMatch(cond, @"^(?:DNA digivolving|DigiXrosing|it DNA digivolved|this Digimon DNA digivolved)$", RegexOptions.IgnoreCase))
             return new(cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화했을 때,", "조그레스 진화한 동안,");
-        return CondKo32(cond) ?? CondKo33(cond);   // v0.32.0 · v0.33.0
+        return CondKo32(cond) ?? CondKo33(cond) ?? CondKo34(cond);   // v0.32.0 · v0.33.0
     }
 
     /// <summary>"When ~," 사건 → "~했을 때,"</summary>
@@ -1557,7 +1570,7 @@ public static partial class KoreanEffectRenderer
             return $"서로의 시큐리티 {Per(m)}장마다";
         if ((m = Regex.Match(counter, $@"^(?<x>{TargetSpec.NameList}) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
             return $"이 디지몬의 진화원의 {NamesKo(m.Groups["x"].Value)} 1장마다";
-        return CounterKo32(counter);   // v0.32.0
+        return CounterKo32(counter) ?? CounterKo34(counter);   // v0.32.0 · v0.34.0
     }
 
     // =====================================================================
@@ -1704,6 +1717,7 @@ public static partial class KoreanEffectRenderer
                 list.Add("이 디지몬의 DP 이하인");
             else if ((m = Regex.Match(rest, @"^with (?:a )?lower (?<w>DP|level) than this Digimon", RegexOptions.IgnoreCase)).Success)
                 list.Add($"이 디지몬보다 {(m.Groups["w"].Value.Equals("DP", StringComparison.OrdinalIgnoreCase) ? "DP가" : "Lv.이")} 낮은");
+            else if (FilterKo34(rest) is { } f34) { m = f34.M; list.Add(f34.Ko); }   // v0.34.0 (KoreanEffectRenderer.Batch34.cs)
             else return null;
             rest = rest[m.Length..].Trim().TrimStart(',').Trim();
         }
@@ -2079,9 +2093,28 @@ public static partial class KoreanEffectRenderer
         // v0.31.0 "Creepymon (X Antibody)" · "Sistermon Noir (Awakened)" — 용어집에 없으면 기본 이름 + "X항체" / "(각성)" (공식: 「베르제브몬 X항체」 · 「시스터몬 블랑(각성)」)
         : Regex.Match(en.Trim(), @"^(?<b>.+?) \((?<p>X Antibody|Awakened)\)$") is { Success: true } xp && Glossary.Value.Names.TryGetValue(xp.Groups["b"].Value, out var baseKo)
             ? (xp.Groups["p"].Value == "X Antibody" ? baseKo + " X항체" : baseKo + "(각성)")
+        : Glossary.Value.Names.Count > 0 && ExtraNames34.TryGetValue(en.Trim(), out var extra) ? extra   // v0.34.0 카드 이름이 아닌 이름 조각 (공식 한글 데이터가 있을 때만)
         : en.Trim();
 
-    internal static string TraitKo(string en) => Glossary.Value.Traits.TryGetValue(en.Trim(), out var ko) ? ko : en.Trim();
+    internal static string TraitKo(string en) => Glossary.Value.Traits.TryGetValue(en.Trim(), out var ko) ? ko
+        : Glossary.Value.Traits.Count > 0 && ExtraTraits34.TryGetValue(en.Trim(), out var extra) ? extra   // v0.34.0
+        : en.Trim();
+
+    /// <summary>
+    /// v0.34.0 카드 이름 그대로가 아닌 이름 조각 ("with [Sistermon] in its name") — 공식 한글 표기 (BT10-016 「시스터몬」 · BT13-068 「체스몬」 · BT12-021 「황제드라몬」 ·
+    /// ST8-03 「드라몬」 · BT9-029 「저스티몬」 · BT13-103 「벨페몬」/「기즈몬」 · EX2-021 「플러그인」). 용어집(공식 한글 데이터)이 있을 때만 쓴다
+    /// </summary>
+    private static readonly Dictionary<string, string> ExtraNames34 = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Sistermon"] = "시스터몬", ["Chessmon"] = "체스몬", ["Imperialdramon"] = "황제드라몬", ["Dramon"] = "드라몬",
+        ["Justimon"] = "저스티몬", ["Belphemon"] = "벨페몬", ["Gizmon"] = "기즈몬", ["Plug-In"] = "플러그인", ["Three Musketeers"] = "3총사",
+    };
+
+    /// <summary>v0.34.0 특징 조각 ("[Aqua] or [Sea Animal] in any of its traits") — 공식 (BT22-018 · P-164): 「수생」</summary>
+    private static readonly Dictionary<string, string> ExtraTraits34 = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Aqua"] = "수생",
+    };
 
     /// <summary>
     /// 카드 이름 · 특징 용어집: 영어 카드 캐시와 공식 한글 데이터(data/kr/cards_ko.json)를 카드 번호로 맞춰 만든다.

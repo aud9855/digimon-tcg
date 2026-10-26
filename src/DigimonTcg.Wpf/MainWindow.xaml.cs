@@ -2244,7 +2244,7 @@ public partial class MainWindow : Window
             // 옵션의 대상 조건(예: 전기 충격 = 레스트 상태)에 맞는 디지몬만 강조 · 클릭 대상
             bool isTargetForOption = _pendingHandCard != null && !_pendingIsEvolution && _pendingTargetsOpponent
                                      && CardScripts.IsValidMainTarget(_pendingHandCard, opp);
-            bool isTargetForAttack = _pendingAttackerInstance != null && opp.IsSuspended;
+            bool isTargetForAttack = _pendingAttackerInstance != null && EffectRules.CanBeAttackTargetFor(_pendingAttackerInstance, opp);   // v0.34.0 "can also attack your opponent's unsuspended Digimon"
             bool isHighlighted = isTargetForOption || isTargetForAttack;
 
             // 존에 놓인 카드 1장 (위: 카드 / 아래: 상태·이름·DP·대상 버튼)

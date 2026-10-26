@@ -250,6 +250,10 @@ public sealed class TargetSpec
                 bool dp = m.Value.Contains("DP", StringComparison.OrdinalIgnoreCase);
                 spec.ContextFilters.Add((c, d) => c.Self != null && (dp ? d.GetCurrentDP() < c.Self.GetCurrentDP() : d.TopCard.Level < c.Self.TopCard.Level));
             }
+            else if (ParseFilter34(rest, spec) is { } m34)
+            {
+                m = m34;   // v0.34.0 (아래 ParseFilter34)
+            }
             else
             {
                 return false;
@@ -264,6 +268,60 @@ public sealed class TargetSpec
             rest = rest[m.Length..].Trim().TrimStart(',').Trim();
         }
         return true;
+    }
+
+    /// <summary>
+    /// v0.34.0 대상 조건: "with as many or fewer digivolution cards as this Digimon" (공식 "진화원 매수가 이 디지몬 이하의") ·
+    /// "with as much or less DP as that Digimon" ("그 디지몬의 DP 이하의") · "with as high or lower a play cost as this Digimon" ("이 디지몬의 등장 코스트 이하의") ·
+    /// "with 2 or more colors" ("2색 이상인") · "with [X Antibody] in its digivolution cards" ("진화원에 「X항체」를 가진") · "without [X Antibody] trait"
+    /// </summary>
+    private static Match? ParseFilter34(string rest, TargetSpec spec)
+    {
+        Match m;
+        static CardInstance? That(EffectContext c) => c.LastTargets.FirstOrDefault() ?? c.Other;
+        if ((m = Regex.Match(rest, @"^(?:with |and )?(?:(?:as many or fewer|equal or fewer|the same number or fewer) digivolution cards (?:as|than) this Digimon(?:'s)?|as many digivolution cards as this Digimon or fewer|(?:digivolution cards )?less than or equal to (?:the number of )?this Digimon's digivolution cards)", RegexOptions.IgnoreCase)).Success)
+        { spec.ContextFilters.Add((c, d) => c.Self != null && d.EvolutionSources.Count <= c.Self.EvolutionSources.Count); return m; }
+        if ((m = Regex.Match(rest, @"^(?:with |and )?(?:as many or more|equal or more) digivolution cards (?:as|than) this Digimon", RegexOptions.IgnoreCase)).Success)
+        { spec.ContextFilters.Add((c, d) => c.Self != null && d.EvolutionSources.Count >= c.Self.EvolutionSources.Count); return m; }
+        if ((m = Regex.Match(rest, @"^with (?:DP less than or equal to|as much or less DP (?:as|than)|less or equal DP (?:as|than)) (?<w>this|that) Digimon(?:'s DP)?", RegexOptions.IgnoreCase)).Success)
+        {
+            bool that = m.Groups["w"].Value.Equals("that", StringComparison.OrdinalIgnoreCase);
+            spec.ContextFilters.Add((c, d) => (that ? That(c) : c.Self) is { } r && !ReferenceEquals(r, d) && d.GetCurrentDP() <= r.GetCurrentDP());
+            return m;
+        }
+        if ((m = Regex.Match(rest, @"^with (?:as high or lower a play cost as|a play cost less than or equal to|a play cost equal to or less than) (?<w>this|that) Digimon(?:'s play cost)?", RegexOptions.IgnoreCase)).Success)
+        {
+            bool that = m.Groups["w"].Value.Equals("that", StringComparison.OrdinalIgnoreCase);
+            spec.ContextFilters.Add((c, d) => (that ? That(c) : c.Self) is { } r && d.TopCard.PlayCost <= r.TopCard.PlayCost);
+            return m;
+        }
+        if ((m = Regex.Match(rest, @"^with (?:play costs? less than or equal to (?:the number of )?this Digimon's digivolution cards|as high or lower a play cost as the number of this Digimon's digivolution cards)", RegexOptions.IgnoreCase)).Success)
+        { spec.ContextFilters.Add((c, d) => c.Self != null && d.TopCard.PlayCost <= c.Self.EvolutionSources.Count); return m; }
+        // "Choose 1 of your Digimon. ~ with DP less than or equal to the chosen Digimon" · "~ with as much or less DP as it" · "~ with as many or fewer digivolution cards at that Digimon"
+        static CardInstance? Ref(EffectContext c) => c.Chosen34 ?? That(c);
+        if ((m = Regex.Match(rest, @"^with (?:DP less than or equal to (?:the DP of )?|as much or less DP (?:as|than) )(?:the chosen Digimon(?:'s DP)?|it\b)", RegexOptions.IgnoreCase)).Success)
+        { spec.ContextFilters.Add((c, d) => Ref(c) is { } r && !ReferenceEquals(r, d) && d.GetCurrentDP() <= r.GetCurrentDP()); return m; }
+        if ((m = Regex.Match(rest, @"^with (?:as many or fewer|equal or fewer) digivolution cards (?:as|at|than) (?:that Digimon|it\b|the chosen Digimon)", RegexOptions.IgnoreCase)).Success)
+        { spec.ContextFilters.Add((c, d) => Ref(c) is { } r && d.EvolutionSources.Count <= r.EvolutionSources.Count); return m; }
+        if ((m = Regex.Match(rest, @"^with (?:a level equal to or lower than|as high or lower a level as|a level less than or equal to) (?:that Digimon|it\b|the chosen Digimon)(?:'s level)?", RegexOptions.IgnoreCase)).Success)
+        { spec.ContextFilters.Add((c, d) => Ref(c) is { } r && d.TopCard.Level <= r.TopCard.Level); return m; }
+        // "with 4 or more [Vemmon] digivolution cards" · "with 4 or more [Vemmon] in its digivolution cards"
+        if ((m = Regex.Match(rest, $@"^(?:with |and )?(?<n>\d+) or more (?<x>{NameList}) (?:digivolution cards|in (?:its|their) digivolution cards)", RegexOptions.IgnoreCase)).Success)
+        { int n = int.Parse(m.Groups["n"].Value); var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => d.EvolutionSources.Count(s => xs.Any(x => CardNames.Is(s, x))) >= n); return m; }
+        if ((m = Regex.Match(rest, @"^(?:with |and )?(?<n>\d+) or more colors", RegexOptions.IgnoreCase)).Success)
+        { int n = int.Parse(m.Groups["n"].Value); spec.Filters.Add(d => d.TopCard.AllColors.Distinct().Count() >= n); return m; }
+        if ((m = Regex.Match(rest, $@"^(?<neg>with|without|and|or|that has|that have)?\s*(?<x>{NameList}) in (?:its|their) digivolution cards", RegexOptions.IgnoreCase)).Success)
+        {
+            var xs = Names(m.Groups["x"].Value);
+            bool without = m.Groups["neg"].Value.Equals("without", StringComparison.OrdinalIgnoreCase);
+            spec.Filters.Add(d => d.EvolutionSources.Any(s => xs.Any(x => NameHas(s, x) || HasTrait(s, x))) != without);
+            return m;
+        }
+        if ((m = Regex.Match(rest, $@"^without (?:the )?(?<x>{NameList}) traits?", RegexOptions.IgnoreCase)).Success)
+        { var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => !xs.Any(x => HasTrait(d.TopCard, x))); return m; }
+        if ((m = Regex.Match(rest, $@"^without (?<x>{NameList}) in (?:its|their) names?", RegexOptions.IgnoreCase)).Success)
+        { var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => !xs.Any(x => NameHas(d.TopCard, x))); return m; }
+        return null;
     }
 
     private static readonly Dictionary<string, Keyword> KeywordNames = new(StringComparer.OrdinalIgnoreCase)

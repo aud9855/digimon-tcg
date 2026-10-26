@@ -308,6 +308,8 @@ internal static partial class SentenceParser
             def?.OptionalPlayCostReduction(new PlayCostOption(int.Parse(paid.Groups["n"].Value), payCost.CanPay, payCost.Pay, payCost.Recommend, payCost.Describe, costText));
             return null;
         }
+        if (ClausePlayCost34(Normalize(clause), card, def) is { } pc34) return pc34.Length == 0 ? null : pc34;
+        if (ClauseMisc34(Normalize(clause), card, def) is { } misc34) return misc34.Length == 0 ? null : misc34;   // v0.34.0   // v0.34.0 (SentenceParser.Batch34.cs) — "~ for each one" · "When you would use this card, by ~"
         // 코스트 감소: "When this card would be played, if you have ~, reduce the play cost by 4."
         //  · "When you would play this card from your hand, reduce its play cost by 1 if you have a blue Digimon in play."
         //  · "~, reduce the play cost by 2 for each of your opponent's Digimon" · "~ by 4 for every 10 cards in your trash"
@@ -1587,6 +1589,20 @@ internal static partial class SentenceParser
 
     private static string? ParseStatic(string body, bool inherited, CardData card, Qualifier qualifier, Pending pending, Func<StaticContext, bool>? outer = null)
     {
+        // v0.34.0: 원래 규칙이 읽지 못한 지속 효과만 SentenceParser.Batch34의 규칙으로 (원래 규칙이 등록하던 것은 그대로)
+        var trial = new Pending();
+        string? err = ParseStaticCore(body, inherited, card, qualifier, trial, outer);
+        if (err != null)
+        {
+            var alt = new Pending();
+            if (ParseStatic34(body, inherited, card, qualifier, alt, outer) == null) { pending.Registrations.AddRange(alt.Registrations); return null; }
+        }
+        pending.Registrations.AddRange(trial.Registrations);
+        return err;
+    }
+
+    private static string? ParseStaticCore(string body, bool inherited, CardData card, Qualifier qualifier, Pending pending, Func<StaticContext, bool>? outer = null)
+    {
         var sentences = SplitSentences(body);
         if (sentences.Count != 1)
             return "문장 파서(3단계) 대상: 여러 문장의 지속 효과";
@@ -2419,7 +2435,9 @@ internal static partial class SentenceParser
 
         var act = ParseAction(s.TrimEnd('.'), card, triggers);
         if (act.Error != null && Compound32(s.TrimEnd('.'), card, triggers) is { } compound) act = compound;   // v0.32.0 "Suspend ~, and 1 of your Digimon gains ~" (SentenceParser.Batch32.cs)
+        if (act.Error != null && PreAction34(s.TrimEnd('.'), card, triggers) is { } pre34) act = pre34;   // v0.34.0 "Place 1 [A], [B] and [C] ~" (1장씩) — 7차 규칙보다 먼저
         if (act.Error != null && ParseAction33(s.TrimEnd('.'), card, triggers) is { } act33) act = act33;   // v0.33.0 (SentenceParser.Batch33.cs) — 원래 규칙이 읽지 못한 문장만
+        if (act.Error != null && ParseAction34(s.TrimEnd('.'), card, triggers) is { } act34) act = act34;   // v0.34.0 (SentenceParser.Batch34.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2492,7 +2510,7 @@ internal static partial class SentenceParser
         { int per = Per(m); return (o, e, _) => (o.Trash.Count + e.Trash.Count) / per; }
         if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?(?:total )?cards? in both players' security stacks$", RegexOptions.IgnoreCase)).Success)
         { int per = Per(m); return (o, e, _) => (o.SecurityStack.Count + e.SecurityStack.Count) / per; }
-        return ParseCounter32(counter);   // v0.32.0 (SentenceParser.Batch32.cs)
+        return ParseCounter32(counter) ?? ParseCounter34(counter);   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
     }
 
     private static string Gerund(string verb) => verb.ToLowerInvariant() switch
@@ -2649,17 +2667,21 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cost, @"^trashing (?<n>\d+) cards? (?:in|from) your hand$", RegexOptions.IgnoreCase)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);
-            return (c => c.Owner.Hand.Count >= n, c => c.Engine.DiscardFromHand(c.Owner, n), c => c.Owner.Hand.Count >= n + 2, $"패 {n}장을 버려");
+            return (c => c.Owner.Hand.Count >= n, c => c.PaidCount = c.Engine.DiscardFromHand(c.Owner, n), c => c.Owner.Hand.Count >= n + 2, $"패 {n}장을 버려");
         }
         // "trashing 1 card with the [X] trait in your hand" · "trashing 1 [X] trait card from your hand"
         if ((m = Regex.Match(cost, @"^trashing (?<pick>.+?) (?:in|from) your hand$", RegexOptions.IgnoreCase)).Success
             && (ParseCardPick(m.Groups["pick"].Value) ?? ParseNamePick(m.Groups["pick"].Value)) is { } pick)
         {
             var (n, match) = pick;
-            return (c => c.Owner.Hand.Count(match) >= n,
+            bool handUpTo = IsUpTo(m.Groups["pick"].Value);   // v0.34.0 "trashing up to 3 cards in your hand" — 1장 이상, 낸 매수는 PaidCount ("~ for each card trashed")
+            return (c => c.Owner.Hand.Count(match) >= (handUpTo ? 1 : n),
                     c =>
                     {
-                        var trashed = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Hand, c.Owner.Hand.Where(match).OrderBy(x => x.Level).ToList(), n, upTo: false, $"[{c.Card.Name}] 비용으로 버릴 패 {n}장을 고르세요.");
+                        var pool = c.Owner.Hand.Where(match).OrderBy(x => x.Level).ToList();
+                        int want = handUpTo && !c.OwnerIsPlayer ? Math.Min(n, Math.Max(1, c.Owner.Hand.Count - 2)) : n;
+                        var trashed = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Hand, pool, Math.Min(c.OwnerIsPlayer ? n : want, pool.Count), upTo: handUpTo, $"[{c.Card.Name}] 비용으로 버릴 패 {n}장{(handUpTo ? "까지" : "")}를 고르세요.");
+                        c.PaidCount = trashed.Count;
                         foreach (var x in trashed)
                         {
                             c.Owner.Hand.Remove(x);
@@ -2718,18 +2740,21 @@ internal static partial class SentenceParser
             bool top = m.Groups["pos"].Value.Equals("top", StringComparison.OrdinalIgnoreCase), toEggDeck = m.Groups["egg"].Success;
             if (toEggDeck && top) return null;
             Func<CardData, bool> ok = x => match(x) && (toEggDeck ? x.Type == CardType.Digitama : x.Type != CardType.Digitama);
-            return (c => c.Owner.Trash.Count(ok) >= n,
+            bool trashUpTo = IsUpTo(m.Groups["pick"].Value);   // v0.34.0 "returning up to 5 ~" — 1장 이상, 낸 매수는 PaidCount
+            return (c => c.Owner.Trash.Count(ok) >= (trashUpTo ? 1 : n),
                     c =>
                     {
-                        var picked = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Trash, c.Owner.Trash.Where(ok).OrderBy(x => x.Level).ToList(), n, upTo: false,
+                        var pool = c.Owner.Trash.Where(ok).OrderBy(x => x.Level).ToList();
+                        var picked = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Trash, pool, Math.Min(n, pool.Count), upTo: trashUpTo,
                             $"[{c.Card.Name}] 비용으로 트래시에서 {(toEggDeck ? "디지타마 덱" : "덱")} {(top ? "위" : "아래")}로 되돌릴 카드 {n}장을 고르세요.").ToList();
                         foreach (var x in picked) c.Owner.Trash.Remove(x);
                         if (toEggDeck) GoldfishEngine.AddToDigitamaDeckBottom(c.Owner, picked);
                         else if (top) c.Owner.MainDeck.InsertRange(0, picked);
                         else c.Owner.MainDeck.AddRange(picked);
                         if (!toEggDeck) c.Engine.NotifyTrashMoved(c.Owner, picked, toHand: false);   // v0.33.0 "When a card is returned to the deck from your trash"
+                        c.PaidCount = picked.Count;
                     },
-                    c => c.Owner.Trash.Count(ok) >= n + 3, $"트래시의 카드 {n}장을 {(toEggDeck ? "디지타마 덱" : "덱")} {(top ? "위" : "아래")}로 되돌려");
+                    c => trashUpTo ? c.Owner.Trash.Count(ok) >= 1 : c.Owner.Trash.Count(ok) >= n + 3, $"트래시의 카드 {n}장{(trashUpTo ? "까지" : "")}을 {(toEggDeck ? "디지타마 덱" : "덱")} {(top ? "위" : "아래")}로 되돌려");
         }
         if ((m = Regex.Match(cost, @"^deleting (?<n>\d+) of your (?<other>other )?Digimon$", RegexOptions.IgnoreCase)).Success)
         {
@@ -2759,7 +2784,7 @@ internal static partial class SentenceParser
         {
             bool delete = m.Groups["v"].Value.Equals("deleting", StringComparison.OrdinalIgnoreCase), other = m.Groups["other"].Success;
             string what = m.Groups["what"].Value.Trim();
-            if (!delete && !cost.Contains(" hand", StringComparison.OrdinalIgnoreCase)) return null;
+            if (!delete && !cost.Contains(" hand", StringComparison.OrdinalIgnoreCase)) return ParseCost34(cost, card);   // v0.34.0 읽지 못하면 8차 규칙으로
             Func<CardInstance, bool>? filter = null;
             if (Regex.IsMatch(what, @"^\[[^\]]+\](?:,? (?:or )?\[[^\]]+\])*$"))
             {
@@ -2767,7 +2792,7 @@ internal static partial class SentenceParser
                 filter = d => names.Any(n => TargetSpec.NameHas(d.TopCard, n));
             }
             else if (TargetSpec.Parse("all of your " + what) is { } spec) filter = d => spec.Filters.All(f => f(d));
-            if (filter == null) return null;
+            if (filter == null) return ParseCost34(cost, card);   // v0.34.0 테이머 ("returning 1 of your yellow Tamers to the hand") 등
             IEnumerable<CardInstance> Pool(EffectContext c) => c.Owner.BattleArea.Where(d => (!other || !ReferenceEquals(d, c.Self)) && filter(d))
                 .OrderBy(d => d.TopCard.Level).ThenBy(d => d.GetCurrentDP());
             return (c => Pool(c).Any(),
@@ -3095,7 +3120,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, @"^your opponent has (?<n>\d+) or (?<dir>fewer|less|more) memory$", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); bool more = m.Groups["dir"].Value == "more"; return c => more ? -c.OwnerMemory >= n : -c.OwnerMemory <= n; }
         if (ParseZoneCondition(cond) is { } zc) return c => zc(c.Owner);   // 육성 에어리어 · 트래시 매수 등 자신의 영역 조건
-        return ParseEventCondition33(cond);   // v0.33.0 (SentenceParser.Batch33b.cs)
+        return ParseEventCondition33(cond) ?? ParseEventCondition34(cond);   // v0.33.0 (SentenceParser.Batch33b.cs) · v0.34.0
     }
 
     // =====================================================================
