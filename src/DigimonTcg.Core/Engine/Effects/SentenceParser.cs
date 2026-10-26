@@ -11,7 +11,7 @@ namespace DigimonTcg.Core.Engine.Effects;
 /// 절 = [발동 시점 · 조건 표시]* + 문장들. 문장마다 "Then," · "If ~," · "You may" · 동작을 읽고,
 /// 하나라도 읽지 못하면 그 절 전체를 미지원으로 둔다 (조용히 일부만 처리하지 않는다).
 /// </summary>
-internal static class SentenceParser
+internal static partial class SentenceParser
 {
     private enum Qualifier { None, YourTurn, OpponentsTurn, AllTurns }
 
@@ -29,6 +29,7 @@ internal static class SentenceParser
         ["End of Your Turn"] = EffectTrigger.EndOfYourTurn,
         ["End of Opponent's Turn"] = EffectTrigger.EndOfOpponentsTurn,
         ["When Moving"] = EffectTrigger.WhenMoving,
+        ["Counter"] = EffectTrigger.Counter,   // v0.31.0 배틀 에어리어 디지몬의 【카운터】 (종합 룰 11-3)
     };
 
     private static readonly Dictionary<EffectTrigger, string> Labels = new()
@@ -38,7 +39,12 @@ internal static class SentenceParser
         [EffectTrigger.StartOfYourTurn] = "자신의 턴 개시 시", [EffectTrigger.EndOfAttack] = "어택 종료 시",
         [EffectTrigger.StartOfYourMainPhase] = "자신의 메인 페이즈 개시 시", [EffectTrigger.EndOfYourTurn] = "자신의 턴 종료 시",
         [EffectTrigger.DeletedOpponentInBattle] = "배틀에서 소멸시켰을 때", [EffectTrigger.AttackBlocked] = "블록당했을 때",
-        [EffectTrigger.EndOfOpponentsTurn] = "상대의 턴 종료 시",
+        [EffectTrigger.EndOfOpponentsTurn] = "상대의 턴 종료 시", [EffectTrigger.Counter] = "카운터",
+        // v0.31.0
+        [EffectTrigger.OpponentDigimonDigivolved] = "상대의 디지몬이 진화했을 때", [EffectTrigger.AllyTamerDeleted] = "자신의 테이머가 소멸했을 때",
+        [EffectTrigger.OpponentTamerDeleted] = "상대의 테이머가 소멸했을 때", [EffectTrigger.AllyTamerUnsuspended] = "테이머가 액티브가 되었을 때",
+        [EffectTrigger.UnderTamersTrashed] = "테이머 아래의 카드가 파기되었을 때", [EffectTrigger.AllyLinkCardsTrashed] = "링크 카드가 파기되었을 때",
+        [EffectTrigger.OpponentDeckTrashed] = "상대의 덱이 파기되었을 때", [EffectTrigger.AllyHandTrashed] = "자신의 패가 파기되었을 때",
         // 7단계 2차 — "시큐리티"라는 말은 넣지 않는다 (Emit이 [시큐리티] 결과 메시지로 보낸다)
         [EffectTrigger.OnLinked] = "링크 시", [EffectTrigger.ThisDigimonLinked] = "링크되었을 때", [EffectTrigger.AllyDigimonLinked] = "자신의 디지몬이 링크되었을 때",
         [EffectTrigger.AllyHatched] = "부화했을 때", [EffectTrigger.AllyDigimonMovedFromBreeding] = "육성 에어리어에서 이동했을 때",
@@ -202,17 +208,22 @@ internal static class SentenceParser
         // 진화 코스트 감소: "[Your Turn] [Once Per Turn] When this Digimon would digivolve into a Digimon card with the [CS] trait, reduce the digivolution cost by 2."
         //  · "When one of your Digimon would digivolve into ~, by trashing ~, reduce the cost by 1"
         //  · "When one of your Digimon with ~ would digivolve into this card in your hand, reduce the memory cost of the digivolution by 1" (패의 이 카드)
-        string evoText = Normalize(clause);
-        evoText = Regex.Replace(evoText, @"\bWhen you would digivolve this Digimon into\b", "When this Digimon would digivolve into", RegexOptions.IgnoreCase);
+        // v0.31.0: "When you would digivolve this Digimon into"는 Normalize("you may digivolve this Digimon into" → 주어를 앞으로)보다 먼저 바꾼다
+        string evoText = Normalize(Regex.Replace(clause, @"\bWhen you would digivolve this Digimon into\b", "When this Digimon would digivolve into", RegexOptions.IgnoreCase));
         evoText = Regex.Replace(evoText, @"\bWhen this Digimon or any of your Tamers would digivolve\b", "When this Digimon would digivolve", RegexOptions.IgnoreCase);
-        var evoMod = Regex.Match(evoText, @"^(?<labels>(?:\[[^\]]+\]\s*)*)When (?:this (?<sus>suspended )?Digimon|(?:one|any) of your (?<spec>[^,]*?Digimon(?: with [^,]+?)?)) would digivolve(?: into (?<into>[^,]+?))?, (?:if (?<cond>[^,]+), )?(?:by (?<cost>[^,]+?), )?reduce (?:the|its) (?:digivolution |memory )?cost(?: of the digivolution)? by (?<n>\d+)\.?$", RegexOptions.IgnoreCase);
+        var evoMod = Regex.Match(evoText, @"^(?<labels>(?:\[[^\]]+\]\s*)*)When (?:this (?<sus>suspended )?Digimon|(?:one|any) of your (?<spec>[^,]*?Digimon(?: with [^,]+?)?)|(?:one|any) of your (?<names>\[[^\]]+\](?: or \[[^\]]+\])*)|an? (?<spec>Digimon with [^,]+?)) would digivolve(?: into (?<into>[^,]+?))?, (?:if (?<cond>[^,]+), )?(?:by (?<cost>[^,]+?), )?reduce (?:the|its) (?:digivolution |memory )?cost(?: of the digivolution)? by (?<n>\d+)(?: for (?:each|every) (?<cnt>[^,]+?))?\.?$", RegexOptions.IgnoreCase);
         if (evoMod.Success)
         {
             string evoLabels = evoMod.Groups["labels"].Value;
             if (Regex.IsMatch(evoLabels, @"\[(?!Your Turn\]|Once Per Turn\])[^\]]+\]", RegexOptions.IgnoreCase)) return $"미지원 진화 코스트 감소 시점: {evoLabels.Trim()}";
-            var subject = evoMod.Groups["spec"].Success ? EvoCostSubject.AnyOwnDigimon : EvoCostSubject.ThisDigimon;
+            var subject = evoMod.Groups["spec"].Success || evoMod.Groups["names"].Success ? EvoCostSubject.AnyOwnDigimon : EvoCostSubject.ThisDigimon;
             Func<EffectContext, CardInstance, bool>? filter = evoMod.Groups["sus"].Success ? (_, d) => d.IsSuspended : null;
-            if (evoMod.Groups["spec"].Success && (filter = ParseAllySubject(evoMod.Groups["spec"].Value)) == null)
+            if (evoMod.Groups["names"].Success)   // v0.31.0 "one of your [Paildramon] or [Dinobeemon]" (BT3-111)
+            {
+                var evoNames = TargetSpec.Names(evoMod.Groups["names"].Value);
+                filter = (_, d) => evoNames.Any(x => CardNames.Is(d.TopCard, x));
+            }
+            if (evoMod.Groups["spec"].Success && (filter = AttackerSubject(evoMod.Groups["spec"].Value)) == null)
                 return $"미지원 진화 코스트 감소 대상: {evoMod.Groups["spec"].Value}";
             Func<CardData, bool>? into = null;
             if (evoMod.Groups["into"].Success)
@@ -236,9 +247,53 @@ internal static class SentenceParser
                 if (ParseCost(evoMod.Groups["cost"].Value, card) is not { } c) return $"미지원 비용 (진화 코스트 감소: by {evoMod.Groups["cost"].Value})";
                 evoPay = new PlayCostOption(reduceBy, c.CanPay, c.Pay, c.Recommend, c.Describe, evoMod.Groups["cost"].Value);
             }
+            // v0.31.0 "reduce the digivolution cost by 1 for each green or black Tamer you have in play" (BT11-059) · "~ for each color in your opponent's trash" (BT18-085)
+            Func<EffectContext, CardInstance, int>? times = null;
+            if (evoMod.Groups["cnt"].Success)
+            {
+                if (evoPay != null || ParseCounter(evoMod.Groups["cnt"].Value) is not { } evoCounter) return $"미지원 진화 코스트 감소 셈: for each {evoMod.Groups["cnt"].Value}";
+                times = (c, d) => Math.Min(evoCounter(c.Owner, c.Enemy, d), 20);
+            }
             def?.EvoCostModifier(new EvoCostModifier(inherited ? EffectSource.Inherited : EffectSource.Main, subject, filter, into, evoCond, evoPay, reduceBy,
                 OncePerTurn: evoLabels.Contains("[Once Per Turn]", StringComparison.OrdinalIgnoreCase),
-                YourTurnOnly: evoLabels.Contains("[Your Turn]", StringComparison.OrdinalIgnoreCase)));
+                YourTurnOnly: evoLabels.Contains("[Your Turn]", StringComparison.OrdinalIgnoreCase)) { Times = times });
+            return null;
+        }
+        // v0.31.0 다른 카드의 등장 코스트 감소 (필드 · 테이머 · [육성]): "[Your Turn] When any Digimon cards with the [ADVENTURE] trait would be played from your hand, by suspending this Tamer, reduce the play cost by 1."
+        //  · "[Your Turn] When you would play [MarineAngemon] from your hand, reduce its play cost by 1." · "[Breeding] [Your Turn] [Once Per Turn] When any of your Digimon cards with the [Eater] trait would be played, you may reduce the play costs by 1."
+        // v0.31.0 "[All Turns] This Digimon gains all effects of cards with [Gammamon] in their names in this Digimon's digivolution cards" ·
+        // "~ gains all effects of [Machinedramon] and [Chaosdramon] cards in ~" · "~ gains all effects of [Goldramon] in ~" (공식 Q&A BT16-062 · BT16-014 · BT12-072)
+        if (GainAllEffectsClause(Normalize(clause)) is { } gainWhich)
+        {
+            if (card.Type != CardType.Digimon) return "미지원: 디지몬이 아닌 카드의 효과 얻기";
+            def?.GainSourceEffects(inherited ? EffectSource.Inherited : EffectSource.Main, gainWhich);
+            return null;
+        }
+        if (FieldPlayCostClause(Normalize(clause)) is { } fpc)
+        {
+            string fpLabels = fpc.Groups["labels"].Value;
+            bool breeding = fpLabels.Contains("[Breeding]", StringComparison.OrdinalIgnoreCase);
+            if (breeding && card.Type != CardType.Digimon) return "미지원 시점 [Breeding]: 디지몬이 아닌 카드";
+            if (!breeding && inherited && card.Type != CardType.Digimon) return "미지원: 진화원 등장 코스트 감소";
+            if (FieldPlayCostTarget(fpc.Groups["p"].Value) is not { } which) return $"미지원 등장 코스트 감소 카드: {fpc.Groups["p"].Value}";
+            int n = int.Parse(fpc.Groups["n"].Value);
+            PlayCostOption? fpPay = null;
+            if (fpc.Groups["cost"].Success)
+            {
+                if (ParseCost(fpc.Groups["cost"].Value, card) is not { } c) return $"미지원 비용 (등장 코스트 감소: by {fpc.Groups["cost"].Value})";
+                fpPay = new PlayCostOption(n, c.CanPay, c.Pay, c.Recommend, c.Describe, fpc.Groups["cost"].Value);
+            }
+            Func<EffectContext, int>? fpTimes = null;
+            if (fpc.Groups["cnt"].Success)
+            {
+                if (ParseCounter(fpc.Groups["cnt"].Value) is not { } fpCounter) return $"미지원 등장 코스트 감소 셈: for each {fpc.Groups["cnt"].Value}";
+                fpTimes = c => fpCounter(c.Owner, c.Enemy, c.Self);
+            }
+            def?.FieldPlayCostModifier(new FieldPlayCostModifier(inherited ? EffectSource.Inherited : EffectSource.Main, which, n, fpPay,
+                Optional: fpc.Groups["may"].Success,
+                OncePerTurn: fpLabels.Contains("[Once Per Turn]", StringComparison.OrdinalIgnoreCase),
+                YourTurnOnly: fpLabels.Contains("[Your Turn]", StringComparison.OrdinalIgnoreCase),
+                Breeding: breeding) { Times = fpTimes });
             return null;
         }
         // 비용을 내는 코스트 감소: "When this card would be played, by deleting 1 of your Digimon, reduce the play cost by 4."
@@ -328,23 +383,37 @@ internal static class SentenceParser
             else return $"미지원 시점 [{label}]";
         }
         // "[Hand] [Main] ~" · "[Trash] [Main] ~" — 패 · 트래시의 이 카드로 쓰는 [메인] 기동 효과 (그 밖의 패 · 트래시 시점은 아직 미지원)
+        // v0.31.0 "[Trash] [Your Turn] When ~, ~" · "[Trash] [End of Your Turn] ~" — 트래시의 이 카드로 발휘하는 시점 효과 (EffectSource.Trash)
+        bool trashZoneEvent = false;
         if (zoneLabel != null)
         {
-            if (inherited || triggers.Count != 1 || triggers[0] != EffectTrigger.Main || qualifier != Qualifier.None)
+            bool trashLabel = zoneLabel.Equals("Trash", StringComparison.OrdinalIgnoreCase);
+            if (trashLabel && !inherited && !triggers.Contains(EffectTrigger.Main) && !triggers.Contains(EffectTrigger.Counter)
+                && (triggers.Count > 0 ? triggers.All(t => t is EffectTrigger.EndOfYourTurn or EffectTrigger.EndOfOpponentsTurn or EffectTrigger.StartOfYourTurn or EffectTrigger.StartOfYourMainPhase)
+                                       : Regex.IsMatch(body, @"^When ", RegexOptions.IgnoreCase)))
+                trashZoneEvent = true;
+            else if (inherited || triggers.Count != 1 || triggers[0] != EffectTrigger.Main || qualifier != Qualifier.None)
                 return $"미지원 시점 [{zoneLabel}]";
-            triggers[0] = zoneLabel.Equals("Hand", StringComparison.OrdinalIgnoreCase) ? EffectTrigger.HandMain : EffectTrigger.TrashMain;
+            else
+                triggers[0] = zoneLabel.Equals("Hand", StringComparison.OrdinalIgnoreCase) ? EffectTrigger.HandMain : EffectTrigger.TrashMain;
         }
+        if (triggers.Contains(EffectTrigger.Counter) && (card.Type != CardType.Digimon || zoneLabel != null))
+            return "미지원 시점 [Counter]";
 
         // "When this Digimon ~, ~" — 문장 안의 발동 시점
         Func<EffectContext, bool>? eventCondition = null;
         var when = Regex.Match(body, @"^When (?<ev>[^,]+), (?<rest>.+)$", RegexOptions.IgnoreCase);
+        // v0.31.0 사건 안의 쉼표 목록 ("[Social], [Creation], [Navi] or [Tool] trait") — 원래 나눈 사건을 읽지 못할 때만 다시 나눈다
+        if (when.Success && ParseEventPhrase(when.Groups["ev"].Value) == null && Regex.Match(body, WhenWithListPattern, RegexOptions.IgnoreCase) is { Success: true } whenList
+            && whenList.Groups["ev"].Value != when.Groups["ev"].Value && ParseEventPhrase(whenList.Groups["ev"].Value) != null)
+            when = whenList;
         if (triggers.Count == 0 && when.Success)
         {
             var ev = ParseEventPhrase(when.Groups["ev"].Value);
             if (ev == null)
             {
                 // "[Your Turn] When this Digimon has [Omnimon] in its name, it gets +2000 DP" — 사건이 아니라 상태: While로 읽는다
-                if (ParseStaticCondition(when.Groups["ev"].Value) != null)
+                if (!trashZoneEvent && ParseStaticCondition(when.Groups["ev"].Value) != null)
                 {
                     var staticPending = new Pending();
                     if (ParseStatic($"While {when.Groups["ev"].Value}, {when.Groups["rest"].Value}", inherited, card, qualifier, staticPending) == null)
@@ -358,6 +427,9 @@ internal static class SentenceParser
             triggers.AddRange(ev.Value.Triggers);
             eventCondition = ev.Value.Condition;
             body = when.Groups["rest"].Value;
+            // v0.31.0 [트래시] 시점: 엔진이 트래시에도 알리는 사건(FireForSide)만 — "떠나려 할 때" · 이 디지몬의 시점은 아직 아님
+            if (trashZoneEvent && !triggers.All(TrashZoneTriggerOk))
+                return "미지원 시점 [Trash]";
             // 막기만 하는 "떠나려 할 때" 효과는 막을 수 없는 소멸(DP 0 · 코스트)에서는 발휘하지 않는다 (비용만 내게 되므로)
             if (triggers.Any(t => t is EffectTrigger.ThisDigimonWouldLeave or EffectTrigger.ThisDigimonWouldBeDeleted or EffectTrigger.AllyDigimonWouldLeave or EffectTrigger.AllyDigimonWouldBeDeleted)
                 && Regex.IsMatch(body, @"\b(?:prevent|doesn't leave|does not leave|don't leave|isn't deleted|is not deleted|aren't deleted)\b", RegexOptions.IgnoreCase))
@@ -381,13 +453,24 @@ internal static class SentenceParser
         }
 
         var pending = new Pending();
-        string? error = triggers.Count == 0
-            ? ParseStatic(body, inherited, card, qualifier, pending)
-            : ParseTriggered(body, inherited, card, triggers, qualifier, oncePerTurn, pending, eventCondition, twicePerTurn);
+        string? error;
+        bool outerTrashZone = _trashZoneParse;
+        _trashZoneParse = trashZoneEvent;   // v0.31.0 [트래시] 시점: "this card"는 트래시의 이 카드 (비용 · 동작이 본다)
+        try
+        {
+            error = triggers.Count == 0
+                ? ParseStatic(body, inherited, card, qualifier, pending)
+                : ParseTriggered(body, inherited, card, triggers, qualifier, oncePerTurn, pending, eventCondition, twicePerTurn);
+        }
+        finally { _trashZoneParse = outerTrashZone; }
         if (error != null)
             return error;
         if (def != null)
-            foreach (var r in pending.Registrations) r(def);
+        {
+            if (trashZoneEvent) def.ZoneSource = EffectSource.Trash;
+            try { foreach (var r in pending.Registrations) r(def); }
+            finally { def.ZoneSource = null; }
+        }
         return null;
     }
 
@@ -619,11 +702,19 @@ internal static class SentenceParser
         s = Regex.Replace(s, @"\b(rest|cards) the the (bottom|top)\b", "$1 to the $2", RegexOptions.IgnoreCase);   // 원문 오타 "Return the rest the the bottom"
         s = Regex.Replace(s, @"\bBy Reveal\b", "Reveal");   // 원문 오타 "By Reveal the top 4 cards"
         s = Regex.Replace(s, @"\bBy trash (?=\d)", "By trashing ");   // 원문 오타 "By trash 1 card in your hand" (v0.30.0)
+        // v0.31.0 원문 표기 정리: 꺾쇠 없는 "Draw 1" (BT26-002 · BT23-016 · P-190) · "cards in hand" · "reveal 3 cards from the top of your deck" · "both player's trashes"
+        s = Regex.Replace(s, @"(?<=^|[.,]\s|\]\s?)Draw (\d+)(?=\.|$|,| and\b)", "＜Draw $1＞");
+        s = Regex.Replace(s, @"\bboth players ＜Draw (\d+)＞", "Both players ＜Draw $1＞", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\b(you have \d+ or (?:fewer|more|less)) cards in hand\b", "$1 cards in your hand", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\breveal (\d+) cards from the top of your deck\b", "reveal the top $1 cards of your deck", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\bboth player's trash(es)?\b", "both players' trash$1", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"(?<=returning this card to the bottom of (?:the|your) deck, )activate its \[Main\] effects", "activate this card's [Main] effects", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\b(?<head>[Pp]lace (?:\d+|up to \d+) [^.]+? from your trash) as (?:the|your) top security cards?\b", "${head} on top of your security stack");
         s = Regex.Replace(s, @"\bthe Digimon (?:this|this card|it) was placed under\b", "that Digimon", RegexOptions.IgnoreCase);   // "attack ~ with the Digimon this was placed under"
         // 어택: "you may attack with this Digimon without suspending it" → "this Digimon may attack without suspending"
         s = Regex.Replace(s, @"\byou may attack with (?<t>this Digimon|it|that Digimon)(?<nosus> without suspending(?: it)?)?(?=[.,]|$)", "${t} may attack${nosus}", RegexOptions.IgnoreCase);
         // 진화: "you may digivolve this Digimon into ~" → "this Digimon may digivolve into ~" (주어를 앞으로)
-        s = Regex.Replace(s, @"\b(?:you may )?digivolve (?<t>this Digimon|\d+ of your (?:other )?[^,.]*?Digimon(?: with [^,.]+?)?) into\b", "${t} may digivolve into", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"(?<!\bwould )\b(?:you may )?digivolve (?<t>this Digimon|\d+ of your (?:other )?[^,.]*?Digimon(?: with [^,.]+?)?) into\b", "${t} may digivolve into", RegexOptions.IgnoreCase);
         // "~ for its digivolution cost. When it would digivolve by this effect, reduce the cost by 2." → "~ for its digivolution cost with the digivolution cost reduced by 2."
         s = Regex.Replace(s, @"(?<head>for its digivolution cost)\.\s*When (?:digivolving|(?:it|this Digimon|that Digimon) would digivolve) (?:by|with|using) this effect, (?:reduce|yellowuce) the (?:digivolution )?cost by (?<n>\d+)\.?", "${head} with the digivolution cost reduced by ${n}.", RegexOptions.IgnoreCase);   // "yellowuce" = 원문 오타
         s = Regex.Replace(s, @"\[(?<a>[^\]]+)\] trait or \[(?<b>[^\]]+)\] trait\b", "[${a}] or [${b}] trait");   // "the [A] trait or [B] trait" = "the [A] or [B] trait"
@@ -635,6 +726,8 @@ internal static class SentenceParser
         s = Regex.Replace(s, @"\b(?<a>\d+ (?:Digimon|Tamer|Option) cards?) and (?<b>\d+ (?:Digimon|Tamer|Option) cards?)\s*[―—-]\s*both (?<w>with [^―—]+?)\s*[―—-]\s*", "${a} ${w} and ${b} ${w} ", RegexOptions.IgnoreCase);
         s = Regex.Replace(s, @"\byou have (\d+) or (fewer|less|more) cards in your security stack\b", "you have $1 or $2 security cards", RegexOptions.IgnoreCase);
         s = Regex.Replace(s, @"\byou have (\d+) security cards or (fewer|less|more)\b", "you have $1 or $2 security cards", RegexOptions.IgnoreCase);
+        // v0.31.0 카드명 안의 괄호 "[Beelzemon (X Antibody)]" · "[Sistermon Blanc (Awakened)]"는 설명문이 아니라 이름의 일부 — 지우면 "[Beelzemon]"과 같아진다
+        s = Regex.Replace(s, @"\[(?<n>[^\]\(\)]+) \((?<p>X Antibody|Awakened)\)\]", "[${n} ⟮${p}⟯]");
         // ＜Recovery +1 (Deck)＞ 같은 키워드 안 괄호를 잠시 바꿔 두고, 설명문 괄호를 지운다
         s = Regex.Replace(s, @"[＜<]([^＞>]*)[＞>]", m => "＜" + m.Groups[1].Value.Replace("(", "⟮").Replace(")", "⟯") + "＞");
         s = Regex.Replace(s, @"\s*\((?:[^()]|\([^()]*\))*\)", "");
@@ -643,6 +736,18 @@ internal static class SentenceParser
         s = Regex.Replace(s, @"\s+([.,])", "$1");
         return s;
     }
+
+    /// <summary>v0.31.0 "When ~,"의 사건에 쉼표가 든 이름 · 특징 목록 (쉼표 뒤가 "["이면 사건의 일부)</summary>
+    internal const string WhenWithListPattern = @"^When (?<ev>(?:[^,\[]|\[[^\]]*\]|,\s*(?=\[))+), (?<rest>.+)$";
+
+    /// <summary>v0.31.0 [트래시] 시점 효과로 읽을 수 있는 사건 (엔진이 FireForSide로 트래시에도 알리는 것)</summary>
+    private static bool TrashZoneTriggerOk(EffectTrigger t) => t is EffectTrigger.AllyDigimonDeleted or EffectTrigger.OpponentDigimonDeleted
+        or EffectTrigger.AllyDigimonPlayed or EffectTrigger.OpponentDigimonPlayed or EffectTrigger.AllyDigimonDigivolved or EffectTrigger.OpponentDigimonDigivolved
+        or EffectTrigger.AllyDigimonAttacks or EffectTrigger.OpponentDigimonAttacks or EffectTrigger.AllyDigimonSuspended or EffectTrigger.OpponentDigimonSuspended
+        or EffectTrigger.AllyTamerPlayed or EffectTrigger.OpponentTamerPlayed or EffectTrigger.AllyTamerSuspended or EffectTrigger.AllyOptionUsed or EffectTrigger.OpponentOptionUsed
+        or EffectTrigger.AllyHandTrashed or EffectTrigger.OpponentHandTrashed or EffectTrigger.AllyDeckTrashed or EffectTrigger.OpponentDeckTrashed
+        or EffectTrigger.AllySecurityRemoved or EffectTrigger.OpponentSecurityRemoved or EffectTrigger.AllySecurityAdded
+        or EffectTrigger.AllyDigimonUnsuspended or EffectTrigger.OpponentDigimonUnsuspended or EffectTrigger.AllyTamerDeleted or EffectTrigger.OpponentTamerDeleted;
 
     /// <summary>"When ~," 문장 안의 발동 시점 → 엔진 시점 + 추가 조건 (예: "your other Digimon" = 자신이 아닌 디지몬)</summary>
     private static (List<EffectTrigger> Triggers, Func<EffectContext, bool>? Condition)? ParseEventPhrase(string ev)
@@ -1202,7 +1307,7 @@ internal static class SentenceParser
                 && (!mine || ReferenceEquals(c.Engine.CurrentSourceEffectOwner, c.Owner))
                 && c.Engine.CurrentSourceCards.Any(what));
         }
-        return null;
+        return ParseEventPhrase31(ev);   // v0.31.0 (SentenceParser.Batch31.cs)
     }
 
     /// <summary>
@@ -1988,7 +2093,7 @@ internal static class SentenceParser
                 raw = raw[..further.Index] + $"{further.Groups["it"].Value} gets {further.Groups["dp"].Value} {prevDur.Groups["dur"].Value}.";
             // v0.30.0 "For each of your other Digimon, add 1 to this effect's level maximum." · "If ~, add 1 to this effect's level maximum." —
             // 앞 문장의 상한(Lv. · 등장 코스트 · DP)을 늘린다 (공식 BT18-029 "다른 자신의 디지몬 1마리마다 이 효과의 Lv. 상한 +1")
-            var maxUp = Regex.Match(raw.Trim().TrimEnd('.'), @"^(?:For (?:each|every) (?<cnt>.+?)|If (?<cond>[^,]+)), add (?<n>\d+) to this effect's (?<what>choosable levels|level maximum|maximum level|play cost maximum|maximum play cost|DP maximum|maximum DP|DP reduction)$", RegexOptions.IgnoreCase);
+            var maxUp = Regex.Match(raw.Trim().TrimEnd('.'), @"^(?:For (?:each|every) (?<cnt>.+?)|If (?<cond>[^,]+)), add (?<n>\d+) to (?:this effect's (?<what>choosable levels|level maximum|maximum level|play cost maximum|maximum play cost|DP maximum|maximum DP|DP reduction)|the (?<what>maximum(?: [^.]*)?)|this (?<what>level deletion effect's maximum))$", RegexOptions.IgnoreCase);
             if (maxUp.Success)
             {
                 if (steps.Count == 0 || lastStepRaw == null) return "미지원 상한 늘리기 (앞 문장 없음)";
@@ -2073,8 +2178,10 @@ internal static class SentenceParser
             : what.Contains("play cost") ? @"\bplay cost (?:of )?(?<v>\d+) or (?:lower|less)\b"
             : what.Contains("reduction") ? @"\bgets? -(?<v>\d+) DP\b"   // "add 1000 to this effect's DP reduction" (BT27-043) — 마이너스 값을 늘린다
             : @"\b(?<v>\d+) DP or (?:lower|less)\b";
-        var thresholds = Regex.Matches(prevRaw, pattern, RegexOptions.IgnoreCase);
-        if (thresholds.Count != 1) return null;
+        // v0.31.0 합계로 고르는 효과의 상한 ("whose total DP adds up to 4000 or less" · "up to 8 play cost's total worth") — "add 3000 to the maximum you can choose with this effect"
+        var totals = Regex.Matches(prevRaw, @"\b(?:adds? up to|up to) (?<v>\d+)(?= or (?:less|lower)\b| (?:DP|play cost's|play costs'|levels') total worth\b)", RegexOptions.IgnoreCase);
+        var thresholds = totals.Count == 1 ? totals : Regex.Matches(prevRaw, pattern, RegexOptions.IgnoreCase);
+        if (thresholds.Count != 1 || (totals.Count != 1 && what.StartsWith("maximum") && !what.Contains("level") && !what.Contains("play cost") && !what.Contains("dp"))) return null;
         var thr = thresholds[0].Groups["v"];
         int baseValue = int.Parse(thr.Value), per = int.Parse(up.Groups["n"].Value);
         Func<EffectContext, int> times;
@@ -2319,11 +2426,15 @@ internal static class SentenceParser
             return (_, e, _) => e.BattleArea.Count;
         if (Regex.IsMatch(counter, @"^(?:of your opponent's Digimon with no digivolution cards|Digimon with no digivolution cards your opponent has)$", RegexOptions.IgnoreCase))
             return (_, e, _) => e.BattleArea.Count(d => d.EvolutionSources.Count == 0);
-        if ((m = Regex.Match(counter, $@"^(?:of your (?:(?<color>{Colors}) )?Tamers|(?:(?<color>{Colors}) )?Tamer you have(?: in play)?)$", RegexOptions.IgnoreCase)).Success)
+        if ((m = Regex.Match(counter, $@"^(?:of your (?:(?<color>(?:{Colors})(?: or (?:{Colors}))*) )?Tamers|(?:(?<color>(?:{Colors})(?: or (?:{Colors}))*) )?Tamer you have(?: in play)?)$", RegexOptions.IgnoreCase)).Success)
         {
-            CardColor? color = m.Groups["color"].Success ? Enum.Parse<CardColor>(m.Groups["color"].Value, ignoreCase: true) : null;
-            return (o, _, _) => o.Tamers.Count(t => color == null || t.AllColors.Contains(color.Value));
+            // v0.31.0 "green or black Tamer you have in play" (BT11-059) — 색 여럿은 그중 하나
+            var colors = Regex.Matches(m.Groups["color"].Value, Colors, RegexOptions.IgnoreCase).Select(x => Enum.Parse<CardColor>(x.Value, ignoreCase: true)).ToList();
+            return (o, _, _) => o.Tamers.Count(t => colors.Count == 0 || t.AllColors.Any(colors.Contains));
         }
+        // v0.31.0 "color in your opponent's trash" · "2 colors in your opponent's trash" (BT18-085) — 트래시의 카드의 색 수
+        if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?colou?rs? in your (?<opp>opponent's )?trash$", RegexOptions.IgnoreCase)).Success)
+        { int per = Per(m); bool opp = m.Groups["opp"].Success; return (o, e, _) => (opp ? e : o).Trash.SelectMany(c => c.AllColors).Distinct().Count() / per; }
         if ((m = Regex.Match(counter, @"^(?:of your (?<other>other )?(?<sus>suspended )?Digimon|(?<other>other )?(?<sus>suspended )?Digimon you have)(?: in play)?$", RegexOptions.IgnoreCase)).Success)
         {
             bool other = m.Groups["other"].Success, sus = m.Groups["sus"].Success;
@@ -2369,6 +2480,7 @@ internal static class SentenceParser
     {
         cost = cost.Trim();
         Match m;
+        if (ParseCost31(cost, card) is { } cost31) return cost31;   // v0.31.0 (SentenceParser.Batch31.cs)
         // ≪디지버스트≫: 이 디지몬의 진화원 N장 파기 (아래쪽부터 — 오래된 카드)
         if ((m = Regex.Match(cost, @"^trashing (?<n>\d+) of this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
         {
@@ -2495,7 +2607,12 @@ internal static class SentenceParser
         {
             int n = m.Groups["n"].Success ? int.Parse(m.Groups["n"].Value) : 1;
             return (c => c.Owner.UnderTamers.Count >= n,
-                    c => { for (int i = 0; i < n; i++) { var x = c.Owner.UnderTamers[^1]; c.Owner.UnderTamers.RemoveAt(c.Owner.UnderTamers.Count - 1); c.Owner.Trash.Add(x); } },
+                    c =>
+                    {
+                        var trashed = new List<CardData>();
+                        for (int i = 0; i < n; i++) { var x = c.Owner.UnderTamers[^1]; c.Owner.UnderTamers.RemoveAt(c.Owner.UnderTamers.Count - 1); c.Owner.Trash.Add(x); trashed.Add(x); }
+                        c.Engine.NotifyUnderTamersTrashed(c.Owner, trashed);   // v0.31.0 "When effects trash cards from under your Tamers"
+                    },
                     _ => true, $"테이머 아래 카드 {n}장을 파기하여");
         }
         if (Regex.IsMatch(cost, @"^trashing (?:the top card of your security stack|your top security card)$", RegexOptions.IgnoreCase))
@@ -2642,12 +2759,14 @@ internal static class SentenceParser
             return (c => c.Self != null && c.Self.LinkedCards.Count >= n,
                     c =>
                     {
+                        int trashedLinks = 0;
                         foreach (var x in c.Engine.ChooseCards(c.Owner, CardChoiceZone.Other, c.Self!.LinkedCards.OrderBy(x => GoldfishEngine.LinkDp(x)).ToList(), n, upTo: false, $"[{c.Card.Name}] 비용으로 쓸 링크 카드 {n}장을 고르세요."))
                         {
                             if (!c.Self.LinkedCards.Remove(x)) continue;
-                            if (trash) c.Owner.Trash.Add(x); else c.Self.AddBottomSource(x);
+                            if (trash) { c.Owner.Trash.Add(x); trashedLinks++; } else c.Self.AddBottomSource(x);
                         }
                         c.RecalculateFieldBuffs();
+                        c.Engine.NotifyLinkCardsTrashed(c.Owner, c.Self, trashedLinks);   // v0.31.0 "When effects trash any of this Digimon's link cards"
                     },
                     _ => true, trash ? $"링크 카드 {n}장을 파기하여" : $"링크 카드 {n}장을 진화원 맨 아래에 놓아");
         }
@@ -2688,6 +2807,9 @@ internal static class SentenceParser
                     },
                     _ => true, $"패의 카드 {n}장을 이 디지몬의 진화원 위에 놓아");
         }
+        // v0.31.0 "deleting this Tamer" (BT16-089) — 자신의 테이머가 소멸했을 때도 알린다
+        if (Regex.IsMatch(cost, @"^deleting this Tamer$", RegexOptions.IgnoreCase) && card.Type == CardType.Tamer)
+            return (c => c.Owner.Tamers.Contains(c.Card), c => c.Engine.DeleteTamer(c.Owner, c.Card), _ => true, "이 테이머를 소멸시켜");
         if (Regex.IsMatch(cost, @"^returning this Tamer to the bottom of the deck$", RegexOptions.IgnoreCase) && card.Type == CardType.Tamer)
             return (c => c.Owner.Tamers.Contains(c.Card),
                     c => { c.Owner.Tamers.Remove(c.Card); c.Owner.SuspendedTamers.Remove(c.Card); c.Owner.MainDeck.Add(c.Card); c.Engine.ClearUnderTamersIfNoTamer(c.Owner); },
@@ -3007,6 +3129,7 @@ internal static class SentenceParser
         bool security = triggers.Contains(EffectTrigger.Security);
         string label = string.Join(" · ", triggers.Select(t => Labels.GetValueOrDefault(t, t.ToString())));
         Match m;
+        if (ParseAction31(s, card, triggers, label) is { } batch31) return batch31;   // v0.31.0 (SentenceParser.Batch31.cs)
 
         // "Unsuspend 1 of your Digimon and suspend 1 of your opponent's Digimon" · "Unsuspend all of your Digimon with ＜Blocker＞ and they get +5000 DP"
         // — 대상 구절이 and 뒤까지 삼키기 전에 두 동작으로 나눈다
@@ -3888,7 +4011,7 @@ internal static class SentenceParser
                 var tamers = c.Enemy.Tamers.Where(t => delete || c.Enemy.HasActiveTamer(t)).OrderByDescending(t => t.PlayCost).Take(n).ToList();
                 foreach (var t in tamers)
                 {
-                    if (delete) { c.Enemy.Tamers.Remove(t); c.Enemy.SuspendedTamers.Remove(t); c.Enemy.Trash.Add(t); c.Engine.ClearUnderTamersIfNoTamer(c.Enemy); }
+                    if (delete) c.Engine.DeleteTamer(c.Enemy, t);   // v0.31.0 "When one of your Tamers is deleted"
                     else c.Engine.SuspendTamer(c.Enemy, t);
                 }
                 Emit(c, label, tamers.Count > 0 ? $"상대 테이머 [{string.Join(", ", tamers.Select(t => t.Name))}] {(delete ? "소멸" : "레스트")}" : "대상이 없습니다");

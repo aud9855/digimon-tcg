@@ -389,6 +389,7 @@ public partial class GoldfishEngine
     {
         State.CurrentPhase = Phase.Active;
         State.TurnSequence++;
+        var wokeTamers = State.Player.SuspendedTamers.ToList();   // v0.31.0 "When this Tamer becomes unsuspended"
         State.Player.SuspendedTamers.Clear();
         _usedMainAbilities.Clear();
         int awakened = 0;
@@ -407,6 +408,7 @@ public partial class GoldfishEngine
         SetTurnOwner(playerTurn: true);
         Log($"액티브 페이즈 완료 (기상한 디지몬: {awakened}체)");
         FireUnsuspendPhase(State.Player, woke);
+        NotifyTamersUnsuspended(State.Player, wokeTamers);
         TriggerStartOfTurn(State.Player);
     }
 
@@ -1128,6 +1130,7 @@ public partial class GoldfishEngine
         // 1. AI 액티브 페이즈 (턴 순번 증가 → "다음 상대의 턴 종료 시까지" 같은 기간 효과의 기준)
         State.TurnSequence++;
         State.OpponentAttackedThisTurn = false;
+        var aiWokeTamers = State.DummyOpponent.SuspendedTamers.ToList();
         State.DummyOpponent.SuspendedTamers.Clear();
         _usedMainAbilities.Clear();
         var aiWoke = new List<CardInstance>();
@@ -1152,7 +1155,7 @@ public partial class GoldfishEngine
         PruneExpiredBuffs();
         SetTurnOwner(playerTurn: false);
         AddEffectEvent(State.DummyOpponent.Tamers.FirstOrDefault() ?? State.DummyOpponent.BattleArea.FirstOrDefault()?.TopCard ?? new CardData { Name = "상대" },
-            CaptureEffectLogs(() => { FireUnsuspendPhase(State.DummyOpponent, aiWoke); TriggerStartOfTurn(State.DummyOpponent); }));
+            CaptureEffectLogs(() => { FireUnsuspendPhase(State.DummyOpponent, aiWoke); NotifyTamersUnsuspended(State.DummyOpponent, aiWokeTamers); TriggerStartOfTurn(State.DummyOpponent); }));
 
         // 2. AI 드로우 페이즈 (AI가 선공인 게임 첫 턴은 드로우 없음)
         //    공식 룰: 드로우 페이즈에 덱이 0장이라 드로우할 수 없으면 그 플레이어가 패배한다 (AI도 동일)

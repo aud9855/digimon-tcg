@@ -15,7 +15,7 @@ namespace DigimonTcg.Core.Engine.Effects;
 /// 공식 한글 문구가 없는 카드(신규 세트 · 다른 PC)의 화면 표시용이며, 대전 판정은 계속 영어 문장(SentenceParser)으로 한다.
 /// 문장 틀은 SentenceParser와 같은 구조(조건 · "~할 수 있다" · 비용 · 셈 · 동작 · 기간)를 따른다.
 /// </summary>
-public static class KoreanEffectRenderer
+public static partial class KoreanEffectRenderer
 {
     /// <summary>번역하지 못한 절 앞에 붙는 표시 (영어 원문을 그대로 보여 준다)</summary>
     public const string UntranslatedMark = "※(원문) ";
@@ -102,6 +102,8 @@ public static class KoreanEffectRenderer
             return $"{(play ? "패의 이 카드를 등장시킬 때," : "이 카드를 사용할 때,")} {(mid.Length > 0 ? mid + " " : "")}지불하는 {(play ? "등장" : "사용")} 코스트를 -{red.Groups["n"].Value} 한다.";
         }
 
+        if (ClauseKo31(clause) is { } clause31) return clause31;   // v0.31.0 (KoreanEffectRenderer.Batch31.cs)
+
         var prefix = Regex.Match(clause, @"^((?:\s*\[[^\]]+\])*)\s*(.*)$");
         var labels = new List<string>();
         foreach (Match l in Regex.Matches(prefix.Groups[1].Value, @"\[([^\]]+)\]"))
@@ -164,6 +166,7 @@ public static class KoreanEffectRenderer
         Match m;
         if ((m = Regex.Match(s, @"^Then,?\s+(?<rest>.+)$", RegexOptions.IgnoreCase)).Success)
             return Sentence(Cap(m.Groups["rest"].Value)) is { } then ? "그 후, " + then : null;
+        if (SentenceKo31(s) is { } sentence31) return sentence31;   // v0.31.0
 
         // v0.30.0 — 공식 (BT18-029 · BT19-052 · ST21-06 · BT21-078): "다른 자신의 디지몬 1마리마다 이 효과의 Lv. 상한 +1" · "~ 이 효과의 등장 코스트 상한 +2" ·
         // "~ 이 효과의 DP 상한 +2000" · "자신의 테이머의 색 합계가 2색 이상이라면, 이 효과의 Lv. 상한 +1"
@@ -187,6 +190,10 @@ public static class KoreanEffectRenderer
         // "When ~," (문장 안의 발동 시점)
         if ((m = Regex.Match(s, @"^When (?<ev>[^,]+), (?<rest>.+)$", RegexOptions.IgnoreCase)).Success)
         {
+            // v0.31.0 사건 안의 쉼표 목록 "When any of your Digimon get linked to a [Social], [Creation] or [Tool] trait card, ~"
+            if (EventKo(m.Groups["ev"].Value) == null && CondKo(m.Groups["ev"].Value) == null
+                && Regex.Match(s, SentenceParser.WhenWithListPattern, RegexOptions.IgnoreCase) is { Success: true } wl && wl.Groups["ev"].Value != m.Groups["ev"].Value)
+                m = wl;
             string? ev = EventKo(m.Groups["ev"].Value) ?? (CondKo(m.Groups["ev"].Value)?.While);
             if (ev == null) return null;
             // "When an opponent's Digimon attacks, trash its bottom 2 ~" — 사건의 디지몬이 뒤의 "it" (공식 BT14-019: "그 디지몬의 진화원을")
@@ -785,7 +792,7 @@ public static class KoreanEffectRenderer
             return new($"이 카드를 지불하는 등장 코스트 -{m.Groups["n"].Value} 하여 ", Siki("등장"));
 
         // ---- 진화 ----
-        if ((m = Regex.Match(s, @"^reduce (?:the|its) digivolution cost by (?<n>\d+)$", RegexOptions.IgnoreCase)).Success)
+        if ((m = Regex.Match(s, @"^reduce (?:the|its) (?:digivolution cost|memory cost of the digivolution) by (?<n>\d+)$", RegexOptions.IgnoreCase)).Success)
             return new($"지불하는 진화 코스트를 -{m.Groups["n"].Value} ", Ha());
         if ((m = Regex.Match(s, @"^(?<t>this Digimon|this (?<selfx>\[[^\]]+\](?: or \[[^\]]+\])*) trait Digimon|\d+ of your (?:[^,]*? )?Digimon(?: with [^,]+?)?) (?<may>may )?digivolves? into (?<pick>.+?) in (?:the|your) (?<zone>hand or (?:the |your )?trash|hand|trash)(?: for (?:a digivolution cost of (?<cost>\d+)|its digivolution cost))? ?(?<free>without paying (?:the|its) (?:memory |digivolution )?cost|with the (?:digivolution )?cost reduced by (?<red>\d+))?$", RegexOptions.IgnoreCase)).Success
             // v0.30.0 "this [Demon] or [Titan] trait Digimon" — 공식 표기 "특징으로 「데몬」/「타이탄」을 가진 이 디지몬"
@@ -813,6 +820,7 @@ public static class KoreanEffectRenderer
     {
         cost = cost.Trim().TrimEnd('.');
         Match m;
+        if (CostKo31(cost) is { } cost31) return cost31;   // v0.31.0
         // 공식 (BT21-083): "자신의 패에서 특징 「크로스 하트」/「블루 플레어」/「히어로」를 가진 디지몬 카드 1장을 이 테이머 아래에 놓는 것으로,"
         if ((m = Regex.Match(cost, @"^placing (?<pick>.+?) from your hand (?:face down )?under (?<who>this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success && PickKo(m.Groups["pick"].Value) is { } underK)
             return $"자신의 패에서 {underK}{J(underK, "을", "를")} {(m.Groups["who"].Value.StartsWith("this", StringComparison.OrdinalIgnoreCase) ? "이 테이머" : "자신의 테이머")} 아래에 놓는 것으로,";
@@ -1453,7 +1461,7 @@ public static class KoreanEffectRenderer
                 return m.Groups["mine"].Success ? $"자신의 효과로 {host}의 진화원이 늘어났을 때," : $"{host}의 진화원이 효과로 늘어났을 때,";
             return $"{(m.Groups["mine"].Success ? "자신의 효과로 " : "")}{host}의 진화원에 {card}{J(card, "이", "가")} {(byEffect && !m.Groups["mine"].Success ? "효과로 " : "")}놓였을 때,";
         }
-        return null;
+        return EventKo31(ev);   // v0.31.0 (KoreanEffectRenderer.Batch31.cs)
     }
 
     /// <summary>벗어날 때 · 소멸할 때의 단서 → "자신의 효과 이외로 " · "배틀 이외로 " · "배틀에서 " · "상대의 효과로 " (빈 단서 = "", 모르면 null)</summary>
@@ -1482,6 +1490,9 @@ public static class KoreanEffectRenderer
         { string x = NamesKo(m.Groups["x"].Value, trait: true); return $"특징으로 {x}{J(x, "을", "를")} 가진"; }
         if ((m = Regex.Match(with, $@"^with (?<x>{TargetSpec.NameList}) in (?:its|their) texts?$", RegexOptions.IgnoreCase)).Success)
         { string x = NamesKo(m.Groups["x"].Value); return $"{x}{J(x, "이", "가")} 기술되어 있는"; }
+        // v0.31.0 — 공식 (BT13-100): "특징으로 「식물형」/「요정형」을 포함하는"
+        if ((m = Regex.Match(with, $@"^with (?<x>{TargetSpec.NameList}) in any of (?:its|their) traits$", RegexOptions.IgnoreCase)).Success)
+        { string x = NamesKo(m.Groups["x"].Value, trait: true); return $"특징으로 {x}{J(x, "을", "를")} 포함하는"; }
         return null;
     }
 
@@ -1490,6 +1501,7 @@ public static class KoreanEffectRenderer
     {
         counter = counter.Trim().TrimEnd('.');
         Match m;
+        if (CounterKo31(counter) is { } counter31) return counter31;   // v0.31.0
         string Per(Match x) => x.Groups["n"].Success ? x.Groups["n"].Value : "1";
         if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?(?:security cards? you have|cards? in your security stack|of your security cards)$", RegexOptions.IgnoreCase)).Success)
             return $"자신의 시큐리티 {Per(m)}장마다";
@@ -1639,6 +1651,11 @@ public static class KoreanEffectRenderer
                 list.Add("진화원을 갖지 않은");
             else if ((m = Regex.Match(rest, @"^(?:with |and )?(?<n>\d+) or (?<dir>more|fewer|less) digivolution cards", RegexOptions.IgnoreCase)).Success)
                 list.Add($"진화원이 {m.Groups["n"].Value}장 {Dir(m.Groups["dir"].Value)}인");
+            // v0.31.0 — 공식 (P-062 · BT8-085): "진화원에 「감마몬」을 가진" · "2색 이상인"
+            else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?<x>{TargetSpec.NameList}) in (?:its|their) digivolution cards", RegexOptions.IgnoreCase)).Success)
+            { string x = NamesKo(m.Groups["x"].Value); list.Add($"진화원에 {x}{J(x, "을", "를")} 가진"); }
+            else if ((m = Regex.Match(rest, @"^with (?<n>\d+) or more colors", RegexOptions.IgnoreCase)).Success)
+                list.Add($"{m.Groups["n"].Value}색 이상인");
             else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?<x>{TargetSpec.NameList}) in (?:its|their) names?", RegexOptions.IgnoreCase)).Success)
             { string x = NamesKo(m.Groups["x"].Value); list.Add($"명칭에 {x}{J(x, "을", "를")} 포함하는"); }
             else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?:the )?(?<x>{TargetSpec.NameList}) traits?|^with (?<x>{TargetSpec.NameList}) in any of its traits", RegexOptions.IgnoreCase)).Success)
@@ -2029,7 +2046,11 @@ public static class KoreanEffectRenderer
         return $"「{n}」({string.Join("・", parts)})";
     }
 
-    internal static string NameKo(string en) => Glossary.Value.Names.TryGetValue(en.Trim(), out var ko) ? ko : en.Trim();
+    internal static string NameKo(string en) => Glossary.Value.Names.TryGetValue(en.Trim(), out var ko) ? ko
+        // v0.31.0 "Creepymon (X Antibody)" · "Sistermon Noir (Awakened)" — 용어집에 없으면 기본 이름 + "X항체" / "(각성)" (공식: 「베르제브몬 X항체」 · 「시스터몬 블랑(각성)」)
+        : Regex.Match(en.Trim(), @"^(?<b>.+?) \((?<p>X Antibody|Awakened)\)$") is { Success: true } xp && Glossary.Value.Names.TryGetValue(xp.Groups["b"].Value, out var baseKo)
+            ? (xp.Groups["p"].Value == "X Antibody" ? baseKo + " X항체" : baseKo + "(각성)")
+        : en.Trim();
 
     internal static string TraitKo(string en) => Glossary.Value.Traits.TryGetValue(en.Trim(), out var ko) ? ko : en.Trim();
 

@@ -40,7 +40,7 @@ public partial class GoldfishEngine
         if (owner.BattleArea.Contains(target))
             RunEffects(EffectTrigger.ThisDigimonLinked, owner, target, target.TopCard);
         if (owner.BattleArea.Contains(target))
-            FireForSide(EffectTrigger.AllyDigimonLinked, owner, target);
+            FireForSide(EffectTrigger.AllyDigimonLinked, owner, target, triggerCard: card);   // TriggerCard = 링크한 카드 (v0.31.0)
         RecalculateFieldBuffs();
     }
 

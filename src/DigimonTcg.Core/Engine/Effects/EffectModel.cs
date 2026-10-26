@@ -85,10 +85,18 @@ public enum EffectTrigger
     ThisTrashedFromBattleArea,      // 배틀 에어리어에 놓인 이 옵션 카드가 파기되었을 때 — 카드 자신의 효과 (v0.30.0, BT19 디바이스 · P-159 · P-161)
     AllyOptionPlaced,               // 자신의 옵션 카드가 배틀 에어리어에 놓였을 때 (TriggerCard = 그 옵션, v0.30.0 — BT23-003 · BT23-053)
     OptionTrashedFromBattleArea,    // 배틀 에어리어의 옵션 카드가 파기되었을 때 (어느 쪽이든, TriggerCard = 그 옵션 — 공식 Q&A BT23-059: 「배틀 에어리어에 놓는다」로 놓인 옵션)
+    OpponentDigimonDigivolved,      // 상대의 디지몬이 진화했을 때 (Other = 진화한 상대 디지몬, v0.31.0)
+    AllyTamerDeleted,               // 자신의 테이머가 소멸했을 때 (TriggerCard = 그 테이머, v0.31.0)
+    OpponentTamerDeleted,           // 상대의 테이머가 소멸했을 때 (TriggerCard)
+    AllyTamerUnsuspended,           // 자신의 테이머가 액티브 상태가 되었을 때 (TriggerCard = 그 테이머 — 액티브 페이즈 · 효과 모두)
+    UnderTamersTrashed,             // 효과로 자신의 테이머 아래 카드가 파기되었을 때 (TriggerCard = 파기된 카드 중 1장)
+    AllyLinkCardsTrashed,           // 효과로 자신의 디지몬의 링크 카드가 파기되었을 때 (Other = 그 디지몬)
+    OpponentDeckTrashed,            // 상대의 덱에서 카드가 파기되었을 때 (TriggerCard)
+    Counter,                        // 【카운터】 (종합 룰 11-3): 상대의 디지몬이 어택했을 때 어택받는 쪽이 어택 1번에 1개 발휘할 수 있다 (Other = 어택한 디지몬)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
-public enum EffectSource { Main, Inherited }
+public enum EffectSource { Main, Inherited, Trash }   // Trash = 트래시의 이 카드로 발휘하는 [트래시] 시점 효과 (v0.31.0)
 
 /// <summary>규칙이 정해져 있어서 이름만으로 동작하는 키워드 효과</summary>
 public enum Keyword
@@ -264,6 +272,34 @@ public sealed class CardScript
 
     /// <summary>"When this Digimon would digivolve (into ~), reduce the digivolution cost by N" — 진화하기 직전에 진화 코스트를 바꾸는 효과</summary>
     public List<EvoCostModifier> EvoCostModifiers { get; } = new();
+
+    /// <summary>v0.31.0 "[Your Turn] When any Digimon cards with the [ADVENTURE] trait would be played from your hand, by suspending this Tamer, reduce the play cost by 1" — 다른 카드의 등장 코스트 감소 (필드 · 육성)</summary>
+    public List<FieldPlayCostModifier> FieldPlayCostModifiers { get; } = new();
+
+    /// <summary>
+    /// v0.31.0 "[All Turns] This Digimon gains all effects of cards with [Gammamon] in their names in this Digimon's digivolution cards" —
+    /// (적힌 곳, 진화원 카드 조건). 조건에 맞는 진화원 카드의 메인 효과(시점 효과 · 지속 효과 · 키워드 · [메인])를 이 디지몬이 얻는다
+    /// </summary>
+    public List<(EffectSource Source, Func<CardData, bool> Which)> GainedSourceEffects { get; } = new();
+}
+
+/// <summary>
+/// v0.31.0 필드의 카드가 패에서 등장하는 다른 카드의 등장 코스트를 줄이는 효과. Source = 적힌 곳 (진화원 효과면 그 카드가 진화원에 있을 때),
+/// Breeding = [육성] (육성 에어리어에 있을 때만, 아니면 배틀 에어리어 · 테이머). Which = 등장하는 카드 조건, Cost = 비용 (낼지 묻는다),
+/// Optional = "you may reduce" (쓸지 묻는다). 공식 Q&A ST20-12 · ST21-12: 여러 장의 효과는 더한다
+/// </summary>
+public sealed record FieldPlayCostModifier(
+    EffectSource Source,
+    Func<CardData, bool> Which,
+    int Reduce,
+    PlayCostOption? Cost,
+    bool Optional,
+    bool OncePerTurn,
+    bool YourTurnOnly,
+    bool Breeding)
+{
+    /// <summary>"~ by 1 for each of this Digimon's digivolution cards" — Reduce × 셈 (효과 상황)</summary>
+    public Func<EffectContext, int>? Times { get; init; }
 }
 
 /// <summary>진화 코스트 감소가 걸리는 진화: 이 디지몬이 진화할 때 · 자신의 디지몬이 진화할 때 · (패의) 이 카드로 진화할 때</summary>
@@ -282,7 +318,14 @@ public sealed record EvoCostModifier(
     PlayCostOption? Cost,
     int Reduce,
     bool OncePerTurn,
-    bool YourTurnOnly);
+    bool YourTurnOnly)
+{
+    /// <summary>v0.31.0 "~ by 1 for each ~": Reduce × 셈 (효과 상황, 진화하는 디지몬). 없으면 Reduce 그대로</summary>
+    public Func<EffectContext, CardInstance, int>? Times { get; init; }
+
+    /// <summary>지금 줄이는 양</summary>
+    public int ReduceFor(EffectContext ctx, CardInstance target) => Times == null ? Reduce : Reduce * Math.Max(0, Times(ctx, target));
+}
 
 /// <summary>등장할 때 고르는 코스트 감소: 비용(낼 수 있는지 · 내기 · 추천 · 설명)을 내면 Reduce만큼 줄인다. CostText = 원문 비용 구절 (예: "deleting 1 of your Digimon" — AI가 비용 종류를 가늠)</summary>
 public sealed record PlayCostOption(int Reduce, Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe, string CostText = "");

@@ -132,7 +132,7 @@ public partial class GoldfishEngine
         CardData? triggerCard = null,
         bool optionSide = false)
     {
-        var ctx = new EffectContext(this, owner, self, other, chosenTarget) { TriggerCard = triggerCard };
+        var ctx = new EffectContext(this, owner, self, other, chosenTarget) { TriggerCard = triggerCard, Trigger = trigger };
 
         _effectDepth++;
         var outerEffectOwner = CurrentEffectOwner;
@@ -143,6 +143,20 @@ public partial class GoldfishEngine
             {
                 foreach (var effect in main.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Main).ToList())
                     Resolve(ctx, mainCard, effect);
+            }
+
+            // v0.31.0 "This Digimon gains all effects of ~ in this Digimon's digivolution cards" — 얻은 진화원 카드의 메인 효과 (맨 위 카드의 시점으로)
+            if (self != null && mainCard != null && !optionSide && ReferenceEquals(mainCard, self.TopCard) && trigger != EffectTrigger.ActivateMain)
+            {
+                foreach (var gained in CardScripts.GainedSources(self, sources).ToList())
+                {
+                    if (CardScripts.For(gained) is not { } gainedScript) continue;
+                    foreach (var effect in gainedScript.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Main).ToList())
+                    {
+                        if (sources == null && !self.HasSource(gained.CardId)) break;
+                        Resolve(ctx, gained, effect);
+                    }
+                }
             }
 
             if (includeInherited && self != null)
@@ -169,6 +183,23 @@ public partial class GoldfishEngine
         if (_effectDepth == 0)
             FlushPendingTriggers();
         return ctx;
+    }
+
+    // 디지몬이 아닌 카드의 [턴에 1회] 사용 기록: (카드, 효과) → (턴 번호, 횟수)
+    private readonly Dictionary<(CardData Card, string Key), (int Turn, int Count)> _cardOncePerTurn = new();
+
+    /// <summary>테이머 · 옵션 · 트래시 카드의 [턴에 1회] (v0.31.0): 이번 턴에 limit번 썼으면 false, 아니면 사용으로 기록하고 true</summary>
+    internal bool TryUseCardOncePerTurn(CardData card, string key, int limit)
+    {
+        var k = (card, key);
+        if (_cardOncePerTurn.TryGetValue(k, out var used) && used.Turn == State.TurnSequence)
+        {
+            if (used.Count >= limit) return false;
+            _cardOncePerTurn[k] = (used.Turn, used.Count + 1);
+            return true;
+        }
+        _cardOncePerTurn[k] = (State.TurnSequence, 1);
+        return true;
     }
 
     /// <summary>지금 처리 중인 효과의 주인 (효과 밖이면 null) — "자신의 효과 이외로" 같은 판단</summary>
@@ -264,6 +295,9 @@ public partial class GoldfishEngine
         if (effect.OncePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey))
             return;
         if (effect.TwicePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey) && !ctx.Self.UsedOncePerTurn.Add(onceKey + "#2"))
+            return;
+        // v0.31.0: 디지몬이 아닌 카드(테이머 · 배틀 에어리어의 옵션 · 트래시의 카드)의 [턴에 1회] · [턴에 2회] — 그 카드마다 이번 턴 사용 횟수
+        if ((effect.OncePerTurn || effect.TwicePerTurn) && ctx.Self == null && !ctx.Engine.TryUseCardOncePerTurn(card, onceKey, effect.TwicePerTurn ? 2 : 1))
             return;
         int logsBefore = ctx.State.ActionLogs.Count;
         string messageBefore = ctx.Message;
@@ -396,6 +430,10 @@ public partial class GoldfishEngine
             foreach (var e in top.Statics.Where(e => e.Source == EffectSource.Main))
                 yield return e;
         }
+        foreach (var gained in CardScripts.GainedSources(inst))   // v0.31.0 진화원 카드의 효과 전부를 얻는다 (지속 효과)
+            if (CardScripts.For(gained) is { } gs)
+                foreach (var e in gs.Statics.Where(e => e.Source == EffectSource.Main))
+                    yield return e;
         foreach (var source in inst.EvolutionSources.GroupBy(s => s.CardId).Select(g => g.First()))
         {
             if (CardScripts.For(source) is not { } script) continue;
@@ -840,6 +878,7 @@ public partial class GoldfishEngine
         foreach (var tamer in owner.Tamers.ToList())
             RunEffects(EffectTrigger.StartOfYourTurn, owner, null, tamer, includeInherited: false);
         RunPlacedOptions(EffectTrigger.StartOfYourTurn, owner);
+        RunTrashEffects(EffectTrigger.StartOfYourTurn, owner);   // v0.31.0 [트래시] [~ 시] 효과
         RecalculateFieldBuffs();
     }
 
@@ -910,6 +949,7 @@ public partial class GoldfishEngine
         {
             Log($"[효과] {reason}: {SideName(zones)} 덱 위에서 {n}장 파기");
             FireForSide(EffectTrigger.AllyDeckTrashed, zones, null, triggerCard: first);   // "When a card is trashed from your deck"
+            FireForSide(EffectTrigger.OpponentDeckTrashed, EnemyOf(zones), null, triggerCard: first);   // v0.31.0 "When your opponent's deck is trashed from"
             FireThisCardTrashed(zones, zones.Trash.Skip(zones.Trash.Count - n).ToList(), EffectTrigger.ThisTrashedFromDeck);   // "When this card is trashed from your deck" (덱에서 직접)
         }
     }
@@ -1201,9 +1241,16 @@ public partial class GoldfishEngine
         if (owner.BattleArea.Contains(target))
         {
             ApplyWhenDigivolvingEffects(owner, target, evoCard);
-            FireForSide(EffectTrigger.AllyDigimonDigivolved, owner, target);
+            _digivolvingByEffect++;   // v0.31.0 "When effects digivolve your opponent's Digimon"
+            try { FireForSide(EffectTrigger.AllyDigimonDigivolved, owner, target); }
+            finally { _digivolvingByEffect--; }
         }
     }
+
+    private int _digivolvingByEffect;
+
+    /// <summary>지금 알리는 진화가 효과로 진화한 것인지 (v0.31.0)</summary>
+    internal bool DigivolvingByEffect => _digivolvingByEffect > 0;
 
     /// <summary>토큰 카드 아이디 ("TOKEN-" 접두사) — 필드를 떠나면 사라진다</summary>
     internal static bool IsToken(CardData card) => card.CardId.StartsWith("TOKEN-", StringComparison.Ordinal);
@@ -1248,10 +1295,24 @@ public partial class GoldfishEngine
         if (trashed.Count == 0)
             return;
         var first = trashed.First();
-        FireForSide(EffectTrigger.AllyHandTrashed, zones, null, triggerCard: first);
-        FireForSide(EffectTrigger.OpponentHandTrashed, EnemyOf(zones), null, triggerCard: first);
+        var outerCards = CurrentHandTrashed;
+        var outerBy = HandTrashedBy;
+        CurrentHandTrashed = trashed.ToList();   // v0.31.0 "When a Digimon card with the [X] trait is trashed from your hand" — 버린 카드 조건
+        HandTrashedBy = CurrentEffectOwner;      // v0.31.0 "~ by your effect"
+        try
+        {
+            FireForSide(EffectTrigger.AllyHandTrashed, zones, null, triggerCard: first);
+            FireForSide(EffectTrigger.OpponentHandTrashed, EnemyOf(zones), null, triggerCard: first);
+        }
+        finally { CurrentHandTrashed = outerCards; HandTrashedBy = outerBy; }
         FireThisCardTrashed(zones, trashed, EffectTrigger.ThisTrashedFromHand);   // "When this card is trashed from your hand"
     }
+
+    /// <summary>지금 알리는 "패가 파기되었을 때"의 버린 카드 전부 (밖이면 빈 목록)</summary>
+    internal IReadOnlyList<CardData> CurrentHandTrashed { get; private set; } = Array.Empty<CardData>();
+
+    /// <summary>지금 알리는 "패가 파기되었을 때"의 파기한 효과의 주인 (효과 밖이면 null)</summary>
+    internal PlayerZones? HandTrashedBy { get; private set; }
 
     // 효과로 등장시키는 중 ("When an effect plays one of your Digimon")
     private int _playingByEffect;
@@ -1280,6 +1341,7 @@ public partial class GoldfishEngine
         foreach (var tamer in owner.Tamers.ToList())
             RunEffects(EffectTrigger.StartOfYourMainPhase, owner, null, tamer, includeInherited: false);
         RunPlacedOptions(EffectTrigger.StartOfYourMainPhase, owner);
+        RunTrashEffects(EffectTrigger.StartOfYourMainPhase, owner);   // v0.31.0 [트래시] [~ 시] 효과
         RecalculateFieldBuffs();
     }
 
@@ -1288,7 +1350,7 @@ public partial class GoldfishEngine
     // =====================================================================
 
     /// <summary>쓸 수 있는 [메인] 기동 효과 1건 (Digimon = 효과를 가진 디지몬, 테이머 · 패 · 트래시면 null, Zone = 효과를 쓰는 곳)</summary>
-    public sealed record MainAbility(CardInstance? Digimon, CardData Card, MainAbilityZone Zone = MainAbilityZone.Field, bool Inherited = false);
+    public sealed record MainAbility(CardInstance? Digimon, CardData Card, MainAbilityZone Zone = MainAbilityZone.Field, bool Inherited = false, bool Gained = false);
 
     // 이번 턴에 쓴 기동 효과 (같은 효과를 한 턴에 여러 번 쓰지 않도록 — 비용이 없는 효과의 무한 반복 방지)
     // 테이머는 같은 카드가 여러 장일 수 있어(같은 CardData 참조) 쓴 횟수를 센다 — 장수만큼 쓸 수 있다
@@ -1302,6 +1364,10 @@ public partial class GoldfishEngine
         {
             if (HasMainAbility(d.TopCard) && !_usedMainAbilities.ContainsKey(d))
                 list.Add(new MainAbility(d, d.TopCard));
+            // v0.31.0 얻은 진화원 카드의 [메인] ("gains all effects of ~ in this Digimon's digivolution cards") — 그 카드마다
+            foreach (var gained in CardScripts.GainedSources(d))
+                if (HasMainAbility(gained) && !_usedMainAbilities.ContainsKey((d, gained.CardId, "gained")))
+                    list.Add(new MainAbility(d, gained, Gained: true));
             // 진화원의 [메인] 기동 효과 (v0.29.0 — "[Main] [Once Per Turn] By placing this Digimon's top stacked card ~"): 진화원 카드마다
             foreach (var source in d.GetEvolutionStackBottomUp().GroupBy(s => s.CardId).Select(g => g.First()))
                 if (HasInheritedMainAbility(source) && !_usedMainAbilities.ContainsKey((d, source.CardId)))
@@ -1335,7 +1401,7 @@ public partial class GoldfishEngine
         var ability = GetMainAbilities(State.Player).FirstOrDefault(a => ReferenceEquals(a.Digimon, digimon) && ReferenceEquals(a.Card, card));
         if (ability == null)
             return ActionResult.Fail($"[{card.Name}]의 [메인] 효과는 지금 쓸 수 없습니다 (이번 턴에 이미 썼거나 효과가 없음).");
-        bool used = UseMainAbility(State.Player, digimon, card, ability.Inherited);
+        bool used = UseMainAbility(State.Player, digimon, card, ability.Inherited, ability.Gained);
         CheckTurnEndAndAutoReset();
         // 패 · 트래시 [메인] 효과(ActivateZoneEffect)와 같이: 조건 · 비용이 맞지 않아 아무것도 안 했으면 "썼다"가 아니라 실패로 알린다
         if (!used)
@@ -1344,7 +1410,7 @@ public partial class GoldfishEngine
     }
 
     /// <summary>[메인] 기동 효과를 쓴다. 반환: 실제로 효과를 발휘했는지 (아니면 이번 턴에 쓴 것으로 치지 않는다)</summary>
-    private bool UseMainAbility(PlayerZones owner, CardInstance? digimon, CardData card, bool inherited = false)
+    private bool UseMainAbility(PlayerZones owner, CardInstance? digimon, CardData card, bool inherited = false, bool gained = false)
     {
         EffectLog(owner, inherited ? $"[메인] {digimon?.TopCard.Name}의 진화원 {card.Name}의 효과 사용" : $"[메인] {card.Name}의 효과 사용");
         // 진화원의 [메인]: 그 진화원 카드의 진화원 효과만 (디지몬 = Self)
@@ -1355,7 +1421,7 @@ public partial class GoldfishEngine
         bool used = ctx.AnyEffectRan && !(ctx.StepsRan && !ctx.AnyStepResolved);
         if (used)
         {
-            object key = inherited && digimon != null ? (digimon, card.CardId) : (object?)digimon ?? card;
+            object key = gained && digimon != null ? (digimon, card.CardId, "gained") : inherited && digimon != null ? (digimon, card.CardId) : (object?)digimon ?? card;
             _usedMainAbilities[key] = _usedMainAbilities.GetValueOrDefault(key) + 1;
         }
         else
@@ -1380,7 +1446,7 @@ public partial class GoldfishEngine
             if (!AiPolicy.ShouldUseMainAbility(this, ability, _aiTurn?.Memory ?? 0)) continue;
             AddEffectEvent(ability.Card, CaptureEffectLogs(() =>
             {
-                if (ability.Zone == MainAbilityZone.Field) UseMainAbility(State.DummyOpponent, ability.Digimon, ability.Card, ability.Inherited);
+                if (ability.Zone == MainAbilityZone.Field) UseMainAbility(State.DummyOpponent, ability.Digimon, ability.Card, ability.Inherited, ability.Gained);
                 else UseZoneAbility(State.DummyOpponent, ability.Card, ability.Zone);
             }));
         }
@@ -1466,7 +1532,46 @@ public partial class GoldfishEngine
         foreach (var tamer in owner.Tamers.ToList())
             RunEffects(trigger, owner, null, tamer, other: other, includeInherited: false, triggerCard: triggerCard);
         RunPlacedOptions(trigger, owner, other, triggerCard);   // ≪딜레이≫ 옵션의 "When ~, ＜Delay＞"
+        RunTrashEffects(trigger, owner, other, triggerCard);    // v0.31.0 [트래시] 시점 효과 (트래시의 이 카드)
         RecalculateFieldBuffs();
+        // v0.31.0 "When an opponent's Digimon digivolves" — 자신의 디지몬이 진화했을 때를 상대 쪽에도 알린다
+        if (trigger == EffectTrigger.AllyDigimonDigivolved && !State.IsGameOver)
+            FireForSide(EffectTrigger.OpponentDigimonDigivolved, EnemyOf(owner), other, triggerCard);
+    }
+
+    /// <summary>
+    /// [트래시] 시점 효과 (v0.31.0): 트래시에 있는 이 카드의 "[Trash] [Your Turn] When ~, ~" — 같은 카드가 여러 장이면 1장만 (같은 효과).
+    /// 처리하는 동안 이 카드가 트래시에 그대로 있어야 한다 (앞의 효과로 트래시를 떠났으면 발휘하지 않는다)
+    /// </summary>
+    internal void RunTrashEffects(EffectTrigger trigger, PlayerZones owner, CardInstance? other = null, CardData? triggerCard = null)
+    {
+        if (owner.Trash.Count == 0)
+            return;
+        var cards = owner.Trash.Where(c => CardScripts.For(c)?.Effects.Any(e => e.Source == EffectSource.Trash && e.Trigger == trigger) == true)
+            .GroupBy(c => c.CardId).Select(g => g.First()).ToList();
+        foreach (var card in cards)
+        {
+            if (State.IsGameOver || !owner.Trash.Contains(card)) continue;
+            var ctx = new EffectContext(this, owner, null, other, null) { TriggerCard = triggerCard, Trigger = trigger };
+            _effectDepth++;
+            var outerEffectOwner = CurrentEffectOwner;
+            CurrentEffectOwner = owner;
+            try
+            {
+                foreach (var effect in CardScripts.For(card)!.Effects.Where(e => e.Source == EffectSource.Trash && e.Trigger == trigger).ToList())
+                {
+                    if (!owner.Trash.Contains(card)) break;
+                    Resolve(ctx, card, effect);
+                }
+            }
+            finally
+            {
+                _effectDepth--;
+                CurrentEffectOwner = outerEffectOwner;
+            }
+            if (_effectDepth == 0)
+                FlushPendingTriggers();
+        }
     }
 
     /// <summary>테이머를 레스트시킨다 (비용 "이 테이머를 레스트시켜") + "자신의 테이머가 레스트했을 때" 효과</summary>
@@ -1477,6 +1582,80 @@ public partial class GoldfishEngine
         owner.SuspendedTamers.Add(tamer);
         FireForSide(EffectTrigger.AllyTamerSuspended, owner, null, triggerCard: tamer);
         FireForSide(EffectTrigger.OpponentTamerSuspended, EnemyOf(owner), null, triggerCard: tamer);
+    }
+
+    /// <summary>
+    /// v0.31.0 "activate 1 of this Digimon's [When Digivolving] effects": 디지몬의 맨 위 카드(와 얻은 진화원 카드)의 그 시점 효과 1개를 이 효과로 발휘한다
+    /// (여럿이면 고른다). 효과가 없으면 false
+    /// </summary>
+    internal bool ActivateDigimonEffect(PlayerZones owner, CardInstance digimon, EffectTrigger trigger)
+    {
+        if (!owner.BattleArea.Contains(digimon))
+            return false;
+        var list = new List<(CardData Card, CardEffect Effect)>();
+        if (CardScripts.For(digimon.TopCard) is { } top)
+            list.AddRange(top.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Main).Select(e => (digimon.TopCard, e)));
+        foreach (var gained in CardScripts.GainedSources(digimon))
+            if (CardScripts.For(gained) is { } gs)
+                list.AddRange(gs.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Main).Select(e => (gained, e)));
+        if (list.Count == 0)
+            return false;
+        int pick = list.Count == 1 ? 0
+            : Math.Clamp(ChooseOption(owner, $"[{digimon.TopCard.Name}] 발휘할 효과를 고르세요.", list.Select((x, i) => $"[{x.Card.Name}] 효과 {i + 1}").ToList(), 0), 0, list.Count - 1);
+        var ctx = new EffectContext(this, owner, digimon, null, null) { Trigger = trigger };
+        _effectDepth++;
+        var outerEffectOwner = CurrentEffectOwner;
+        CurrentEffectOwner = owner;
+        try { Resolve(ctx, list[pick].Card, list[pick].Effect); }
+        finally
+        {
+            _effectDepth--;
+            CurrentEffectOwner = outerEffectOwner;
+        }
+        if (_effectDepth == 0)
+            FlushPendingTriggers();
+        RecalculateFieldBuffs();
+        return true;
+    }
+
+    /// <summary>테이머를 소멸시킨다 (효과 · 비용) + "자신의 테이머가 소멸했을 때" (v0.31.0) — 디지몬 소멸처럼 효과 처리 중이면 끝난 뒤에</summary>
+    internal void DeleteTamer(PlayerZones owner, CardData tamer)
+    {
+        if (!owner.Tamers.Remove(tamer))
+            return;
+        owner.SuspendedTamers.Remove(tamer);
+        owner.Trash.Add(tamer);
+        ClearUnderTamersIfNoTamer(owner);
+        RunOrDefer(() =>
+        {
+            if (State.IsGameOver) return;
+            FireForSide(EffectTrigger.AllyTamerDeleted, owner, null, triggerCard: tamer);
+            FireForSide(EffectTrigger.OpponentTamerDeleted, EnemyOf(owner), null, triggerCard: tamer);
+        });
+    }
+
+    /// <summary>"When this Tamer becomes unsuspended" (v0.31.0) — 액티브가 된 테이머마다</summary>
+    internal void NotifyTamersUnsuspended(PlayerZones owner, IEnumerable<CardData> tamers)
+    {
+        foreach (var t in tamers.Distinct().ToList())
+            if (owner.Tamers.Contains(t) && !State.IsGameOver)
+                FireForSide(EffectTrigger.AllyTamerUnsuspended, owner, null, triggerCard: t);
+    }
+
+    /// <summary>효과로 테이머 아래 카드를 파기한 뒤 (v0.31.0) — "When effects trash cards from under your Tamers / this Tamer"</summary>
+    internal void NotifyUnderTamersTrashed(PlayerZones owner, IReadOnlyCollection<CardData> trashed)
+    {
+        if (trashed.Count == 0 || State.IsGameOver)
+            return;
+        RunOrDefer(() => FireForSide(EffectTrigger.UnderTamersTrashed, owner, null, triggerCard: trashed.First()));
+    }
+
+    /// <summary>효과로 디지몬의 링크 카드를 파기한 뒤 (v0.31.0) — "When effects trash any of this Digimon's / your Digimon's link cards"</summary>
+    internal void NotifyLinkCardsTrashed(PlayerZones owner, CardInstance digimon, int count)
+    {
+        if (count == 0 || State.IsGameOver)
+            return;
+        RunOrDefer(() => FireForSide(EffectTrigger.AllyLinkCardsTrashed, owner, digimon));
     }
 
     /// <summary>상대 효과("Your opponent can't reduce digivolution costs")로 진화 코스트 감소가 막혀 있지 않은지</summary>
@@ -1526,7 +1705,26 @@ public partial class GoldfishEngine
             EvolveByEffect(defender, target, card, 0);
             return;
         }
+        // v0.31.0 배틀 에어리어 디지몬의 【카운터】 효과 (종합 룰 11-3: 어택받는 쪽이 어택 1번에 1개) — "[When Digivolving] [Counter] [Once Per Turn] ~"
+        foreach (var d in defender.BattleArea.Where(HasCounterEffect).ToList())
+        {
+            if (State.IsGameOver || !EnemyOf(defender).BattleArea.Contains(attacker)) return;
+            if (!defender.BattleArea.Contains(d)
+                || !AskYesNo(defender, d, $"【카운터】 [{attacker.TopCard.Name}]의 어택: [{d.TopCard.Name}]의 【카운터】 효과를 발휘할까요?", recommended: true))
+                continue;
+            var ctx = RunEffects(EffectTrigger.Counter, defender, d, d.TopCard, other: attacker);
+            RecalculateFieldBuffs();
+            if (ctx.AnyEffectRan)
+                return;   // 1번 발휘했으면 이 어택에서는 끝 (조건 · [턴에 1회]로 아무것도 안 했으면 다음 디지몬)
+        }
     }
+
+    /// <summary>배틀 에어리어 디지몬이 【카운터】 효과(맨 위 카드 · 진화원)를 가졌는지</summary>
+    private static bool HasCounterEffect(CardInstance d) =>
+        CardScripts.For(d.TopCard)?.Effects.Any(e => e.Trigger == EffectTrigger.Counter && e.Source == EffectSource.Main
+                                                    && !(e.OncePerTurn && d.UsedOncePerTurn.Contains(d.TopCard.CardId))) == true
+        || d.EvolutionSources.Any(s => CardScripts.For(s)?.Effects.Any(e => e.Trigger == EffectTrigger.Counter && e.Source == EffectSource.Inherited
+                                                                      && !(e.OncePerTurn && d.UsedOncePerTurn.Contains(s.CardId + "#I"))) == true);
 
     /// <summary>≪디지버스트 N≫ 비용: 진화원 아래에서 N장 파기 → 그 카드들의 "디지버스트로 트래시되었을 때" 효과 → "디지버스트를 발휘했을 때"</summary>
     internal void PayDigiBurst(PlayerZones owner, CardInstance self, int n)
@@ -1576,6 +1774,7 @@ public partial class GoldfishEngine
         foreach (var tamer in owner.Tamers.ToList())
             RunEffects(EffectTrigger.EndOfOpponentsTurn, owner, null, tamer, includeInherited: false);
         RunPlacedOptions(EffectTrigger.EndOfOpponentsTurn, owner);
+        RunTrashEffects(EffectTrigger.EndOfOpponentsTurn, owner);   // v0.31.0 [트래시] [~ 시] 효과
         RunScheduledDeletions();   // "~ is deleted at the end of the turn" (이 효과로 등장한 디지몬) — 턴 종료 시의 마지막
         RecalculateFieldBuffs();
     }
@@ -1588,6 +1787,7 @@ public partial class GoldfishEngine
         foreach (var tamer in owner.Tamers.ToList())
             RunEffects(EffectTrigger.EndOfYourTurn, owner, null, tamer, includeInherited: false);
         RunPlacedOptions(EffectTrigger.EndOfYourTurn, owner);
+        RunTrashEffects(EffectTrigger.EndOfYourTurn, owner);   // v0.31.0 [트래시] [~ 시] 효과
         RecalculateFieldBuffs();
     }
 

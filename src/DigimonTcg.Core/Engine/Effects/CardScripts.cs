@@ -58,7 +58,27 @@ public static class CardScripts
     public static bool HasKeyword(CardInstance digimon, Keyword keyword) =>
         digimon.ActiveKeywords.Contains(keyword)
         || (For(digimon.TopCard)?.Keywords.Contains(keyword) ?? false)
-        || digimon.EvolutionSources.Any(s => For(s)?.InheritedKeywords.Contains(keyword) ?? false);
+        || digimon.EvolutionSources.Any(s => For(s)?.InheritedKeywords.Contains(keyword) ?? false)
+        || GainedSources(digimon).Any(s => For(s)?.Keywords.Contains(keyword) ?? false);   // v0.31.0 진화원 카드의 효과 전부를 얻는다
+
+    /// <summary>
+    /// v0.31.0 이 디지몬이 효과를 얻는 진화원 카드 (맨 위 카드의 메인 효과 · 진화원 효과의 "gains all effects of ~ in this Digimon's digivolution cards").
+    /// 같은 카드 번호는 1장, 맨 위 카드 자신은 아니다 (공식 Q&A BT16-062 · BT16-014: 진화할 때 얻은 [진화 시]도 발휘)
+    /// </summary>
+    public static IEnumerable<CardData> GainedSources(CardInstance digimon, IReadOnlyList<CardData>? sources = null)
+    {
+        IEnumerable<CardData> stack = sources ?? (IEnumerable<CardData>)digimon.EvolutionSources;   // [소멸 시]: 이미 트래시로 간 진화원
+        if (!stack.Any()) return Enumerable.Empty<CardData>();
+        var whichList = new List<Func<CardData, bool>>();
+        if (For(digimon.TopCard) is { GainedSourceEffects.Count: > 0 } top)
+            whichList.AddRange(top.GainedSourceEffects.Where(g => g.Source == EffectSource.Main).Select(g => g.Which));
+        foreach (var src in stack)
+            if (For(src) is { GainedSourceEffects.Count: > 0 } ss)
+                whichList.AddRange(ss.GainedSourceEffects.Where(g => g.Source == EffectSource.Inherited).Select(g => g.Which));
+        if (whichList.Count == 0) return Enumerable.Empty<CardData>();
+        return stack.Where(s => !ReferenceEquals(s, digimon.TopCard) && whichList.Any(w => w(s)))
+            .GroupBy(s => s.CardId).Select(g => g.First()).ToList();
+    }
 
     /// <summary>옵션 [메인] 효과를 쓸 때 고를 대상 종류</summary>
     public static TargetKind MainTargetOf(CardData card) => For(card)?.MainTarget ?? TargetKind.None;
@@ -121,9 +141,12 @@ public sealed class CardScriptDefinition
     private readonly CardScript _script;
     internal CardScriptDefinition(CardScript script) => _script = script;
 
+    /// <summary>v0.31.0: 설정하면 On()이 이 출처로 등록한다 ([트래시] 시점 효과 = EffectSource.Trash) — 문장 하나를 읽는 동안만</summary>
+    internal EffectSource? ZoneSource { get; set; }
+
     public CardScriptDefinition On(EffectTrigger trigger, Action<EffectContext> resolve, Func<EffectContext, bool>? when = null, bool oncePerTurn = false, bool twicePerTurn = false)
     {
-        _script.Effects.Add(new CardEffect(trigger, EffectSource.Main, resolve) { Condition = when, OncePerTurn = oncePerTurn, TwicePerTurn = twicePerTurn });
+        _script.Effects.Add(new CardEffect(trigger, ZoneSource ?? EffectSource.Main, resolve) { Condition = when, OncePerTurn = oncePerTurn, TwicePerTurn = twicePerTurn });
         return this;
     }
 
@@ -183,6 +206,20 @@ public sealed class CardScriptDefinition
     public CardScriptDefinition EvoCostModifier(EvoCostModifier modifier)
     {
         _script.EvoCostModifiers.Add(modifier);
+        return this;
+    }
+
+    /// <summary>v0.31.0 진화원 카드의 효과 전부를 얻는다 ("This Digimon gains all effects of ~ in this Digimon's digivolution cards")</summary>
+    public CardScriptDefinition GainSourceEffects(EffectSource source, Func<CardData, bool> which)
+    {
+        _script.GainedSourceEffects.Add((source, which));
+        return this;
+    }
+
+    /// <summary>v0.31.0 다른 카드의 등장 코스트 감소 (필드 · 육성의 이 카드)</summary>
+    public CardScriptDefinition FieldPlayCostModifier(FieldPlayCostModifier modifier)
+    {
+        _script.FieldPlayCostModifiers.Add(modifier);
         return this;
     }
 

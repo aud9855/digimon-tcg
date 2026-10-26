@@ -47,6 +47,9 @@ public sealed class EffectContext
     /// <summary>시점을 일으킨 카드 (예: 레스트한 테이머 — AllyTamerSuspended)</summary>
     public CardData? TriggerCard { get; internal set; }
 
+    /// <summary>지금 처리 중인 시점 (v0.31.0 — "A or B" 사건 문장이 어느 쪽 사건인지 본다)</summary>
+    public EffectTrigger Trigger { get; internal set; }
+
     /// <summary>GameState.TurnSequence — "다음 상대의 턴 종료 시까지" = TurnSequence + 1</summary>
     public int TurnSequence => State.TurnSequence;
 

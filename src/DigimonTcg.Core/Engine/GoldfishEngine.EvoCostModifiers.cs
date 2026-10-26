@@ -27,9 +27,9 @@ public partial class GoldfishEngine
         int cost = ActionValidator.EvolutionCost(target, evoCard);
         if (cost <= 0 || !CanReduceEvoCost(owner))
             return cost;
-        foreach (var (mod, _, _, _) in ApplicableEvoCostModifiers(owner, target, evoCard))
+        foreach (var (mod, _, _, ctx) in ApplicableEvoCostModifiers(owner, target, evoCard))
             if (mod.Cost == null)
-                cost = Math.Max(0, cost - mod.Reduce);
+                cost = Math.Max(0, cost - mod.ReduceFor(ctx, target));
         return cost;
     }
 
@@ -72,7 +72,7 @@ public partial class GoldfishEngine
                     continue;
                 pay.Pay(ctx);
             }
-            int reduced = Math.Min(mod.Reduce, cost);
+            int reduced = Math.Min(mod.ReduceFor(ctx, target), cost);
             cost -= reduced;
             if (mod.OncePerTurn)
                 _evoCostModifierUsedTurn[key] = State.TurnSequence;
