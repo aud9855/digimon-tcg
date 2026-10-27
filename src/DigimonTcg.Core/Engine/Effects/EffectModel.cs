@@ -112,7 +112,7 @@ public enum EffectTrigger
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
-public enum EffectSource { Main, Inherited, Trash }   // Trash = 트래시의 이 카드로 발휘하는 [트래시] 시점 효과 (v0.31.0)
+public enum EffectSource { Main, Inherited, Trash, Breeding42, BreedingInherited42 }   // Trash = 트래시의 이 카드로 발휘하는 [트래시] 시점 효과 (v0.31.0) · v0.42.0 [육성] 효과 (육성 에어리어의 디지몬 — 맨 위 카드 · 진화원)
 
 /// <summary>규칙이 정해져 있어서 이름만으로 동작하는 키워드 효과</summary>
 public enum Keyword
@@ -179,6 +179,8 @@ public enum Keyword
     // v0.38.0 얻는 ≪가드≫ · ≪디코이 (색)≫ — 카드에 적힌 것은 ParseLeaveKeyword가 효과로 등록한다
     Guard,                             // ≪가드≫: 다른 자신의 디지몬이 상대의 효과로 떠날 때, 이 디지몬을 소멸시키는 것으로 떠나지 않는다
     DecoyRed, DecoyBlue, DecoyYellow, DecoyGreen, DecoyBlack, DecoyPurple, DecoyWhite,   // ≪디코이 (색)≫: 그 색의 다른 자신의 디지몬이 상대의 효과로 소멸할 때
+    // v0.42.0
+    StackProtectedFromOpponent,        // 겹쳐진 카드(맨 위 카드 · 진화원)가 상대의 효과로 파기되지 않는다 (공식 BT21-060 "이 디지몬에 겹쳐져 있는 카드는 상대의 효과로 파기되지 않는다" — ≪퇴화≫도)
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>
@@ -362,6 +364,15 @@ public sealed class CardScript
     /// <summary>v0.41.0 ≪계승 (지정)≫ — 이 디지몬은 가장 위의 지정된 진화원 카드의 ≪계승≫ 이외의 효과를 모두 얻는다 (BT26-032)</summary>
     public List<Func<CardData, bool>> SuccessionSpecs41 { get; } = new();
 
+    /// <summary>v0.42.0 조건이 붙은 진화 조건 무시 진화 — 진화할 카드 쪽 ("While ~, your [Impmon] can digivolve into this card ~ for a memory cost of 4" BT2-111) (조건, 진화하는 디지몬, 코스트)</summary>
+    public List<(Func<StaticContext, bool>? Cond, Func<CardInstance, bool> From, int Cost)> SpecialEvolutions42 { get; } = new();
+
+    /// <summary>v0.42.0 진화 조건 무시 진화 — 진화하는 디지몬 쪽 ("[Your Turn] If ~, this Digimon can digivolve into a [Gallantmon] in your hand for a memory cost of 4" ST7-03) (적힌 곳, [자신의 턴], 조건, 진화할 카드, 코스트)</summary>
+    public List<(EffectSource Source, bool YourTurnOnly, Func<StaticContext, bool>? Cond, Func<CardData, bool> Into, int Cost)> HolderEvolutions42 { get; } = new();
+
+
+
+
     /// <summary>v0.31.0 "[Your Turn] When any Digimon cards with the [ADVENTURE] trait would be played from your hand, by suspending this Tamer, reduce the play cost by 1" — 다른 카드의 등장 코스트 감소 (필드 · 육성)</summary>
     public List<FieldPlayCostModifier> FieldPlayCostModifiers { get; } = new();
 
@@ -395,6 +406,9 @@ public sealed record FieldPlayCostModifier(
 
     /// <summary>v0.32.0 줄이는 양을 직접 정한다 (Reduce · Times 대신) — "~ -4. 이 디지몬의 진화원 1장마다 이 코스트 경감 효과의 수치 -1" (BT13-007) · "~ 대신 -4" (EX6-006)</summary>
     public Func<EffectContext, int>? Amount { get; init; }
+
+    /// <summary>v0.42.0 비용을 낸 뒤 줄이는 양 (Amount는 미리보기) — "reduce the play cost by the play cost of the deleted Digimon" (BT13-103)</summary>
+    public Func<EffectContext, int>? PaidAmount42 { get; init; }
 }
 
 /// <summary>진화 코스트 감소가 걸리는 진화: 이 디지몬이 진화할 때 · 자신의 디지몬이 진화할 때 · (패의) 이 카드로 진화할 때</summary>

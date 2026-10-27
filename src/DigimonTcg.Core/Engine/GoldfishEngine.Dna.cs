@@ -70,9 +70,15 @@ public partial class GoldfishEngine
         var opp = State.DummyOpponent;
         if (DnaOf(dna.Card) is not { } req || !opp.Hand.Contains(dna.Card) || !opp.BattleArea.Contains(dna.A) || !opp.BattleArea.Contains(dna.B) || !DnaPairOk(req, dna.Card, dna.A, dna.B))
             return false;
+        // v0.42.0 진화할 수 없는 디지몬(지속 효과 "can't digivolve")이면 하지 않는다 — DnaDigivolveCore가 카드를 쓰지 않고 돌아오면 AI가 같은 DNA 진화를 끝없이 다시 고른다
+        if (EffectRules.IsDigivolveLocked(State, dna.A) || EffectRules.IsDigivolveLocked(State, dna.B))
+            return false;
         string names = $"{dna.A.TopCard.Name} + {dna.B.TopCard.Name}";
         int before = _aiTurn?.Memory ?? 0;
+        int copiesBefore = opp.Hand.Count(c => ReferenceEquals(c, dna.Card));
         var logs = CaptureEffectLogs(() => DnaDigivolveCore(opp, dna.Card, dna.A, dna.B, req.Cost, opp.Hand));
+        if (opp.Hand.Count(c => ReferenceEquals(c, dna.Card)) == copiesBefore)
+            return false;   // 처리되지 않았다 (DNA 진화하려 할 때 효과로 디지몬이 떠났다 등)
         Log($"🤖 [AI DNA 진화] [{names}] -> [{dna.Card.Name}(Lv.{dna.Card.Level}, 코스트 {req.Cost})] (AI 메모리: +{before} → {_aiTurn?.Memory})");
         AddOpponentEvent(OpponentActionKind.Evolve, "DNA 진화", $"{names} → {dna.Card.Name} (Lv.{dna.Card.Level}) · 메모리 {before} → {_aiTurn?.Memory}", dna.Card);
         AddEffectEvent(dna.Card, logs);

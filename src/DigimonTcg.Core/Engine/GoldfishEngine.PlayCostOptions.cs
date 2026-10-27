@@ -101,6 +101,7 @@ public partial class GoldfishEngine
                 if (!pay.CanPay(ctx) || !AskYesNo(owner, ctx.Self, $"[{ctx.Card.Name}] {pay.Describe} [{card.Name}] 등장 코스트를 {reduce} 줄일까요?", pay.Recommend(ctx)))
                     continue;
                 pay.Pay(ctx);
+                if (mod.PaidAmount42 != null) reduce = Math.Max(0, mod.PaidAmount42(ctx));   // v0.42.0 소멸시킨 디지몬의 등장 코스트만큼 (BT13-103)
             }
             else if (mod.Optional && !AskYesNo(owner, ctx.Self, $"[{ctx.Card.Name}] [{card.Name}] 등장 코스트를 {reduce} 줄일까요?", recommended: true))
                 continue;

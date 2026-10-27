@@ -216,7 +216,8 @@ public static class KeywordDictionary
                    || script.OverflowMemory > 0 || script.DigisorptionReduction > 0 || script.BlastDigivolve || script.MaterialSave > 0 || script.LinkRequirement != null || script.SpecialEvolutions.Count > 0 || script.TamerEvolutions.Count > 0 || script.IgnoreColorRequirement != null || script.PlayCostReduction != null || script.PlayCostOptions.Count > 0 || script.EvoCostModifiers.Count > 0 || script.FieldPlayCostModifiers.Count > 0 || script.GainedSourceEffects.Count > 0
                    || script.XrosAliases.Count > 0 || script.XrosFromTrash != null || script.XrosUnderTamersFor != null || script.OverclockSpecified != null
                    || script.EvoOnlyInto.Count > 0 || script.TamerAuras.Count > 0 || script.DnaAliases.Count > 0 || script.LinkCostModifiers41.Count > 0 || script.SuccessionSpecs41.Count > 0   // v0.41.0 링크 코스트 감소 · ≪계승≫ · v0.34.0 · v0.37.0 DNA 진화 이름 취급
-                   || script.SecurityPlayAtEndOfOpponentTurn38 || script.OpponentEvoCostIncreases40.Count > 0;   // v0.40.0   // v0.38.0 [시큐리티]【상대의 턴 종료 시】
+                   || script.SecurityPlayAtEndOfOpponentTurn38 || script.OpponentEvoCostIncreases40.Count > 0
+                   || script.SpecialEvolutions42.Count > 0 || script.HolderEvolutions42.Count > 0;   // v0.42.0   // v0.40.0   // v0.38.0 [시큐리티]【상대의 턴 종료 시】
         return any ? script : null;
     }
 

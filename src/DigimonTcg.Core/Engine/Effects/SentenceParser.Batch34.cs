@@ -37,6 +37,7 @@ internal static partial class SentenceParser
         (new Regex(@"^(?:isn't|is not) affected by (?:your opponent's|their) ＜De-Digivolve＞ effects$", I), new[] { Keyword.UnaffectedByOpponentDeDigivolve }, true),   // v0.36.0 (BT22-060)
         (new Regex(@"^can't have (?:its|their) DP reduced by (?:your |the )?opponent's(?: card)? effects$", I), new[] { Keyword.DpCannotBeReducedByOpponent }, true),
         (new Regex(@"^can't have (?:its|their) DP reduced$", I), new[] { Keyword.DpCannotBeReduced }, true),
+        (new Regex(@"^can't have (?:its|their) stacked cards trashed by (?:your |the )?opponent's effects$", I), new[] { Keyword.StackProtectedFromOpponent }, true),   // v0.42.0 (BT21-060 · BT26-085 — SentenceParser.Batch42Src)
         (new Regex(@"^can't be blocked(?: by (?:your opponent's|their) Digimon)?$|^(?:is|are) unblockable$", I), new[] { Keyword.Unblockable }, true),
         (new Regex(@"^can't be attacked$", I), new[] { Keyword.CannotBeAttacked }, true),
         (new Regex(@"^(?:can|may) (?:also )?attack (?:your opponent's|their|an opponent's) unsuspended Digimon with no digivolution cards$", I), new[] { Keyword.CanAttackUnsuspendedSourceless }, true),

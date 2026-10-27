@@ -397,6 +397,7 @@ public static partial class KoreanEffectRenderer
             Keyword.UnaffectedByOpponentDeDigivolve => ('t', "상대의 《퇴화》의 효과를 받지 않는다", "상대의 《퇴화》의 효과를 받지 않고"),   // v0.36.0 공식 BT22-060
             Keyword.DpCannotBeReduced => ('t', "DP가 마이너스되지 않는다", "DP가 마이너스되지 않고"),
             Keyword.DpCannotBeReducedByOpponent => ('t', "상대의 효과로 DP가 마이너스되지 않는다", "상대의 효과로 DP가 마이너스되지 않고"),
+            Keyword.StackProtectedFromOpponent => ('t', "겹쳐져 있는 카드가 상대의 효과로 파기되지 않는다", "겹쳐져 있는 카드가 상대의 효과로 파기되지 않고"),   // v0.42.0 공식 BT21-060
             Keyword.Unblockable => ('t', "블록당하지 않는다", "블록당하지 않고"),
             Keyword.CannotBeAttacked => ('t', "어택당하지 않는다", "어택당하지 않고"),
             Keyword.CanAttackUnsuspended => ('t', "액티브 상태인 상대의 디지몬에게도 어택할 수 있다", "액티브 상태인 상대의 디지몬에게도 어택할 수 있고"),

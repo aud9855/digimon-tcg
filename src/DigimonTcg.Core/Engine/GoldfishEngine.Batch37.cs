@@ -28,8 +28,11 @@ public partial class GoldfishEngine
     {
         SecurityPlayWithoutBattle = false;
         if (!owner.Trash.Contains(card)) return false;
-        if (!TryPlayByEffect(owner, card, PlayOrigin.Security, () => owner.Trash.Remove(card))) return false;
+        if (!TryPlayByEffect(owner, card, PlayOrigin.Security, () => owner.Trash.Remove(card))) { _securityReturnAtEnd42 = false; return false; }
         SecurityPlayWithoutBattleTotal++;
+        if (_securityReturnAtEnd42 && owner.BattleArea.LastOrDefault(d => ReferenceEquals(d.TopCard, card)) is { } played)   // v0.42.0 "Return this Digimon to your hand at the end of the turn" (EX4-013)
+            ScheduleReturnAtTurnEnd42(played, owner, State.TurnSequence, toHand: true);
+        _securityReturnAtEnd42 = false;
         return true;
     }
 

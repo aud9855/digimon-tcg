@@ -77,7 +77,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse41(rawClause, inherited, card, def);   // v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse42(rawClause, inherited, card, def);   // v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -2350,14 +2350,14 @@ internal static partial class SentenceParser
             }
             else result.Add(sentences[i]);
         }
-        return MergeSentences40(result);   // v0.40.0 (SentenceParser.Batch40Step.cs)
+        return MergeSentences42(MergeSentences40(result));   // v0.42.0 "대신" (SentenceParser.Batch42Instead.cs) · v0.40.0 (SentenceParser.Batch40Step.cs)
     }
 
     private static (Step? Step, string? Error) ParseStep(string sentence, CardData card, List<EffectTrigger> triggers)
     {
         var r = ParseStepCore(sentence, card, triggers);
         if (r.Error == null) return r;
-        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? StepFallback40(sentence, card, triggers) ?? StepFallback41(sentence, card, triggers) ?? r;   // v0.41.0 (Batch41) · v0.40.0 (Batch40) · v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
+        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? StepFallback40(sentence, card, triggers) ?? StepFallback41(sentence, card, triggers) ?? StepFallback42(sentence, card, triggers) ?? r;   // v0.42.0 (Batch42) · v0.41.0 (Batch41) · v0.40.0 (Batch40) · v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
     }
 
     private static (Step? Step, string? Error) ParseStepCore(string sentence, CardData card, List<EffectTrigger> triggers)
@@ -2492,6 +2492,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction39(s.TrimEnd('.'), card, triggers) is { } act39) act = act39;   // v0.39.0 (SentenceParser.Batch39.cs)
         if (act.Error != null && ParseAction40(s.TrimEnd('.'), card, triggers) is { } act40) act = act40;   // v0.40.0 (SentenceParser.Batch40.cs)
         if (act.Error != null && ParseAction41(s.TrimEnd('.'), card, triggers) is { } act41) act = act41;   // v0.41.0 (SentenceParser.Batch41.cs)
+        if (act.Error != null && ParseAction42(s.TrimEnd('.'), card, triggers) is { } act42) act = act42;   // v0.42.0 (SentenceParser.Batch42.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2564,7 +2565,7 @@ internal static partial class SentenceParser
         { int per = Per(m); return (o, e, _) => (o.Trash.Count + e.Trash.Count) / per; }
         if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?(?:total )?cards? in both players' security stacks$", RegexOptions.IgnoreCase)).Success)
         { int per = Per(m); return (o, e, _) => (o.SecurityStack.Count + e.SecurityStack.Count) / per; }
-        return ParseCounter32(counter) ?? ParseCounter34(counter) ?? ParseCounter35(counter) ?? ParseCounter38(counter) ?? ParseCounter39(counter);   // v0.38.0 (Batch38b)   // v0.35.0 뒷면 진화원 (Batch35)   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
+        return ParseCounter32(counter) ?? ParseCounter34(counter) ?? ParseCounter35(counter) ?? ParseCounter38(counter) ?? ParseCounter39(counter) ?? ParseCounter42(counter);   // v0.42.0 (Batch42Count)   // v0.38.0 (Batch38b)   // v0.35.0 뒷면 진화원 (Batch35)   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
     }
 
     private static string Gerund(string verb) => verb.ToLowerInvariant() switch
@@ -4083,6 +4084,7 @@ internal static partial class SentenceParser
                 foreach (var d in Pick(target, c, security).Where(d => d.EvolutionSources.Count > 0))
                 {
                     var zone = c.Engine.OwnerOf(d);
+                    if (c.Engine.StackProtected42(zone, d)) continue;   // v0.42.0 겹쳐진 카드 보호 (BT21-060)
                     bool topHere = either ? TopOrBottomSource37(c, d) : top;
                     var removed = topHere ? c.Engine.TrashTopSources(zone, d, n) : d.RemoveBottomSources(n);
                     if (!topHere) zone.Trash.AddRange(removed);
@@ -4099,7 +4101,7 @@ internal static partial class SentenceParser
             bool one = m.Groups["one"].Success;
             return (c =>
             {
-                var hosts = c.Enemy.BattleArea.Where(d => d.EvolutionSources.Count > 0 && !c.Engine.IsUnaffectedBy(c.Owner, d)).ToList();
+                var hosts = c.Enemy.BattleArea.Where(d => d.EvolutionSources.Count > 0 && !c.Engine.IsUnaffectedBy(c.Owner, d) && !CardScripts.HasKeyword(d, Keyword.StackProtectedFromOpponent)).ToList();   // v0.42.0 겹쳐진 카드 보호
                 if (one && hosts.Count > 0)
                 {
                     var ranked = hosts.OrderByDescending(d => d.EvolutionSources.Count >= n).ThenByDescending(d => d.GetCurrentDP()).ToList();

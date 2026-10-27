@@ -594,6 +594,7 @@ public partial class GoldfishEngine
         int prevLevel = target.TopCard.Level;
 
         int baseCost = ActionValidator.EvolutionCost(target, evoCard);
+        NoteSpecialEvo42(target, evoCard, baseCost);   // v0.42.0 집계
         int evoCost = baseCost - TryDigisorption(State.Player, target, evoCard, baseCost, State.MemoryGauge);
         State.Player.Hand.Remove(evoCard);
         evoCost = ApplyEvoCostModifiers(State.Player, target, evoCard, evoCost);   // "When this Digimon would digivolve, reduce the digivolution cost by N"
@@ -616,6 +617,8 @@ public partial class GoldfishEngine
         // [진화 시] 효과 — 육성 에어리어의 디지몬은 효과를 발휘하지 않는다
         if (State.Player.BattleArea.Contains(target))
             ApplyWhenDigivolvingEffects(State.Player, target, evoCard);
+        else if (ReferenceEquals(State.Player.BreedingArea, target))
+            RunBreedingEffects42(EffectTrigger.WhenDigivolving, State.Player, null, evoCard);   // v0.42.0 [육성]【진화 시】 (EX10-013)
         if (State.Player.BattleArea.Contains(target))
             FireForSide(EffectTrigger.AllyDigimonDigivolved, State.Player, target);
 
@@ -1754,6 +1757,7 @@ public partial class GoldfishEngine
     {
         var opp = State.DummyOpponent;
         int baseCost = ActionValidator.EvolutionCost(fieldDigimon, evoCard);
+        NoteSpecialEvo42(fieldDigimon, evoCard, baseCost);   // v0.42.0 집계
         int evoCost = baseCost - TryDigisorption(opp, fieldDigimon, evoCard, baseCost, ctx.Memory);
         opp.Hand.Remove(evoCard);
         evoCost = ApplyEvoCostModifiers(opp, fieldDigimon, evoCard, evoCost);
@@ -1768,6 +1772,8 @@ public partial class GoldfishEngine
 
         if (opp.BattleArea.Contains(fieldDigimon))
             AddEffectEvent(evoCard, CaptureEffectLogs(() => { ApplyWhenDigivolvingEffects(opp, fieldDigimon, evoCard); FireForSide(EffectTrigger.AllyDigimonDigivolved, opp, fieldDigimon); }));
+        else if (ReferenceEquals(opp.BreedingArea, fieldDigimon))
+            AddEffectEvent(evoCard, CaptureEffectLogs(() => RunBreedingEffects42(EffectTrigger.WhenDigivolving, opp, null, evoCard)));   // v0.42.0 [육성]【진화 시】 (EX10-013)
     }
 
     /// <summary>AI 등장: 코스트 지불 → [등장 시] 효과 (플레이어와 같은 카드 스크립트)</summary>

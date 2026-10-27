@@ -61,6 +61,10 @@ public class CardInstance
     /// <summary>v0.37.0 지속 효과로 더해진 색 ("This Digimon is also treated as yellow" · "~ treated as also having the color of its digivolution cards") — 엔진이 지속 효과를 계산할 때마다 다시 채운다</summary>
     public HashSet<CardColor> ExtraColors { get; } = new();
 
+    /// <summary>v0.42.0 지금 필드에서의 지속 효과 조건 판단용 (엔진이 지속 효과를 계산할 때 채운다 — 조건이 붙은 진화 조건 무시 진화)</summary>
+    public Func<DigimonTcg.Core.Engine.Effects.StaticContext>? LiveContext42 { get; set; }
+    internal PlayerZones? LiveOwner42 { get; set; }
+
     /// <summary>v0.37.0 이 디지몬의 지금 색 (맨 위 카드의 색 + 효과로 더해진 색)</summary>
     public IReadOnlyList<CardColor> Colors => ExtraColors.Count == 0 ? TopCard.AllColors : TopCard.AllColors.Concat(ExtraColors.Where(c => !TopCard.AllColors.Contains(c))).ToList();
 

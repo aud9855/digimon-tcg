@@ -80,6 +80,9 @@ public sealed class EffectContext
     /// <summary>v0.37.0 [시큐리티] "Play this card without battling and without paying the cost" — 배틀하지 않고 이 시큐리티 디지몬을 등장시킨다</summary>
     public bool PlayWithoutBattle { get; set; }
 
+    /// <summary>v0.42.0 [시큐리티] "Return this Digimon to your hand at the end of the turn" (EX4-013) — 배틀하지 않고 등장한 이 디지몬을 이 턴 종료 시 패로</summary>
+    internal bool ReturnPlayedAtTurnEnd42 { get; set; }
+
     /// <summary>앞 문장에서 고른 대상 ("that Digimon" · "it"이 가리키는 디지몬)</summary>
     public List<CardInstance> LastTargets { get; set; } = new();
 

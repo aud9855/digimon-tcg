@@ -144,8 +144,35 @@ public static class CardScripts
         : For(evoCard)?.TamerEvolutions.Where(t => t.Tamer(tamer) && evoCard.EvoRequirementLevel == t.Level && evoCard.EvoRequirementColor == t.Color)
             .Select(t => (int?)(t.Cost ?? evoCard.EvoCost)).Min();
 
-    public static int? SpecialEvolutionCost(CardData evoCard, CardInstance target) =>
-        For(evoCard)?.SpecialEvolutions.Where(s => s.From(target)).Select(s => (int?)s.Cost).Min();
+    public static int? SpecialEvolutionCost(CardData evoCard, CardInstance target)
+    {
+        int? cost = For(evoCard)?.SpecialEvolutions.Where(s => s.From(target)).Select(s => (int?)s.Cost).Min();
+        if (SpecialEvolutionCost42(evoCard, target) is int c42) cost = cost == null ? c42 : Math.Min(cost.Value, c42);   // v0.42.0 조건이 붙은 진화 조건 무시 진화
+        return cost;
+    }
+
+    /// <summary>
+    /// v0.42.0 조건이 붙은 진화 조건 무시 진화 (진화할 카드 쪽 SpecialEvolutions42 · 진화하는 디지몬 쪽 HolderEvolutions42) — 조건은 지금 필드로 판단한다
+    /// (target.LiveContext42 — 엔진이 지속 효과를 계산할 때 채운다. 필드에 없으면 null)
+    /// </summary>
+    internal static int? SpecialEvolutionCost42(CardData evoCard, CardInstance target)
+    {
+        var evoScript = For(evoCard);
+        var top = For(target.TopCard);
+        bool any = evoScript?.SpecialEvolutions42.Count > 0 || top?.HolderEvolutions42.Count > 0 || target.FaceUpSources.Any(x => For(x)?.HolderEvolutions42.Count > 0);
+        if (!any || evoCard.Type != CardType.Digimon || target.LiveContext42?.Invoke() is not { } ctx) return null;
+        int? best = null;
+        void Take(int c) => best = best == null ? c : Math.Min(best.Value, c);
+        if (evoScript != null)
+            foreach (var (cond, from, c) in evoScript.SpecialEvolutions42)
+                if (from(target) && (cond == null || cond(ctx))) Take(c);
+        IEnumerable<(EffectSource Source, bool YourTurnOnly, Func<StaticContext, bool>? Cond, Func<CardData, bool> Into, int Cost)> holders =
+            (top?.HolderEvolutions42.Where(h => h.Source == EffectSource.Main) ?? Enumerable.Empty<(EffectSource, bool, Func<StaticContext, bool>?, Func<CardData, bool>, int)>())
+            .Concat(target.FaceUpSources.GroupBy(x => x.CardId).Select(g => For(g.First())).Where(x => x != null).SelectMany(x => x!.HolderEvolutions42.Where(h => h.Source == EffectSource.Inherited)));
+        foreach (var h in holders)
+            if ((!h.YourTurnOnly || target.IsOwnersTurn) && h.Into(evoCard) && (h.Cond == null || h.Cond(ctx))) Take(h.Cost);
+        return best;
+    }
 }
 
 /// <summary>카드 스크립트를 읽기 쉽게 등록하는 도구</summary>

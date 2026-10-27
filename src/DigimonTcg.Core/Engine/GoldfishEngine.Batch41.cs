@@ -154,7 +154,7 @@ public partial class GoldfishEngine
     internal bool TrashTopCardOf41(PlayerZones owner, CardInstance inst, out CardData? top)
     {
         top = null;
-        if (!owner.BattleArea.Contains(inst) || inst.EvolutionSources.Count == 0 || inst.TrashTopCard() is not { } t)
+        if (!owner.BattleArea.Contains(inst) || inst.EvolutionSources.Count == 0 || StackProtected42(owner, inst) || inst.TrashTopCard() is not { } t)   // v0.42.0 StackProtected42
             return false;
         top = t;
         ApplyOverflow(owner, new[] { t });

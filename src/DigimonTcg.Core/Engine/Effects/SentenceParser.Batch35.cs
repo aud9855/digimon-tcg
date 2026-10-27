@@ -216,6 +216,7 @@ internal static partial class SentenceParser
                 var d = Pick(fromT, c, security).FirstOrDefault();
                 if (d == null || k <= 0 || d.EvolutionSources.Count == 0) { Emit(c, label, "진화원을 파기할 대상이 없습니다"); c.LastStepResolved = false; return; }
                 var zone = c.Engine.OwnerOf(d);
+                if (c.Engine.StackProtected42(zone, d)) { c.LastStepResolved = false; return; }   // v0.42.0
                 var pool = d.EvolutionSources.OrderByDescending(x => !d.IsFaceDown(x) && (x.InheritedEffectText.Trim().Length > 0 || x.InheritedDpBonus > 0)).ToList();
                 int take = Math.Min(k, pool.Count);
                 var picks = c.Engine.ChooseCards(c.Owner, CardChoiceZone.DigivolutionCards, pool, take, upTo: false, $"[{c.Card.Name}] [{d.TopCard.Name}]의 진화원에서 파기할 카드 {take}장을 고르세요.");

@@ -61,6 +61,7 @@ public partial class GoldfishEngine
     /// <summary>inst의 진화원 중 아래에서부터 뒷면 카드 n장을 파기한다 (트래시로). 파기한 카드 반환</summary>
     internal List<CardData> TrashBottomFaceDownSources(PlayerZones owner, CardInstance inst, int n)
     {
+        if (StackProtected42(owner, inst)) return new List<CardData>();   // v0.42.0 (BT21-060)
         var picks = inst.GetEvolutionStackBottomUp().Where(inst.IsFaceDown).Take(n).ToList();
         foreach (var x in picks)
             if (inst.TakeSource(y => ReferenceEquals(y, x)) != null) owner.Trash.Add(x);

@@ -423,6 +423,7 @@ public partial class GoldfishEngine
         {
             bool ownTurn = inst.IsOwnersTurn;
             var ctx = new StaticContext { Engine = this, State = State, Owner = owner, Enemy = enemy, Digimon = inst, OwnersTurn = ownTurn };
+            SetLiveContext42(inst, owner, enemy);   // v0.42.0 조건이 붙은 진화 조건 무시 진화 (GoldfishEngine.Batch42)
 
             // 효과로 얻은 키워드: 기간 효과 + 조건부 지속 효과 (먼저 계산해야 ≪블로커≫ 판정에 들어간다)
             inst.TimedKeywords.RemoveAll(t => t.Until < State.TurnSequence);
@@ -471,6 +472,7 @@ public partial class GoldfishEngine
 
         if (owner.BreedingArea != null)
         {
+            SetLiveContext42(owner.BreedingArea, owner, enemy);   // v0.42.0
             owner.BreedingArea.EffectDpBonus = 0;
             owner.BreedingArea.EffectSecurityAttackBonus = 0;
             owner.BreedingArea.TamerDpBonus = 0;
@@ -579,6 +581,8 @@ public partial class GoldfishEngine
             foreach (var e in StaticEffectsOf(source).Where(e => e.Stat == stat))
                 yield return (e, ctx);
         }
+        foreach (var x in BreedingAuras42(side, enemy, stat))   // v0.42.0 [육성] 지속 효과 (GoldfishEngine.Batch42)
+            yield return x;
     }
 
     internal List<(int Dp, int Until)> SecurityDpBuffsOf(PlayerZones owner) =>
@@ -963,6 +967,7 @@ public partial class GoldfishEngine
         var ctx = RunEffects(EffectTrigger.Security, owner, null, securityCard, other: attacker, chosenTarget: attacker, includeInherited: false);
         RecalculateFieldBuffs();
         SecurityPlayWithoutBattle = ctx.PlayWithoutBattle;   // v0.37.0
+        _securityReturnAtEnd42 = ctx.PlayWithoutBattle && ctx.ReturnPlayedAtTurnEnd42;   // v0.42.0 (EX4-013)
         string msg = $"[{SideName(owner)} 시큐리티 디지몬 {securityCard.Name}의 [시큐리티] 효과] {ctx.Message}";
         Log(msg);
         return (msg, ctx.PlayAfterBattle);
@@ -1091,6 +1096,7 @@ public partial class GoldfishEngine
             EffectLog(zones, $"[{inst.TopCard.Name}]은(는) 상대의 ≪퇴화≫ 효과를 받지 않습니다.");
             return 0;
         }
+        if (StackProtected42(zones, inst)) return 0;   // v0.42.0 겹쳐진 카드는 상대의 효과로 파기되지 않는다 (BT21-060)
         int n = 0;
         while (n < count)
         {
@@ -1202,6 +1208,7 @@ public partial class GoldfishEngine
     internal List<CardData> TrashTopSources(PlayerZones zones, CardInstance inst, int count)
     {
         var removed = new List<CardData>();
+        if (StackProtected42(zones, inst)) return removed;   // v0.42.0 (BT21-060)
         while (removed.Count < count && inst.EvolutionSources.Count > 0)
             removed.Add(inst.EvolutionSources.Pop());
         zones.Trash.AddRange(removed);
@@ -1666,6 +1673,7 @@ public partial class GoldfishEngine
     /// </summary>
     internal void RunTrashEffects(EffectTrigger trigger, PlayerZones owner, CardInstance? other = null, CardData? triggerCard = null)
     {
+        RunBreedingEffects42(trigger, owner, other, triggerCard);   // v0.42.0 [육성] 효과 (육성 에어리어의 디지몬 — GoldfishEngine.Batch42)
         if (owner.Trash.Count == 0)
             return;
         var cards = owner.Trash.Where(c => CardScripts.For(c)?.Effects.Any(e => e.Source == EffectSource.Trash && e.Trigger == trigger) == true)
@@ -1913,6 +1921,7 @@ public partial class GoldfishEngine
         RunPlacedOptions(EffectTrigger.EndOfOpponentsTurn, owner);
         RunTrashEffects(EffectTrigger.EndOfOpponentsTurn, owner);   // v0.31.0 [트래시] [~ 시] 효과
         PlayFaceUpSecurityAtEndOfOpponentTurn38(owner);   // v0.38.0 [시큐리티]【상대의 턴 종료 시】
+        RunScheduledReturns42();   // v0.42.0 "Return this Digimon to your hand at the end of the turn" (EX4-013) · "~ to the bottom of its owner's deck" (BT5-109)
         RunScheduledDeletions();   // "~ is deleted at the end of the turn" (이 효과로 등장한 디지몬) — 턴 종료 시의 마지막
         RunScheduledReturns39();   // v0.39.0 "At the next end of your opponent's turn, return it to the hand"
         ExpireTamerProxies();   // v0.36.0 테이머의 디지몬 취급 기간 끝
@@ -1957,7 +1966,7 @@ public partial class GoldfishEngine
     /// <summary>상대 디지몬 1마리(진화원이 있고 조건에 맞는 것 중 레벨이 가장 높은 것)의 진화원을 아래에서 1장 파기</summary>
     internal void TrashBottomSourceOfEnemy(PlayerZones enemyZones, Func<CardInstance, bool> match, string source)
     {
-        var target = enemyZones.BattleArea.Where(d => d.EvolutionSources.Count > 0 && match(d))
+        var target = enemyZones.BattleArea.Where(d => d.EvolutionSources.Count > 0 && match(d) && !CardScripts.HasKeyword(d, Keyword.StackProtectedFromOpponent))   // v0.42.0
             .OrderByDescending(d => d.TopCard.Level).FirstOrDefault();
         if (target == null) return;
         var removed = target.RemoveBottomSources(1);
