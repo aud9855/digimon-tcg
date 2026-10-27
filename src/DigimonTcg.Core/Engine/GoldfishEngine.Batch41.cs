@@ -161,6 +161,7 @@ public partial class GoldfishEngine
         owner.Trash.Add(t);
         RecalculateFieldBuffs();
         TrashExposedFaceDownTops();
+        NotifyTopStackedTrashed43(owner, inst, t);   // v0.43.0
         return true;
     }
 }

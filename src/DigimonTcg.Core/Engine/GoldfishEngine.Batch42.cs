@@ -50,8 +50,10 @@ public partial class GoldfishEngine
     {
         if (!zones.BattleArea.Contains(inst) || n <= 0 || StackProtected42(zones, inst)) return 0;
         int done = 0;
+        CardData? firstTop = null;
         while (done < n && inst.EvolutionSources.Count > 0 && inst.TrashTopCard() is { } t)
         {
+            firstTop ??= t;
             ApplyOverflow(zones, new[] { t });
             if (!IsToken(t)) zones.Trash.Add(t);
             done++;
@@ -74,6 +76,7 @@ public partial class GoldfishEngine
         }
         RecalculateFieldBuffs();
         TrashExposedFaceDownTops();
+        if (done > 0) NotifyTopStackedTrashed43(zones, inst, firstTop);   // v0.43.0 겹쳐진 카드가 위에서부터 파기되었을 때 (BT21-094)
         return done;
     }
 }

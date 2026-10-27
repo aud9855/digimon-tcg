@@ -59,7 +59,7 @@ internal static partial class SentenceParser
             amount = c => cond(c) ? n : 0;
         }
         else return null;
-        if (ReducedSentence42(a, 1) is not { } probe || ParseStep(probe, card, triggers) is not { Error: null, Step: not null } probeStep) return null;
+        if ((ReducedSentence42(a, 1) ?? ReducedSentence43(a, 1)) is not { } probe || ParseStep(probe, card, triggers) is not { Error: null, Step: not null } probeStep) return null;
         var byK = new Dictionary<int, Step?>();
         return probeStep.Step with
         {
@@ -68,7 +68,7 @@ internal static partial class SentenceParser
             {
                 int k = Math.Clamp(amount(c), 0, 20);
                 if (k > 0) Diag42.Hit(ref Diag42.CountNew);
-                if (!byK.TryGetValue(k, out var st)) byK[k] = st = ReducedSentence42(a, k) is { } ak ? ParseStep(ak, card, triggers).Step : null;
+                if (!byK.TryGetValue(k, out var st)) byK[k] = st = (ReducedSentence42(a, k) ?? ReducedSentence43(a, k)) is { } ak ? ParseStep(ak, card, triggers).Step : null;
                 if (st != null) RunStep(st, c);
             },
         };

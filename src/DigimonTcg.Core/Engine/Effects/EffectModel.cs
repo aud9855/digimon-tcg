@@ -109,10 +109,12 @@ public enum EffectTrigger
     AllyTopPlacedUnder,             // 효과로 자신의 디지몬의 맨 위 카드가 진화원에 놓였을 때 (Other = 그 디지몬 — 공식 Q&A EX5-001 · EX5-065, 진화는 아님)
     ThisSourcesToDeck,              // 이 디지몬의 진화원이 덱으로 되돌아갔을 때 (CurrentSourceCards = 그 카드)
     AllyUnderTamerPlaced,           // 자신의 테이머 아래에 카드가 놓였을 때 (TriggerCard = 놓인 카드 중 1장, CurrentSourceCards = 놓인 카드)
+    // v0.43.0
+    AllyTopStackedTrashed43,        // 자신의 디지몬에 겹쳐져 있는 카드가 위에서부터 파기되었을 때 (Other = 그 디지몬 — 맨 위 카드 파기 · ≪퇴화≫ · ≪아머 퍼지≫, BT21-094)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
-public enum EffectSource { Main, Inherited, Trash, Breeding42, BreedingInherited42 }   // Trash = 트래시의 이 카드로 발휘하는 [트래시] 시점 효과 (v0.31.0) · v0.42.0 [육성] 효과 (육성 에어리어의 디지몬 — 맨 위 카드 · 진화원)
+public enum EffectSource { Main, Inherited, Trash, Breeding42, BreedingInherited42, Link43 }   // Link43 = v0.43.0 링크 카드의 링크 효과 (링크되어 있는 동안 — 그 디지몬의 효과로) · Trash = 트래시의 이 카드로 발휘하는 [트래시] 시점 효과 (v0.31.0) · v0.42.0 [육성] 효과 (육성 에어리어의 디지몬 — 맨 위 카드 · 진화원)
 
 /// <summary>규칙이 정해져 있어서 이름만으로 동작하는 키워드 효과</summary>
 public enum Keyword
@@ -369,6 +371,15 @@ public sealed class CardScript
 
     /// <summary>v0.42.0 진화 조건 무시 진화 — 진화하는 디지몬 쪽 ("[Your Turn] If ~, this Digimon can digivolve into a [Gallantmon] in your hand for a memory cost of 4" ST7-03) (적힌 곳, [자신의 턴], 조건, 진화할 카드, 코스트)</summary>
     public List<(EffectSource Source, bool YourTurnOnly, Func<StaticContext, bool>? Cond, Func<CardData, bool> Into, int Cost)> HolderEvolutions42 { get; } = new();
+
+    /// <summary>v0.43.0 링크 카드의 링크 효과 중 키워드 (링크되어 있는 동안 그 디지몬이 얻는다 — 종합 룰 2-3-11-4-6 「링크 효과」)</summary>
+    public HashSet<Keyword> LinkKeywords43 { get; } = new();
+
+    /// <summary>v0.43.0 링크 효과의 ≪시큐리티 어택 ±N≫ (링크되어 있는 동안)</summary>
+    public int LinkSecurityAttack43 { get; set; }
+
+    /// <summary>v0.43.0 [패]【카운터】≪블래스트 조그레스 (A + B)≫ — 지정된 이름 2개 (영어). 없으면 null (종합 룰 16-31)</summary>
+    public (string A, string B)? BlastDna43 { get; set; }
 
 
 

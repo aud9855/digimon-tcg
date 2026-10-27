@@ -29,7 +29,7 @@ internal static partial class SentenceParser
         for (int i = 0; i < sentences.Count; i++)
         {
             // "A. For every ~, reduce this effect's digivolution cost by 1." — 앞 문장과 한 문장으로 (ReduceStep42 — SentenceParser.Batch42Reduce.cs)
-            if (i + 1 < sentences.Count && IsReduceSentence42(sentences[i + 1]) && !sentences[i].Contains(InsteadMark42) && ReducedSentence42(sentences[i], 1) != null)
+            if (i + 1 < sentences.Count && IsReduceSentence42(sentences[i + 1]) && !sentences[i].Contains(InsteadMark42) && (ReducedSentence42(sentences[i], 1) ?? ReducedSentence43(sentences[i], 1)) != null)   // v0.43.0 "use ~ from your hand" (BT26-090)
             {
                 result.Add(sentences[i].Trim().TrimEnd('.') + ReduceMark42 + sentences[i + 1].Trim());
                 i++;

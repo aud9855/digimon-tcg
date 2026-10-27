@@ -10,6 +10,28 @@
 
 ---
 
+## v0.43.0 — 2026-10-27
+미지원 효과 문장 17차 묶음 (어플 합체 · ≪블래스트 조그레스≫ · 링크 카드의 링크 효과 · 겹쳐진 맨 위 카드 · 트래시 → 시큐리티 아래 · "for each" 지속 효과 · 상대 메모리 셈 · [육성] · "대신") — 도감 효과 문장 지원 9,555 → 9,592 / 10,366 (92.2% → 92.5%, +37)
+- 모든 절이 동작하는 카드 3,620 → 3,652장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 37문장 모두 생성 한글이 붙는다
+- 읽는 방법: 16차와 같이 원래 규칙이 읽지 못한 절 · 문장 · 동작 · 셈 · 비용 · 사건 · 조건만 17차 규칙으로 다시 읽는다 (SentenceParser.TryParse → 실패하면 Batch43). 한글 렌더러도 원래 규칙이 옮기지 못할 때만 17차 규칙을 쓴다
+- 어플 합체 (종합 룰 8-4 — 공식 "2종의 카드에 의해 링크 상태라면, 링크 카드를 위에 겹쳐 진화시킨다"): 「어플 합체」 조건(지정된 카드 이름 · 코스트)은 영어 데이터에 없어서 링크 조건처럼 공식 한글 문구를 실행 중에만 읽는다 (저장하지 않는다)
+  - 메인 페이즈: 패의 어플 합체 카드를 조건 2종의 조합으로 링크 상태인 내 디지몬 위에 끌어 놓으면 "🧩 어플 합체" (링크 · 진화와 같은 고르기 창). 링크 카드를 그 디지몬 위에 겹치고 그 위에 진화 → 1장 드로우 → [진화 시]. 레스트 상태는 그대로, 진화 코스트 감소 효과도 받는다 (8-4-2-3)
+  - 효과로 어플 합체 (8-4-2-2): "1 of your Digimon may app fuse into a Digimon card in the hand" (BT21-084 · BT22-087 · BT23-079 · BT25-089 · EX10-062 · P-241) · "~ with the [System], [Life] or [Transmutation (App Name)] trait in the trash" (BT24-087)
+  - AI도 메모리 안에서 어플 합체를 한다 (어택 전 · 어택 뒤 메인 페이즈)
+- ≪블래스트 조그레스≫ (종합 룰 16-31 — 공식 "지정된 자신의 디지몬 1마리와 패의 지정된 카드 1장으로, 이 카드로 조그레스 진화할 수 있다"): BT17-078 · BT20-045 · BT20-060 · BT20-076 · BT20-081 · EX6-011 · EX6-029 — 상대가 어택했을 때 【카운터】 타이밍에 묻는다 (≪블래스트 진화≫와 같은 창, AI는 할 수 있으면 한다). 조그레스 조건도 만족해야 한다 (16-31-5). 조그레스로 생긴 디지몬은 새로운 디지몬 (8-2-2-1 — 액티브, 링크 카드 파기, 부여된 효과 · [턴 1회] 리셋) — 어택 대상이었으면 어택 대상이 없어져 배틀하지 않는다. 겹치는 순서는 조그레스 조건의 왼쪽이 위, 1장 드로우 · [진화 시] "조그레스 진화하고 있었다면"
+- 링크 카드의 링크 효과 (종합 룰 2-3-11-4-6 「링크 효과」): 영어 데이터는 링크 카드의 하단(링크 효과)을 진화원 효과 칸에 둔다 — 이제 그 효과는 링크되어 있는 동안 그 디지몬의 효과로 발휘하고, 진화원에 있을 때는 발휘하지 않는다 (EffectSource.Link43 — 시점 효과 · 지속 효과 · 키워드 · ≪시큐리티 어택 +N≫). 링크 카드 = 하단에 "Link Requirements"가 있거나, 특징 "~ (App Name)"인 Lv.3 이상 디지몬, 특징 「Plug-In」 옵션, 공식 한글 문구에 〈링크〉가 있는 카드
+  - 영어 데이터가 깨진 링크 카드의 하단 문장을 공식 문구에 맞춘 영어로 읽는다 (카드 번호 · 원문이 정확히 같을 때만): EX10-024 (비용 뒤 문장이 빠짐 — 공식 "【어택 시】이 디지몬의 링크 카드 1장을 파기하는 것으로, 상대의 디지몬 1마리를 《퇴화 1》") · BT23-009 · ST22-08 (【자신의 턴 종료 시】가 빠짐) · BT23-052 (키워드 이름이 빠짐 — 공식 "《재기동》과 《블로커》를 얻는다") · BT21-041 (【자신의 턴】이 빠짐)
+- 겹쳐진 맨 위 카드: 비용 "trashing the top stacked card of 1 of your [Armor Form] trait Digimon" (BT21-085 — 공식 "~에 겹쳐져 있는 카드를 위에서부터 1장 파기하는 것으로") · 사건 "When the top stacked card of any of your [Armor Form] trait Digimon is trashed" (BT21-094 — 맨 위 카드 파기 · ≪퇴화≫ · ≪아머 퍼지≫ · 겹쳐진 카드를 위에서부터 N장 파기, 파기되기 전의 디지몬 조건을 본다) · "Trash the top card of 1 of your Digimon with the [Armor Form] trait. Then, you may digivolve 1 of your Digimon into a Digimon card in your hand with the [Armor Form] trait ~" (BT8-110)
+- 트래시의 카드를 시큐리티 아래에: "[On Deletion] Place 1 [Etemon] from your trash at the bottom of your security stack" (BT14-038 — 공식 "자신의 트래시에서 「에테몬」 1장을 시큐리티 아래에 놓는다")
+- "for each" 지속 효과: "For each other Digimon with the [Royal Knight] trait or [Sistermon] in their names you have in play, all of your Digimon get +1000 DP" (BT13-017 — 이 디지몬은 빼고 센다) · "[Your Turn] For each Tamer, all of your [Eosmon] get +1000 DP" (BT17-076 — 공식 "테이머 1명마다") · "For each color in this [Blue Flare] or [Xros Heart] trait Digimon's digivolution cards, it gets +1000 DP" (AD1-013)
+- 셈: 상대의 메모리 "for each memory your opponent has" (BT25-086 — "gains +1000 DP"도) · "For each point of memory your opponent has, reduce this effect's paid cost by 1" + 코스트를 내고 옵션 사용 "you may use 1 Option card with the [TS] trait from your hand" (BT26-090) · "＜Draw 1＞ for each of that Digimon's digivolution cards" (BT7-104 — 앞 문장에서 고른 디지몬)
+- [육성]: BT13-007 진화원 효과 ("When an Option card with the [Royal Knight] trait is placed in the battle area, gain 1 memory") · EX6-006 (디지타마 덱 위 1장을 진화원 아래에 + 자신의 디지몬 전부 소멸 — 공식도 강제 효과) · EX9-057 (비용 "returning 4 [Negamon] from your trash or your Digimon's digivolution cards to the bottom of the Digi-Egg deck" — 트래시 → 진화원 순으로 고른다)
+- "대신": "If no Digimon was deleted by this effect, ~ instead" (BT13-111 — 공식 "이 효과로 소멸하지 않았다면" — 앞 문장을 처리한 뒤 그 결과로) · 쉼표가 든 조건 "If you have a Digimon in play with 2 or more colors, or with 2 or more colors in its digivolution cards, ~ instead" (BT8-096 · BT8-100 — 공식 "2색 이상인 자신의 디지몬 또는 진화원에 2색 이상인 카드를 가진 자신의 디지몬이 있다면") · "3 of your opponent's Digimon gain it instead" (BT10-099 — 앞 문장의 키워드 · 기간)
+- 원문 표기: "1 of opponent's Digimon" (BT9-041)
+- 동작이 바뀐 기존 카드: 링크 카드 16장의 하단 효과가 진화원 효과가 아니라 링크 효과로 동작한다 — 링크되어 있는 동안만 발휘하고 진화원에서는 발휘하지 않는다: ≪돌진≫ BT21-009 · ≪관통≫ BT21-047 · BT23-007 · BT26-010 · ≪S 어택 +1≫ BT23-022 (카드 데이터의 진화원 S 어택 보너스도 0으로) · BT21-041 (【자신의 턴】 상대의 시큐리티 디지몬 -3000) · 떠나려 할 때 링크 카드 파기 BT21-073 · EX10-030 · 【어택 시】 BT22-030 · BT22-033 · EX10-014 · EX10-016 · EX10-038 · EX10-043 · 상대 디지몬이 레스트했을 때 EX10-017 · EX10-019. 내 디지몬이 어택한 상대 디지몬이 【카운터】로 새 디지몬이 되면 배틀하지 않는다 (≪블래스트 조그레스≫에서만 일어난다)
+- 읽지 않고 남긴 것: BT11-034 (결정 대기) · [육성] 7문장 (BT13-007 디지타마 공개 · BT22-007 확인/DP 16000 취급/떠날 때 진화원으로 · EX9-005 [메인] · 진화할 수 없음/효과로 소멸하지 않음 · EX6-006 【상대의 턴 종료 시】 이 디지몬 소멸 비용 · BT18-086 떠날 때 이동) · 링크 카드의 〈링크 중〉 효과가 영어 데이터에 아예 없는 카드 (BT22-055 · BT22-058 등 — 링크 조건만 있다) · EX10-029 (영어 원문과 공식 한글이 다름 — 공식은 《퇴화》만 막는다) · 겹쳐진 카드 보호의 다른 표기 (EX11-070 · EX13-023)
+- 테스트 28개 (EffectBatch43Tests)
+
 ## v0.42.0 — 2026-10-27
 미지원 효과 문장 16차 묶음 (조건이 붙은 진화 조건 무시 진화 · 효과로 진화 조건 무시 진화 · 셈 · 앞 문장의 코스트 더 줄이기 · 겹쳐진 카드 보호 · 시큐리티 · "대신" · 소멸시킨 디지몬의 코스트만큼 감소 · [육성] · 효과로 링크) — 도감 효과 문장 지원 9,451 → 9,555 / 10,366 (91.2% → 92.2%, +104)
 - 모든 절이 동작하는 카드 3,535 → 3,620장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 104문장 중 94문장에 생성 한글이 붙는다 (나머지 10문장은 영어 데이터의 깨진 중복 문장 — 아래, 등록하는 효과 없음)

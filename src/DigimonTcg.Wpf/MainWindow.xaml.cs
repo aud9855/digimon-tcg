@@ -4159,6 +4159,10 @@ public partial class MainWindow : Window
         }
         if (LinkTargetOf(card, info) is { } linkTarget)
             actions.Add((LinkLabel(card, linkTarget), () => ApplyActionResult(_engine.LinkFromHand(card, linkTarget))));
+        // v0.43.0 어플 합체 (종합 룰 8-4): 놓은 디지몬이 이 카드의 어플 합체 조건 2종의 조합으로 링크 상태이면 — 조건 · 코스트 · 효과는 엔진이 처리
+        if (info.AllyDigimon is { } fuseHost && GoldfishEngine.HasAppFusion(card) && _engine.GetAppFusionTargets(card).Any(t => ReferenceEquals(t, fuseHost)))
+            actions.Add(($"🧩 어플 합체: [{fuseHost.TopCard.DisplayName}] + 링크 카드 → [{card.DisplayName}]" + (GoldfishEngine.GetAppFusionCost(card) is int fuseCost ? $" (코스트 {fuseCost})" : ""),
+                () => ApplyActionResult(_engine.AppFuse(card, fuseHost))));
         // v0.30.0 테이머에서 진화 (하이브리드체): 내 테이머 카드 위에 놓았을 때
         if (_dropTamer is { } tamerKey && _engine.ValidateTamerEvolution(tamerKey.Card, card).CanExecute
             && CardScripts.TamerEvolutionCost(card, tamerKey.Card) is int tamerCost)

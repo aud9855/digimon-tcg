@@ -190,6 +190,7 @@ public static class KeywordDictionary
         card.IsBlocker = main.Any(p => p.Keywords.Contains(Keyword.Blocker));
         card.SecurityAttackBonus = main.Sum(p => p.SecurityAttack);
         card.InheritedSecurityAttackBonus = inherited.Sum(p => p.SecurityAttack);
+        if (SentenceParser.IsLinkCard43(card)) card.InheritedSecurityAttackBonus = 0;   // v0.43.0 링크 카드의 하단은 진화원 효과가 아니라 링크 효과 (CardScript.LinkSecurityAttack43)
     }
 
     /// <summary>API 카드의 효과 문장에서 키워드 · 키워드 동작을 읽어 카드 스크립트를 만든다 (인식한 것이 없으면 null)</summary>
@@ -197,6 +198,7 @@ public static class KeywordDictionary
     {
         var script = new CardScript(card.CardId);
         var def = new CardScriptDefinition(script);
+        int linkSa43 = 0;
         foreach (var (inherited, clause, options) in ClausesOf(card))
         {
             if (card.IsDual && inherited)
@@ -211,13 +213,16 @@ public static class KeywordDictionary
                 AddParsed(script, new[] { parsed }, inherited);
             else
                 SentenceParser.TryParse(clause, inherited, card, def);   // 키워드 절이 아니면 문장 파서 (읽지 못하면 등록하지 않음)
+            if (inherited && parsed.Unsupported == null) linkSa43 += parsed.SecurityAttack;
         }
+        if (SentenceParser.IsLinkCard43(card)) SentenceParser.RetagLinkEffects43(script, linkSa43);   // v0.43.0 링크 카드의 하단 = 링크 효과 (링크되어 있는 동안)
         bool any = script.Keywords.Count + script.InheritedKeywords.Count + script.Effects.Count + script.Statics.Count > 0
                    || script.OverflowMemory > 0 || script.DigisorptionReduction > 0 || script.BlastDigivolve || script.MaterialSave > 0 || script.LinkRequirement != null || script.SpecialEvolutions.Count > 0 || script.TamerEvolutions.Count > 0 || script.IgnoreColorRequirement != null || script.PlayCostReduction != null || script.PlayCostOptions.Count > 0 || script.EvoCostModifiers.Count > 0 || script.FieldPlayCostModifiers.Count > 0 || script.GainedSourceEffects.Count > 0
                    || script.XrosAliases.Count > 0 || script.XrosFromTrash != null || script.XrosUnderTamersFor != null || script.OverclockSpecified != null
                    || script.EvoOnlyInto.Count > 0 || script.TamerAuras.Count > 0 || script.DnaAliases.Count > 0 || script.LinkCostModifiers41.Count > 0 || script.SuccessionSpecs41.Count > 0   // v0.41.0 링크 코스트 감소 · ≪계승≫ · v0.34.0 · v0.37.0 DNA 진화 이름 취급
                    || script.SecurityPlayAtEndOfOpponentTurn38 || script.OpponentEvoCostIncreases40.Count > 0
-                   || script.SpecialEvolutions42.Count > 0 || script.HolderEvolutions42.Count > 0;   // v0.42.0   // v0.40.0   // v0.38.0 [시큐리티]【상대의 턴 종료 시】
+                   || script.SpecialEvolutions42.Count > 0 || script.HolderEvolutions42.Count > 0
+                   || script.LinkKeywords43.Count > 0 || script.LinkSecurityAttack43 != 0 || script.BlastDna43 != null;   // v0.43.0   // v0.42.0   // v0.40.0   // v0.38.0 [시큐리티]【상대의 턴 종료 시】
         return any ? script : null;
     }
 

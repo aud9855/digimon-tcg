@@ -61,6 +61,7 @@ public static class CardScripts
         digimon.ActiveKeywords.Contains(keyword)
         || (For(digimon.TopCard)?.Keywords.Contains(keyword) ?? false)
         || digimon.SourcesAny(s => For(s)?.InheritedKeywords.Contains(keyword) ?? false)
+        || digimon.LinkedCards.Count > 0 && digimon.LinkedCards.Any(l => For(l)?.LinkKeywords43.Contains(keyword) ?? false)   // v0.43.0 링크 효과의 키워드
         || GainedSources(digimon).Any(s => For(s)?.Keywords.Contains(keyword) ?? false);   // v0.31.0 진화원 카드의 효과 전부를 얻는다
 
     /// <summary>

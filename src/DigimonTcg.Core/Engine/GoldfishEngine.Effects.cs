@@ -144,6 +144,7 @@ public partial class GoldfishEngine
         bool optionSide = false)
     {
         var ctx = new EffectContext(this, owner, self, other, chosenTarget) { TriggerCard = triggerCard, Trigger = trigger };
+        EnsureMemoryProbes43();   // v0.43.0
 
         _effectDepth++;
         var outerEffectOwner = CurrentEffectOwner;
@@ -196,6 +197,10 @@ public partial class GoldfishEngine
                     }
                 }
             }
+
+            // v0.43.0 링크 카드의 링크 효과 (링크되어 있는 동안 — GoldfishEngine.Batch43)
+            if (includeInherited && self != null && sources == null && self.LinkedCards.Count > 0)
+                RunLinkEffects43(ctx, self, trigger);
         }
         finally
         {
@@ -333,7 +338,7 @@ public partial class GoldfishEngine
         if (effect.Condition != null && !effect.Condition(ctx))
             return;
         // [턴에 1회] 기록: 같은 카드의 메인 효과와 진화원 효과는 다른 효과다 (v0.29.0 — 진화원 [메인]과 맨 위가 된 그 카드의 메인 효과, BT22-043)
-        string onceKey = effect.Source == EffectSource.Inherited ? card.CardId + "#I" : card.CardId;
+        string onceKey = effect.Source == EffectSource.Inherited ? card.CardId + "#I" : effect.Source == EffectSource.Link43 ? card.CardId + "#L" : card.CardId;   // v0.43.0 링크 효과
         if (effect.OncePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey))
             return;
         if (effect.TwicePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey) && !ctx.Self.UsedOncePerTurn.Add(onceKey + "#2"))
@@ -417,6 +422,7 @@ public partial class GoldfishEngine
 
     private void ApplyContinuousEffects(PlayerZones owner, PlayerZones enemy, int allSecurityAttackUntil)
     {
+        EnsureMemoryProbes43();   // v0.43.0
         bool shadowWing = EffectRules.IsActive(allSecurityAttackUntil, State);
 
         foreach (var inst in owner.BattleArea)
@@ -455,7 +461,10 @@ public partial class GoldfishEngine
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllyDigimonDp))
                 if (aura.AppliesTo(auraCtx, inst)) dp += aura.Value(auraCtx);
             foreach (var link in inst.LinkedCards)   // 〈링크 중〉 이 디지몬의 DP +N
+            {
                 dp += LinkDp(link);
+                sec += CardScripts.For(link)?.LinkSecurityAttack43 ?? 0;   // v0.43.0 링크 효과의 ≪시큐리티 어택 +N≫
+            }
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllySecurityAttack).Concat(TamerAuras(owner, enemy, StaticStat.AllySecurityAttack)))
                 if (aura.AppliesTo(auraCtx, inst)) sec += aura.Value(auraCtx);
             // 상대 카드가 주는 효과 ("All of your opponent's Digimon with no digivolution cards gain ＜Security A. -1＞")
@@ -497,6 +506,12 @@ public partial class GoldfishEngine
         {
             if (CardScripts.For(source) is not { } script) continue;
             foreach (var e in script.Statics.Where(e => e.Source == EffectSource.Inherited))
+                yield return e;
+        }
+        foreach (var link in inst.LinkedCards.GroupBy(s => s.CardId).Select(g => g.First()))   // v0.43.0 링크 효과 (링크되어 있는 동안)
+        {
+            if (CardScripts.For(link) is not { } script) continue;
+            foreach (var e in script.Statics.Where(e => e.Source == EffectSource.Link43))
                 yield return e;
         }
     }
@@ -711,6 +726,7 @@ public partial class GoldfishEngine
             RecalculateFieldBuffs();
             EffectLog(zones, $"[≪아머 퍼지≫] [{top.Name}]을(를) 파기하고 [{inst.TopCard.Name}](으)로 남습니다.");
             TrashExposedFaceDownTops();   // v0.35.0
+            NotifyTopStackedTrashed43(zones, inst, top);   // v0.43.0
             return true;
         }
 
@@ -1098,15 +1114,18 @@ public partial class GoldfishEngine
         }
         if (StackProtected42(zones, inst)) return 0;   // v0.42.0 겹쳐진 카드는 상대의 효과로 파기되지 않는다 (BT21-060)
         int n = 0;
+        CardData? firstRemoved = null;
         while (n < count)
         {
             var removed = inst.DeDigivolveOnce();
             if (removed == null) break;
+            firstRemoved ??= removed;
             zones.Trash.Add(removed);
             ApplyOverflow(zones, new[] { removed });
             n++;
         }
         if (n > 0) TrashExposedFaceDownTops();   // v0.35.0 뒷면 진화원이 맨 위가 되면 룰 처리로 파기 (17-1-3-2-4)
+        if (n > 0) NotifyTopStackedTrashed43(zones, inst, firstRemoved);   // v0.43.0 겹쳐진 카드가 위에서부터 파기되었을 때
         return n;
     }
 
@@ -1829,6 +1848,8 @@ public partial class GoldfishEngine
     internal void CounterTiming(PlayerZones defender, CardInstance attacker)
     {
         if (!EnemyOf(defender).BattleArea.Contains(attacker))
+            return;
+        if (TryBlastDna43(defender, attacker))   // v0.43.0 ≪블래스트 조그레스≫ (GoldfishEngine.Batch43)
             return;
         foreach (var card in defender.Hand.Where(c => CardScripts.For(c)?.BlastDigivolve == true).Distinct().OrderByDescending(c => c.Level).ThenByDescending(c => c.DP).ToList())
         {

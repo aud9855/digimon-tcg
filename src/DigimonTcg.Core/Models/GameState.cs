@@ -50,6 +50,9 @@ public class PlayerZones
 
     public CardInstance? BreedingArea { get; set; }
     public List<CardInstance> BattleArea { get; set; } = new List<CardInstance>();
+
+    /// <summary>v0.43.0 이 쪽의 지금 메모리 (엔진이 채운다 — "for each memory your opponent has" 셈)</summary>
+    public Func<int>? MemoryProbe43 { get; set; }
     public List<CardData> Tamers { get; set; } = new List<CardData>();
 
     // 자신의 테이머 아래에 놓인 카드 (≪세이브≫ 등 — 어느 테이머 아래인지는 구분하지 않는다)

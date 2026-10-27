@@ -679,7 +679,11 @@ public partial class GoldfishEngine
         }
         else
         {
+            _aiAttackTarget43 = defender;
             CounterTiming(State.DummyOpponent, attacker);   // 【카운터】 (≪블래스트 진화≫)
+            _aiAttackTarget43 = null;
+            if (!State.DummyOpponent.BattleArea.Contains(defender))   // v0.43.0 ≪블래스트 조그레스≫로 어택 대상이 새 디지몬이 되었다 (종합 룰 8-2-2-1-4)
+                return $"상대 [{defender.TopCard.Name}]이(가) 【카운터】로 새 디지몬이 되어 어택 대상이 없어졌습니다 (배틀 없음).";
             var blocker = EffectRules.ChooseOpponentBlocker(State, attacker, defender);
             var battleTarget = blocker ?? defender;
             string prefix = string.Empty;
@@ -1237,6 +1241,7 @@ public partial class GoldfishEngine
             if (AiTryTamerEvolution(ctx)) continue;   // v0.30.0 테이머에서 진화 (하이브리드체)
             if (AiPolicy.ChooseDnaEvolution(this, ctx.Memory, beforeAttacks: true) is { } dna && AiDnaEvolve(dna)) continue;
             if (AiTryLink41(ctx)) continue;   // v0.41.0 링크 (메모리를 넘기지 않는 것만)
+            if (AiTryAppFusion43(ctx)) continue;   // v0.43.0 어플 합체 (GoldfishEngine.Batch43)
             break;
         }
 
@@ -1331,7 +1336,9 @@ public partial class GoldfishEngine
                 continue;
             }
 
+            _aiAttackTarget43 = ctx.AttackTarget;
             var counterLogs = CaptureEffectLogs(() => CounterTiming(State.Player, aiAttacker));   // 【카운터】 (내 ≪블래스트 진화≫)
+            _aiAttackTarget43 = null;
             if (counterLogs.Count > 0)
                 AddReplayEvent("내 【카운터】", string.Join("\n", counterLogs));
             // [공식 룰] ≪블로커≫로 막을지는 방어하는 플레이어가 고른다 (어택 대상인 디지몬은 블록할 수 없다)
@@ -1635,6 +1642,7 @@ public partial class GoldfishEngine
 
             // 2-C) 링크 (v0.41.0 — 메모리를 상대 쪽으로 넘기지 않는 것만, ≪분리≫의 지정 링크 카드 먼저)
             if (AiTryLink41(ctx)) { acted = true; continue; }
+            if (AiTryAppFusion43(ctx)) { acted = true; continue; }   // v0.43.0
 
             // 3) 테이머 등장
             var tamerCandidate = AiPolicy.ChooseTamerToPlay(this, ctx.Memory);
