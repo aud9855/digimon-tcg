@@ -197,7 +197,7 @@ internal static partial class SentenceParser
                 tamerOf[fake] = (z, t);
             }
         bool Mine(CardInstance d) => ReferenceEquals(tamerOf[d].Z, c.Owner);
-        var ranked = pool.OrderBy(d => verb == "unsuspend" ? (Mine(d) ? 0 : 1) : (Mine(d) ? 1 : 0)).ThenByDescending(d => d.TopCard.PlayCost).ToList();
+        var ranked = pool.OrderBy(d => verb == "unsuspend" ? (Mine(d) ? 0 : 1) : (Mine(d) ? 1 : 0)).ThenByDescending(d => d.PlayCost45).ToList();
         var picks = count == 0 ? ranked : c.Engine.ChooseTargets(c.Owner, ranked, count, $"[{c.Card.Name}] 효과의 대상(테이머 {count}명{(upTo ? "까지" : "")})을 고르세요.", upTo, null);
         var names = new List<string>();
         var enemyPicked = new List<CardData>();

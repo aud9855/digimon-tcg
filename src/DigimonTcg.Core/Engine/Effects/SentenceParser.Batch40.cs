@@ -226,7 +226,7 @@ internal static partial class SentenceParser
         {
             string who = m.Groups["who"].Value.ToLowerInvariant();
             var spec = TargetSpec.Parse($"all of {(who == "your opponent" ? "your opponent's" : "your")} {Regex.Replace(m.Groups["spec"].Value, @" (?:in play|on the field)$", "", I)}");
-            if (spec == null || spec.ContextFilters.Count > 0) return null;
+            if (spec == null || spec.ContextFilters.Count > 0) return ParseSideCondition45(cond);   // v0.45.0
             return who switch
             {
                 "there" => (o, e) => o.BattleArea.Concat(e.BattleArea).Any(d => spec.Filters.All(f => f(d))),
@@ -234,7 +234,7 @@ internal static partial class SentenceParser
                 _ => (o, _) => o.BattleArea.Any(d => spec.Filters.All(f => f(d))),
             };
         }
-        return null;
+        return ParseSideCondition45(cond);   // v0.45.0 (SentenceParser.Batch45Cond.cs)
     }
 
     // =====================================================================

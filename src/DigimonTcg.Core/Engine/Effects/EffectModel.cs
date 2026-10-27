@@ -205,7 +205,12 @@ public enum StaticStat
     EnemyKeyword,       // 상대의 디지몬 전부(Subject 조건)가 키워드를 얻는다 (StaticEffect.Keyword — "none of your opponent's Digimon can suspend")
     OpponentPlayDpLock, // 상대는 DP N 이하의 디지몬을 등장시킬 수 없다 (값 = N, 0이면 없음 — BT14-017)
     // v0.44.0
-    EnemyDigimonDp44,   // 상대의 디지몬 전부(Subject 조건)의 DP ("all of your opponent's suspended Digimon get -4000 DP" BT16-101)
+    EnemyDigimonDp44,
+    // v0.45.0
+    AllyDigimonDpSet45, // 자신의 디지몬(Subject)의 DP를 N으로 취급 (값 = N — "treated as having 16000 DP" BT22-007 [육성])
+    UnsuspendLock45,
+    DpFloor45,          // 이 디지몬의 DP는 N 미만이 되지 않는다 (값 = N — "can't have less than 1000 DP" EX11-070)    // 액티브가 되지 않는다 (값 = 비트: 1 자신의 디지몬 · 2 상대의 디지몬 · 4 자신의 테이머 · 8 상대의 테이머 · 16 액티브 페이즈에서만) — BT12-057 · EX10-023 · BT6-092
+   // 상대의 디지몬 전부(Subject 조건)의 DP ("all of your opponent's suspended Digimon get -4000 DP" BT16-101)
 }
 
 /// <summary>옵션 [메인] 효과를 쓸 때 UI가 고르게 할 대상</summary>

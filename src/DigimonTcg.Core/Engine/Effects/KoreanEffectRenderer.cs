@@ -47,7 +47,7 @@ public static partial class KoreanEffectRenderer
         // v0.38.0 시큐리티 에어리어의 효과 표시 — 공식 BT20-052 "[시큐리티]【상대의 턴 종료 시】" (【시큐리티】 효과가 아니다)
         if (Regex.IsMatch(rawClause.TrimStart(), @"^\[Security\]\s*\[End of Opponent's Turn\]", RegexOptions.IgnoreCase) && RenderClauseCore(rawClause) is { } zoneKo)
             return TamerCount41(Regex.Replace(zoneKo, @"^【시큐리티】\s*", "[시큐리티]"));
-        return TamerCount41(RenderBrokenText43(rawClause) ?? FixItAfterPlay40(rawClause, RenderClauseCore(rawClause)) ?? RenderClause40(rawClause) ?? RenderClause41(rawClause) ?? RenderClause42(rawClause) ?? RenderClause43(rawClause) ?? RenderClause44(rawClause));   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42)   // v0.41.0 테이머는 "명" · 원래 규칙이 읽지 못한 절만 (Batch41) · v0.40.0 (KoreanEffectRenderer.Batch40.cs)
+        return TamerCount41(RenderBrokenText43(rawClause) ?? FixItAfterPlay40(rawClause, RenderClauseCore(rawClause)) ?? RenderClause40(rawClause) ?? RenderClause41(rawClause) ?? RenderClause42(rawClause) ?? RenderClause43(rawClause) ?? RenderClause44(rawClause) ?? RenderClause45(rawClause));   // v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42)   // v0.41.0 테이머는 "명" · 원래 규칙이 읽지 못한 절만 (Batch41) · v0.40.0 (KoreanEffectRenderer.Batch40.cs)
     }
 
     private static string? RenderClauseCore(string rawClause)
@@ -177,7 +177,7 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>문장 하나 → 한글 (마침표 없이)</summary>
-    private static string? Sentence(string s, bool nested = false) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested) ?? SentenceFallback39(s, nested) ?? SentenceFallback40(s, nested) ?? SentenceFallback41(s, nested) ?? SentenceFallback42(s, nested) ?? SentenceFallback43(s, nested) ?? SentenceFallback44(s, nested);   // v0.44.0 · v0.43.0   // v0.42.0   // v0.41.0 · v0.40.0   // v0.39.0 · v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
+    private static string? Sentence(string s, bool nested = false) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested) ?? SentenceFallback39(s, nested) ?? SentenceFallback40(s, nested) ?? SentenceFallback41(s, nested) ?? SentenceFallback42(s, nested) ?? SentenceFallback43(s, nested) ?? SentenceFallback44(s, nested) ?? SentenceFallback45(s, nested);   // v0.45.0   // v0.44.0 · v0.43.0   // v0.42.0   // v0.41.0 · v0.40.0   // v0.39.0 · v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
 
     private static string? SentenceCore(string s, bool nested = false)
     {
@@ -860,7 +860,7 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>비용 "~ing ..." → "~하는 것으로,"</summary>
-    private static string? CostKo(string cost) => CostKoCore(cost) ?? CostKo38(cost) ?? CostKo39(cost) ?? CostKo43(cost) ?? CostKo44(cost);   // v0.44.0 · v0.43.0   // v0.38.0 읽지 못한 비용만 (KoreanEffectRenderer.Batch38.cs)
+    private static string? CostKo(string cost) => CostKoCore(cost) ?? CostKo38(cost) ?? CostKo39(cost) ?? CostKo43(cost) ?? CostKo44(cost) ?? CostKo45(cost);   // v0.45.0   // v0.44.0 · v0.43.0   // v0.38.0 읽지 못한 비용만 (KoreanEffectRenderer.Batch38.cs)
 
     private static string? CostKoCore(string cost)
     {
@@ -1157,11 +1157,11 @@ public static partial class KoreanEffectRenderer
             return Have("이 디지몬과 같은 명칭의 자신의 다른 디지몬이");
         if (Regex.IsMatch(cond, @"^(?:DNA digivolving|DigiXrosing|it DNA digivolved|this Digimon DNA digivolved)$", RegexOptions.IgnoreCase))
             return new(cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화했을 때,", cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화하고 있었을 때,");
-        return CondKo32(cond) ?? CondKo33(cond) ?? CondKo34(cond) ?? CondKo35(cond) ?? CondKo37(cond) ?? CondKo38(cond) ?? CondKo40(cond) ?? CondKo41(cond) ?? CondKo42(cond) ?? CondKo43(cond) ?? CondKo44(cond);   // v0.44.0 · v0.43.0   // v0.42.0   // v0.41.0 · v0.40.0   // v0.38.0 · v0.37.0 · v0.32.0 · v0.33.0
+        return CondKo32(cond) ?? CondKo33(cond) ?? CondKo34(cond) ?? CondKo35(cond) ?? CondKo37(cond) ?? CondKo38(cond) ?? CondKo40(cond) ?? CondKo41(cond) ?? CondKo42(cond) ?? CondKo43(cond) ?? CondKo44(cond) ?? CondKo45(cond);   // v0.45.0   // v0.44.0 · v0.43.0   // v0.42.0   // v0.41.0 · v0.40.0   // v0.38.0 · v0.37.0 · v0.32.0 · v0.33.0
     }
 
     /// <summary>"When ~," 사건 → "~했을 때,"</summary>
-    private static string? EventKo(string ev) => FixEventKo39(ev, EventKoCore(ev)) ?? EventKo39(ev) ?? EventKo40(ev) ?? EventKo43(ev) ?? EventKo44(ev);   // v0.44.0 · v0.43.0   // v0.40.0   // v0.39.0 읽지 못한 사건만 (KoreanEffectRenderer.Batch39.cs)
+    private static string? EventKo(string ev) => FixEventKo39(ev, EventKoCore(ev)) ?? EventKo39(ev) ?? EventKo40(ev) ?? EventKo43(ev) ?? EventKo44(ev) ?? EventKo45(ev);   // v0.45.0   // v0.44.0 · v0.43.0   // v0.40.0   // v0.39.0 읽지 못한 사건만 (KoreanEffectRenderer.Batch39.cs)
 
     private static string? EventKoCore(string ev)
     {
@@ -1594,7 +1594,7 @@ public static partial class KoreanEffectRenderer
             return $"서로의 시큐리티 {Per(m)}장마다";
         if ((m = Regex.Match(counter, $@"^(?<x>{TargetSpec.NameList}) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
             return $"이 디지몬의 진화원의 {NamesKo(m.Groups["x"].Value)} 1장마다";
-        return CounterKo32(counter) ?? CounterKo34(counter) ?? CounterKo38(counter) ?? CounterKo39(counter) ?? CounterKo42(counter) ?? CounterKo43(counter) ?? CounterKo44(counter);   // v0.44.0 · v0.43.0   // v0.42.0   // v0.32.0 · v0.34.0 · v0.38.0
+        return CounterKo32(counter) ?? CounterKo34(counter) ?? CounterKo38(counter) ?? CounterKo39(counter) ?? CounterKo42(counter) ?? CounterKo43(counter) ?? CounterKo44(counter) ?? CounterKo45(counter);   // v0.45.0   // v0.44.0 · v0.43.0   // v0.42.0   // v0.32.0 · v0.34.0 · v0.38.0
     }
 
     // =====================================================================
@@ -1617,7 +1617,7 @@ public static partial class KoreanEffectRenderer
     /// <summary>대상 구절의 한글 ("1 of your opponent's suspended Digimon" → 상대의 레스트 상태 디지몬 1마리) — 옵션 대상 안내(MainTargetRule)용</summary>
     internal static string? TargetPhraseKo(string phrase) => TargetKo(phrase);
 
-    private static string? TargetKo(string phrase, bool bare = false) => TargetKoCore(phrase, bare) ?? TargetKo39(phrase, bare) ?? TargetKo40(phrase, bare) ?? TargetKo44(phrase, bare);   // v0.44.0 · v0.40.0   // v0.39.0 읽지 못한 대상만 (KoreanEffectRenderer.Batch39.cs)
+    private static string? TargetKo(string phrase, bool bare = false) => TargetKoCore(phrase, bare) ?? TargetKo39(phrase, bare) ?? TargetKo40(phrase, bare) ?? TargetKo44(phrase, bare) ?? TargetKo45(phrase, bare);   // v0.45.0   // v0.44.0 · v0.40.0   // v0.39.0 읽지 못한 대상만 (KoreanEffectRenderer.Batch39.cs)
 
     private static string? TargetKoCore(string phrase, bool bare = false)
     {

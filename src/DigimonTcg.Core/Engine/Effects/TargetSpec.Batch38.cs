@@ -68,7 +68,7 @@ public sealed partial class TargetSpec
         if ((m = Regex.Match(rest, $@"^(?:and )?{CostLe38} {RefWords38}{tail}", RegexOptions.IgnoreCase)).Success)
         {
             string w = m.Groups["r"].Value;
-            spec.ContextFilters.Add((c, d) => Ref38(c, w) is { } r && d.TopCard.PlayCost <= r.Card.PlayCost);
+            spec.ContextFilters.Add((c, d) => Ref38(c, w) is { } r && d.PlayCost45 <= r.Card.PlayCost);
             return m;
         }
         if ((m = Regex.Match(rest, $@"^(?:and )?{DpLe38} {RefWords38}{tail}", RegexOptions.IgnoreCase)).Success)

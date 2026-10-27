@@ -113,7 +113,7 @@ public static partial class EffectRules
     public static bool IsSuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.CannotSuspendUntil, state) || CardScripts.HasKeyword(digimon, Keyword.CannotSuspend);   // v0.37.0 지속 효과 (EX8-026)
 
     /// <summary>"can't unsuspend" — 액티브 페이즈 · 효과로 액티브가 되지 않는다</summary>
-    public static bool IsUnsuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.CannotUnsuspendUntil, state);
+    public static bool IsUnsuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.CannotUnsuspendUntil, state) || digimon.StaticUnsuspendLock45 && Diag45.HitTrue("unsuspendLock");   // v0.45.0 지속 효과 (BT12-057)
 }
 
 /// <summary>
@@ -327,6 +327,8 @@ public partial class GoldfishEngine
     private static void ResolveCore(EffectContext ctx, CardData card, CardEffect effect)
     {
         ctx.Card = card;
+        ctx.EffectTrashStart45 = ctx.Owner.Trash.Count;
+        ctx.LastStepTrashed45 = new List<CardData>();   // v0.45.0 "If this effect trashed a card with ~"
         ctx.EvolveSerialAtStart40 = ctx.Engine.EffectEvolveSerial40;   // v0.40.0 "If digivolved by this effect" — 효과마다
         ctx.Engine.CurrentEffectCard = card;   // v0.34.0 "상대의 디지몬 · 옵션 카드의 효과를 받지 않는다"
         // "When one of your Digimon attacks, ~ give that Digimon +1000 DP" — 사건의 주인공 디지몬이 "that Digimon"
@@ -336,7 +338,7 @@ public partial class GoldfishEngine
             or EffectTrigger.AllyDigimonUnsuspended or EffectTrigger.OpponentDigimonUnsuspended or EffectTrigger.AllyDeletedOpponentInBattle
             or EffectTrigger.AllySourcesAdded   // v0.35.0 "When face-down cards are placed in any of your Digimon's digivolution cards, any of those Digimon may digivolve ~"
             ? new List<CardInstance> { ctx.Other } : new List<CardInstance>();
-        if (effect.Condition != null && !effect.Condition(ctx))
+        if (effect.Condition != null && !EvalWithDeletionView45(ctx, effect.Condition))   // v0.45.0 소멸한 디지몬은 소멸 직전 모습으로
             return;
         // [턴에 1회] 기록: 같은 카드의 메인 효과와 진화원 효과는 다른 효과다 (v0.29.0 — 진화원 [메인]과 맨 위가 된 그 카드의 메인 효과, BT22-043)
         string onceKey = effect.Source == EffectSource.Inherited ? card.CardId + "#I" : effect.Source == EffectSource.Link43 ? card.CardId + "#L" : card.CardId;   // v0.43.0 링크 효과
@@ -436,6 +438,8 @@ public partial class GoldfishEngine
             inst.TimedKeywords.RemoveAll(t => t.Until < State.TurnSequence);
             inst.TimedDpBuffs.RemoveAll(t => t.Until < State.TurnSequence);
             inst.TimedSecurityAttackBuffs.RemoveAll(t => t.Until < State.TurnSequence);
+            if (inst.TimedPlayCostMods45.Count > 0) inst.TimedPlayCostMods45.RemoveAll(t => t.Until < State.TurnSequence);   // v0.45.0 등장 코스트 변경 (BT16-060)
+            inst.PlayCostDelta45 = inst.TimedPlayCostMods45.Sum(t => t.Delta);
             inst.ActiveKeywords.Clear();
             foreach (var (k, _) in inst.TimedKeywords) inst.ActiveKeywords.Add(k);
             var statics = StaticEffectsOf(inst).ToList();
@@ -475,6 +479,9 @@ public partial class GoldfishEngine
             foreach (var (aura, auraCtx) in DigimonAuras(enemy, owner, StaticStat.EnemyDigimonDp44).Concat(TamerAuras(enemy, owner, StaticStat.EnemyDigimonDp44)))
                 if (aura.AppliesTo(auraCtx, inst)) dp += aura.Value(auraCtx);
 
+            dp += DpSetDelta45(owner, enemy, inst);   // v0.45.0 "treated as having 16000 DP" (BT22-007)
+            inst.DpFloor45 = statics.Where(e => e.Stat == StaticStat.DpFloor45).Select(e => e.Value(ctx)).DefaultIfEmpty(0).Max();   // v0.45.0 DP 하한 (EX11-070)
+            inst.StaticUnsuspendLock45 = UnsuspendLock45(owner, inst, null, phase: false);   // v0.45.0 "don't unsuspend" 지속 효과 (BT12-057)
             inst.EffectDpBonus = dp;
             inst.EffectSecurityAttackBonus = sec;
             inst.TamerDpBonus = TamerStatics(owner, StaticStat.AllyDigimonDp).Where(e => e.Subject == null || e.Subject(inst)).Sum(e => e.Value(ctx));
@@ -770,6 +777,7 @@ public partial class GoldfishEngine
     {
         if (!zones.BattleArea.Remove(instance))
             return;
+        instance.DeletionView45 = instance.SnapshotView45();   // v0.45.0 소멸하기 직전의 모습 — 【소멸 시】 · "소멸했을 때"의 조건은 이것으로 (종합 룰 15-8-3-9-4)
 
         var stack = instance.GetEvolutionStackBottomUp();
         // ≪불굴≫: 진화원을 가진 이 디지몬이 소멸했을 때, 이 카드(≪불굴≫이 적힌 카드)를 코스트 없이 등장
@@ -1143,7 +1151,7 @@ public partial class GoldfishEngine
         target.ActiveSkillBuffLabels.Add($"🔻{source} (DP -{amount:N0})");
         Log($"[효과] {source}: {SideName(zones)} [{target.TopCard.Name}] DP -{amount:N0}");
 
-        if (target.TopCard.DP + target.GetTotalBonusDP() > 0)
+        if (target.GetCurrentDP() > 0)   // v0.45.0 DP 하한(EX11-070)도 본다 — 하한이 없으면 원래와 같다
             return false;
 
         if (!DeleteFrom(zones, target, DeletionCause.ZeroDp))
@@ -1177,7 +1185,7 @@ public partial class GoldfishEngine
             return false;
         target.TimedDpBuffs.Add((dp, until));
         RecalculateFieldBuffs();
-        if (dp >= 0 || target.TopCard.DP + target.GetTotalBonusDP() > 0)
+        if (dp >= 0 || target.GetCurrentDP() > 0)   // v0.45.0 DP 하한
             return false;
         if (!DeleteFrom(zones, target, DeletionCause.ZeroDp))
             return false;
@@ -1501,6 +1509,8 @@ public partial class GoldfishEngine
         if (owner.BreedingArea is { } breeding && CardScripts.For(breeding.TopCard)?.ActivateInBreeding == true
             && HasMainAbility(breeding.TopCard) && !_usedMainAbilities.ContainsKey(breeding))
             list.Add(new MainAbility(breeding, breeding.TopCard));
+        else if (owner.BreedingArea is { } breeding45 && HasBreedingMain45(breeding45.TopCard) && !_usedMainAbilities.ContainsKey(breeding45))
+            list.Add(new MainAbility(breeding45, breeding45.TopCard));   // v0.45.0 [육성] [메인] (EX9-005)
         foreach (var t in owner.Tamers.Distinct())
             if (HasMainAbility(t) && _usedMainAbilities.GetValueOrDefault(t) < owner.Tamers.Count(x => ReferenceEquals(x, t)))
                 list.Add(new MainAbility(null, t));
@@ -1540,6 +1550,7 @@ public partial class GoldfishEngine
         // 진화원의 [메인]: 그 진화원 카드의 진화원 효과만 (디지몬 = Self)
         var ctx = inherited && digimon != null
             ? RunEffects(EffectTrigger.ActivateMain, owner, digimon, null, includeInherited: true, sources: new[] { card })
+            : digimon != null && ReferenceEquals(owner.BreedingArea, digimon) && HasBreedingMain45(card) ? RunBreedingMain45(owner, digimon, card)   // v0.45.0 [육성] [메인]
             : RunEffects(EffectTrigger.ActivateMain, owner, digimon, card, includeInherited: false);
         // 발동 조건("If ~")이 맞지 않았거나, 비용을 내지 않았거나 조건이 맞지 않아 아무 문장도 처리하지 않았으면 사용으로 치지 않는다
         bool used = ctx.AnyEffectRan && !(ctx.StepsRan && !ctx.AnyStepResolved);

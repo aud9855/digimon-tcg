@@ -249,17 +249,20 @@ public static class KeywordDictionary
         {
             bool header = Regex.IsMatch(list[i], @"(?:effects? below|following effects?)(?: twice| \d+ times| instead)?\s*[:.]?\s*$", RegexOptions.IgnoreCase)
                           || list[i].Contains("＜Digi-Burst", StringComparison.OrdinalIgnoreCase) || list[i].Contains("＜Delay", StringComparison.OrdinalIgnoreCase);   // ≪디지버스트 N≫ (설명문 뒤에 ・효과)
-            if (header && i + 1 < list.Count && list[i + 1].StartsWith("・"))
+            if (header && i + 1 < list.Count && IsOption45(list[i + 1]))
             {
                 var options = new List<string>();
                 int j = i + 1;
-                while (j < list.Count && list[j].StartsWith("・")) options.Add(list[j++]);
+                while (j < list.Count && IsOption45(list[j])) options.Add(list[j++]);
                 yield return (list[i], options);
                 i = j - 1;
             }
             else yield return (list[i], null);
         }
     }
+
+    /// <summary>선택지 줄 — "・~" · v0.45.0 "• ~" (BT15-098 · BT16-094 영어 데이터의 다른 기호)</summary>
+    private static bool IsOption45(string line) => line.StartsWith("・") || line.StartsWith("•");
 
     private static void AddParsed(CardScript script, IEnumerable<ParsedClause> clauses, bool inherited)
     {

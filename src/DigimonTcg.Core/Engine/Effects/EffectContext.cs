@@ -37,13 +37,13 @@ public sealed class EffectContext
     public CardData Card { get; internal set; } = null!;
 
     /// <summary>효과를 가진 디지몬 (옵션 · 테이머 효과면 null)</summary>
-    public CardInstance? Self { get; }
+    public CardInstance? Self { get; internal set; }
 
     /// <summary>
     /// 시점별 상대 카드: [어택 시] = 어택 대상 디지몬(시큐리티 어택이면 null),
     /// [시큐리티] = 어택 중인 상대 디지몬, 같은 명칭 등장 = 등장한 디지몬
     /// </summary>
-    public CardInstance? Other { get; }
+    public CardInstance? Other { get; internal set; }
 
     /// <summary>플레이어가 UI에서 고른 대상 (옵션 [메인])</summary>
     public CardInstance? ChosenTarget { get; }
@@ -120,6 +120,17 @@ public sealed class EffectContext
 
     /// <summary>v0.44.0 【소멸 시】: 소멸하기 전의 진화원 (아래 → 위). 그 밖의 시점은 null</summary>
     internal IReadOnlyList<CardData>? DeletedSources44 { get; set; }
+
+    /// <summary>v0.45.0 지금 처리 중인 덱 위 공개 묶음 (중간 문장이 "among them"으로 본다 — SentenceParser.Batch45Reveal)</summary>
+    internal RevealState45? Rv45 { get; set; }
+
+    /// <summary>v0.45.0 이 효과를 처리하기 시작할 때 효과 주인의 트래시 장 수 ("If this effect trashed a card with ~")</summary>
+    internal int EffectTrashStart45 { get; set; } = -1;
+
+    /// <summary>v0.45.0 바로 앞 문장이 효과 주인의 트래시에 보낸 카드 · 덱 장 수 변화 · 이 디지몬의 진화원 장 수 변화 ("If you trash a purple card" · "If you return 3 or more cards using this effect")</summary>
+    internal List<CardData> LastStepTrashed45 { get; set; } = new();
+    internal int LastStepDeckDelta45 { get; set; }
+    internal int LastStepSourcesDelta45 { get; set; }
 
     /// <summary>옵션: "Then, place this card in your battle area" — 트래시 대신 배틀 에어리어에 놓는다 (≪딜레이≫ 옵션)</summary>
     public bool PlaceInBattleArea { get; set; }

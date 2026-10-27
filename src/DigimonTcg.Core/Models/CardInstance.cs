@@ -214,6 +214,62 @@ public class CardInstance
 
     public bool HasSource(string cardId) => FaceUpSources.Any(s => s.CardId == cardId);
 
+    /// <summary>
+    /// v0.45.0 소멸하기 직전의 이 디지몬 (조건 판단 전용 복사본 — 진화원 · DP · 색 · 키워드 · 링크를 그대로 가진다). 소멸하지 않았으면 null.
+    /// 종합 룰 15-8-3-9-4: 영역을 떠나 유발한 효과(【소멸 시】 · "소멸했을 때")의 처리 조건은 유발한 시점의 상황을 참조한다
+    /// </summary>
+    internal CardInstance? DeletionView45 { get; set; }
+
+    /// <summary>v0.45.0 지속 효과로 액티브가 되지 않는다 (액티브 페이즈 · 효과 모두 — BT12-057). 엔진이 지속 효과를 계산할 때마다 다시 채운다</summary>
+    public bool StaticUnsuspendLock45 { get; set; }
+
+    /// <summary>v0.45.0 효과로 바뀐 등장 코스트 (기간 — "reduce the play costs of all of your opponent's Digimon by 1 until the end of the turn" BT16-060)</summary>
+    public List<(int Delta, int Until)> TimedPlayCostMods45 { get; } = new();
+
+    /// <summary>v0.45.0 지금 기간 안의 등장 코스트 변경 합 (엔진이 지속 효과를 계산할 때마다 다시 채운다)</summary>
+    public int PlayCostDelta45 { get; set; }
+
+    /// <summary>v0.45.0 이 Lv.의 카드로 진화할 수 없다 (0 = 없음 — "The Digimon played by this effect can't digivolve to level 7" EX3-069)</summary>
+    public int CannotEvoToLevel45 { get; set; }
+
+    /// <summary>v0.45.0 지속 효과의 DP 하한 (0 = 없음 — "can't have less than 1000 DP" EX11-070). 엔진이 지속 효과를 계산할 때마다 다시 채운다</summary>
+    public int DpFloor45 { get; set; }
+
+    /// <summary>v0.45.0 이 디지몬의 지금 등장 코스트 (맨 위 카드 + 효과로 바뀐 값, 0 미만은 0)</summary>
+    public int PlayCost45 => PlayCostDelta45 == 0 ? TopCard.PlayCost : Math.Max(0, TopCard.PlayCost + PlayCostDelta45);
+
+    /// <summary>v0.45.0 지금 모습의 복사본 (조건 판단 전용 — 효과가 옮기는 카드는 원래 디지몬의 것을 쓴다)</summary>
+    internal CardInstance SnapshotView45()
+    {
+        var v = new CardInstance(TopCard, TurnPlayed)
+        {
+            InstanceId = InstanceId,
+            IsSuspended = IsSuspended,
+            TemporaryDpBonus = TemporaryDpBonus,
+            TemporarySecurityAttackBonus = TemporarySecurityAttackBonus,
+            AttackDpBonus = AttackDpBonus,
+            AttackSecurityAttackBonus = AttackSecurityAttackBonus,
+            TamerDpBonus = TamerDpBonus,
+            TamerSecurityAttackBonus = TamerSecurityAttackBonus,
+            EffectDpBonus = EffectDpBonus,
+            EffectSecurityAttackBonus = EffectSecurityAttackBonus,
+            IsOwnersTurn = IsOwnersTurn,
+            HasGrantedBlocker = HasGrantedBlocker,
+            TamerProxyOf = TamerProxyOf,
+            PlayCostDelta45 = PlayCostDelta45,
+            DpFloor45 = DpFloor45,
+        };
+        v.EvolutionSources = new Stack<CardData>(EvolutionSources.Reverse());
+        foreach (var f in FaceDownSources) v.FaceDownSources.Add(f);
+        foreach (var k in ActiveKeywords) v.ActiveKeywords.Add(k);
+        foreach (var c in ExtraColors) v.ExtraColors.Add(c);
+        v.LinkedCards.AddRange(LinkedCards);
+        v.TimedDpBuffs.AddRange(TimedDpBuffs);
+        v.TimedKeywords.AddRange(TimedKeywords);
+        v.GrantedEffects.AddRange(GrantedEffects);
+        return v;
+    }
+
     public int GetInheritedDpBonus() =>
         IsOwnersTurn ? FaceUpSources.Sum(s => s.InheritedDpBonus) : 0;
 
@@ -221,7 +277,7 @@ public class CardInstance
         GetInheritedDpBonus() + TamerDpBonus + TemporaryDpBonus + EffectDpBonus + AttackDpBonus;
 
     public int GetCurrentDP() =>
-        Math.Max(0, TopCard.DP + GetTotalBonusDP());
+        Math.Max(DpFloor45, TopCard.DP + GetTotalBonusDP());   // v0.45.0 DP 하한 (0이면 원래대로)
 
     public int GetInheritedSecurityAttackBonus() =>
         FaceUpSources.Sum(s => s.InheritedSecurityAttackBonus);

@@ -125,6 +125,7 @@ public static class CardScripts
     /// <summary>v0.34.0 "This Digimon can only digivolve into ~" — target이 evoCard로 진화할 수 있는지 (맨 위 카드의 효과 · 진화원 효과)</summary>
     public static bool EvoAllowed(CardInstance target, CardData evoCard)
     {
+        if (target.CannotEvoToLevel45 > 0 && evoCard.Level == target.CannotEvoToLevel45) return false;   // v0.45.0 "can't digivolve to level 7" (EX3-069)
         bool Ok((EffectSource Source, bool YourTurnOnly, Func<CardData, bool> Allowed) r) => (r.YourTurnOnly && !target.IsOwnersTurn) || r.Allowed(evoCard);
         if (For(target.TopCard) is { } top && !top.EvoOnlyInto.Where(r => r.Source == EffectSource.Main).All(Ok)) return false;
         foreach (var s in target.FaceUpSources)

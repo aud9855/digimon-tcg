@@ -36,8 +36,8 @@ internal static partial class SentenceParser
                 {
                     var all = z.BattleArea.ToList();
                     if (!hi || all.Count == 0) return all;
-                    int max = all.Max(d => d.TopCard.PlayCost);
-                    return all.Where(d => d.TopCard.PlayCost == max).ToList();
+                    int max = all.Max(d => d.PlayCost45);
+                    return all.Where(d => d.PlayCost45 == max).ToList();
                 }
                 var own = Eligible(c.Owner).OrderByDescending(d => ReferenceEquals(d, c.Self)).ThenByDescending(d => d.GetCurrentDP()).ThenByDescending(d => d.EvolutionSources.Count).ToList();
                 var opp = Eligible(c.Enemy).OrderBy(d => d.GetCurrentDP()).ThenBy(d => d.TopCard.Level).ToList();

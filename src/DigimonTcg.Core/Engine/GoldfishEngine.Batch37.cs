@@ -54,7 +54,7 @@ public partial class GoldfishEngine
     private void ApplyEnemyKeywordAuras37(CardInstance inst, PlayerZones owner, PlayerZones enemy)
     {
         foreach (var (aura, auraCtx) in DigimonAuras(enemy, owner, StaticStat.EnemyKeyword).Concat(TamerAuras(enemy, owner, StaticStat.EnemyKeyword)))
-            if (aura.Keyword != null && (aura.Subject == null || aura.Subject(inst)) && aura.Value(auraCtx) != 0)
+            if (aura.Keyword != null && aura.AppliesTo(auraCtx, inst) && aura.Value(auraCtx) != 0)   // v0.45.0 AppliesTo — 효과를 가진 디지몬과 비교하는 조건(SubjectOf, BT18-046 · EX7-023)도 본다
                 inst.ActiveKeywords.Add(aura.Keyword.Value);
     }
 

@@ -25,12 +25,13 @@ public partial class GoldfishEngine
     /// <summary>v0.35.0 테이머가 "can't unsuspend" 상태인지 (액티브 페이즈에도 액티브가 되지 않는다)</summary>
     internal bool TamerUnsuspendLocked(PlayerZones owner, CardData tamer) =>
         (owner.TamerCannotUnsuspendUntil.TryGetValue(tamer, out int until) && EffectRules.IsActive(until, State))
-        || EnemyOf(owner).BattleArea.Any(d => Effects.CardScripts.HasKeyword(d, Effects.Keyword.OpponentTamersCannotUnsuspend));   // v0.36.0 "None of your opponent's Tamers can unsuspend" (BT17-048)
+        || EnemyOf(owner).BattleArea.Any(d => Effects.CardScripts.HasKeyword(d, Effects.Keyword.OpponentTamersCannotUnsuspend))   // v0.36.0 "None of your opponent's Tamers can unsuspend" (BT17-048)
+        || UnsuspendLock45(owner, null, tamer, phase: false) && Diag45.HitTrue("unsuspendLockTamer");   // v0.45.0 지속 효과 (BT12-057)
 
     /// <summary>액티브 페이즈: 레스트 상태인 테이머 중 "can't unsuspend"인 것은 레스트 그대로 둔다. 반환: 액티브가 된 테이머</summary>
     private List<CardData> WakeTamers(PlayerZones owner)
     {
-        var keep = owner.SuspendedTamers.Where(t => TamerUnsuspendLocked(owner, t)).ToList();
+        var keep = owner.SuspendedTamers.Where(t => TamerUnsuspendLocked(owner, t) || UnsuspendLock45(owner, null, t, phase: true)).ToList();   // v0.45.0 "in the unsuspend phase" (EX10-023 · BT6-092)
         var woke = owner.SuspendedTamers.Where(t => !keep.Contains(t)).ToList();
         owner.SuspendedTamers.Clear();
         owner.SuspendedTamers.AddRange(keep);

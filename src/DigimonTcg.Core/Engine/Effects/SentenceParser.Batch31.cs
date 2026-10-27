@@ -271,7 +271,7 @@ internal static partial class SentenceParser
             bool toBottom = verb == "return";
             if (toBottom && !m.Groups["bottom"].Success) return (null, "미지원: 합계로 고른 디지몬을 되돌리는 곳");
             string k = m.Groups["k"].Value.ToLowerInvariant();
-            Func<CardInstance, int> value = k.StartsWith("dp") ? d => d.GetCurrentDP() : k.StartsWith("play") ? d => d.TopCard.PlayCost : d => d.TopCard.Level;
+            Func<CardInstance, int> value = k.StartsWith("dp") ? d => d.GetCurrentDP() : k.StartsWith("play") ? d => d.PlayCost45 : d => d.TopCard.Level;
             bool selfDp = m.Groups["self"].Success;
             int fixedBudget = m.Groups["n"].Success ? int.Parse(m.Groups["n"].Value) : 0;
             string unit = k.StartsWith("dp") ? "DP" : k.StartsWith("play") ? "등장 코스트" : "Lv.";

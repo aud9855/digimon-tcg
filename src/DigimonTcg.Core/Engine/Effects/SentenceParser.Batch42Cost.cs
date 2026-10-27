@@ -53,7 +53,7 @@ internal static partial class SentenceParser
         var m = DeletedCostRe42.Match(Normalize(rawClause));
         if (!m.Success || inherited) return false;
         if (OwnDigimonFilter42(m.Groups["t"].Value) is not { } filter) return false;
-        List<CardInstance> Pool(EffectContext c) => c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && filter(d)).OrderByDescending(d => d.TopCard.PlayCost).ToList();
+        List<CardInstance> Pool(EffectContext c) => c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && filter(d)).OrderByDescending(d => d.PlayCost45).ToList();
         bool CanPay(EffectContext c) => Pool(c).Count > 0;
         // 낸 비용: 고른 디지몬을 소멸시키고 그 등장 코스트를 PaidCount에 (소멸이 막히면 0)
         void Pay(EffectContext c)
@@ -62,7 +62,7 @@ internal static partial class SentenceParser
             c.PaidCount = 0;
             if (pool.Count == 0) return;
             var d = c.Engine.AskDigimon(c.Owner, "비용으로 소멸시킬 자신의 디지몬을 고르세요.", pool, pool[0], optional: false) ?? pool[0];
-            int pc = d.TopCard.PlayCost;
+            int pc = d.PlayCost45;
             c.DeleteOwn(d);
             if (!c.Owner.BattleArea.Contains(d))
             {
@@ -70,7 +70,7 @@ internal static partial class SentenceParser
                 Diag42.Hit(ref Diag42.DeletedCost);
             }
         }
-        int Preview(EffectContext c) => Pool(c).Select(d => d.TopCard.PlayCost).DefaultIfEmpty(0).Max();
+        int Preview(EffectContext c) => Pool(c).Select(d => d.PlayCost45).DefaultIfEmpty(0).Max();
         // AI 추천: 소멸시킬 디지몬의 등장 코스트가 3 이상일 때
         bool Recommend(EffectContext c) => Preview(c) >= 3;
         const string describe = "자신의 디지몬 1마리를 소멸시켜";

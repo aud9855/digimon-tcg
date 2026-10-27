@@ -152,7 +152,7 @@ internal static partial class SentenceParser
             }
             IEnumerable<CardInstance> cands = pool;
             if (spec.Selector != null) cands = spec.Selector(cands);
-            var ranked = cands.OrderByDescending(d => tamerOf.ContainsKey(d) ? 0 : 1).ThenByDescending(d => d.TopCard.PlayCost).ThenByDescending(d => d.GetCurrentDP()).ToList();
+            var ranked = cands.OrderByDescending(d => tamerOf.ContainsKey(d) ? 0 : 1).ThenByDescending(d => d.PlayCost45).ThenByDescending(d => d.GetCurrentDP()).ToList();
             if (verb == "suspend") ranked = ranked.Where(d => tamerOf.ContainsKey(d) || !d.IsSuspended).ToList();
             var picks = count == 0 ? ranked : c.Engine.ChooseTargets(c.Owner, ranked, count, $"[{c.Card.Name}] 효과의 대상(상대의 디지몬 또는 테이머 {count}장{(upTo ? "까지" : "")})을 고르세요.", upTo, null);
             var names = new List<string>();

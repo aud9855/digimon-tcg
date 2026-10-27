@@ -36,7 +36,7 @@ public sealed partial class TargetSpec
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     /// <summary>대상 구절을 읽는다. 읽지 못하면 null</summary>
-    public static TargetSpec? Parse(string phrase) => ParseCore(phrase) ?? Parse39(phrase) ?? Parse40(phrase) ?? Parse44(phrase);   // v0.44.0 (TargetSpec.Batch44.cs) · v0.40.0 (TargetSpec.Batch40.cs) · v0.39.0 읽지 못한 대상만 (TargetSpec.Batch39.cs)
+    public static TargetSpec? Parse(string phrase) => ParseCore(phrase) ?? Parse39(phrase) ?? Parse40(phrase) ?? Parse44(phrase) ?? Parse45(phrase);   // v0.45.0   // v0.44.0 (TargetSpec.Batch44.cs) · v0.40.0 (TargetSpec.Batch40.cs) · v0.39.0 읽지 못한 대상만 (TargetSpec.Batch39.cs)
 
     private static TargetSpec? ParseCore(string phrase)
     {
@@ -157,7 +157,7 @@ public sealed partial class TargetSpec
             {
                 int n = int.Parse(m.Groups["n"].Value);
                 bool less = m.Groups["dir"].Value.Equals("less", StringComparison.OrdinalIgnoreCase);
-                spec.Filters.Add(less ? d => d.TopCard.PlayCost <= n : d => d.TopCard.PlayCost >= n);
+                spec.Filters.Add(less ? d => d.PlayCost45 <= n : d => d.PlayCost45 >= n);
             }
             else if ((m = Regex.Match(rest, @"^(?:with |and )?the (?<which>highest|lowest) (?<what>DP|level|play cost)", RegexOptions.IgnoreCase)).Success)
             {
@@ -166,7 +166,7 @@ public sealed partial class TargetSpec
                 {
                     "dp" => d => d.GetCurrentDP(),
                     "level" => d => d.TopCard.Level,
-                    _ => d => d.TopCard.PlayCost,
+                    _ => d => d.PlayCost45,
                 };
                 spec.Selector = list =>
                 {
@@ -304,11 +304,11 @@ public sealed partial class TargetSpec
         if ((m = Regex.Match(rest, @"^with (?:as high or lower a play cost as|a play cost less than or equal to|a play cost equal to or less than) (?<w>this|that) Digimon(?:'s play cost)?", RegexOptions.IgnoreCase)).Success)
         {
             bool that = m.Groups["w"].Value.Equals("that", StringComparison.OrdinalIgnoreCase);
-            spec.ContextFilters.Add((c, d) => (that ? That(c) : c.Self) is { } r && d.TopCard.PlayCost <= r.TopCard.PlayCost);
+            spec.ContextFilters.Add((c, d) => (that ? That(c) : c.Self) is { } r && d.PlayCost45 <= r.PlayCost45);
             return m;
         }
         if ((m = Regex.Match(rest, @"^with (?:play costs? less than or equal to (?:the number of )?this Digimon's digivolution cards|as high or lower a play cost as the number of this Digimon's digivolution cards)", RegexOptions.IgnoreCase)).Success)
-        { spec.ContextFilters.Add((c, d) => c.Self != null && d.TopCard.PlayCost <= c.Self.EvolutionSources.Count); return m; }
+        { spec.ContextFilters.Add((c, d) => c.Self != null && d.PlayCost45 <= c.Self.EvolutionSources.Count); return m; }
         // "Choose 1 of your Digimon. ~ with DP less than or equal to the chosen Digimon" · "~ with as much or less DP as it" · "~ with as many or fewer digivolution cards at that Digimon"
         static CardInstance? Ref(EffectContext c) => c.Chosen34 ?? That(c);
         if ((m = Regex.Match(rest, @"^with (?:DP less than or equal to (?:the DP of )?|as much or less DP (?:as|than) )(?:the chosen Digimon(?:'s DP)?|it\b)", RegexOptions.IgnoreCase)).Success)

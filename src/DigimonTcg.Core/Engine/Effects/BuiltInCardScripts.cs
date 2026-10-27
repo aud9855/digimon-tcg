@@ -555,7 +555,7 @@ internal static class BuiltInCardScripts
         b.Card("ST5-16")
             .Main(TargetKind.OpponentDigimon, c =>
             {
-                var enemy = c.PickEnemy(d => d.TopCard.PlayCost <= 7, EnemyTarget(c));
+                var enemy = c.PickEnemy(d => d.PlayCost45 <= 7, EnemyTarget(c));
                 if (enemy == null)
                 {
                     c.Message = "등장 코스트 7 이하인 상대 디지몬이 없습니다.";
@@ -563,10 +563,10 @@ internal static class BuiltInCardScripts
                 }
                 c.DeleteEnemy(enemy);
                 c.Message = $"🔥 제노사이드 어택: 상대 [{enemy.TopCard.Name}] 소멸!";
-            }, filter: d => d.TopCard.PlayCost <= 7, rule: "등장 코스트 7 이하인 상대 디지몬")
+            }, filter: d => d.PlayCost45 <= 7, rule: "등장 코스트 7 이하인 상대 디지몬")
             .Security(c =>
             {
-                var t = c.PickEnemy(d => d.TopCard.PlayCost <= 7, c.Other);
+                var t = c.PickEnemy(d => d.PlayCost45 <= 7, c.Other);
                 if (t == null) { c.SecurityResult("등장 코스트 7 이하 디지몬이 없어 불발", "불발"); return; }
                 c.DeleteEnemy(t);
                 c.SecurityResult($"[{t.TopCard.Name}] 소멸!", $"[{t.TopCard.Name}] 소멸", ReferenceEquals(t, c.Other));
