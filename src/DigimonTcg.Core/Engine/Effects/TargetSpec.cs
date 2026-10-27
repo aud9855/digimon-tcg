@@ -36,7 +36,7 @@ public sealed partial class TargetSpec
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     /// <summary>대상 구절을 읽는다. 읽지 못하면 null</summary>
-    public static TargetSpec? Parse(string phrase) => ParseCore(phrase) ?? Parse39(phrase) ?? Parse40(phrase);   // v0.40.0 (TargetSpec.Batch40.cs) · v0.39.0 읽지 못한 대상만 (TargetSpec.Batch39.cs)
+    public static TargetSpec? Parse(string phrase) => ParseCore(phrase) ?? Parse39(phrase) ?? Parse40(phrase) ?? Parse44(phrase);   // v0.44.0 (TargetSpec.Batch44.cs) · v0.40.0 (TargetSpec.Batch40.cs) · v0.39.0 읽지 못한 대상만 (TargetSpec.Batch39.cs)
 
     private static TargetSpec? ParseCore(string phrase)
     {

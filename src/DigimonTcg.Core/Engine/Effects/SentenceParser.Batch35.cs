@@ -165,7 +165,7 @@ internal static partial class SentenceParser
         // 진화 코스트 감소의 "for each of its face-down digivolution cards" — 진화하는 그 디지몬 (공식 BT22-038: "그 디지몬의 뒷면의 진화원 1장마다")
         s = Regex.Replace(s, @"(?<=would digivolve into this card, for each of )(?:its|their)(?= face[- ]down digivolution cards)", "that Digimon's", I);
         s = Regex.Replace(s, @"(?<pre>gets? [+-]\d+ DP (?<dur>until [^.,]+?|for the turn))\. (?:It|That Digimon) further gets (?<v>[+-]\d+) DP for (?<e>each|every) (?<cnt>[^.]+)\.",
-            "DOLLAR{pre}. It gets DOLLAR{v} DP DOLLAR{dur} for DOLLAR{e} DOLLAR{cnt}.", I);
+            "${pre}. It gets ${v} DP ${dur} for ${e} ${cnt}.", I);
         return s;
     }
 

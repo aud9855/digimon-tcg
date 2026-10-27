@@ -144,6 +144,7 @@ public partial class GoldfishEngine
         bool optionSide = false)
     {
         var ctx = new EffectContext(this, owner, self, other, chosenTarget) { TriggerCard = triggerCard, Trigger = trigger };
+        if (trigger == EffectTrigger.OnDeletion) ctx.DeletedSources44 = sources;   // v0.44.0 소멸하기 전의 진화원 ("If [X] was in this Digimon's digivolution cards")
         EnsureMemoryProbes43();   // v0.43.0
 
         _effectDepth++;
@@ -470,6 +471,9 @@ public partial class GoldfishEngine
             // 상대 카드가 주는 효과 ("All of your opponent's Digimon with no digivolution cards gain ＜Security A. -1＞")
             foreach (var (aura, auraCtx) in DigimonAuras(enemy, owner, StaticStat.EnemySecurityAttack).Concat(TamerAuras(enemy, owner, StaticStat.EnemySecurityAttack)))
                 if (aura.AppliesTo(auraCtx, inst)) sec += aura.Value(auraCtx);
+            // v0.44.0 상대 카드가 주는 DP ("all of your opponent's suspended Digimon get -4000 DP" BT16-101)
+            foreach (var (aura, auraCtx) in DigimonAuras(enemy, owner, StaticStat.EnemyDigimonDp44).Concat(TamerAuras(enemy, owner, StaticStat.EnemyDigimonDp44)))
+                if (aura.AppliesTo(auraCtx, inst)) dp += aura.Value(auraCtx);
 
             inst.EffectDpBonus = dp;
             inst.EffectSecurityAttackBonus = sec;

@@ -175,12 +175,13 @@ public class EffectBatch27Tests
     }
 
     [Fact]
-    public void IfThisEffectDidntDelete_AfterCost_IsLeftUnsupported()
+    public void IfThisEffectDidntDelete_AfterCost_IsSupportedSinceV044()
     {
-        // 비용을 내지 않았을 때 뒷문장을 처리할지 Q&A가 없다 (BT16-081)
+        // v0.27.0에는 비용을 내지 않았을 때 뒷문장을 처리할지 몰라 읽지 않았다 (BT16-081).
+        // v0.44.0: 비용을 냈을 때만 결과를 보고 뒷문장을 처리한다 (비용을 내지 않으면 둘 다 처리하지 않는다 — EffectBatch44Tests)
         var card = Card("B27-DD-COST", "[When Digivolving] By deleting 1 of your Digimon or Tamers, delete 1 of your opponent's unsuspended Digimon. If this effect didn't delete an opponent's Digimon, delete 1 of their Tamers.",
             CardType.Digimon, level: 6);
-        Assert.NotEqual(EffectSupportLevel.Full, EffectSupport.For(card).Level);
+        Assert.Equal(EffectSupportLevel.Full, EffectSupport.For(card).Level);
     }
 
     // ---- 키워드 + DP · 양쪽 대상의 may (BT21-014 · EX6-023) ----

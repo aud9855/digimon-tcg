@@ -115,6 +115,12 @@ public sealed class EffectContext
     /// <summary>앞 문장이 실제로 처리되었는지 (조건 불충족 · "~할 수 있다" 거절 · 비용 미지불이면 false) — "If you do, ~"</summary>
     public bool LastStepResolved { get; set; } = true;
 
+    /// <summary>v0.44.0 이 효과에서 낸 "By ~," 비용의 수 — "By X, A. If this effect didn't ~, B"는 비용을 냈을 때만 B를 본다 (SentenceParser.Batch44)</summary>
+    public int CostsPaid44 { get; set; }
+
+    /// <summary>v0.44.0 【소멸 시】: 소멸하기 전의 진화원 (아래 → 위). 그 밖의 시점은 null</summary>
+    internal IReadOnlyList<CardData>? DeletedSources44 { get; set; }
+
     /// <summary>옵션: "Then, place this card in your battle area" — 트래시 대신 배틀 에어리어에 놓는다 (≪딜레이≫ 옵션)</summary>
     public bool PlaceInBattleArea { get; set; }
 

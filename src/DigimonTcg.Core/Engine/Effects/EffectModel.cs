@@ -204,6 +204,8 @@ public enum StaticStat
     ExtraColors,        // 이 디지몬의 색에 더한다 (값 = 색 비트 1<<CardColor — "This Digimon is also treated as yellow")
     EnemyKeyword,       // 상대의 디지몬 전부(Subject 조건)가 키워드를 얻는다 (StaticEffect.Keyword — "none of your opponent's Digimon can suspend")
     OpponentPlayDpLock, // 상대는 DP N 이하의 디지몬을 등장시킬 수 없다 (값 = N, 0이면 없음 — BT14-017)
+    // v0.44.0
+    EnemyDigimonDp44,   // 상대의 디지몬 전부(Subject 조건)의 DP ("all of your opponent's suspended Digimon get -4000 DP" BT16-101)
 }
 
 /// <summary>옵션 [메인] 효과를 쓸 때 UI가 고르게 할 대상</summary>
