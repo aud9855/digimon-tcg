@@ -476,7 +476,7 @@ public class EffectBatch44Tests
     [Fact]
     public void PreviouslyUnsupportedPendingCards_StayAsTheyWere()
     {
-        // BT11-034 (결정 대기)와 EX10-029 (영어 원문과 공식 한글이 다름)는 이 묶음에서 건드리지 않는다
+        // BT11-034 (결정 대기)와 EX10-029 (영어 원문과 공식 한글이 다름)는 이 묶음에서 건드리지 않는다 — v0.46.0에서 카드 번호 EX10-029의 원문만 공식 구조로 고쳐 읽는다 (다른 카드 번호의 같은 문장은 그대로 미지원)
         var ex10029 = Digimon("B44-EX10029", 4, inherited: "By trashing 1 of this Digimon's link cards, effects don't affect 1 of your Digimon until your opponent's turn ends.", traits: "Sport (App Name)");
         Assert.Contains(EffectSupport.For(ex10029).Clauses, c => c.Support == ClauseSupport.Unsupported);
     }

@@ -116,6 +116,7 @@ public partial class GoldfishEngine
         if (!owner.BattleArea.Contains(left) || !owner.BattleArea.Contains(right)) return "DNA 진화할 디지몬이 없습니다.";
         if (EffectRules.IsDigivolveLocked(State, left) || EffectRules.IsDigivolveLocked(State, right)) return "진화할 수 없는 디지몬이 있어 DNA 진화할 수 없습니다.";
         if (!from.Remove(card)) return "DNA 진화할 카드가 없습니다.";
+        NoteDnaEscape46(left, right);   // v0.46.0 떠나려던 디지몬으로 조그레스 진화 — 새 디지몬이라 떠나지 않는다 (공식 Q&A EX9-020 Q1)
         AddMemory(owner, -cost);
         if (ReferenceEquals(owner, State.Player)) { State.TotalMemorySpent += cost; State.TotalEvolutionsCount++; }
         // 오른쪽 디지몬의 카드 묶음(맨 위 → 아래)을 왼쪽 디지몬의 진화원 아래에 → 그 위에 DNA 카드

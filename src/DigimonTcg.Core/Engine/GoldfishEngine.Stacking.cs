@@ -80,9 +80,9 @@ public partial class GoldfishEngine
     /// 디지몬을 주인의 시큐리티 위 · 아래에 놓는다 (맨 위 카드만 — 진화원은 트래시). faceUp = 앞면으로.
     /// 막혔거나 놓지 못했으면 false (토큰은 시큐리티에 가지 않고 사라진다)
     /// </summary>
-    internal bool PlaceDigimonInSecurity(PlayerZones zones, CardInstance inst, bool top, bool faceUp, bool canPrevent)
+    internal bool PlaceDigimonInSecurity(PlayerZones zones, CardInstance inst, bool top, bool faceUp, bool canPrevent, bool skipLeave = false)
     {
-        if (TryPreventLeave(zones, inst, deletion: false, inBattle: false, canPrevent, LeaveDestination.Security) && canPrevent)
+        if (!skipLeave && TryPreventLeave(zones, inst, deletion: false, inBattle: false, canPrevent, LeaveDestination.Security) && canPrevent)   // v0.46.0 skipLeave = 떠나려 할 때 효과가 대신 옮기는 것
             return false;
         if (!zones.BattleArea.Remove(inst))
             return false;

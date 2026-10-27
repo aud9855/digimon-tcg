@@ -424,7 +424,7 @@ public static partial class KoreanEffectRenderer
         if (Regex.IsMatch(c0, @"^played or digivolved by (?:an )?effects?$", RegexOptions.IgnoreCase))
             return new("효과로 등장/진화하고 있었다면,", "효과로 등장/진화한 동안,", "효과로 등장/진화하고 있었다면,");
         if (Regex.IsMatch(c0, @"^played from digivolution cards$", RegexOptions.IgnoreCase))
-            return new("진화원에서 등장하고 있었다면,", "진화원에서 등장한 동안,", "진화원에서 등장하고 있었다면,");
+            return new("진화원에서 등장하고 있었다면,", "진화원에서 등장하고 있었다면,", "진화원에서 등장하고 있었다면,");   // v0.46.0 "When played from digivolution cards, ~" (BT7-018 · EX3-015 · EX3-017)도 공식 "등장하고 있었다면"
         // 공식 (BT17-090 · BT12-097): "이 테이머가 레스트 상태라면," · "이 테이머 아래의 카드가 2장 이하라면,"
         if (Regex.IsMatch(c0, @"^this Tamer\b", RegexOptions.IgnoreCase)) _tamerSubject = true;   // 뒤 문장의 "it" = 이 테이머
         if (Regex.IsMatch(c0, @"^this Tamer is suspended$", RegexOptions.IgnoreCase)) return Be("이 테이머가 레스트 상태");

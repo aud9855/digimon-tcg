@@ -565,9 +565,10 @@ public partial class GoldfishEngine
                 ? string.Empty
                 : $" [🎖️테이머 효과: {card.EffectText.Split('\n')[0]}]";
             Log($"테이머 등장: [{card.Name}] (코스트 {cost} 지불){effectSummary}");
+            var witness46 = CaptureWitness46();   // v0.46.0 등장한 시점에 있던 카드만 "테이머가 등장했을 때"에 반응
             RunEffects(EffectTrigger.OnPlay, State.Player, null, card, includeInherited: false);
-            FireForSide(EffectTrigger.AllyTamerPlayed, State.Player, null, triggerCard: card);
-            FireForSide(EffectTrigger.OpponentTamerPlayed, State.DummyOpponent, null, triggerCard: card);
+            FireForSide(EffectTrigger.AllyTamerPlayed, State.Player, null, triggerCard: card, witness: witness46);
+            FireForSide(EffectTrigger.OpponentTamerPlayed, State.DummyOpponent, null, triggerCard: card, witness: witness46);
             RecalculateFieldBuffs();
         }
         else if (card.Type == CardType.Option || card.IsDual)   // 듀얼 카드 = 옵션 쪽으로 사용 (종합 룰 4-6-2)
@@ -1657,9 +1658,10 @@ public partial class GoldfishEngine
                 AddOpponentEvent(OpponentActionKind.Tamer, "테이머 등장", $"{tamerCandidate.Name} · 메모리 {beforeMem} → {ctx.Memory}", tamerCandidate);
                 AddEffectEvent(tamerCandidate, CaptureEffectLogs(() =>
                 {
+                    var witness46 = CaptureWitness46();   // v0.46.0
                     RunEffects(EffectTrigger.OnPlay, State.DummyOpponent, null, tamerCandidate, includeInherited: false);
-                    FireForSide(EffectTrigger.AllyTamerPlayed, State.DummyOpponent, null, triggerCard: tamerCandidate);
-                    FireForSide(EffectTrigger.OpponentTamerPlayed, State.Player, null, triggerCard: tamerCandidate);
+                    FireForSide(EffectTrigger.AllyTamerPlayed, State.DummyOpponent, null, triggerCard: tamerCandidate, witness: witness46);
+                    FireForSide(EffectTrigger.OpponentTamerPlayed, State.Player, null, triggerCard: tamerCandidate, witness: witness46);
                 }));
                 acted = true;
                 if (ctx.Memory < 0) break;

@@ -111,6 +111,8 @@ public enum EffectTrigger
     AllyUnderTamerPlaced,           // 자신의 테이머 아래에 카드가 놓였을 때 (TriggerCard = 놓인 카드 중 1장, CurrentSourceCards = 놓인 카드)
     // v0.43.0
     AllyTopStackedTrashed43,        // 자신의 디지몬에 겹쳐져 있는 카드가 위에서부터 파기되었을 때 (Other = 그 디지몬 — 맨 위 카드 파기 · ≪퇴화≫ · ≪아머 퍼지≫, BT21-094)
+    // v0.46.0
+    AllyEffectAddedToDeck46,        // 자신의 효과로 덱에 카드가 더해졌을 때 (어느 쪽 덱이든 — "When your effects add to decks" BT26-015, 효과 1개마다 1번)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
@@ -209,6 +211,9 @@ public enum StaticStat
     // v0.45.0
     AllyDigimonDpSet45, // 자신의 디지몬(Subject)의 DP를 N으로 취급 (값 = N — "treated as having 16000 DP" BT22-007 [육성])
     UnsuspendLock45,
+    // v0.46.0
+    CannotBeDeleted46,       // 자신의 디지몬(Subject)은 소멸하지 않는다 — 배틀 · 효과 · DP 0 룰 처리 모두 ("all of your 0 DP Digimon can't be deleted" BT18-086)
+    TamerCannotBeDeleted46,  // 자신의 테이머(Subject — 테이머 카드만 든 가짜 디지몬으로 본다)는 소멸하지 않는다 ("All of your [Yuu Amano] can't be deleted" BT11-082)
     DpFloor45,          // 이 디지몬의 DP는 N 미만이 되지 않는다 (값 = N — "can't have less than 1000 DP" EX11-070)    // 액티브가 되지 않는다 (값 = 비트: 1 자신의 디지몬 · 2 상대의 디지몬 · 4 자신의 테이머 · 8 상대의 테이머 · 16 액티브 페이즈에서만) — BT12-057 · EX10-023 · BT6-092
    // 상대의 디지몬 전부(Subject 조건)의 DP ("all of your opponent's suspended Digimon get -4000 DP" BT16-101)
 }

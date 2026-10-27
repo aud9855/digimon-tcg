@@ -263,7 +263,7 @@ public partial class GoldfishEngine
                 prevented |= RunEffects(EffectTrigger.ThisDigimonWouldBeDeleted, zones, inst, inst.TopCard).PreventLeave;
             foreach (var d in zones.BattleArea.Where(d => !ReferenceEquals(d, inst)).ToList())
             {
-                if (prevented) break;
+                if (prevented || LeaveEscaped46(inst)) break;
                 prevented |= RunEffects(EffectTrigger.AllyDigimonWouldLeave, zones, d, d.TopCard, other: inst).PreventLeave;
                 if (deletion && !prevented)
                     prevented |= RunEffects(EffectTrigger.AllyDigimonWouldBeDeleted, zones, d, d.TopCard, other: inst).PreventLeave;
@@ -272,15 +272,25 @@ public partial class GoldfishEngine
             }
             foreach (var card in zones.Tamers.Concat(zones.OptionsInPlay.Select(p => p.Card)).Distinct().ToList())
             {
-                if (prevented) break;
+                if (prevented || LeaveEscaped46(inst)) break;
                 prevented |= RunEffects(EffectTrigger.AllyDigimonWouldLeave, zones, null, card, other: inst, includeInherited: false).PreventLeave;
                 if (deletion && !prevented)
                     prevented |= RunEffects(EffectTrigger.AllyDigimonWouldBeDeleted, zones, null, card, other: inst, includeInherited: false).PreventLeave;
             }
+            if (!prevented && !LeaveEscaped46(inst))
+                prevented |= RunBreedingWouldLeave46(zones, inst, deletion);   // v0.46.0 [육성] "~ would leave the battle area" (BT18-086 · BT22-007)
+            if (!prevented && !LeaveEscaped46(inst))
+                prevented |= RunTrashWouldLeave46(zones, inst, deletion);      // v0.46.0 [트래시] "When one of your [Dorugamon] would be deleted" (BT17-065)
         }
         finally
         {
             CurrentLeave = outer;
+        }
+        // v0.46.0 떠나려던 디지몬이 조그레스 진화 · 다른 곳으로 옮겨져 이미 다른 디지몬이 되었으면 떠나지 않는다 (공식 Q&A EX9-020 Q1)
+        if (TakeLeaveEscaped46(inst))
+        {
+            EffectLog(zones, $"[{inst.TopCard.Name}]은(는) 새로운 디지몬이 되어 배틀 에어리어를 떠나지 않습니다.");
+            return true;
         }
         if (!canPrevent)
             return false;   // DP 0 소멸 · 코스트 소멸: "떠나려 할 때" 효과는 발휘하지만 막을 수는 없다
@@ -353,6 +363,7 @@ public partial class GoldfishEngine
         string messageBefore = ctx.Message;
         ctx.AnyEffectRan = true;
         bool watching = ctx.Engine.BeginSourceWatch();
+        var deckWatch46 = ctx.Engine.BeginDeckAddWatch46(ctx.Owner);   // v0.46.0 "When your effects add to decks" (BT26-015)
         // "the Digimon this effect played" — 이 효과가 직접 등장시킨 디지몬 (안쪽 효과는 자기 목록)
         var outerCollector = ctx.Engine.PlayCollector;
         ctx.PlayedThisEffect = new List<CardInstance>();
@@ -364,7 +375,7 @@ public partial class GoldfishEngine
             effect.Resolve(ctx);
             if (handBefore != null) ctx.Engine.NoteDigimonHandAdd(ctx.Owner, handBefore, drawsBefore);
         }
-        finally { ctx.Engine.PlayCollector = outerCollector; if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); }
+        finally { ctx.Engine.PlayCollector = outerCollector; if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); ctx.Engine.EndDeckAddWatch46(deckWatch46, ctx.Owner); }
         // 카드에 적힌 시점([등장 시] · [진화 시] · [어택 시] · [소멸 시])의 효과가 대상 · 조건이 없어 아무것도 안 했으면 그렇다고 남긴다.
         // 조용히 넘어가면 "효과가 안 탔다"로 보인다 (사용자 신고: 로제몬 · 쥬드몬 · 엔젤우몬 등 내장 스크립트의 return)
         if (ctx.State.ActionLogs.Count == logsBefore && ctx.Message == messageBefore && AnnouncedLabel(effect) is { } label)
@@ -693,8 +704,8 @@ public partial class GoldfishEngine
         // DP 0 소멸 · 코스트 소멸은 "would be deleted / leave" 효과로도 막지 않는다 (≪회피≫와 같은 규칙).
         // 다만 막지 않고 발휘만 하는 효과(≪디코드≫의 진화원 등장 등 — "배틀 이외로 떠날 때")는 발휘한다
         bool canPrevent = cause is not (DeletionCause.ZeroDp or DeletionCause.Cost);
-        if (TryPreventLeave(zones, instance, deletion: true, inBattle: cause == DeletionCause.Battle, canPrevent) && canPrevent)
-            return false;
+        if (TryPreventLeave(zones, instance, deletion: true, inBattle: cause == DeletionCause.Battle, canPrevent) && (canPrevent || !zones.BattleArea.Contains(instance) || LastLeaveEscaped46))
+            return false;   // v0.46.0 조그레스 진화 등으로 새 디지몬이 되었으면 DP 0 · 코스트 소멸도 그 디지몬에는 일어나지 않는다
         RemoveDeleted(zones, instance, cause);
         return true;
     }
@@ -702,6 +713,8 @@ public partial class GoldfishEngine
     /// <summary>≪방벽≫ · ≪회피≫ — 소멸을 막았으면 true</summary>
     private bool TryPreventDeletion(PlayerZones zones, CardInstance inst, DeletionCause cause)
     {
+        if (cause != DeletionCause.Cost && CannotBeDeleted46(zones, inst))   // v0.46.0 "can't be deleted" 지속 효과 (배틀 · 효과 · DP 0 룰 처리 — BT18-086)
+            return true;
         if (cause is DeletionCause.ZeroDp or DeletionCause.Cost)
             return false;
         if (DeletionBlocked34(zones, inst, cause))   // v0.34.0 "can't be deleted in battle / by your opponent's effects"
@@ -805,6 +818,7 @@ public partial class GoldfishEngine
         while (instance.EvolutionSources.Count > 0)
             zones.Trash.Add(instance.EvolutionSources.Pop());
         PurgeTokens(zones);
+        var witness46 = CaptureWitness46();   // v0.46.0 소멸한 시점에 있던 카드만 "소멸했을 때"에 반응 (【소멸 시】로 등장한 디지몬은 아니다 — 종합 룰 15-5-1)
         NotifyLeftBattleArea(zones, instance);   // v0.33.0 "When any of your opponent's Digimon leave the battle area"
 
         // [소멸 시] · "소멸했을 때" · ≪불굴≫ — 효과 처리 중이면 그 효과가 끝난 뒤에
@@ -813,8 +827,8 @@ public partial class GoldfishEngine
             var outerCause = CurrentDeletionCause;
             CurrentDeletionCause = cause;   // 이 효과들이 볼 수 있게 ("deleted by an effect" · "by dropping to 0 DP")
             RunEffects(EffectTrigger.OnDeletion, zones, instance, instance.TopCard, sources: stack);
-            FireForSide(EffectTrigger.AllyDigimonDeleted, zones, instance);
-            FireForSide(EffectTrigger.OpponentDigimonDeleted, EnemyOf(zones), instance);
+            FireForSide(EffectTrigger.AllyDigimonDeleted, zones, instance, witness: witness46);
+            FireForSide(EffectTrigger.OpponentDigimonDeleted, EnemyOf(zones), instance, witness: witness46);
             CurrentDeletionCause = outerCause;
 
             // ≪천승≫ (종합 룰 16-43, 임의): 이 디지몬이 소멸했을 때, 이 카드를 시큐리티 위에 놓을 수 있다 (트래시에 있을 때만 — 다른 효과로 옮겨졌으면 못 한다)
@@ -969,20 +983,24 @@ public partial class GoldfishEngine
     /// <summary>[자신의 턴 개시 시] 효과 — 자신의 디지몬(메인 · 진화원)과 테이머</summary>
     private void TriggerStartOfTurn(PlayerZones owner)
     {
+        var witness46 = CaptureWitness46();   // v0.46.0 이 시점에 있던 테이머 · 옵션 · 트래시만 (공식 Q&A BT15-052 Q1)
         foreach (var d in owner.BattleArea.ToList())
             RunEffects(EffectTrigger.StartOfYourTurn, owner, d, d.TopCard);
-        foreach (var tamer in owner.Tamers.ToList())
-            RunEffects(EffectTrigger.StartOfYourTurn, owner, null, tamer, includeInherited: false);
-        RunPlacedOptions(EffectTrigger.StartOfYourTurn, owner);
-        RunTrashEffects(EffectTrigger.StartOfYourTurn, owner);   // v0.31.0 [트래시] [~ 시] 효과
+        RunPhaseTamers46(EffectTrigger.StartOfYourTurn, owner, witness46);
+        RunPlacedOptions(EffectTrigger.StartOfYourTurn, owner, witness: witness46);
+        RunTrashEffects(EffectTrigger.StartOfYourTurn, owner, witness: witness46);   // v0.31.0 [트래시] [~ 시] 효과
         RecalculateFieldBuffs();
     }
 
     /// <summary>배틀 에어리어의 옵션(≪딜레이≫)에도 시점을 알린다 — 놓인 장마다 (같은 카드 2장이면 2번, 발휘할 때마다 1장씩 파기)</summary>
-    private void RunPlacedOptions(EffectTrigger trigger, PlayerZones owner, CardInstance? other = null, CardData? triggerCard = null)
+    private void RunPlacedOptions(EffectTrigger trigger, PlayerZones owner, CardInstance? other = null, CardData? triggerCard = null, EventWitness46? witness = null)
     {
+        var budget = witness?.OptionBudget(owner);   // v0.46.0 사건 뒤에 놓인 옵션은 알리지 않는다
         foreach (var option in owner.OptionsInPlay.Select(p => p.Card).ToList())
+        {
+            if (budget != null && !EventWitness46.Consume(budget, option)) { NoteWitnessSkip46(trigger, option); continue; }
             RunEffects(trigger, owner, null, option, other: other, includeInherited: false, triggerCard: triggerCard);
+        }
     }
 
     /// <summary>
@@ -1263,9 +1281,10 @@ public partial class GoldfishEngine
         {
             AddTamer(owner, card);
             EffectLog(owner, $"[효과] 테이머 [{card.Name}] 코스트 없이 등장");
+            var witness46 = CaptureWitness46();   // v0.46.0
             if (triggerOnPlay) RunEffects(EffectTrigger.OnPlay, owner, null, card, includeInherited: false);
-            FireForSide(EffectTrigger.AllyTamerPlayed, owner, null, triggerCard: card);
-            FireForSide(EffectTrigger.OpponentTamerPlayed, EnemyOf(owner), null, triggerCard: card);
+            FireForSide(EffectTrigger.AllyTamerPlayed, owner, null, triggerCard: card, witness: witness46);
+            FireForSide(EffectTrigger.OpponentTamerPlayed, EnemyOf(owner), null, triggerCard: card, witness: witness46);
             RecalculateFieldBuffs();
             return;
         }
@@ -1468,12 +1487,12 @@ public partial class GoldfishEngine
     /// <summary>[자신의 메인 페이즈 개시 시] 효과 — 자신의 디지몬(메인 · 진화원)과 테이머</summary>
     private void TriggerStartOfMainPhase(PlayerZones owner)
     {
+        var witness46 = CaptureWitness46();   // v0.46.0 이 시점에 있던 테이머 · 옵션 · 트래시만 (공식 Q&A BT15-052 Q1)
         foreach (var d in owner.BattleArea.ToList())
             RunEffects(EffectTrigger.StartOfYourMainPhase, owner, d, d.TopCard);
-        foreach (var tamer in owner.Tamers.ToList())
-            RunEffects(EffectTrigger.StartOfYourMainPhase, owner, null, tamer, includeInherited: false);
-        RunPlacedOptions(EffectTrigger.StartOfYourMainPhase, owner);
-        RunTrashEffects(EffectTrigger.StartOfYourMainPhase, owner);   // v0.31.0 [트래시] [~ 시] 효과
+        RunPhaseTamers46(EffectTrigger.StartOfYourMainPhase, owner, witness46);
+        RunPlacedOptions(EffectTrigger.StartOfYourMainPhase, owner, witness: witness46);
+        RunTrashEffects(EffectTrigger.StartOfYourMainPhase, owner, witness: witness46);   // v0.31.0 [트래시] [~ 시] 효과
         RecalculateFieldBuffs();
     }
 
@@ -1687,30 +1706,41 @@ public partial class GoldfishEngine
     }
 
     /// <summary>owner 쪽 디지몬(메인 · 진화원)과 테이머 전부에 trigger 시점을 알린다 (other = 그 일을 일으킨 디지몬)</summary>
-    internal void FireForSide(EffectTrigger trigger, PlayerZones owner, CardInstance? other, CardData? triggerCard = null)
+    internal void FireForSide(EffectTrigger trigger, PlayerZones owner, CardInstance? other, CardData? triggerCard = null, EventWitness46? witness = null)
     {
+        witness ??= TakeDigivolveWitness46(trigger, other);   // v0.46.0 사건 시점에 있던 카드만 (GoldfishEngine.Batch46)
         foreach (var d in owner.BattleArea.ToList())
+        {
+            if (witness != null && !witness.Saw(d)) { NoteWitnessSkip46(trigger, null, d); continue; }
             RunEffects(trigger, owner, d, d.TopCard, other: other, triggerCard: triggerCard);
+        }
+        var tamerBudget = witness?.TamerBudget(owner);
         foreach (var tamer in owner.Tamers.ToList())
+        {
+            if (tamerBudget != null && !EventWitness46.Consume(tamerBudget, tamer)) { NoteWitnessSkip46(trigger, tamer); continue; }
             RunEffects(trigger, owner, null, tamer, other: other, includeInherited: false, triggerCard: triggerCard);
-        RunPlacedOptions(trigger, owner, other, triggerCard);   // ≪딜레이≫ 옵션의 "When ~, ＜Delay＞"
-        RunTrashEffects(trigger, owner, other, triggerCard);    // v0.31.0 [트래시] 시점 효과 (트래시의 이 카드)
+        }
+        RunPlacedOptions(trigger, owner, other, triggerCard, witness);   // ≪딜레이≫ 옵션의 "When ~, ＜Delay＞"
+        RunTrashEffects(trigger, owner, other, triggerCard, witness);    // v0.31.0 [트래시] 시점 효과 (트래시의 이 카드)
         RecalculateFieldBuffs();
         // v0.31.0 "When an opponent's Digimon digivolves" — 자신의 디지몬이 진화했을 때를 상대 쪽에도 알린다
         if (trigger == EffectTrigger.AllyDigimonDigivolved && !State.IsGameOver)
-            FireForSide(EffectTrigger.OpponentDigimonDigivolved, EnemyOf(owner), other, triggerCard);
+            FireForSide(EffectTrigger.OpponentDigimonDigivolved, EnemyOf(owner), other, triggerCard, witness);
     }
 
     /// <summary>
     /// [트래시] 시점 효과 (v0.31.0): 트래시에 있는 이 카드의 "[Trash] [Your Turn] When ~, ~" — 같은 카드가 여러 장이면 1장만 (같은 효과).
     /// 처리하는 동안 이 카드가 트래시에 그대로 있어야 한다 (앞의 효과로 트래시를 떠났으면 발휘하지 않는다)
     /// </summary>
-    internal void RunTrashEffects(EffectTrigger trigger, PlayerZones owner, CardInstance? other = null, CardData? triggerCard = null)
+    internal void RunTrashEffects(EffectTrigger trigger, PlayerZones owner, CardInstance? other = null, CardData? triggerCard = null, EventWitness46? witness = null)
     {
-        RunBreedingEffects42(trigger, owner, other, triggerCard);   // v0.42.0 [육성] 효과 (육성 에어리어의 디지몬 — GoldfishEngine.Batch42)
+        if (witness == null || owner.BreedingArea is not { } b46 || witness.SawBreeding(owner, b46))
+            RunBreedingEffects42(trigger, owner, other, triggerCard);   // v0.42.0 [육성] 효과 (육성 에어리어의 디지몬 — GoldfishEngine.Batch42)
+        else NoteWitnessSkip46(trigger, null, b46);   // v0.46.0 사건 뒤에 육성 에어리어에 온 디지몬
         if (owner.Trash.Count == 0)
             return;
         var cards = owner.Trash.Where(c => CardScripts.For(c)?.Effects.Any(e => e.Source == EffectSource.Trash && e.Trigger == trigger) == true)
+            .Where(c => witness == null || witness.SawTrash(owner, c) || NoteSkipFalse46(trigger, c))   // v0.46.0 사건 뒤에 트래시에 간 카드
             .GroupBy(c => c.CardId).Select(g => g.First()).ToList();
         foreach (var card in cards)
         {
@@ -1789,6 +1819,8 @@ public partial class GoldfishEngine
     /// <summary>테이머를 소멸시킨다 (효과 · 비용) + "자신의 테이머가 소멸했을 때" (v0.31.0) — 디지몬 소멸처럼 효과 처리 중이면 끝난 뒤에</summary>
     internal void DeleteTamer(PlayerZones owner, CardData tamer, bool canPrevent = true)
     {
+        if (canPrevent && TamerCannotBeDeleted46(owner, tamer))   // v0.46.0 "All of your [Yuu Amano] can't be deleted" (BT11-082)
+            return;
         // v0.33.0 "When any of your Digimon or Tamers would leave the battle area" — 비용으로 소멸시키는 것은 막을 수 없다
         if (TryPreventTamerLeave(owner, tamer, canPrevent, LeaveDestination.Deleted) && canPrevent)
             return;
@@ -1797,11 +1829,12 @@ public partial class GoldfishEngine
         owner.SuspendedTamers.Remove(tamer);
         owner.Trash.Add(tamer);
         ClearUnderTamersIfNoTamer(owner);
+        var witness46 = CaptureWitness46();   // v0.46.0 소멸한 시점에 있던 카드만
         RunOrDefer(() =>
         {
             if (State.IsGameOver) return;
-            FireForSide(EffectTrigger.AllyTamerDeleted, owner, null, triggerCard: tamer);
-            FireForSide(EffectTrigger.OpponentTamerDeleted, EnemyOf(owner), null, triggerCard: tamer);
+            FireForSide(EffectTrigger.AllyTamerDeleted, owner, null, triggerCard: tamer, witness: witness46);
+            FireForSide(EffectTrigger.OpponentTamerDeleted, EnemyOf(owner), null, triggerCard: tamer, witness: witness46);
         });
     }
 
@@ -1950,12 +1983,12 @@ public partial class GoldfishEngine
     /// <summary>[상대의 턴 종료 시] 효과 — owner = 턴을 마친 쪽의 상대</summary>
     private void TriggerEndOfOpponentTurn(PlayerZones owner)
     {
+        var witness46 = CaptureWitness46();   // v0.46.0 이 시점에 있던 테이머 · 옵션 · 트래시만 (공식 Q&A BT15-052 Q1)
         foreach (var d in owner.BattleArea.ToList())
             RunEffects(EffectTrigger.EndOfOpponentsTurn, owner, d, d.TopCard);
-        foreach (var tamer in owner.Tamers.ToList())
-            RunEffects(EffectTrigger.EndOfOpponentsTurn, owner, null, tamer, includeInherited: false);
-        RunPlacedOptions(EffectTrigger.EndOfOpponentsTurn, owner);
-        RunTrashEffects(EffectTrigger.EndOfOpponentsTurn, owner);   // v0.31.0 [트래시] [~ 시] 효과
+        RunPhaseTamers46(EffectTrigger.EndOfOpponentsTurn, owner, witness46);
+        RunPlacedOptions(EffectTrigger.EndOfOpponentsTurn, owner, witness: witness46);
+        RunTrashEffects(EffectTrigger.EndOfOpponentsTurn, owner, witness: witness46);   // v0.31.0 [트래시] [~ 시] 효과
         PlayFaceUpSecurityAtEndOfOpponentTurn38(owner);   // v0.38.0 [시큐리티]【상대의 턴 종료 시】
         RunScheduledReturns42();   // v0.42.0 "Return this Digimon to your hand at the end of the turn" (EX4-013) · "~ to the bottom of its owner's deck" (BT5-109)
         RunScheduledDeletions();   // "~ is deleted at the end of the turn" (이 효과로 등장한 디지몬) — 턴 종료 시의 마지막
@@ -1967,12 +2000,12 @@ public partial class GoldfishEngine
     /// <summary>[자신의 턴 종료 시] 효과 — 자신의 디지몬(메인 · 진화원)과 테이머</summary>
     private void TriggerEndOfTurn(PlayerZones owner)
     {
+        var witness46 = CaptureWitness46();   // v0.46.0 이 시점에 있던 테이머 · 옵션 · 트래시만 (공식 Q&A BT15-052 Q1)
         foreach (var d in owner.BattleArea.ToList())
             RunEffects(EffectTrigger.EndOfYourTurn, owner, d, d.TopCard);
-        foreach (var tamer in owner.Tamers.ToList())
-            RunEffects(EffectTrigger.EndOfYourTurn, owner, null, tamer, includeInherited: false);
-        RunPlacedOptions(EffectTrigger.EndOfYourTurn, owner);
-        RunTrashEffects(EffectTrigger.EndOfYourTurn, owner);   // v0.31.0 [트래시] [~ 시] 효과
+        RunPhaseTamers46(EffectTrigger.EndOfYourTurn, owner, witness46);
+        RunPlacedOptions(EffectTrigger.EndOfYourTurn, owner, witness: witness46);
+        RunTrashEffects(EffectTrigger.EndOfYourTurn, owner, witness: witness46);   // v0.31.0 [트래시] [~ 시] 효과
         RecalculateFieldBuffs();
     }
 
@@ -2091,6 +2124,7 @@ public partial class GoldfishEngine
     {
         var card = instance.TopCard;
         string summary;
+        var witness46 = CaptureWitness46();   // v0.46.0 등장한 시점에 있던 카드만 "등장했을 때"에 반응 (【등장 시】로 등장한 디지몬은 아니다)
         if (OnPlayBlocked37(owner, instance))   // v0.37.0 "none of your opponent's Digimon can activate [On Play] effects" (EX8-029)
         {
             EffectLog(owner, $"[{card.Name}]의 【등장 시】 효과는 상대의 효과로 발휘하지 않습니다.");
@@ -2099,10 +2133,10 @@ public partial class GoldfishEngine
         else
             summary = RunEffects(EffectTrigger.OnPlay, owner, instance, card, includeInherited: false).Message;
 
-        foreach (var other in owner.BattleArea.Where(d => !ReferenceEquals(d, instance)).ToList())
+        foreach (var other in owner.BattleArea.Where(d => !ReferenceEquals(d, instance) && (witness46 == null || witness46.Saw(d))).ToList())
             RunEffects(EffectTrigger.AllySameNamePlayed, owner, other, null, other: instance);
-        FireForSide(EffectTrigger.AllyDigimonPlayed, owner, instance);
-        FireForSide(EffectTrigger.OpponentDigimonPlayed, EnemyOf(owner), instance);
+        FireForSide(EffectTrigger.AllyDigimonPlayed, owner, instance, witness: witness46);
+        FireForSide(EffectTrigger.OpponentDigimonPlayed, EnemyOf(owner), instance, witness: witness46);
 
         if (summary.Length > 0)
             EffectLog(owner, $"[효과] {card.Name} {summary}");
@@ -2113,6 +2147,7 @@ public partial class GoldfishEngine
     /// <summary>[진화 시] 효과 (진화한 카드의 메인 효과)</summary>
     private void ApplyWhenDigivolvingEffects(PlayerZones owner, CardInstance target, CardData evoCard)
     {
+        NoteDigivolveWitness46(target);   // v0.46.0 진화한 시점에 있던 카드만 "진화했을 때"에 반응 (【진화 시】로 등장한 디지몬은 아니다)
         if (CardScripts.HasKeyword(target, Keyword.CannotActivateWhenDigivolving))   // v0.34.0 "can't activate [When Digivolving] effects"
         {
             EffectLog(owner, $"[{evoCard.Name}]의 【진화 시】 효과는 효과로 발휘하지 않습니다.");
@@ -2154,6 +2189,7 @@ public partial class GoldfishEngine
     {
         // 옵션 효과를 모두 처리하고 그 결과를 남긴 뒤에, 처리 중에 일어난 [소멸 시] 등을 발휘한다
         EffectContext optionCtx;
+        var witness46 = CaptureWitness46(options: false);   // v0.46.0 옵션을 사용한 시점에 있던 디지몬 · 테이머 · 트래시만 "옵션을 사용했을 때"에 반응
         _effectDepth++;
         try { optionCtx = RunEffects(EffectTrigger.Main, owner, null, optionCard, chosenTarget: target, includeInherited: false, optionSide: optionCard.IsDual); }
         finally { _effectDepth--; }
@@ -2173,8 +2209,8 @@ public partial class GoldfishEngine
         else if (optionCtx.PlaceInBattleArea) PlaceOption(owner, optionCard);
         else owner.Trash.Add(optionCard);
         // "When you use an Option card" / "When a player uses an Option card"
-        FireForSide(EffectTrigger.AllyOptionUsed, owner, null, triggerCard: optionCard);
-        FireForSide(EffectTrigger.OpponentOptionUsed, EnemyOf(owner), null, triggerCard: optionCard);
+        FireForSide(EffectTrigger.AllyOptionUsed, owner, null, triggerCard: optionCard, witness: witness46);
+        FireForSide(EffectTrigger.OpponentOptionUsed, EnemyOf(owner), null, triggerCard: optionCard, witness: witness46);
         RecalculateFieldBuffs();
         return msg;
     }
