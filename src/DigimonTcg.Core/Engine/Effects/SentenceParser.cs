@@ -77,7 +77,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse40(rawClause, inherited, card, def);   // v0.40.0 원래 규칙(13차까지)이 읽지 못한 절만 14차 규칙으로 (SentenceParser.Batch40.cs)
+        TryParse41(rawClause, inherited, card, def);   // v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -177,7 +177,7 @@ internal static partial class SentenceParser
             Func<CardInstance, bool>? req = null;
             Match rm;
             if ((rm = Regex.Match(linkReq.Groups["req"].Value, $@"^(?<x>{TargetSpec.NameList}) traits?$", RegexOptions.IgnoreCase)).Success)
-            { var xs = TargetSpec.Names(rm.Groups["x"].Value); req = d => xs.Any(x => TargetSpec.HasTrait(d.TopCard, x)); }
+            { var xs = TargetSpec.Names(rm.Groups["x"].Value); req = d => xs.Any(x => TargetSpec.HasTrait(d.TopCard, x) || GoldfishEngine.IsAppmonByAppName41(d.TopCard, x)); }   // v0.41.0 영어 데이터에 [Appmon] 특징이 빠진 어플몬
             else if ((rm = Regex.Match(linkReq.Groups["req"].Value, @"^Lv\.\s*(?<lv>\d+)(?: or (?<dir>higher|lower))?$", RegexOptions.IgnoreCase)).Success)
             {
                 int lv = int.Parse(rm.Groups["lv"].Value); string dir = rm.Groups["dir"].Value.ToLowerInvariant();
@@ -466,7 +466,7 @@ internal static partial class SentenceParser
         }
 
         // 링크 카드: 진화원 칸의 라벨 없는 문장 = 【링크 시】 효과 (링크된 디지몬 기준으로 이 카드의 효과로 처리)
-        if (inherited && triggers.Count == 0 && labels.Count == 0 && card.InheritedEffectText.Contains("Link Requirements", StringComparison.OrdinalIgnoreCase))
+        if (inherited && triggers.Count == 0 && labels.Count == 0 && (card.InheritedEffectText.Contains("Link Requirements", StringComparison.OrdinalIgnoreCase) || _forceLinked41))   // v0.41.0 링크 조건이 빠진 어플몬의 라벨 없는 문장 (SentenceParser.Batch41.cs)
         {
             triggers.Add(EffectTrigger.OnLinked);
             inherited = false;
@@ -2357,7 +2357,7 @@ internal static partial class SentenceParser
     {
         var r = ParseStepCore(sentence, card, triggers);
         if (r.Error == null) return r;
-        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? StepFallback40(sentence, card, triggers) ?? r;   // v0.40.0 (Batch40) · v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
+        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? StepFallback40(sentence, card, triggers) ?? StepFallback41(sentence, card, triggers) ?? r;   // v0.41.0 (Batch41) · v0.40.0 (Batch40) · v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
     }
 
     private static (Step? Step, string? Error) ParseStepCore(string sentence, CardData card, List<EffectTrigger> triggers)
@@ -2491,6 +2491,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction38(s.TrimEnd('.'), card, triggers) is { } act38) act = act38;   // v0.38.0 (SentenceParser.Batch38.cs)
         if (act.Error != null && ParseAction39(s.TrimEnd('.'), card, triggers) is { } act39) act = act39;   // v0.39.0 (SentenceParser.Batch39.cs)
         if (act.Error != null && ParseAction40(s.TrimEnd('.'), card, triggers) is { } act40) act = act40;   // v0.40.0 (SentenceParser.Batch40.cs)
+        if (act.Error != null && ParseAction41(s.TrimEnd('.'), card, triggers) is { } act41) act = act41;   // v0.41.0 (SentenceParser.Batch41.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2696,6 +2697,7 @@ internal static partial class SentenceParser
                             if (!TakeFromPool(c, x)) continue;
                             if (fd) c.Engine.PlaceFaceDownSource(c.Owner, c.Self!, x.Card);
                             else c.Self!.AddBottomSource(x.Card);
+                            c.LastCard = x.Card;   // v0.41.0 "the placed card" · "that card" (BT18-066 · BT15-102)
                         }
                         c.RecalculateFieldBuffs();
                     },
@@ -3075,7 +3077,7 @@ internal static partial class SentenceParser
         return null;
     }
 
-    private static Func<EffectContext, bool>? ParseEventCondition(string cond) => ColorDigimonOrTamer40(cond) ?? ParseEventConditionCore(cond) ?? ParseEventCondition38(cond) ?? ParseEventCondition40(cond);   // v0.40.0 "a blue or green Digimon or Tamer"는 원래 규칙보다 먼저 (원래는 테이머의 색을 보지 않았다)   // v0.40.0 (Batch40Step) · v0.38.0 읽지 못한 조건만 (Batch38b)
+    private static Func<EffectContext, bool>? ParseEventCondition(string cond) => ColorDigimonOrTamer40(cond) ?? ParseEventConditionCore(cond) ?? ParseEventCondition38(cond) ?? ParseEventCondition40(cond) ?? ParseEventCondition41(cond);   // v0.41.0 (Batch41Cond) · v0.40.0 "a blue or green Digimon or Tamer"는 원래 규칙보다 먼저 (원래는 테이머의 색을 보지 않았다)   // v0.40.0 (Batch40Step) · v0.38.0 읽지 못한 조건만 (Batch38b)
 
     private static Func<EffectContext, bool>? ParseEventConditionCore(string cond)
     {
@@ -3603,7 +3605,7 @@ internal static partial class SentenceParser
                     bool taken = (fromHand && c.Owner.Hand.Remove(x)) || (fromTrash && c.Owner.Trash.Remove(x))
                                  || (fromSources && c.Self?.TakeSource(y => ReferenceEquals(y, x)) != null);
                     if (!taken) continue;
-                    if (reduce >= 0) c.AddMemory(-Math.Max(0, (GoldfishEngine.LinkCostOf(x) ?? 0) - reduce));
+                    if (reduce >= 0) c.AddMemory(-c.Engine.ReduceLinkCost41(c.Owner, d, x, Math.Max(0, (GoldfishEngine.LinkCostOf(x) ?? 0) - reduce), apply: true));   // v0.41.0 링크 코스트 감소
                     c.Engine.LinkCard(c.Owner, d, x);
                 }
                 Emit(c, label, $"[{string.Join(", ", picks.Select(x => x.Name))}]을(를) [{d.TopCard.Name}]에 링크");

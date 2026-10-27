@@ -232,7 +232,7 @@ public class KoreanEffectRendererTests
         string? R(string en) => KoreanEffectRenderer.RenderClause(en);
         // v0.17.0에서 엔진이 새로 읽는 비용
         Assert.StartsWith("【메인】 디지몬 2마리를 레스트시키는 것으로,", R("[Main] By suspending 2 Digimon, gain 2 memory."));
-        Assert.StartsWith("【메인】 옐로인 자신의 테이머 1장을 레스트시키는 것으로,", R("[Main] By suspending 1 of your yellow Tamers, gain 1 memory."));
+        Assert.StartsWith("【메인】 옐로인 자신의 테이머 1명을 레스트시키는 것으로,", R("[Main] By suspending 1 of your yellow Tamers, gain 1 memory."));
         Assert.StartsWith("【자신의 턴】 이 디지몬을 액티브로 하는 것으로,", R("[Your Turn] By unsuspending this Digimon, gain 1 memory."));
         Assert.Equal("【등장 시】 【진화 시】 【어택 시】 [턴에 1회] 자신의 시큐리티의 위 또는 아래에서 1장 파기하는 것으로, 상대의 턴 종료 시까지, 이 디지몬은 상대의 디지몬의 효과를 받지 않는다.",
             R("[On Play] [When Digivolving] [When Attacking] [Once Per Turn] By trashing your top or bottom security card, your opponent's Digimon effects don't affect this Digimon until their turn ends."));

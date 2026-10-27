@@ -356,6 +356,12 @@ public sealed class CardScript
     /// <summary>v0.40.0 상대의 디지몬이 진화할 때 진화 코스트 +N ("[Opponent's Turn] When an opponent's Digimon with no digivolution cards would digivolve, increase the digivolution cost by 1" EX3-016 · EX3-019)</summary>
     public List<(EffectSource Source, Func<CardInstance, bool> Who, int Amount, bool OpponentsTurnOnly)> OpponentEvoCostIncreases40 { get; } = new();
 
+    /// <summary>v0.41.0 이 디지몬에 카드를 링크할 때의 링크 코스트 감소 ("[Your Turn] [Once Per Turn] When a [Social], [Tool] or [Game] trait card would link to this Digimon, you may reduce the cost by 1" BT25-004 · BT25-045)</summary>
+    public List<LinkCostModifier41> LinkCostModifiers41 { get; } = new();
+
+    /// <summary>v0.41.0 ≪계승 (지정)≫ — 이 디지몬은 가장 위의 지정된 진화원 카드의 ≪계승≫ 이외의 효과를 모두 얻는다 (BT26-032)</summary>
+    public List<Func<CardData, bool>> SuccessionSpecs41 { get; } = new();
+
     /// <summary>v0.31.0 "[Your Turn] When any Digimon cards with the [ADVENTURE] trait would be played from your hand, by suspending this Tamer, reduce the play cost by 1" — 다른 카드의 등장 코스트 감소 (필드 · 육성)</summary>
     public List<FieldPlayCostModifier> FieldPlayCostModifiers { get; } = new();
 
@@ -426,3 +432,6 @@ public sealed record PlayCostOption(int Reduce, Func<EffectContext, bool> CanPay
     public Func<EffectContext, int>? PreviewCount { get; init; }
     public bool PerCount { get; init; }
 }
+
+/// <summary>v0.41.0 링크 코스트 감소 하나: Source = 적힌 곳 (진화원 효과면 그 카드가 진화원에 있을 때), Which = 링크하는 카드 조건, Key = 같은 효과를 두 번 등록하지 않게 (영어 데이터의 중복 문장)</summary>
+public sealed record LinkCostModifier41(EffectSource Source, Func<CardData, bool> Which, int Reduce, bool OncePerTurn, bool YourTurnOnly, bool Optional, string Key);

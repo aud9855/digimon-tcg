@@ -38,7 +38,7 @@ public partial class GoldfishEngine
     private IEnumerable<(EvoCostModifier Mod, CardInstance? Holder, CardData Card, EffectContext Ctx)> ApplicableEvoCostModifiers(PlayerZones owner, CardInstance target, CardData evoCard)
     {
         var enemy = EnemyOf(owner);
-        foreach (var (mod, holder, card) in EvoCostModifierSources(owner, evoCard).ToList())
+        foreach (var (mod, holder, card) in EvoCostModifierSources(owner, evoCard).Concat(TurnEvoCostModifierSources41(owner)).ToList())   // v0.41.0 이 턴 동안의 감소 (GoldfishEngine.Batch41)
         {
             var ctx = new EffectContext(this, owner, holder, target, null) { Card = card, TriggerCard = evoCard };
             bool subject = mod.Subject switch
@@ -84,6 +84,7 @@ public partial class GoldfishEngine
             cost -= reduced;
             if (mod.OncePerTurn)
                 _evoCostModifierUsedTurn[key] = State.TurnSequence;
+            ConsumeTurnEvoCostModifier41(mod);   // v0.41.0 "다음에 진화할 때" 감소는 한 번만
             EffectLog(owner, $"[{card.Name}] [{evoCard.Name}]으로 진화 — 진화 코스트 -{reduced} (코스트 {cost})");
         }
         return cost;

@@ -10,6 +10,31 @@
 
 ---
 
+## v0.41.0 — 2026-10-27
+미지원 효과 문장 15차 묶음 (어플몬 【링크 시】 · 다른 표기 · "다음에 진화할 때" · 진화원 조작 · 조건 · 효과 발휘 · 링크 코스트 감소 · AI 링크 · ≪계승≫) — 도감 효과 문장 지원 9,337 → 9,451 / 10,366 (90.1% → 91.2%, +114)
+- 모든 절이 동작하는 카드 3,444 → 3,535장 (수정 전 지원되던 문장 중 깨진 것 0). 한글은 테이머를 세는 말 "명" 외에 바뀐 것 0 (아래). 새로 지원한 114문장 모두 생성 한글이 붙는다
+- 읽는 방법: 14차와 같이 원래 규칙이 읽지 못한 절 · 문장 · 동작 · 조건만 15차 규칙으로 다시 읽는다 (SentenceParser.TryParse → 실패하면 Batch41). 한글 렌더러도 원래 규칙이 옮기지 못할 때만 15차 규칙을 쓴다
+- 어플몬의 【링크 시】 효과 — 영어 데이터에 〈링크〉 조건이 빠진 어플몬 카드(특징 "~ (App Name)", Lv.3 이상)의 진화원 칸 라벨 없는 문장 = 【링크 시】 효과 (공식 BT21-043 "【링크 시】상대의 턴 종료까지 ~"). BT21-018 · BT21-023 · BT21-043 · BT21-053 · BT21-054 · BT21-070 · BT21-071 · BT21-074 · BT22-009 · BT22-016 · BT22-035 · BT22-050 · BT23-016 · BT23-021 · BT23-028 · BT23-039 · BT24-032 · BT24-036 · BT24-038 · BT24-056 · BT24-071 · BT24-077 · BT25-007 · BT25-036 · BT25-045 · BT25-052 · BT25-056 · BT25-061 · BT25-070 · BT25-072 · BT26-019 · BT26-028 · BT26-037 · BT26-063 · BT26-084 · P-190 · ST22-12 (링크 조건 · 코스트는 그대로 공식 한글 데이터에서 읽는다)
+- 다른 표기: "Draw 1" (괄호 없음) · "Until your opponent's turn ends, 1 of their Digimon ~" · "Until their turn ends" · "To 1 of your opponent's Digimon, give -4000 DP for the turn for each ~" · "To 1 of your opponent's Digimon, ＜De-Digivolve 1＞ for each ~" (BT24-041 · BT24-065 · EX9-043) · "From 1 of your opponent's Digimon, trash any 1 digivolution card for every ~" (EX9-018 · ST21-04) · "gets ＜Piercing＞ and ＜Blocker＞" (EX7-064 · BT8-043) · "-5000DP" (EX4-074) · "to their owner's hand(s)" (BT14-027 · P-073 · BT9-031) · "Digimon that has an [On Deletion] effect" (EX1-021) · "Gain 1 memory if you have ~" (EX9-066) · "For each card trashed (by this card's effect) / For each one, ~" (BT9-107 · EX6-060 · LM-067) · "give 3 of your opponent's Digimon ＜Security A. -1＞" · "At turn end, delete this Digimon" (BT23-025) · "add your top security card to the hand and place this card as the top security card" (BT27-099) · "[System|Seven Code]" 묶은 표기
+- 보호 두 가지: "can't have its DP reduced by your opponent's effects, and isn't affected by ＜De-Digivolve＞ effects" (BT11-069 · BT16-055 — 공식 "《퇴화》 효과를 받지 않는다": 엔진은 상대의 ≪퇴화≫만 막는다) · "their ＜De-Digivolve＞ effects don't affect 1 of your Digimon" (BT24-055)
+- "다음에 ~ 진화할 때" 진화 코스트 감소 (엔진에 이 턴 동안의 감소 — 다음 1번 진화에만): "The next time one of your Digimon would digivolve this turn, reduce the digivolution cost by 1" (ST12-15) · BT1-109 (공식 "이 턴 동안, 다음에 그린인 자신의 디지몬이 Lv.5에서 Lv.6으로 진화할 때") · EX1-033 · EX5-029 · BT3-103 (비용: 자신의 디지몬 1마리를 레스트)
+- 자신의 어택 대상 변경: "if this Digimon is attacking, you may switch the target of the attack to 1 of your opponent's suspended Digimon" (BT9-052 · BT9-055)
+- 진화원 조작
+  - 상대의 디지몬을 다른 상대의 디지몬의 진화원 아래에 (BT11-088) · "또는 상대의 테이머 아래에" (EX10-056 — 놓일 다른 디지몬이 없으면 테이머 아래). 종합 룰 4-7-7: 맨 위 카드만 놓이고 진화원은 트래시
+  - 맨 위 카드 파기: "Trash the top card of this Digimon" (BT9-083 · BT13-058 · BT13-091) · "trash this Digimon's top stacked card" (EX10-022) — 바로 아래 진화원이 맨 위 카드가 된다 (진화원이 없으면 하지 않는다)
+  - 위치 표기: "at the bottom of one of your Digimon's digivolution cards" (BT7-027) · "at the bottom of this Digimon's digivolution cards" · "as digivolution cards of this Digimon" (BT12-111) · 시큐리티 "Place this Digimon at the bottom of your security stack face down" (EX4-060)
+- 조건: "If digivolving from the trash" (BT10-080 · BT23-066 — 공식 "트래시에서 진화하고 있었다면") · "A or B" (BT9-075 · BT17-065 · BT17-067 · BT17-073 — 공식 "~ 있거나, ~") · "this Digimon has 4 or more [Vemmon] in its digivolution cards" (EX11-046) · "4 or more colors in its digivolution cards" (EX12-076) · "one of your [Mother D-Reaper]s has 5 or more digivolution cards" (EX2-053) · "a Digimon with ~ is in play" (BT6-111 — 서로의 디지몬) · "you don't have any Digimon other than Digimon with [Dark Masters] in their texts" (EX10-012 · EX10-020 · EX10-035 · EX10-057) · "When this Digimon had 2 or more colors" (BT9-074 · BT9-076 — 조건) · "your have" 원문 오타 (BT9-080 · BT9-081)
+- 효과 발휘 (공식 BT18-066 "놓은 카드의 【등장 시】 효과 1개를 이 디지몬의 효과로서 발휘할 수 있다"): EX5-059 · EX5-061 ("activate this Digimon's [On Play] effects") · BT23-101 · BT11-016 · BT10-110 · EX3-065 · BT15-041 · BT11-029 · BT24-102 · BT18-066 · EX9-073 · P-147 · EX8-054 — 그 카드의 메인 효과를 발휘한다 (조건 · [턴에 1회]는 그대로, 효과 안에서 다시 발휘하는 것은 3단계까지)
+- 링크
+  - 링크 코스트 감소 (BT25-004 · BT25-045 "When a [Social], [Tool] or [Game] trait card would link to this Digimon, you may reduce the cost by 1"): 패에서 링크할 때 · 효과로 코스트를 내고 링크할 때. BT25-004는 메인 칸("Inherited Effect [Your Turn] ~")과 진화원 칸에 같은 문장이 있어 한 번만 등록한다
+  - AI가 패의 카드를 링크한다 (메모리를 상대 쪽으로 넘기지 않는 것만, ≪분리≫의 지정 링크 카드 — [Seven Code] 등 — 를 그 디지몬에 먼저). 시뮬레이션 플레이어 쪽도 링크
+  - 링크 조건 "[Appmon] trait" · 「어플몬」: 특징에 "(App Name)"이 있는 디지몬도 어플몬으로 본다 (영어 데이터는 어플몬의 특징 "Appmon"을 빠뜨린 카드가 많다 — 공식 한글 데이터가 있는 어플몬 디지몬은 모두 특징 「어플몬」). 예: BT26-051 「고미몬」을 「롤플레이몬」(BT26-010)에 링크할 수 있게 되어 ≪분리≫가 실제로 쓰인다
+- ≪계승 (지정)≫ (BT26-032 "＜Succession ([Ceresmon])＞"): 가장 위의 지정된 진화원 카드 1장의 효과를 얻는다
+- 한글: 테이머를 세는 말 "장" → "명" (공식 "자신의 테이머가 1명 이하라면" · "자신의 테이머 1명마다" · "상대의 테이머 1명을 소멸시킨다") — 수정 전 지원되던 문장 73개 (+ 미지원 문장 5개)의 한글이 바뀌었다. "테이머 카드 1장" · "테이머 아래의 카드 1장" · "디지몬 또는 테이머 1장" · "디지몬과 테이머 1장마다"는 공식도 "장"이라 그대로. 그 밖에 바뀐 한글 0
+- 동작이 바뀐 기존 카드: 링크 조건이 "[Appmon] trait"인 링크 카드를 특징이 "~ (App Name)"뿐인 어플몬에도 링크할 수 있다 (위). AI의 링크는 새 동작 — 어플몬 덱의 AI가 패의 카드를 링크한다. "placing ~ from your hand or trash as this Digimon's bottom digivolution card" 비용이 놓은 카드를 기억한다 ("the placed card" — 이 카드를 쓰는 기존 문장은 없었다)
+- 읽지 않고 남긴 것: BT11-034 (결정 대기) · 삭제한 디지몬의 코스트만큼 감소 (BT13-103 · BT25-076 — 비용으로 소멸시킨 디지몬의 코스트를 기억하는 처리 없음) · [육성] 시점 15문장 · 디지크로스 · 어플 합체 · DNA 진화 (90) · "Trash the top 10 stacked cards" (BT21-030 — 맨 위까지 파기) · 조건이 붙은 진화 조건 무시 진화 (BT2-111 · EX2-022 · ST7-03 · ST8-04 · BT6-060 · BT23-026) · 효과로 진화 조건 무시 진화 (BT22-013 · BT22-026 · BT6-087 · BT6-088) · 영어 원문이 깨진 문장 (EX13-001 · EX13-003 · EX13-004 · EX13-005 · EX13-065 · EX13-066 · EX10-024 · BT23-052 · BT27-070 · BT27-084) · BT23-009 (영어 데이터에 【자신의 턴 종료 시】가 빠졌다) · "can't trash its stacked cards" 보호 (BT21-060 · BT26-085 · EX12-059 — 엔진 처리 없음)
+- 테스트 29개 (EffectBatch41Tests — 「라센몬」 ≪디지버스트≫ BT8-081 포함)
+
 ## v0.40.0 — 2026-10-27
 미지원 효과 문장 14차 묶음 ("When ~" 사건 · 같은 명칭의 지속 효과 · 키워드 부여 · ≪분리≫ · ≪디코드≫ · 여러 Lv. 1마리씩 소멸 · 공개 · 시큐리티에서 진화 · 코스트) — 도감 효과 문장 지원 9,228 → 9,337 / 10,366 (89.0% → 90.1%, +109)
 - 모든 절이 동작하는 카드 3,361 → 3,444장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 1 — EX13-060, 아래). 새로 지원한 109문장 모두 생성 한글이 붙는다

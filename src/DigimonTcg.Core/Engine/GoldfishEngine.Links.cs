@@ -92,6 +92,7 @@ public partial class GoldfishEngine
         if (MeetsLinkRequirement(card, target) != true)
             return ActionResult.Fail($"[{target.TopCard.Name}]에는 [{card.Name}]을(를) 링크할 수 없습니다 (링크 조건).");
         State.Player.Hand.Remove(card);
+        cost = ReduceLinkCost41(State.Player, target, card, cost, apply: true);   // v0.41.0 링크 코스트 감소 (BT25-004 · BT25-045)
         State.MemoryGauge -= cost;
         State.TotalMemorySpent += cost;
         RecalculateFieldBuffs();   // v0.37.0
@@ -129,7 +130,7 @@ public partial class GoldfishEngine
         if (traits.Success)
         {
             var xs = Regex.Matches(traits.Groups["x"].Value, @"「([^」]+)」").Select(m => m.Groups[1].Value).ToList();
-            conds.Add(d => KoreanCardData.DisplayTraits(d.TopCard).Any(t => xs.Any(x => t.Contains(x, StringComparison.Ordinal))));
+            conds.Add(d => KoreanCardData.DisplayTraits(d.TopCard).Any(t => xs.Any(x => t.Contains(x, StringComparison.Ordinal))) || xs.Any(x => IsAppmonByAppName41(d.TopCard, x)));   // v0.41.0
         }
         var names = Regex.Match(r, @"명칭에\s*(?<x>(?:「[^」]+」\s*/?\s*)+)");
         if (names.Success)

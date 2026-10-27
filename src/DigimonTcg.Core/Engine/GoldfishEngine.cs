@@ -1233,6 +1233,7 @@ public partial class GoldfishEngine
             if (AiPolicy.ChooseEvolution(this, ctx.Memory, beforeAttacks: true) is { } evo) { AiEvolve(ctx, evo.Base, evo.Card); continue; }
             if (AiTryTamerEvolution(ctx)) continue;   // v0.30.0 테이머에서 진화 (하이브리드체)
             if (AiPolicy.ChooseDnaEvolution(this, ctx.Memory, beforeAttacks: true) is { } dna && AiDnaEvolve(dna)) continue;
+            if (AiTryLink41(ctx)) continue;   // v0.41.0 링크 (메모리를 넘기지 않는 것만)
             break;
         }
 
@@ -1628,6 +1629,9 @@ public partial class GoldfishEngine
                 acted = true;
 
             if (ctx.Memory < 0) break;
+
+            // 2-C) 링크 (v0.41.0 — 메모리를 상대 쪽으로 넘기지 않는 것만, ≪분리≫의 지정 링크 카드 먼저)
+            if (AiTryLink41(ctx)) { acted = true; continue; }
 
             // 3) 테이머 등장
             var tamerCandidate = AiPolicy.ChooseTamerToPlay(this, ctx.Memory);

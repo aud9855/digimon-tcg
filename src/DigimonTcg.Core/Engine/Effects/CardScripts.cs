@@ -77,8 +77,16 @@ public static class CardScripts
         foreach (var src in stack)
             if (For(src) is { GainedSourceEffects.Count: > 0 } ss)
                 whichList.AddRange(ss.GainedSourceEffects.Where(g => g.Source == EffectSource.Inherited).Select(g => g.Which));
-        if (whichList.Count == 0) return Enumerable.Empty<CardData>();
-        return stack.Where(s => !ReferenceEquals(s, digimon.TopCard) && whichList.Any(w => w(s)))
+        // v0.41.0 ≪계승 (지정)≫: 가장 위의 지정된 진화원 카드 1장 (진화원 목록은 위에서부터 — 넘겨받은 목록은 아래에서부터)
+        var succession = new List<CardData>();
+        if (For(digimon.TopCard) is { SuccessionSpecs41.Count: > 0 } suc)
+            foreach (var spec in suc.SuccessionSpecs41)
+            {
+                var topmost = sources == null ? stack.FirstOrDefault(s => !ReferenceEquals(s, digimon.TopCard) && spec(s)) : stack.LastOrDefault(s => !ReferenceEquals(s, digimon.TopCard) && spec(s));
+                if (topmost != null) succession.Add(topmost);
+            }
+        if (whichList.Count == 0) return succession.GroupBy(s => s.CardId).Select(g => g.First()).ToList();
+        return stack.Where(s => !ReferenceEquals(s, digimon.TopCard) && whichList.Any(w => w(s))).Concat(succession)
             .GroupBy(s => s.CardId).Select(g => g.First()).ToList();
     }
 
@@ -157,6 +165,16 @@ public sealed class CardScriptDefinition
 {
     private readonly CardScript _script;
     internal CardScriptDefinition(CardScript script) => _script = script;
+
+    /// <summary>v0.41.0 등록한 스크립트 (임시 카드로 읽은 진화 코스트 감소를 꺼낸다 — SentenceParser.Batch41)</summary>
+    internal CardScript Script41 => _script;
+
+    /// <summary>v0.41.0 링크 코스트 감소 (같은 Key는 한 번만 — 영어 데이터의 메인 칸 "Inherited Effect ~"와 진화원 칸에 같은 문장이 있다 BT25-004)</summary>
+    internal CardScriptDefinition LinkCostModifier41(LinkCostModifier41 modifier)
+    {
+        if (!_script.LinkCostModifiers41.Any(x => x.Key == modifier.Key)) _script.LinkCostModifiers41.Add(modifier);
+        return this;
+    }
 
     /// <summary>v0.31.0: 설정하면 On()이 이 출처로 등록한다 ([트래시] 시점 효과 = EffectSource.Trash) — 문장 하나를 읽는 동안만</summary>
     internal EffectSource? ZoneSource { get; set; }

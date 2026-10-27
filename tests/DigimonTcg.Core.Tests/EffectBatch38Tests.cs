@@ -228,7 +228,7 @@ public class EffectBatch38Tests
         engine.RunEffects(EffectTrigger.OnPlay, state.Player, me, card);
         Assert.False(me.IsSuspended);
         Assert.Equal(10, state.MemoryGauge);
-        Assert.Equal("【등장 시】 이 디지몬을 액티브로 하고, 자신의 레드의 테이머 1장마다 메모리를 +1 한다.",
+        Assert.Equal("【등장 시】 이 디지몬을 액티브로 하고, 자신의 레드의 테이머 1명마다 메모리를 +1 한다.",
             KoreanEffectRenderer.RenderClause("[On Play] Unsuspend this Digimon, and gain 1 memory for each red Tamer you have in play."));
     }
 
