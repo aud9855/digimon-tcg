@@ -25,6 +25,7 @@ public partial class GoldfishEngine
     private static void NoteSpecialEvo42(CardInstance target, CardData evoCard, int cost)
     {
         if (target.TopCard.Level == evoCard.EvoRequirementLevel && target.Colors.Contains(evoCard.EvoRequirementColor)) return;   // 보통 진화
+        if (KoreanEvolution47.Cost(evoCard, target) == cost) { Diag46.Hit("koreanEvo47"); return; }   // v0.47.0 공식 한글 〔진화〕 조건으로 진화
         if (CardScripts.SpecialEvolutionCost42(evoCard, target) != cost) return;
         if (CardScripts.For(evoCard)?.SpecialEvolutions42.Count > 0) Diag42.Hit(ref Diag42.SpecialEvo);
         else Diag42.Hit(ref Diag42.HolderEvo);

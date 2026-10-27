@@ -141,15 +141,20 @@ public static class CardScripts
     /// 패의 evoCard로 테이머 tamer를 진화시킬 수 있으면 그 진화 코스트 (v0.30.0): 카드의 "~ Tamers as if the Tamer is a level 3 red Digimon" 이 테이머에 맞고,
     /// 그 레벨 · 색의 디지몬에서 진화하는 진화 조건을 가질 때
     /// </summary>
-    public static int? TamerEvolutionCost(CardData evoCard, CardData tamer) =>
-        tamer.Type != CardType.Tamer || evoCard.Type != CardType.Digimon ? null
-        : For(evoCard)?.TamerEvolutions.Where(t => t.Tamer(tamer) && evoCard.EvoRequirementLevel == t.Level && evoCard.EvoRequirementColor == t.Color)
+    public static int? TamerEvolutionCost(CardData evoCard, CardData tamer)
+    {
+        if (tamer.Type != CardType.Tamer || evoCard.Type != CardType.Digimon) return null;
+        int? cost = For(evoCard)?.TamerEvolutions.Where(t => t.Tamer(tamer) && evoCard.EvoRequirementLevel == t.Level && evoCard.EvoRequirementColor == t.Color)
             .Select(t => (int?)(t.Cost ?? evoCard.EvoCost)).Min();
+        if (KoreanEvolution47.TamerCost(evoCard, tamer) is int k47) cost = cost == null ? k47 : Math.Min(cost.Value, k47);   // v0.47.0 〔진화〕「테이머 이름」 (BT18-011 「우정훈」)
+        return cost;
+    }
 
     public static int? SpecialEvolutionCost(CardData evoCard, CardInstance target)
     {
         int? cost = For(evoCard)?.SpecialEvolutions.Where(s => s.From(target)).Select(s => (int?)s.Cost).Min();
         if (SpecialEvolutionCost42(evoCard, target) is int c42) cost = cost == null ? c42 : Math.Min(cost.Value, c42);   // v0.42.0 조건이 붙은 진화 조건 무시 진화
+        if (KoreanEvolution47.Cost(evoCard, target) is int k47) cost = cost == null ? k47 : Math.Min(cost.Value, k47);   // v0.47.0 공식 한글 〔진화〕 진화 조건 (종합 룰 2-3-5-3)
         return cost;
     }
 

@@ -3788,7 +3788,7 @@ public partial class MainWindow : Window
         if (info.AllyDigimon != null)
         {
             // Lv.3 성장기 디지몬은 진화 조건이 Lv.2(유년기)이므로 배틀 에어리어 디지몬 위에는 절대 진화할 수 없음 -> 무조건 [배틀 에어리어 일반 등장]으로 처리!
-            if (card.Level == 3)
+            if (card.Level == 3 && !ActionValidator.ValidateEvolution(_gameState, info.AllyDigimon, card).CanExecute)   // v0.47.0 공식 한글 〔진화〕 조건으로는 Lv.3도 진화할 수 있다
             {
                 return (false, null, true, false);
             }
@@ -3801,7 +3801,7 @@ public partial class MainWindow : Window
             }
 
             // 만약 배틀 에어리어에 진화 가능한 레벨의 디지몬이 아예 없는데 다른 레벨 디지몬 카드 위로 드래그했다면 -> [일반 등장]으로 스마트 처리!
-            bool anyValidEvoInBattle = _gameState.Player.BattleArea.Any(d => d.TopCard.Level == card.EvoRequirementLevel);
+            bool anyValidEvoInBattle = _gameState.Player.BattleArea.Any(d => d.TopCard.Level == card.EvoRequirementLevel || ActionValidator.ValidateEvolution(_gameState, d, card).CanExecute);
             if (!anyValidEvoInBattle)
             {
                 return (false, null, true, false);

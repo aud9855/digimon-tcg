@@ -750,7 +750,7 @@ public class EffectBatch46Tests
             var (state, engine, _) = NewMainPhase();
             var dex = Digimon(dexId, 4, "[Trash] [All Turns] When one of your [Dorugamon] would be deleted, by digivolving it into this card without paying the cost, prevent that deletion.", name: "DexDorugamon");
             var doru = Put(state.Player, Digimon(doruId, 4, name: "Dorugamon"));   // 영어 진화 조건은 Lv.3 — 공식 한글 〔진화〕「도루가몬」으로만 진화할 수 있다
-            Assert.False(ActionValidator.ValidateEvolution(doru, dex).CanExecute);
+            Assert.True(ActionValidator.ValidateEvolution(doru, dex).CanExecute);   // v0.47.0 공식 한글 〔진화〕 조건은 보통 진화에도 쓴다 (종합 룰 2-3-5-3)
             state.Player.Trash.Add(dex);
             engine.DeleteByOpponentEffect(state.Player, doru);
             Assert.Same(dex, doru.TopCard);

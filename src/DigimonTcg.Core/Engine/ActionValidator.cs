@@ -129,7 +129,9 @@ public static class ActionValidator
 
         // 진화 조건을 무시하는 다른 진화 ("Your [Shoutmon] can digivolve into this card ~ for a memory cost of 4")
         if (!MeetsNormalEvolution(target, evoCard) && CardScripts.SpecialEvolutionCost(evoCard, target) is int special)
-            return ActionResult.Success($"진화 코스트 {special} 지불 (카드 효과의 진화). 진화 성공 시 카드 1장을 추가로 드로우합니다.");
+            return ActionResult.Success(KoreanEvolution47.Cost(evoCard, target) == special
+                ? $"진화 코스트 {special} 지불 (〔진화〕 조건). 진화 성공 시 카드 1장을 추가로 드로우합니다."   // v0.47.0 공식 한글 〔진화〕 진화 조건
+                : $"진화 코스트 {special} 지불 (카드 효과의 진화). 진화 성공 시 카드 1장을 추가로 드로우합니다.");
 
         if (target.TopCard.Level != evoCard.EvoRequirementLevel)
             return ActionResult.Fail($"Lv.{evoCard.EvoRequirementLevel} 디지몬 위에만 진화할 수 있습니다. (현재 대상: Lv.{target.TopCard.Level})");
@@ -140,7 +142,7 @@ public static class ActionValidator
         if (!colorMatches)
             return ActionResult.Fail($"색상이 일치하지 않습니다. ({evoCard.EvoRequirementColor} 필요)");
 
-        string guide = $"진화 코스트 {evoCard.EvoCost} 지불. 진화 성공 시 카드 1장을 추가로 드로우합니다.";
+        string guide = $"진화 코스트 {EvolutionCost(target, evoCard)} 지불. 진화 성공 시 카드 1장을 추가로 드로우합니다.";
         return ActionResult.Success(guide);
     }
 

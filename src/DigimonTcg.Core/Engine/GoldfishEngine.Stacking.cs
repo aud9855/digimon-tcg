@@ -20,7 +20,7 @@ public partial class GoldfishEngine
     /// </summary>
     internal bool PlaceDigimonUnder(PlayerZones zones, CardInstance moving, CardInstance target, bool canPrevent, bool top = false)
     {
-        if (ReferenceEquals(moving, target) || !zones.BattleArea.Contains(moving) || !zones.BattleArea.Contains(target))
+        if (ReferenceEquals(moving, target) || !zones.BattleArea.Contains(moving) || !(zones.BattleArea.Contains(target) || ReferenceEquals(zones.BreedingArea, target)))   // v0.47.0 육성 에어리어의 디지몬 아래에도 (BT13-007)
             return false;
         if (TryPreventLeave(zones, moving, deletion: false, inBattle: false, canPrevent, LeaveDestination.Other) && canPrevent)
             return false;

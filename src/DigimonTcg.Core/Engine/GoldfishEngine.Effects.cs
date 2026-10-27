@@ -350,6 +350,8 @@ public partial class GoldfishEngine
             ? new List<CardInstance> { ctx.Other } : new List<CardInstance>();
         if (effect.Condition != null && !EvalWithDeletionView45(ctx, effect.Condition))   // v0.45.0 소멸한 디지몬은 소멸 직전 모습으로
             return;
+        if (!ctx.Engine.FirstPlayedTrigger47(ctx, card, effect))   // v0.47.0 동시 등장의 "등장했을 때"는 같은 효과 1번만 (공식 Q&A ST12-04 Q1)
+            return;
         // [턴에 1회] 기록: 같은 카드의 메인 효과와 진화원 효과는 다른 효과다 (v0.29.0 — 진화원 [메인]과 맨 위가 된 그 카드의 메인 효과, BT22-043)
         string onceKey = effect.Source == EffectSource.Inherited ? card.CardId + "#I" : effect.Source == EffectSource.Link43 ? card.CardId + "#L" : card.CardId;   // v0.43.0 링크 효과
         if (effect.OncePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey))
@@ -370,12 +372,17 @@ public partial class GoldfishEngine
         ctx.Engine.PlayCollector = ctx.PlayedThisEffect;
         var handBefore = ctx.Self != null ? ctx.Owner.Hand.ToArray() : null;   // "one of your Digimon's effects adds cards to your hand" (v0.30.0)
         int drawsBefore = ctx.Engine.DrawSerial.GetValueOrDefault(ctx.Owner);
+        var playBatch47 = ctx.Engine.BeginPlayBatch47();   // v0.47.0 이 효과로 등장한 카드는 동시에 — 등장 뒤 유발은 효과가 끝난 뒤 (GoldfishEngine.Batch47Play)
         try
         {
-            effect.Resolve(ctx);
-            if (handBefore != null) ctx.Engine.NoteDigimonHandAdd(ctx.Owner, handBefore, drawsBefore);
+            try
+            {
+                effect.Resolve(ctx);
+                if (handBefore != null) ctx.Engine.NoteDigimonHandAdd(ctx.Owner, handBefore, drawsBefore);
+            }
+            finally { ctx.Engine.PlayCollector = outerCollector; if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); ctx.Engine.EndDeckAddWatch46(deckWatch46, ctx.Owner); }
         }
-        finally { ctx.Engine.PlayCollector = outerCollector; if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); ctx.Engine.EndDeckAddWatch46(deckWatch46, ctx.Owner); }
+        finally { ctx.Engine.EndPlayBatch47(playBatch47); }
         // 카드에 적힌 시점([등장 시] · [진화 시] · [어택 시] · [소멸 시])의 효과가 대상 · 조건이 없어 아무것도 안 했으면 그렇다고 남긴다.
         // 조용히 넘어가면 "효과가 안 탔다"로 보인다 (사용자 신고: 로제몬 · 쥬드몬 · 엔젤우몬 등 내장 스크립트의 return)
         if (ctx.State.ActionLogs.Count == logsBefore && ctx.Message == messageBefore && AnnouncedLabel(effect) is { } label)
@@ -1281,6 +1288,7 @@ public partial class GoldfishEngine
         {
             AddTamer(owner, card);
             EffectLog(owner, $"[효과] 테이머 [{card.Name}] 코스트 없이 등장");
+            if (DeferPlayed47(owner, null, card, triggerOnPlay)) { RecalculateFieldBuffs(); return; }   // v0.47.0 효과 하나로 함께 등장 — 효과가 끝난 뒤 한꺼번에 (GoldfishEngine.Batch47Play)
             var witness46 = CaptureWitness46();   // v0.46.0
             if (triggerOnPlay) RunEffects(EffectTrigger.OnPlay, owner, null, card, includeInherited: false);
             FireForSide(EffectTrigger.AllyTamerPlayed, owner, null, triggerCard: card, witness: witness46);
@@ -1293,6 +1301,7 @@ public partial class GoldfishEngine
         PlayCollector?.Add(inst);
         RecalculateFieldBuffs();
         EffectLog(owner, $"[효과] [{card.Name}(Lv.{card.Level})] 코스트 없이 {(suspended ? "레스트 상태로 " : "")}등장");
+        if (DeferPlayed47(owner, inst, null, triggerOnPlay)) return;   // v0.47.0 효과 하나로 함께 등장 — 효과가 끝난 뒤 한꺼번에 (GoldfishEngine.Batch47Play)
         if (triggerOnPlay)
             ApplyOnPlayEffects(owner, inst);
         else

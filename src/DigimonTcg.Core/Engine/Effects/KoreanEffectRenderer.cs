@@ -47,7 +47,7 @@ public static partial class KoreanEffectRenderer
         // v0.38.0 시큐리티 에어리어의 효과 표시 — 공식 BT20-052 "[시큐리티]【상대의 턴 종료 시】" (【시큐리티】 효과가 아니다)
         if (Regex.IsMatch(rawClause.TrimStart(), @"^\[Security\]\s*\[End of Opponent's Turn\]", RegexOptions.IgnoreCase) && RenderClauseCore(rawClause) is { } zoneKo)
             return TamerCount41(Regex.Replace(zoneKo, @"^【시큐리티】\s*", "[시큐리티]"));
-        return TamerCount41(RenderBrokenText43(rawClause) ?? FixItAfterPlay40(rawClause, RenderClauseCore(rawClause)) ?? RenderClause40(rawClause) ?? RenderClause41(rawClause) ?? RenderClause42(rawClause) ?? RenderClause43(rawClause) ?? RenderClause44(rawClause) ?? RenderClause45(rawClause) ?? RenderClause46(rawClause));   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42)   // v0.41.0 테이머는 "명" · 원래 규칙이 읽지 못한 절만 (Batch41) · v0.40.0 (KoreanEffectRenderer.Batch40.cs)
+        return TamerCount41(RenderClause47Fixed(rawClause) ?? RenderBrokenText43(rawClause) ?? FixItAfterPlay40(rawClause, RenderClauseCore(rawClause)) ?? RenderClause40(rawClause) ?? RenderClause41(rawClause) ?? RenderClause42(rawClause) ?? RenderClause43(rawClause) ?? RenderClause44(rawClause) ?? RenderClause45(rawClause) ?? RenderClause46(rawClause) ?? RenderClause47(rawClause));   // v0.47.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42)   // v0.41.0 테이머는 "명" · 원래 규칙이 읽지 못한 절만 (Batch41) · v0.40.0 (KoreanEffectRenderer.Batch40.cs)
     }
 
     private static string? RenderClauseCore(string rawClause)
