@@ -34,8 +34,11 @@ public partial class GoldfishEngine
         && (d.TurnPlayed < State.CurrentTurn || CardScripts.HasKeyword(d, Keyword.Rush))
         && !EffectRules.IsAttackLocked(State, d);
 
-    /// <summary>효과로 어택한다 (어택했거나 AI 어택 큐에 넣었으면 true)</summary>
-    internal bool EffectAttack(PlayerZones owner, CardInstance attacker, EffectAttackTarget allowed, bool withoutSuspending, string label)
+    /// <summary>
+    /// 효과로 어택한다 (어택했거나 AI 어택 큐에 넣었으면 true).
+    /// v0.39.0 forced = "that Digimon attacks" 같은 강제 처리 (종합 룰 15-9-1 · 공식 Q&A BT21-081 · BT20-102 "가능한 만큼 어택합니다") — 어택할 수 있으면 어택하지 않기를 고를 수 없다. 대상은 어택하는 쪽이 고른다
+    /// </summary>
+    internal bool EffectAttack(PlayerZones owner, CardInstance attacker, EffectAttackTarget allowed, bool withoutSuspending, string label, bool forced = false)
     {
         if (!CanEffectAttack(owner, attacker, withoutSuspending))
             return false;
@@ -48,11 +51,16 @@ public partial class GoldfishEngine
 
         if (!ReferenceEquals(owner, State.Player))
         {
-            if (_aiTurn is not { } ctx || AiPolicy.ChooseEffectAttack(this, attacker, targets, canSecurity) is not { } choice)
+            if (_aiTurn is not { } ctx)
                 return false;
-            if (choice.Target == null ? !canSecurity : !targets.Contains(choice.Target))
+            if (forced && ctx.Attackers.Contains(attacker))
+                return false;   // 같은 시점의 두 번째 강제 어택은 어택하지 않는다 (Q&A EX5-048)
+            var choice = AiPolicy.ChooseEffectAttack(this, attacker, targets, canSecurity);
+            bool legal = choice is { } ch && (ch.Target == null ? canSecurity : targets.Contains(ch.Target));
+            if (!legal && !forced)
                 return false;
-            ctx.QueuedTargets[attacker] = choice.Target;
+            ctx.QueuedTargets[attacker] = legal ? choice!.Value.Target : ForcedAiTarget39(attacker, targets, canSecurity);
+            if (forced) Diag39.Hit(ref Diag39.ForcedAttack);
             if (withoutSuspending) ctx.NoSuspendAttackers.Add(attacker);
             ctx.Attackers.Enqueue(attacker);
             Log($"🤖 [{label}] AI [{attacker.TopCard.Name}]이(가) 효과로 어택합니다!");
@@ -60,10 +68,15 @@ public partial class GoldfishEngine
         }
 
         var best = BestWinningTarget(attacker, targets);
-        if (!AskYesNo(owner, attacker, $"[{label}] [{attacker.TopCard.Name}]으로 어택할까요?", recommended: canSecurity || best != null))
-            return false;
         CardInstance? defender = null;
-        if (targets.Count > 0)
+        if (forced)
+        {
+            Diag39.Hit(ref Diag39.ForcedAttack);
+            defender = ChooseForcedAttackTarget39(owner, attacker, targets, canSecurity, $"[{label}] [{attacker.TopCard.Name}]은(는) 반드시 어택합니다. 어택 대상을 고르세요.{(canSecurity ? " (고르지 않으면 시큐리티)" : "")}");
+        }
+        else if (!AskYesNo(owner, attacker, $"[{label}] [{attacker.TopCard.Name}]으로 어택할까요?", recommended: canSecurity || best != null))
+            return false;
+        else if (targets.Count > 0)
             defender = ChooseTargets(owner, AiEvaluator.Rank(targets, best), 1,
                 $"[{label}] [{attacker.TopCard.Name}]의 어택 대상을 고르세요.{(canSecurity ? " (고르지 않으면 시큐리티)" : "")}",
                 optional: canSecurity, preselected: canSecurity ? best : best ?? targets[0]).FirstOrDefault();

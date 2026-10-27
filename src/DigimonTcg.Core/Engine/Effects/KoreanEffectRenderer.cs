@@ -177,7 +177,7 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>문장 하나 → 한글 (마침표 없이)</summary>
-    private static string? Sentence(string s, bool nested = false) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested);   // v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
+    private static string? Sentence(string s, bool nested = false) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested) ?? SentenceFallback39(s, nested);   // v0.39.0 · v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
 
     private static string? SentenceCore(string s, bool nested = false)
     {
@@ -359,7 +359,7 @@ public static partial class KoreanEffectRenderer
         if (Regex.Match(s, @"^(?<d>until [^,]+), (?<rest>.+)$", RegexOptions.IgnoreCase) is { Success: true } lead)
             s = $"{lead.Groups["rest"].Value} {lead.Groups["d"].Value.ToLowerInvariant()}";
         var (dur, core) = SplitDuration(s);
-        var phrase = Core(core);
+        var phrase = Core(core) ?? (_core39 ? Core39(core) : null);   // v0.39.0 읽지 못한 동작만 (KoreanEffectRenderer.Batch39.cs)
         if (phrase == null) return null;
         return (dur != null ? dur + ", " : "") + phrase.Render(form);
     }
@@ -860,7 +860,7 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>비용 "~ing ..." → "~하는 것으로,"</summary>
-    private static string? CostKo(string cost) => CostKoCore(cost) ?? CostKo38(cost);   // v0.38.0 읽지 못한 비용만 (KoreanEffectRenderer.Batch38.cs)
+    private static string? CostKo(string cost) => CostKoCore(cost) ?? CostKo38(cost) ?? CostKo39(cost);   // v0.38.0 읽지 못한 비용만 (KoreanEffectRenderer.Batch38.cs)
 
     private static string? CostKoCore(string cost)
     {
@@ -1159,7 +1159,9 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>"When ~," 사건 → "~했을 때,"</summary>
-    private static string? EventKo(string ev)
+    private static string? EventKo(string ev) => FixEventKo39(ev, EventKoCore(ev)) ?? EventKo39(ev);   // v0.39.0 읽지 못한 사건만 (KoreanEffectRenderer.Batch39.cs)
+
+    private static string? EventKoCore(string ev)
     {
         ev = ev.Trim();
         Match m;
@@ -1590,7 +1592,7 @@ public static partial class KoreanEffectRenderer
             return $"서로의 시큐리티 {Per(m)}장마다";
         if ((m = Regex.Match(counter, $@"^(?<x>{TargetSpec.NameList}) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
             return $"이 디지몬의 진화원의 {NamesKo(m.Groups["x"].Value)} 1장마다";
-        return CounterKo32(counter) ?? CounterKo34(counter) ?? CounterKo38(counter);   // v0.32.0 · v0.34.0 · v0.38.0
+        return CounterKo32(counter) ?? CounterKo34(counter) ?? CounterKo38(counter) ?? CounterKo39(counter);   // v0.32.0 · v0.34.0 · v0.38.0
     }
 
     // =====================================================================
@@ -1613,7 +1615,9 @@ public static partial class KoreanEffectRenderer
     /// <summary>대상 구절의 한글 ("1 of your opponent's suspended Digimon" → 상대의 레스트 상태 디지몬 1마리) — 옵션 대상 안내(MainTargetRule)용</summary>
     internal static string? TargetPhraseKo(string phrase) => TargetKo(phrase);
 
-    private static string? TargetKo(string phrase, bool bare = false)
+    private static string? TargetKo(string phrase, bool bare = false) => TargetKoCore(phrase, bare) ?? TargetKo39(phrase, bare);   // v0.39.0 읽지 못한 대상만 (KoreanEffectRenderer.Batch39.cs)
+
+    private static string? TargetKoCore(string phrase, bool bare = false)
     {
         phrase = phrase.Trim().TrimEnd('.').Trim();
         if (Regex.Match(phrase, @"^(?<pre>(?:(?:\d+|all|up to \d+|any) of )?(?<side>your|their|your opponent's) )Tokens? or (?<other>other )?(?<body>.*\bDigimon\b.*)$", RegexOptions.IgnoreCase) is { Success: true } tok)
@@ -1740,6 +1744,7 @@ public static partial class KoreanEffectRenderer
             else if (FilterKo34(rest) is { } f34) { m = f34.M; list.Add(f34.Ko); }   // v0.34.0 (KoreanEffectRenderer.Batch34.cs)
             else if (FilterKo35(rest) is { } f35) { m = f35.M; list.Add(f35.Ko); }   // v0.35.0
             else if (FilterKo38(rest) is { } f38) { m = f38.M; list.Add(f38.Ko); }   // v0.38.0 (KoreanEffectRenderer.Batch38.cs)
+            else if (FilterKo39(rest) is { } f39) { m = f39.M; list.Add(f39.Ko); }   // v0.39.0 (KoreanEffectRenderer.Batch39.cs)
             else return null;
             rest = rest[m.Length..].Trim().TrimStart(',').Trim();
         }
@@ -1851,6 +1856,7 @@ public static partial class KoreanEffectRenderer
                 mods.Add($"{lk} 효과를 가진");
             else if ((f = Regex.Match(filter, $@"^(?<x>{TargetSpec.NameList})", RegexOptions.IgnoreCase)).Success)
                 mods.Add($"{NamesKo(f.Groups["x"].Value)}인");
+            else if (FilterKo39(filter) is { } f39) { f = f39.M; mods.Add(f39.Ko); }   // v0.39.0 "without [X] in its name"
             else return null;
             // "with [Ravemon] in its name or [Bird] in any of its traits" — 둘 중 하나 (공식 BT23-011: "특징 「CS」를 가지거나 레드인")
             if (Regex.IsMatch(f.Value, @"^or\s", RegexOptions.IgnoreCase) && mods.Count >= 2)

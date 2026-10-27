@@ -10,6 +10,50 @@
 
 ---
 
+## v0.39.0 — 2026-10-27
+미지원 효과 문장 13차 묶음 (강제 어택 규칙 · 여러 곳에서 등장 · 사용 · 이름 제외 · 상한 · 비용 · 시큐리티 · 테이머 아래에서 진화 · 정한 턴 종료 시) — 도감 효과 문장 지원 9,056 → 9,228 / 10,366 (87.4% → 89.0%, +172)
+- 모든 절이 동작하는 카드 3,228 → 3,361장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 원래 지원하던 문장 중 한글이 없던 15문장(BT10-089 · BT10-090 "패 또는 테이머 아래에서" · BT21-060 · BT22-081 · BT22-082 "its digivolution cards" · BT16-014 · BT17-038 · BT23-085 옵션 사용 등)에 새로 붙었다. 새로 지원한 172문장 모두 생성 한글이 붙는다
+- 읽는 방법: 12차와 같이 원래 규칙이 읽지 못한 문장 · 비용 · 조건 · 셈 · 대상만 13차 규칙으로 다시 읽는다. 한글 렌더러의 13차 동작 읽기는 문장 전체가 원래 규칙으로 읽히지 않을 때 다시 읽는 동안에만 켠다 (원래의 다른 읽기를 가로채지 않게)
+- 룰에 맞춘 수정 — 강제 어택 (종합 룰 15-9-1 강제 처리 · 16-34-3 · 공식 Q&A BT21-081 · BT23-070 · BT20-102 · BT24-051 "가능한 만큼 어택합니다")
+  - "that Digimon attacks" · "this Digimon attacks (a player / without suspending)" — 어택할 수 있으면 어택하지 않기를 고를 수 없다. 대상은 어택하는 쪽이 고른다 (시큐리티에 어택할 수 없으면 "고르지 않음"이 없다). AI 정책이 고르지 않아도 어택한다
+  - 새로 지원: BT19-062 · BT20-090 · BT21-081 · BT23-070 · EX10-071 · BT19-080 · "1 of your Digimon may get +5000 DP for the turn and attack your opponent's Digimon" (BT24-051)
+- 동작이 바뀐 기존 카드
+  - EX7-013 "~ and that Digimon attacks" — 전에는 어택을 고를 수 있었다 → 강제 어택
+  - "~ may gain ＜Rush＞ for the turn and attack ~" (BT16-077 · BT20-102 · EX12-029 · EX12-056 · EX6-027) — "may"는 효과 전체: 발휘할지 한 번 묻고, 발휘하면 어택은 강제 (전에는 얻는 것은 언제나 하고 어택만 고름)
+  - 준 효과 "[Start of Your Main Phase] This Digimon attacks." (BT21-077 · BT23-032 · BT25-054 · BT27-064 · BT27-100 · EX10-008 · EX10-034 · EX12-016 · EX5-048 · P-183 · P-240 · ST15-16 등) — 플레이어가 어택 대상을 고른다 (전에는 이기는 대상이 있으면 묻지 않고 그 대상). 플레이어에게 어택할 수 없는 디지몬은 디지몬 중에서 고른다 (전에는 고르지 않으면 시큐리티)
+  - "[On Play] effects on Digimon played by this effect don't activate" (BT2-081 · BT3-110 · BT5-078 · BT5-079 · BT5-081 · BT5-106 · BT5-107 · EX1-063 · P-020) — 그 디지몬의 【등장 시】만 막고, 다른 카드의 "디지몬이 등장했을 때" 효과는 유발한다 (전에는 함께 막혔다)
+  - 앞에 고른 대상이 없을 때 "it" · "that Digimon" = 이 효과로 등장한 디지몬 (BT14-076 "that Digimon gains ＜Rush＞" — 전에는 아무것도 얻지 않았다)
+- 여러 곳에서 등장 · 사용 (SentenceParser.Batch39Play)
+  - "Play 1 blue level 3 Digimon card from 1 of your blue Digimon's digivolution cards ~" (EX3-022 — 공식 "블루인 자신의 디지몬 1마리의 진화원에서 ~") · BT11-085 · BT11-098 · BT12-025 · BT12-032 · BT13-096 · EX2-016 · EX3-023 · EX3-026 · EX6-014 · "any of your [Imperialdramon: Fighter Mode]'s digivolution cards" (BT20-094) · "that Digimon's digivolution cards" (BT17-084 · EX6-065)
+  - "from your hand or this Digimon's digivolution cards" (BT24-065 · EX12-034 · BT13-040) · "from your trash or from one of your Digimon's digivolution cards" (BT17-025) · "from under any of your Tamers" (BT19-025 · BT19-102 · P-224)
+  - "Return to the hand or play 1 ~ from this Digimon's digivolution cards" (BT18-017 · BT18-029 · BT18-055 · BT18-074 — 공식 "~ 패로 되돌리거나, 코스트를 지불하지 않고 등장시킬 수 있다")
+  - 1장씩: "1 level 3 Digimon card and 1 level 4 Digimon card" (BT10-027) · ST9-06 · EX3-073 · EX4-021 · EX6-031 · BT7-063 (레스트 상태로) · "as another Digimon" (BT7-028 · BT7-096)
+  - 옵션 사용: "Use 1 ~ Option card from your hand or this Digimon's digivolution cards" (BT25-085 · EX13-014 · EX13-061) · "Play or use 1 ~ card ~" (EX12-077 · EX13-045 · BT27-015) · 코스트를 내는 "Play or use 1 card with ~ from your hand with the cost reduced by 2" (EX12-013 · EX12-027 · EX12-041 · EX12-043 · EX12-050 · EX13-005 · EX13-012 · BT25-041 · BT26-006 · BT26-032 · BT26-033 · ST23-04 · ST23-08) · BT25-083 · BT26-026 · BT26-070 · BT26-074 · EX13-072
+- 이름 제외 · 진화
+  - "without [Justimon: Accel Arm] in its name" (BT11-073 · EX13-060 — 공식 "「저스티몬: 액셀 암」 이외의") · ", other than [Sea Animal]," (BT25-009 · BT25-012 · BT25-051 · EX13-038 · EX13-042) · "1 of your [Diaboromon] without [Doomsday Clock] in its digivolution cards" (BT17-100 · BT19-078 — 공식 "진화원에 「종말의 시계」가 없는")
+  - 진화 다른 표기: "can digivolve" (BT11-073 · BT7-051 · EX1-035 · EX1-040) · "for 1 memory" (BT10-041) · "for the digivolution cost" (BT12-016 · EX3-063 · EX4-056) · "from your trash for the cost" (EX3-008 · EX3-058) · BT10-067
+  - 테이머 아래에서 진화: "This Digimon may digivolve into [OmniShoutmon] under your Tamers without paying the cost" (BT19-008 · BT19-025 · BT19-033 · BT19-047 · BT19-057 — 공식 "자신의 테이머 아래의 「오메가샤우트몬」으로")
+  - "1 of your Digimon or Tamers may digivolve into ~" (BT18-022 · BT18-048 · BT18-063 · BT18-076 · BT18-078 — 공식 "자신의 디지몬/테이머 1마리(명)를 ~ 진화시킬 수 있다")
+- 등장 조건 · 상대가 등장
+  - "Your opponent plays 1 level 4 or lower Digimon card from their trash suspended without paying the cost" + "[On Play] effects ~ don't activate" ("Any" 없는 표기) (EX5-060 — 상대가 고른다) · "with a level less than or equal to it" (EX5-060 — 공식 "등장한 디지몬의 Lv. 이하의")
+  - 그 디지몬의 진화원 아래에: "~ from your hand as that Digimon's bottom digivolution card" (BT19-082) · EX8-067 · EX11-065
+- 상한 · 셈 (원래 규칙이 읽지 못한 표기만)
+  - "remove 2000 from this DP deletion effect's maximum" (BT15-089 — 공식 "상대의 시큐리티 1장마다 이 DP 소멸 효과의 상한 -2000") · "add 3000 to this DP-Based deletion effects maximum" (EX7-066 — "명칭이 서로 다른 ~ 1마리마다") · BT18-102 · LM-001 · BT23-014 ("상대의 디지몬과 테이머 1마리(명)마다") · EX8-074 ("레스트 상태인 다른 디지몬") · "reduce ~ by 1" · "reduce 1 from ~" (EX6-059 · EX7-062) · EX8-072 · P-114 ("자신의 「디아블로몬」 1마리마다")
+- 비용
+  - 상대 · 서로의 트래시: "returning 1 of each Digimon card with different levels from your opponent's trash to the top of the deck" (BT18-019 — 공식 "Lv.이 서로 다른 디지몬 카드 1장씩") · "returning 3 cards in trashes" (BT26-016 — 각자의 덱 아래로) · "1 [Kimeramon] and 1 [Machinedramon]" (BT18-019) · BT26-015 · P-243
+  - "returning 1 [Dorumon] from those Digimon's digivolution cards to the hand" (BT20-097) · "~ from that Digimon's digivolution cards to the bottom of the deck" (BT18-092)
+  - 진화 코스트 감소의 비용 "placing 1 card from under one of your Tamers as the bottom digivolution card of that Digimon" (BT12-087 · BT12-091 · BT12-093 · BT12-094 · BT12-096 · BT12-097 · BT21-088 — 진화하는 그 디지몬)
+- 시큐리티
+  - [시큐리티] "At the end of the battle, ~" (P-067 · P-068 · P-069 · P-071 · EX8-035 · EX1-027 · BT6-056 · EX1-065 — 공식 "배틀 종료 시, ~"): 시큐리티 디지몬의 배틀이 끝난 뒤 발휘. 뒤의 "Then, add this card to its owner's hand"도 배틀 뒤에 트래시에서 패로
+  - "Trash the top card of both players' security stacks" (BT16-036) · "~ so that it has 1 card left" (BT21-098 — 공식 "상대의 시큐리티가 1장이 되도록 위에서부터 파기한다") · BT23-102 · "until there are 3 left; gain 1 memory for each ~" (BT6-033) · "They place 1 card from their hand as the bottom security card" (BT21-024 · BT24-016 — 상대가 고른다) · "Trash any 1 of your opponent's security cards" (BT24-018)
+  - 다른 표기: "Trash 1 card from the top of your opponent's security stack" (BT13-020 · BT17-018) · "add the top card of your security stack to the hand" (BT14-032 · BT15-034 · BT18-038) · "add this card into your hand" (EX2-068) · "Place this Digimon on top of your security stack" (LM-007)
+- 정한 턴 종료 시
+  - "At the next end of your opponent's turn, return it to the hand" (BT16-084 · BT16-085 · BT16-088 · BT17-025 · BT17-069 · LM-013 — 공식 "다음 상대의 턴 종료 시, 그 디지몬을 패로 되돌린다") · "~ delete it" (BT16-074 · BT16-089) · "At the end of your opponent's turn, delete that token" (P-165)
+  - "At the end of your opponent's (next) turn, play 1 [Ravemon] from your trash ~" (BT13-089 · EX4-058 · EX4-071)
+- 한글: 사건 "any of your Digimon (with ~) attack" — 원래 규칙이 "자신의 ~"를 빠뜨린 경우만 고친다 (BT18-092 · BT19-082, 새로 지원한 문장) · "one of your [Galacticmon] attacks" (BT21-098)
+- 읽지 않고 남긴 것: BT11-034 (결정 대기) · [육성] 효과 15문장 (육성 에어리어 시점 모델 없음) · 턴 종료 조건 변경 (BT14-081 · BT17-069) · "with the same name as this Digimon"의 지속 효과 (P-045 · BT5-063 · EX1-051 — 지속 효과의 대상 조건이 효과를 가진 디지몬을 볼 수 없어 읽지 않는다) · BT12-043 (디지몬 + 시큐리티 디지몬을 함께 고르는 대상) · BT15-078 (어택하는 쪽의 어택 대상 변경) · EX13-077 (색 2개마다 고르는 효과 · 진화원의 색 얻기) · 시큐리티 찾기 · 공개 (BT14-033 · BT16-024 · BT14-093 · P-078 · RB1-027) · EX4-013 (배틀 없이 등장한 시큐리티 디지몬을 턴 종료 시 패로) · P-066 · P-070 · BT6-111 (배틀 종료 시의 조건문) · BT18-096 · BT21-091 (테이머 진화의 다른 표기)
+- 테스트 44개 (EffectBatch39Tests)
+
 ## v0.38.0 — 2026-10-27
 미지원 효과 문장 12차 묶음 (다른 카드와 비교하는 대상 · 액티브 + 다른 동작 · 키워드 부여 · 비용 · 위 또는 아래 · [시큐리티]【상대의 턴 종료 시】) — 도감 효과 문장 지원 8,956 → 9,056 / 10,366 (86.4% → 87.4%, +100)
 - 모든 절이 동작하는 카드 3,155 → 3,228장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 원래 지원하던 문장 중 한글이 없던 5문장(EX5-015 · EX5-018 · P-011 · P-047 "디지타마 카드 이외의 카드 N장을 덱 아래로 되돌리는 것으로" · BT18-018)에 새로 붙었다. 새로 지원한 100문장 모두 생성 한글이 붙는다

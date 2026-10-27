@@ -62,18 +62,18 @@ internal static partial class SentenceParser
     {
         var m = Regex.Match(s, @"^(?<t>.+?) (?<may>may gain|gains?) (?<k>＜[^＞]+＞(?:\s*(?:,|and)\s*＜[^＞]+＞)*) for the turn and (?:that Digimon |it )?(?<atk>attacks?|attack)(?<rest>(?: a player| your opponent's Digimon)?(?: without suspending)?)$", I);
         if (!m.Success) return null;
-        // 공식 BT16-077 "턴 종료까지 자신의 디지몬 1마리는 《속공》을 얻고, 그 디지몬으로 플레이어에게 어택할 수 있다" — 얻는 것은 그대로, 어택만 고른다
+        // v0.39.0 공식 Q&A BT20-102 · BT24-051 · BT21-081: "may"는 효과 전체 — 발휘하기로 하면 얻은 디지몬은 가능한 만큼 어택한다 (어택하지 않기를 고를 수 없다).
+        //  (v0.38.0에서는 얻는 것은 언제나 하고 어택만 고르게 했다)
         var a = ParseStep($"{m.Groups["t"].Value} gains {m.Groups["k"].Value} for the turn", card, triggers);
-        var b = ParseStep($"That Digimon may attack{m.Groups["rest"].Value}", card, triggers);
-        if (a.Error != null || a.Step == null || b.Error != null || b.Step == null) return null;
-        var (sa, sb) = (a.Step with { Optional = false }, b.Step);
+        if (a.Error != null || a.Step == null || ForcedAttack39("that Digimon", m.Groups["rest"].Value, triggers) is not { } atk) return null;
+        var sa = a.Step with { Optional = false };
         return new Step(null, c =>
         {
             RunStep(sa, c);
             if (!c.LastStepResolved || c.LastTargets.Count == 0) return;
             Diag38.Hit(ref Diag38.GainAttack);
-            RunStep(sb, c);
-        }, false, s);
+            atk(c);
+        }, m.Groups["may"].Value.StartsWith("may", StringComparison.OrdinalIgnoreCase), s);
     }
 
     /// <summary>

@@ -1237,6 +1237,8 @@ public partial class GoldfishEngine
         EffectLog(owner, $"[효과] [{card.Name}(Lv.{card.Level})] 코스트 없이 {(suspended ? "레스트 상태로 " : "")}등장");
         if (triggerOnPlay)
             ApplyOnPlayEffects(owner, inst);
+        else
+            FirePlayedTriggers39(owner, inst);   // v0.39.0 【등장 시】만 막는다 — "등장했을 때" 효과는 발휘 (EX5-060 · BT2-081 등)
     }
 
     /// <summary>플레이어의 어택이 상대 효과로 바뀐 대상 (플레이어 어택 처리 중에만 쓰인다)</summary>
@@ -1903,6 +1905,7 @@ public partial class GoldfishEngine
         RunTrashEffects(EffectTrigger.EndOfOpponentsTurn, owner);   // v0.31.0 [트래시] [~ 시] 효과
         PlayFaceUpSecurityAtEndOfOpponentTurn38(owner);   // v0.38.0 [시큐리티]【상대의 턴 종료 시】
         RunScheduledDeletions();   // "~ is deleted at the end of the turn" (이 효과로 등장한 디지몬) — 턴 종료 시의 마지막
+        RunScheduledReturns39();   // v0.39.0 "At the next end of your opponent's turn, return it to the hand"
         ExpireTamerProxies();   // v0.36.0 테이머의 디지몬 취급 기간 끝
         RecalculateFieldBuffs();
     }

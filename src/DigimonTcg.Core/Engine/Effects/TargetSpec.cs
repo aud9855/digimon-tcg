@@ -36,7 +36,9 @@ public sealed partial class TargetSpec
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     /// <summary>대상 구절을 읽는다. 읽지 못하면 null</summary>
-    public static TargetSpec? Parse(string phrase)
+    public static TargetSpec? Parse(string phrase) => ParseCore(phrase) ?? Parse39(phrase);   // v0.39.0 읽지 못한 대상만 (TargetSpec.Batch39.cs)
+
+    private static TargetSpec? ParseCore(string phrase)
     {
         phrase = phrase.Trim().TrimEnd('.').Trim();
         phrase = NormalizePreNoun(phrase);
@@ -379,6 +381,9 @@ public sealed partial class TargetSpec
     {
         if (IsThat && c.LastTargets.Count > 0)
             return c.LastTargets.Where(d => c.Owner.BattleArea.Contains(d) || c.Enemy.BattleArea.Contains(d)).ToList();
+        // v0.39.0 앞에 고른 대상이 없고 이 효과가 디지몬을 등장시켰으면 "it" · "that Digimon" = 등장한 디지몬 (EX13-060 "~ 등장시킬 수 있다. 그 디지몬은 《속공》을 얻는다" · BT14-076)
+        if (IsThat && c.PlayedThisEffect.LastOrDefault(d => c.Owner.BattleArea.Contains(d)) is { } played)
+            return new List<CardInstance> { played };
         if (IsThis || IsThat)
             return c.Self != null && (c.Owner.BattleArea.Contains(c.Self) || ReferenceEquals(c.Owner.BreedingArea, c.Self)) ? new List<CardInstance> { c.Self } : new List<CardInstance>();
 

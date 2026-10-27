@@ -117,6 +117,9 @@ public partial class GoldfishEngine
         State.BlitzAttacker = null;
         _aiTurn = null;
         _scheduledDeletions.Clear();
+        _scheduledReturns39.Clear();
+        _scheduledActs39.Clear();
+        _afterSecurityBattle39.Clear();
         _tamerEntries.Clear();
         State.TurnSequence = 0;
         State.PendingEndOfTurnMemoryLoss = 0;
@@ -817,6 +820,7 @@ public partial class GoldfishEngine
 
         for (int i = 0; i < checksToPerform; i++)
         {
+            FlushAfterSecurityBattle39();   // v0.39.0 앞 시큐리티 디지몬의 "배틀 종료 시"
             if (!State.Player.BattleArea.Contains(attacker))
             {
                 battleSummaries.Add($"공격 디지몬 [{attacker.TopCard.Name}]이(가) 필드에서 벗어나 남은 시큐리티 체크가 중단되었습니다.");
@@ -958,6 +962,7 @@ public partial class GoldfishEngine
                     break;
             }
         }
+        FlushAfterSecurityBattle39();   // v0.39.0
 
         return string.Join(" / ", battleSummaries);
     }
@@ -1482,6 +1487,7 @@ public partial class GoldfishEngine
     {
         for (int c = 0; c < aiChecks; c++)
         {
+            FlushAfterSecurityBattle39();   // v0.39.0 앞 시큐리티 디지몬의 "배틀 종료 시"
             if (!State.DummyOpponent.BattleArea.Contains(aiAttacker) || State.Player.SecurityStack.Count == 0)
                 break;
 
@@ -1588,6 +1594,7 @@ public partial class GoldfishEngine
                 AddOpponentEvent(OpponentActionKind.SecurityResult, "내 시큐리티 파괴", $"내 {mySec.Name} (DP {mySecDp:N0}) vs {aiAttacker.TopCard.Name} (DP {aiDp:N0}){why} · 남은 시큐리티 {State.Player.SecurityStack.Count}장", aiAttacker.TopCard, mySec);
             }
         }
+        FlushAfterSecurityBattle39();   // v0.39.0
     }
 
     /// <summary>

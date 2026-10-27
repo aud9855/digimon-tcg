@@ -70,6 +70,9 @@ public sealed class EffectContext
     /// <summary>시큐리티 디지몬: 배틀이 끝난 뒤 트래시 대신 코스트 없이 등장 ("At the end of the battle, play this card")</summary>
     public bool PlayAfterBattle { get; set; }
 
+    /// <summary>v0.39.0 [시큐리티] "At the end of the battle, ~" 뒤의 문장 — null이 아니면 RunStep이 문장을 바로 처리하지 않고 여기에 모아 배틀 뒤에 처리한다</summary>
+    internal List<Action>? Deferred39 { get; set; }
+
     /// <summary>v0.37.0 [시큐리티] "Play this card without battling and without paying the cost" — 배틀하지 않고 이 시큐리티 디지몬을 등장시킨다</summary>
     public bool PlayWithoutBattle { get; set; }
 

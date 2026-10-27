@@ -26,23 +26,24 @@ public partial class GoldfishEngine
         if (!CanEffectAttack(owner, attacker, withoutSuspending: false))
             return false;
         var targets = EnemyOf(owner).BattleArea.Where(t => EffectRules.CanBeAttackTargetFor(attacker, t)).ToList();
-        if (targets.Count == 0 && !EffectRules.CanAttackPlayer(attacker))   // v0.34.0 어택할 수 있는 곳이 없다
+        bool canSecurity = EffectRules.CanAttackPlayer(attacker);
+        if (targets.Count == 0 && !canSecurity)   // v0.34.0 어택할 수 있는 곳이 없다
             return false;
         if (!ReferenceEquals(owner, State.Player))
         {
             if (_aiTurn is not { } ctx || ctx.Attackers.Contains(attacker)) return false;   // 같은 시점의 두 번째 강제 어택은 어택하지 않는다 (Q&A EX5-048)
             var choice = AiPolicy.ChooseEffectAttack(this, attacker, targets, canAttackSecurity: true);
-            ctx.QueuedTargets[attacker] = choice is { Target: { } chosen } && targets.Contains(chosen) ? chosen : null;
+            // v0.39.0 정책이 고르지 않았거나 고를 수 없는 대상이면: 시큐리티에 어택할 수 없을 때는 디지몬 중에서 (전에는 언제나 시큐리티)
+            ctx.QueuedTargets[attacker] = choice is { Target: { } chosen } && targets.Contains(chosen) ? chosen : canSecurity ? null : ForcedAiTarget39(attacker, targets, canSecurity);
+            Diag39.Hit(ref Diag39.ForcedAttack);
             ctx.Attackers.Enqueue(attacker);
             Log($"🤖 [{label}] AI [{attacker.TopCard.Name}]이(가) 효과로 어택합니다!");
             return true;
         }
-        var best = BestWinningTarget(attacker, targets);
-        CardInstance? defender = null;
-        if (targets.Count > 0)
-            defender = ChooseTargets(owner, AiEvaluator.Rank(targets, best), 1,
-                $"[{label}] [{attacker.TopCard.Name}]은(는) 반드시 어택합니다. 어택 대상을 고르세요. (고르지 않으면 시큐리티)",
-                optional: true, preselected: best).FirstOrDefault();
+        // v0.39.0 대상은 플레이어가 고른다 (전에는 이기는 대상이 있으면 묻지 않고 그 대상) · 시큐리티에 어택할 수 없으면 "고르지 않음"이 없다
+        Diag39.Hit(ref Diag39.ForcedAttack);
+        var defender = ChooseForcedAttackTarget39(owner, attacker, targets, canSecurity,
+            $"[{label}] [{attacker.TopCard.Name}]은(는) 반드시 어택합니다. 어택 대상을 고르세요.{(canSecurity ? " (고르지 않으면 시큐리티)" : "")}");
         Log($"[{label}] [{attacker.TopCard.Name}] 효과로 어택!");
         if (defender != null) PlayerAttackOnDigimonCore(attacker, defender);
         else PlayerSecurityAttackCore(attacker);

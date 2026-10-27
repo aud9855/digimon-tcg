@@ -2105,6 +2105,7 @@ internal static partial class SentenceParser
     /// <summary>문장을 처리한다: 조건 확인 → "~할 수 있다"면 효과 주인에게 묻기(추천 = AI 평가) → 동작</summary>
     private static void RunStep(Step s, EffectContext c)
     {
+        if (c.Deferred39 is { } deferred) { deferred.Add(() => RunStep(s, c)); return; }   // v0.39.0 "At the end of the battle, ~" 뒤의 문장은 배틀 뒤에 (SentenceParser.Batch39Sec.cs)
         c.StepsRan = true;
         if (s.Condition != null && !s.Condition(c)) { c.LastStepResolved = false; return; }
         if (s.Optional && !c.Engine.AskYesNo(c.Owner, c.Self, $"[{c.Card.Name}] 이 효과를 발휘할까요?\n{s.Text}", AiEvaluator.EstimateSentenceValue(s.Text) >= 0)) { c.LastStepResolved = false; return; }
@@ -2184,6 +2185,13 @@ internal static partial class SentenceParser
             if (idx > 0 && Regex.IsMatch(raw, @"^If you did\b", RegexOptions.IgnoreCase) && Regex.IsMatch(sentences[idx - 1], @"^(?:Then,?\s+)?(?:Delete|Suspend|Return|Trash|De-Digivolve)\b", RegexOptions.IgnoreCase))
                 return "미지원 조건 (대상 동작 뒤 \"If you did\")";
             var step = ParseStep(raw, card, triggers);
+            // v0.39.0 상한 늘리기 · 줄이기의 다른 표기 — 원래 규칙이 읽지 못한 문장만 (SentenceParser.Batch39Max.cs)
+            if (step.Error != null && steps.Count > 0 && lastStepRaw != null && ParseMaxAdj39(raw) is { } adj39 && MaxAdjStep39(steps[^1], lastStepRaw, adj39, card, triggers) is { } adjStep)
+            {
+                steps[^1] = adjStep;
+                lastStepRaw = null;
+                continue;
+            }
             if (step.Error != null) return step.Error;
             if (step.Step != null) { steps.Add(step.Step); lastStepRaw = raw; }
         }
@@ -2285,7 +2293,7 @@ internal static partial class SentenceParser
         // "Any [On Play] effects on Digimon played with this effect don't activate." — 앞 문장(등장)에 붙인다
         for (int k = sentences.Count - 1; k > 0; k--)
         {
-            if (Regex.IsMatch(sentences[k], @"^Any \[On Play\] effects on (?:Digimon|cards) played (?:with|by) this effect don't activate\.?$", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(sentences[k], @"^(?:Any )?\[On Play\] effects on (?:Digimon|cards) played (?:with|by) this effect don't activate\.?$", RegexOptions.IgnoreCase))   // v0.39.0 "Any" 없는 표기 (EX5-060 · BT15-078)
             {
                 sentences[k - 1] = sentences[k - 1].TrimEnd('.') + " ⟦no-onplay⟧.";
                 sentences.RemoveAt(k);
@@ -2345,7 +2353,7 @@ internal static partial class SentenceParser
     {
         var r = ParseStepCore(sentence, card, triggers);
         if (r.Error == null) return r;
-        return StepFallback38(sentence, card, triggers) ?? r;   // v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
+        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? r;   // v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
     }
 
     private static (Step? Step, string? Error) ParseStepCore(string sentence, CardData card, List<EffectTrigger> triggers)
@@ -2477,6 +2485,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction36(s.TrimEnd('.'), card, triggers) is { } act36) act = act36;   // v0.36.0 (SentenceParser.Batch36.cs)
         if (act.Error != null && ParseAction37(s.TrimEnd('.'), card, triggers) is { } act37) act = act37;   // v0.37.0 (SentenceParser.Batch37.cs)
         if (act.Error != null && ParseAction38(s.TrimEnd('.'), card, triggers) is { } act38) act = act38;   // v0.38.0 (SentenceParser.Batch38.cs)
+        if (act.Error != null && ParseAction39(s.TrimEnd('.'), card, triggers) is { } act39) act = act39;   // v0.39.0 (SentenceParser.Batch39.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2549,7 +2558,7 @@ internal static partial class SentenceParser
         { int per = Per(m); return (o, e, _) => (o.Trash.Count + e.Trash.Count) / per; }
         if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?(?:total )?cards? in both players' security stacks$", RegexOptions.IgnoreCase)).Success)
         { int per = Per(m); return (o, e, _) => (o.SecurityStack.Count + e.SecurityStack.Count) / per; }
-        return ParseCounter32(counter) ?? ParseCounter34(counter) ?? ParseCounter35(counter) ?? ParseCounter38(counter);   // v0.38.0 (Batch38b)   // v0.35.0 뒷면 진화원 (Batch35)   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
+        return ParseCounter32(counter) ?? ParseCounter34(counter) ?? ParseCounter35(counter) ?? ParseCounter38(counter) ?? ParseCounter39(counter);   // v0.38.0 (Batch38b)   // v0.35.0 뒷면 진화원 (Batch35)   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
     }
 
     private static string Gerund(string verb) => verb.ToLowerInvariant() switch
@@ -2561,7 +2570,7 @@ internal static partial class SentenceParser
 
     /// <summary>비용 구절 → (낼 수 있는지, 내기, AI 추천, 설명)</summary>
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCost(string cost, CardData card) =>
-        ParseCostCore(cost, card) ?? ParseCost38(cost, card);   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
+        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card);   // v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
 
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCostCore(string cost, CardData card)
     {
@@ -5178,6 +5187,7 @@ internal static partial class SentenceParser
             { string t = f.Groups["t"].Value; filters.Add(c => c.EffectText.Contains($"[{t}]", StringComparison.OrdinalIgnoreCase)); }
             else if ((f = Regex.Match(rest, @"^suspended", RegexOptions.IgnoreCase)).Success)
             { /* "suspended" 등장 — 레스트 상태로 등장 (지금은 액티브로 등장) */ }
+            else if (PickFilter39(rest) is { } f39) { f = f39.M; filters.Add(f39.Filter); }   // v0.39.0 "without [X] in its name" (SentenceParser.Batch39.cs)
             else return null;
             // "with [Ravemon] in its name or [Bird] in any of its traits" — "or"로 이어진 조건은 앞 조건과 둘 중 하나 (v0.28.0 전에는 둘 다로 읽었다)
             if (Regex.IsMatch(f.Value, @"^or\s", RegexOptions.IgnoreCase) && filters.Count >= 2)
