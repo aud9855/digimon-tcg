@@ -104,6 +104,11 @@ public enum EffectTrigger
     OpponentSourcesAdded,           // 효과로 상대의 디지몬의 진화원에 카드가 놓였을 때 (Other = 그 디지몬)
     AllyTrashToHand,                // 자신의 트래시에서 카드가 효과로 패에 되돌아갔을 때 (GoldfishEngine.CurrentMovedCards = 그 카드)
     AllyTrashToDeck,                // 자신의 트래시에서 카드가 덱으로 되돌아갔을 때 (CurrentMovedCards)
+    // v0.40.0
+    ThisDigimonWouldDigivolve,      // 이 디지몬이 진화하려 할 때 (코스트를 내기 전, TriggerCard = 진화할 카드)
+    AllyTopPlacedUnder,             // 효과로 자신의 디지몬의 맨 위 카드가 진화원에 놓였을 때 (Other = 그 디지몬 — 공식 Q&A EX5-001 · EX5-065, 진화는 아님)
+    ThisSourcesToDeck,              // 이 디지몬의 진화원이 덱으로 되돌아갔을 때 (CurrentSourceCards = 그 카드)
+    AllyUnderTamerPlaced,           // 자신의 테이머 아래에 카드가 놓였을 때 (TriggerCard = 놓인 카드 중 1장, CurrentSourceCards = 놓인 카드)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
@@ -227,6 +232,13 @@ public sealed record StaticEffect(StaticStat Stat, EffectSource Source, Func<Sta
 
     /// <summary>v0.34.0 "All of your other ~" — 효과를 가진 디지몬 자신은 받지 않는다</summary>
     public bool ExcludeSource { get; init; }
+
+    /// <summary>v0.40.0 효과를 가진 디지몬(StaticContext.Digimon)을 보는 받는 디지몬 조건 — "All of your other Digimon with the same name as this Digimon" (P-045 · BT5-063 · EX1-051)</summary>
+    public Func<StaticContext, CardInstance, bool>? SubjectOf { get; init; }
+
+    /// <summary>v0.40.0 효과를 받는 디지몬인지 (Subject · ExcludeSource · SubjectOf) — ctx = 효과를 가진 쪽 기준</summary>
+    public bool AppliesTo(StaticContext ctx, CardInstance d) =>
+        (Subject == null || Subject(d)) && !(ExcludeSource && ReferenceEquals(d, ctx.Digimon)) && (SubjectOf == null || SubjectOf(ctx, d));
 }
 
 /// <summary>지속 효과 계산에 필요한 정보</summary>
@@ -341,6 +353,9 @@ public sealed class CardScript
     /// <summary>"When this Digimon would digivolve (into ~), reduce the digivolution cost by N" — 진화하기 직전에 진화 코스트를 바꾸는 효과</summary>
     public List<EvoCostModifier> EvoCostModifiers { get; } = new();
 
+    /// <summary>v0.40.0 상대의 디지몬이 진화할 때 진화 코스트 +N ("[Opponent's Turn] When an opponent's Digimon with no digivolution cards would digivolve, increase the digivolution cost by 1" EX3-016 · EX3-019)</summary>
+    public List<(EffectSource Source, Func<CardInstance, bool> Who, int Amount, bool OpponentsTurnOnly)> OpponentEvoCostIncreases40 { get; } = new();
+
     /// <summary>v0.31.0 "[Your Turn] When any Digimon cards with the [ADVENTURE] trait would be played from your hand, by suspending this Tamer, reduce the play cost by 1" — 다른 카드의 등장 코스트 감소 (필드 · 육성)</summary>
     public List<FieldPlayCostModifier> FieldPlayCostModifiers { get; } = new();
 
@@ -397,8 +412,11 @@ public sealed record EvoCostModifier(
     /// <summary>v0.31.0 "~ by 1 for each ~": Reduce × 셈 (효과 상황, 진화하는 디지몬). 없으면 Reduce 그대로</summary>
     public Func<EffectContext, CardInstance, int>? Times { get; init; }
 
+    /// <summary>v0.40.0 정해진 코스트로 만드는 변화량 (원래 진화 코스트 - 정해진 코스트, 음수면 늘린다 — "the memory cost of the digivolution is equal to the number of cards in your security stack" BT7-040)</summary>
+    public Func<EffectContext, CardInstance, int>? Delta40 { get; init; }
+
     /// <summary>지금 줄이는 양</summary>
-    public int ReduceFor(EffectContext ctx, CardInstance target) => Times == null ? Reduce : Reduce * Math.Max(0, Times(ctx, target));
+    public int ReduceFor(EffectContext ctx, CardInstance target) => Delta40 != null ? Delta40(ctx, target) : Times == null ? Reduce : Reduce * Math.Max(0, Times(ctx, target));
 }
 
 /// <summary>등장할 때 고르는 코스트 감소: 비용(낼 수 있는지 · 내기 · 추천 · 설명)을 내면 Reduce만큼 줄인다. CostText = 원문 비용 구절 (예: "deleting 1 of your Digimon" — AI가 비용 종류를 가늠)</summary>

@@ -76,7 +76,10 @@ internal static partial class SentenceParser
     // =====================================================================
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
-    public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
+    public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
+        TryParse40(rawClause, inherited, card, def);   // v0.40.0 원래 규칙(13차까지)이 읽지 못한 절만 14차 규칙으로 (SentenceParser.Batch40.cs)
+
+    private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
         rawClause = CardTextFix35(rawClause, card);   // v0.35.0 공식 한글 · 룰에 맞춘 카드별 문장 (BT19-051)
         string clause = Normalize(rawClause);
@@ -754,7 +757,7 @@ internal static partial class SentenceParser
         s = Regex.Replace(s, @"\s+([.,])", "$1");
         // v0.32.0 마침표 뒤 소문자로 시작하는 문장 (원문 "trash the rest." · 위에서 바꾼 "you may ~" · "this Digimon may digivolve ~") — 문장 나누기가 대문자를 본다
         s = Regex.Replace(s, @"(?<=[a-z\]\)＞0-9]\.\s)(?=(?:you|this Digimon|trash the|play \d|add \d|reveal)\b)[a-z]", x => x.Value.ToUpperInvariant());
-        s = Normalize37(Normalize36(Normalize35(s)));   // v0.37.0 (Batch37) · v0.36.0 (Batch36) · v0.35.0 "After, ~" · "It further gets ~" (SentenceParser.Batch35.cs)
+        s = Normalize40(Normalize37(Normalize36(Normalize35(s))));   // v0.40.0 (Batch40Step) · v0.37.0 (Batch37) · v0.36.0 (Batch36) · v0.35.0 "After, ~" · "It further gets ~" (SentenceParser.Batch35.cs)
         return s;
     }
 
@@ -1329,7 +1332,7 @@ internal static partial class SentenceParser
                 && (!mine || ReferenceEquals(c.Engine.CurrentSourceEffectOwner, c.Owner))
                 && c.Engine.CurrentSourceCards.Any(what));
         }
-        return ParseEventPhrase31(ev) ?? ParseEventPhrase32(ev) ?? ParseEventPhrase33(ev);   // v0.31.0 (SentenceParser.Batch31.cs) · v0.32.0 (SentenceParser.Batch32.cs)
+        return ParseEventPhrase31(ev) ?? ParseEventPhrase32(ev) ?? ParseEventPhrase33(ev) ?? ParseEventPhrase40(ev);   // v0.40.0 (SentenceParser.Batch40.cs) · v0.31.0 (SentenceParser.Batch31.cs) · v0.32.0 (SentenceParser.Batch32.cs)
     }
 
     /// <summary>
@@ -1453,7 +1456,7 @@ internal static partial class SentenceParser
             if (m.Groups["rest"].Value.Trim().Length > 0 && ors.Count == 0) return null;
             return c => c.Type == CardType.Digimon && (low ? c.Level <= lv : c.Level == lv) && (ors.Count == 0 || ors.Any(f => f(c)));
         }
-        return null;
+        return ParseSpecifiedCard40(spec);   // v0.40.0 (SentenceParser.Batch40.cs)
     }
 
     /// <summary>진화원에서 지정 카드를 1장씩 코스트 없이 등장 ("~할 수 있다" — 한 번 묻는다)</summary>
@@ -1593,8 +1596,9 @@ internal static partial class SentenceParser
             quotes.Add(q.Value);
             return $"⟪{quotes.Count - 1}⟫" + (q.Value.Trim('"').TrimEnd().EndsWith('.') ? "." : "");
         });
+        masked = Regex.Replace(masked, @"\[[^\]\[]*\]", b => b.Value.Replace(". ", ".␟"));   // v0.40.0 이름 안의 마침표 "[T.K. Takaishi]" (BT14-093)는 문장 끝이 아니다
         var parts = Regex.Split(Regex.Replace(masked, @"＞\s+Then\b", "＞. Then"), @"(?<=[.!])\s+(?=[A-Z＜<\[])")
-            .Select(s => s.Trim())
+            .Select(s => s.Replace(".␟", ". ").Trim())
             .Where(s => s.Length > 0);
         if (quotes.Count == 0) return parts.ToList();
         return parts.Select(s => Regex.Replace(s, @"⟪(\d+)⟫\.?", q => quotes[int.Parse(q.Groups[1].Value)])).ToList();
@@ -2346,14 +2350,14 @@ internal static partial class SentenceParser
             }
             else result.Add(sentences[i]);
         }
-        return result;
+        return MergeSentences40(result);   // v0.40.0 (SentenceParser.Batch40Step.cs)
     }
 
     private static (Step? Step, string? Error) ParseStep(string sentence, CardData card, List<EffectTrigger> triggers)
     {
         var r = ParseStepCore(sentence, card, triggers);
         if (r.Error == null) return r;
-        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? r;   // v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
+        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? StepFallback40(sentence, card, triggers) ?? r;   // v0.40.0 (Batch40) · v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
     }
 
     private static (Step? Step, string? Error) ParseStepCore(string sentence, CardData card, List<EffectTrigger> triggers)
@@ -2486,6 +2490,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction37(s.TrimEnd('.'), card, triggers) is { } act37) act = act37;   // v0.37.0 (SentenceParser.Batch37.cs)
         if (act.Error != null && ParseAction38(s.TrimEnd('.'), card, triggers) is { } act38) act = act38;   // v0.38.0 (SentenceParser.Batch38.cs)
         if (act.Error != null && ParseAction39(s.TrimEnd('.'), card, triggers) is { } act39) act = act39;   // v0.39.0 (SentenceParser.Batch39.cs)
+        if (act.Error != null && ParseAction40(s.TrimEnd('.'), card, triggers) is { } act40) act = act40;   // v0.40.0 (SentenceParser.Batch40.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2570,7 +2575,7 @@ internal static partial class SentenceParser
 
     /// <summary>비용 구절 → (낼 수 있는지, 내기, AI 추천, 설명)</summary>
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCost(string cost, CardData card) =>
-        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card);   // v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
+        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card);   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
 
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCostCore(string cost, CardData card)
     {
@@ -3070,7 +3075,7 @@ internal static partial class SentenceParser
         return null;
     }
 
-    private static Func<EffectContext, bool>? ParseEventCondition(string cond) => ParseEventConditionCore(cond) ?? ParseEventCondition38(cond);   // v0.38.0 읽지 못한 조건만 (Batch38b)
+    private static Func<EffectContext, bool>? ParseEventCondition(string cond) => ColorDigimonOrTamer40(cond) ?? ParseEventConditionCore(cond) ?? ParseEventCondition38(cond) ?? ParseEventCondition40(cond);   // v0.40.0 "a blue or green Digimon or Tamer"는 원래 규칙보다 먼저 (원래는 테이머의 색을 보지 않았다)   // v0.40.0 (Batch40Step) · v0.38.0 읽지 못한 조건만 (Batch38b)
 
     private static Func<EffectContext, bool>? ParseEventConditionCore(string cond)
     {
@@ -4791,7 +4796,11 @@ internal static partial class SentenceParser
     private enum RevealVerb { Add, Play, Trash, Place, AddOrPlace, Digivolve, Use }   // v0.32.0 Digivolve · Use
 
     /// <summary>공개한 카드에 하는 일 하나: "add 1 X to the hand" · "play 1 X without paying the cost" · "trash 1 such card" · "place 1 X under this Digimon"</summary>
-    private sealed record RevealAction(RevealVerb Verb, List<(int Count, Func<CardData, bool> Match, bool UpTo)> Picks, Func<EffectContext, CardData, bool>? Place, bool NoOnPlay, bool AnyOwn = false);
+    private sealed record RevealAction(RevealVerb Verb, List<(int Count, Func<CardData, bool> Match, bool UpTo)> Picks, Func<EffectContext, CardData, bool>? Place, bool NoOnPlay, bool AnyOwn = false)
+    {
+        /// <summary>v0.40.0 고른 카드의 등장 코스트 합계 상한 ("whose total play costs add up to 7 or less" · "up to 7 play cost's total worth of ~") — 1장씩 고른다</summary>
+        public int? Budget40 { get; init; }
+    }
 
     /// <summary>공개 효과의 마지막 문장: "Return the rest to the bottom of the deck" · "Trash the remaining cards" · "Return the revealed cards to the top or bottom of the deck"</summary>
     internal const string RevealRest = @"(?:Return|Place|Put|Trash) (?:the |those )?(?:rest|remaining cards?|revealed cards?|cards)\b[^.]*";
@@ -4855,6 +4864,8 @@ internal static partial class SentenceParser
             else return (null, $"미지원 공개 후 처리: {a}");
 
             var picks = new List<(int Count, Func<CardData, bool> Match, bool UpTo)>();
+            int? budget40 = null;   // v0.40.0 합계 상한 표시 "⟦budget:N⟧" (SentenceParser.Batch40Step.Rewrites40)
+            if (Regex.Match(picksText, @"\s*⟦budget:(?<n>\d+)⟧") is { Success: true } bm40) { budget40 = int.Parse(bm40.Groups["n"].Value); picksText = picksText.Remove(bm40.Index, bm40.Length); }
             var parts = Regex.Split(picksText, @"\s+and\s+(?=(?:up to )?\d+ )", RegexOptions.IgnoreCase);
             // "1 blue and 1 green Digimon card" — 앞 조건에 뒤의 종류를 붙인다
             string kindTail = Regex.Match(parts[^1], @"(?:Digimon|Tamer|Option) cards?$", RegexOptions.IgnoreCase).Value;
@@ -4867,7 +4878,7 @@ internal static partial class SentenceParser
                 picks.Add((pick.Value.Count, pick.Value.Match, may || IsUpTo(part)));
                 if (!such) prevPart = part;
             }
-            actions.Add(new RevealAction(verb, picks, place, noOnPlay));
+            actions.Add(new RevealAction(verb, picks, place, noOnPlay) { Budget40 = budget40 });
         }
 
         string rest = m.Groups["rest"].Value.TrimEnd('.');
@@ -4891,6 +4902,25 @@ internal static partial class SentenceParser
                 var cards = new List<CardData>();
                 bool play = action.Verb == RevealVerb.Play;
                 string what = action.Verb switch { RevealVerb.Play => "등장시킬", RevealVerb.Trash => "파기할", RevealVerb.Place => "진화원 아래에 놓을", RevealVerb.AddOrPlace => "패에 넣거나 진화원 아래에 놓을", RevealVerb.Digivolve => "진화할", RevealVerb.Use => "사용할", _ => "패에 넣을" };
+                if (action.Budget40 is int budget)   // v0.40.0 합계 상한 안에서 1장씩 (고르지 않으면 끝)
+                {
+                    var (_, bMatch, _) = action.Picks[0];
+                    while (true)
+                    {
+                        int spent = cards.Sum(x => x.PlayCost);
+                        var bPool = Enumerable.Range(0, revealed.Count)
+                            .Where(i => !takenIndex.Contains(i) && bMatch(revealed[i]) && (!play || revealed[i].Type is CardType.Digimon or CardType.Tamer) && spent + revealed[i].PlayCost <= budget)
+                            .OrderByDescending(i => revealed[i].PlayCost).ToList();
+                        if (bPool.Count == 0) break;
+                        var ks = c.Engine.ChooseCardIndexes(c.Owner, CardChoiceZone.Other, bPool.Select(i => revealed[i]).ToList(), 1, true,
+                            $"[{c.Card.Name}] 공개한 카드 중 {what} 카드를 고르세요 (등장 코스트 합계 {spent}/{budget} — 고르지 않으면 끝).");
+                        if (ks.Count == 0) break;
+                        takenIndex.Add(bPool[ks[0]]); cards.Add(revealed[bPool[ks[0]]]);
+                    }
+                    if (cards.Count > 0) Diag40.Hit(ref Diag40.RevealVariant);
+                    chosen.Add((action, cards));
+                    continue;
+                }
                 foreach (var (count, match, upTo) in action.Picks)
                 {
                     var pool = Enumerable.Range(0, revealed.Count)
@@ -5071,7 +5101,7 @@ internal static partial class SentenceParser
                     return (Math.Max(a.Value.Count, b.Value.Count), c => a.Value.Match(c) || b.Value.Match(c));
             }
         }
-        return null;
+        return ParseCardPick40(p);   // v0.40.0 (SentenceParser.Batch40Step.cs)
 
         static (int Count, Func<CardData, bool> Match)? AltPick(string x) =>
             ParseSingleCardPick(x) ?? ParseNamePick(x)

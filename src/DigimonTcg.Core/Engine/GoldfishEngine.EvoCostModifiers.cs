@@ -25,6 +25,7 @@ public partial class GoldfishEngine
     public int PreviewEvoCost(PlayerZones owner, CardInstance target, CardData evoCard)
     {
         int cost = ActionValidator.EvolutionCost(target, evoCard);
+        if (cost > 0) cost += OpponentEvoCostIncrease40(owner, target);   // v0.40.0
         if (cost <= 0 || !CanReduceEvoCost(owner))
             return cost;
         foreach (var (mod, _, _, ctx) in ApplicableEvoCostModifiers(owner, target, evoCard))
@@ -59,6 +60,12 @@ public partial class GoldfishEngine
 
     private int ApplyEvoCostModifiers(PlayerZones owner, CardInstance target, CardData evoCard, int cost)
     {
+        NotifyWouldDigivolve40(owner, target, evoCard);   // v0.40.0 "When this Digimon would digivolve, ~" (코스트를 내기 전)
+        if (cost > 0 && OpponentEvoCostIncrease40(owner, target) is var inc && inc > 0)   // v0.40.0 상대 효과로 진화 코스트 +N (코스트를 지불하지 않는 진화는 그대로)
+        {
+            cost += inc;
+            EffectLog(owner, $"[{target.TopCard.Name}] 상대의 효과로 진화 코스트 +{inc} (코스트 {cost})");
+        }
         if (cost <= 0 || !CanReduceEvoCost(owner))
             return cost;
         foreach (var (mod, holder, card, ctx) in ApplicableEvoCostModifiers(owner, target, evoCard).ToList())

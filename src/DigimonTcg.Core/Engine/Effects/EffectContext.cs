@@ -19,9 +19,13 @@ public sealed class EffectContext
         Self = self;
         Other = other;
         ChosenTarget = chosenTarget;
+        EvolveSerialAtStart40 = engine.EffectEvolveSerial40;   // v0.40.0
     }
 
     internal GoldfishEngine Engine { get; }
+
+    /// <summary>v0.40.0 이 효과를 처리하기 시작할 때의 엔진 효과 진화 횟수 — "If digivolved by this effect" (GoldfishEngine.EffectEvolveSerial40과 비교)</summary>
+    internal int EvolveSerialAtStart40 { get; set; }
     public GameState State => Engine.State;
 
     /// <summary>효과 주인의 필드</summary>

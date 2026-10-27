@@ -321,6 +321,7 @@ public partial class GoldfishEngine
     private static void ResolveCore(EffectContext ctx, CardData card, CardEffect effect)
     {
         ctx.Card = card;
+        ctx.EvolveSerialAtStart40 = ctx.Engine.EffectEvolveSerial40;   // v0.40.0 "If digivolved by this effect" — 효과마다
         ctx.Engine.CurrentEffectCard = card;   // v0.34.0 "상대의 디지몬 · 옵션 카드의 효과를 받지 않는다"
         // "When one of your Digimon attacks, ~ give that Digimon +1000 DP" — 사건의 주인공 디지몬이 "that Digimon"
         ctx.LastTargets = ctx.Other != null && effect.Trigger is EffectTrigger.AllyDigimonAttacks or EffectTrigger.AllyDigimonPlayed
@@ -436,7 +437,7 @@ public partial class GoldfishEngine
                 if (effect.Value(ctx) != 0) inst.ActiveKeywords.Add(effect.Keyword!.Value);
             // 다른 카드가 주는 키워드 ("All of your level 4 or lower Digimon gain ＜Jamming＞") — 효과를 가진 카드 기준으로 조건 판단
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllyKeyword).Concat(TamerAuras(owner, enemy, StaticStat.AllyKeyword)))
-                if (aura.Keyword != null && (aura.Subject == null || aura.Subject(inst)) && !(aura.ExcludeSource && ReferenceEquals(inst, auraCtx.Digimon)) && aura.Value(auraCtx) != 0)
+                if (aura.Keyword != null && aura.AppliesTo(auraCtx, inst) && aura.Value(auraCtx) != 0)
                     inst.ActiveKeywords.Add(aura.Keyword.Value);
 
             inst.HasGrantedBlocker = EffectRules.IsActive(inst.GrantedBlockerUntil, State) || CardScripts.HasKeyword(inst, Keyword.Blocker);
@@ -451,14 +452,14 @@ public partial class GoldfishEngine
 
             // 다른 디지몬이 주는 효과 ("All of your black Digimon get +1000 DP") — 효과를 가진 디지몬 기준으로 조건 판단
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllyDigimonDp))
-                if ((aura.Subject == null || aura.Subject(inst)) && !(aura.ExcludeSource && ReferenceEquals(inst, auraCtx.Digimon))) dp += aura.Value(auraCtx);
+                if (aura.AppliesTo(auraCtx, inst)) dp += aura.Value(auraCtx);
             foreach (var link in inst.LinkedCards)   // 〈링크 중〉 이 디지몬의 DP +N
                 dp += LinkDp(link);
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllySecurityAttack).Concat(TamerAuras(owner, enemy, StaticStat.AllySecurityAttack)))
-                if ((aura.Subject == null || aura.Subject(inst)) && !(aura.ExcludeSource && ReferenceEquals(inst, auraCtx.Digimon))) sec += aura.Value(auraCtx);
+                if (aura.AppliesTo(auraCtx, inst)) sec += aura.Value(auraCtx);
             // 상대 카드가 주는 효과 ("All of your opponent's Digimon with no digivolution cards gain ＜Security A. -1＞")
             foreach (var (aura, auraCtx) in DigimonAuras(enemy, owner, StaticStat.EnemySecurityAttack).Concat(TamerAuras(enemy, owner, StaticStat.EnemySecurityAttack)))
-                if ((aura.Subject == null || aura.Subject(inst)) && !(aura.ExcludeSource && ReferenceEquals(inst, auraCtx.Digimon))) sec += aura.Value(auraCtx);
+                if (aura.AppliesTo(auraCtx, inst)) sec += aura.Value(auraCtx);
 
             inst.EffectDpBonus = dp;
             inst.EffectSecurityAttackBonus = sec;
@@ -888,7 +889,7 @@ public partial class GoldfishEngine
                 var ally = AskDigimon(owner, $"≪연계≫ [{attacker.TopCard.Name}]: 레스트시켜 DP를 더할 다른 디지몬을 고르세요 (고르지 않아도 됩니다).", options, recommended, optional: true);
                 if (ally != null)
                 {
-                    Suspend(ally);
+                    SuspendForAlliance40(ally);   // v0.40.0 "suspended by an ＜Alliance＞ effect"
                     int dp = ally.GetCurrentDP();
                     attacker.AttackDpBonus += dp;
                     attacker.AttackSecurityAttackBonus += 1;
@@ -1305,6 +1306,7 @@ public partial class GoldfishEngine
             return;
         cost = ApplyEvoCostModifiers(owner, target, evoCard, cost);   // "When this Digimon would digivolve, reduce the digivolution cost" (코스트 없는 진화는 그대로 0)
         target.Evolve(evoCard);
+        EffectEvolveSerial40++;   // v0.40.0 "If digivolved by this effect"
         AddMemory(owner, -cost);
         if (ReferenceEquals(owner, State.Player))
         {
@@ -1864,6 +1866,13 @@ public partial class GoldfishEngine
 
     /// <summary>"When this Digimon becomes unsuspended during your unsuspend phase" — 액티브 페이즈에 액티브가 된 배틀 에어리어 디지몬</summary>
     private void FireUnsuspendPhase(PlayerZones owner, List<CardInstance> woke)
+    {
+        _unsuspendPhase40++;   // v0.40.0 "during a main phase"가 아니다
+        try { FireUnsuspendPhaseCore(owner, woke); }
+        finally { _unsuspendPhase40--; }
+    }
+
+    private void FireUnsuspendPhaseCore(PlayerZones owner, List<CardInstance> woke)
     {
         foreach (var d in woke.Where(owner.BattleArea.Contains).ToList())
             RunEffects(EffectTrigger.ThisDigimonUnsuspendedInUnsuspendPhase, owner, d, d.TopCard);

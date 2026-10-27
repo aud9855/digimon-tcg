@@ -62,6 +62,7 @@ public partial class GoldfishEngine
             _sourceWatchHand[zones] = zones.Hand.ToArray();
             _sourceWatchDraws[zones] = DrawSerial.GetValueOrDefault(zones);
         }
+        BeginWatch40();   // v0.40.0 덱 · 테이머 아래 (GoldfishEngine.Batch40.cs)
         return true;
     }
 
@@ -78,6 +79,7 @@ public partial class GoldfishEngine
         _digimonHandAdds.Clear();
         if (snaps == null || trashBefore == null)
             return;
+        EndWatch40(snaps, effectOwner);   // v0.40.0 맨 위 카드가 진화원으로 · 진화원이 덱으로 · 테이머 아래에 놓였을 때 (GoldfishEngine.Batch40.cs)
 
         // 효과로 패에 카드가 들어갔다 (드로우 포함 — 종합 룰 4-14-1 "드로우 = 덱에서 뽑아 패에 더하는 것"). 효과 하나가 끝난 뒤 쪽마다 1번
         if (handBefore != null)

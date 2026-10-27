@@ -529,6 +529,9 @@ internal static partial class SentenceParser
             var xs = TargetSpec.Names(m.Groups["x"].Value); var ts = TargetSpec.Names(m.Groups["t"].Value);
             return z => z.Tamers.Any(t => xs.Any(x => CardNames.Is(t, x))) || z.BattleArea.Any(d => xs.Any(x => CardNames.Is(d.TopCard, x)) || ts.Any(t => TargetSpec.HasTrait(d.TopCard, t)));
         }
+        // v0.40.0 "you have a Tamer with inherited effects" (BT21-091 — 색 조건 무시. 사건 · 지속 효과 쪽의 같은 조건과 같은 판정)
+        if (Regex.IsMatch(cond, @"^you have an? Tamer with inherited effects$", RegexOptions.IgnoreCase))
+            return z => z.Tamers.Any(t => t.InheritedEffectText.Trim().Length > 0);
         return null;
     }
 
@@ -542,7 +545,7 @@ internal static partial class SentenceParser
         // "your opponent has 10 or more cards in either their hand or trash" (ST22-14)
         if ((m = Regex.Match(cond, @"^(?:your opponent|they) (?:has|have) (?<n>\d+) or more cards in either their hand or (?:their )?trash$", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); return (_, e) => e.Hand.Count >= n || e.Trash.Count >= n; }
-        return null;
+        return ParseSideCondition40(cond);   // v0.40.0 (SentenceParser.Batch40.cs)
     }
 
     /// <summary>v0.32.0 공개한 카드 x로 진화할 수 있는 자신의 디지몬 (이 디지몬 또는 자신의 디지몬 전부 — 진화 조건 · 진화 불가 확인)</summary>

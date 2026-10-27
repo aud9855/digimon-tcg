@@ -195,6 +195,20 @@ public sealed class CardScriptDefinition
         return this;
     }
 
+    /// <summary>v0.40.0 상대의 디지몬의 진화 코스트를 늘린다 (GoldfishEngine.EvoCostModifiers)</summary>
+    internal CardScriptDefinition OpponentEvoCostIncrease40(EffectSource source, Func<CardInstance, bool> who, int amount, bool opponentsTurnOnly)
+    {
+        _script.OpponentEvoCostIncreases40.Add((source, who, amount, opponentsTurnOnly));
+        return this;
+    }
+
+    /// <summary>v0.40.0 지금까지 등록한 지속 효과 수 · 그 뒤에 등록한 것을 바꾼다 (SentenceParser.Batch40 — 효과를 가진 디지몬을 보는 대상 조건)</summary>
+    internal int StaticCount => _script.Statics.Count;
+    internal void PatchStatics(int from, Func<StaticEffect, StaticEffect> patch)
+    {
+        for (int i = from; i < _script.Statics.Count; i++) _script.Statics[i] = patch(_script.Statics[i]);
+    }
+
     /// <summary>진화원 효과: [자신의 턴] 조건부 DP +N</summary>
     public CardScriptDefinition InheritedDpOnOwnTurn(int dp, Func<StaticContext, bool> when) =>
         Static(StaticStat.Dp, EffectSource.Inherited, c => c.OwnersTurn && when(c) ? dp : 0);

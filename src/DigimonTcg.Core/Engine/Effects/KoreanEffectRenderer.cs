@@ -47,7 +47,7 @@ public static partial class KoreanEffectRenderer
         // v0.38.0 시큐리티 에어리어의 효과 표시 — 공식 BT20-052 "[시큐리티]【상대의 턴 종료 시】" (【시큐리티】 효과가 아니다)
         if (Regex.IsMatch(rawClause.TrimStart(), @"^\[Security\]\s*\[End of Opponent's Turn\]", RegexOptions.IgnoreCase) && RenderClauseCore(rawClause) is { } zoneKo)
             return Regex.Replace(zoneKo, @"^【시큐리티】\s*", "[시큐리티]");
-        return RenderClauseCore(rawClause);
+        return FixItAfterPlay40(rawClause, RenderClauseCore(rawClause)) ?? RenderClause40(rawClause);   // v0.40.0 원래 규칙이 읽지 못한 절만 (KoreanEffectRenderer.Batch40.cs)
     }
 
     private static string? RenderClauseCore(string rawClause)
@@ -177,7 +177,7 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>문장 하나 → 한글 (마침표 없이)</summary>
-    private static string? Sentence(string s, bool nested = false) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested) ?? SentenceFallback39(s, nested);   // v0.39.0 · v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
+    private static string? Sentence(string s, bool nested = false) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested) ?? SentenceFallback39(s, nested) ?? SentenceFallback40(s, nested);   // v0.40.0   // v0.39.0 · v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
 
     private static string? SentenceCore(string s, bool nested = false)
     {
@@ -971,7 +971,9 @@ public static partial class KoreanEffectRenderer
     private static Cond NotHave(string subject) => new($"{subject} 없을 때,", $"{subject} 없는 동안,", $"{subject} 없다면,");
     private static Cond Be(string noun) => new($"{noun}일 때,", $"{noun}인 동안,", $"{noun}{(Batchim(noun) ? "이라면" : "라면")},");
 
-    private static Cond? CondKo(string cond)
+    private static Cond? CondKo(string cond) => ColorDigimonOrTamerKo40(cond) ?? CondKoCore(cond);   // v0.40.0 "a blue or green Digimon or Tamer" (KoreanEffectRenderer.Batch40.cs)
+
+    private static Cond? CondKoCore(string cond)
     {
         cond = cond.Trim();
         Match m;
@@ -1155,11 +1157,11 @@ public static partial class KoreanEffectRenderer
             return Have("이 디지몬과 같은 명칭의 자신의 다른 디지몬이");
         if (Regex.IsMatch(cond, @"^(?:DNA digivolving|DigiXrosing|it DNA digivolved|this Digimon DNA digivolved)$", RegexOptions.IgnoreCase))
             return new(cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화했을 때,", cond.StartsWith("Digi", StringComparison.OrdinalIgnoreCase) ? "디지크로스하고 있었을 때," : "조그레스 진화하고 있었을 때,");
-        return CondKo32(cond) ?? CondKo33(cond) ?? CondKo34(cond) ?? CondKo35(cond) ?? CondKo37(cond) ?? CondKo38(cond);   // v0.38.0 · v0.37.0 · v0.32.0 · v0.33.0
+        return CondKo32(cond) ?? CondKo33(cond) ?? CondKo34(cond) ?? CondKo35(cond) ?? CondKo37(cond) ?? CondKo38(cond) ?? CondKo40(cond);   // v0.40.0   // v0.38.0 · v0.37.0 · v0.32.0 · v0.33.0
     }
 
     /// <summary>"When ~," 사건 → "~했을 때,"</summary>
-    private static string? EventKo(string ev) => FixEventKo39(ev, EventKoCore(ev)) ?? EventKo39(ev);   // v0.39.0 읽지 못한 사건만 (KoreanEffectRenderer.Batch39.cs)
+    private static string? EventKo(string ev) => FixEventKo39(ev, EventKoCore(ev)) ?? EventKo39(ev) ?? EventKo40(ev);   // v0.40.0   // v0.39.0 읽지 못한 사건만 (KoreanEffectRenderer.Batch39.cs)
 
     private static string? EventKoCore(string ev)
     {
@@ -1615,7 +1617,7 @@ public static partial class KoreanEffectRenderer
     /// <summary>대상 구절의 한글 ("1 of your opponent's suspended Digimon" → 상대의 레스트 상태 디지몬 1마리) — 옵션 대상 안내(MainTargetRule)용</summary>
     internal static string? TargetPhraseKo(string phrase) => TargetKo(phrase);
 
-    private static string? TargetKo(string phrase, bool bare = false) => TargetKoCore(phrase, bare) ?? TargetKo39(phrase, bare);   // v0.39.0 읽지 못한 대상만 (KoreanEffectRenderer.Batch39.cs)
+    private static string? TargetKo(string phrase, bool bare = false) => TargetKoCore(phrase, bare) ?? TargetKo39(phrase, bare) ?? TargetKo40(phrase, bare);   // v0.40.0   // v0.39.0 읽지 못한 대상만 (KoreanEffectRenderer.Batch39.cs)
 
     private static string? TargetKoCore(string phrase, bool bare = false)
     {
@@ -1782,7 +1784,7 @@ public static partial class KoreanEffectRenderer
                 return $"{aa} 또는 {b}";
             }
         }
-        return null;
+        return PickKo40(p);   // v0.40.0 (KoreanEffectRenderer.Batch40.cs)
     }
 
     private static string? PickKoCore(string part)
@@ -2051,7 +2053,7 @@ public static partial class KoreanEffectRenderer
     /// </summary>
     private static string? SpecKo(string spec)
     {
-        string s = spec.Trim();
+        string s = SpecNormalize40(spec.Trim());   // v0.40.0 "[Lv.4 or lower w/[DS] trait]" · "[Deva] or [Four Sovereigns] trait" (KoreanEffectRenderer.Batch40.cs)
         // 특징: "[A]/[B] trait" · "[A] Trait" · "w/[A] trait"
         s = Regex.Replace(s, @"(?:w/)?(?<x>\[[^\]]+\](?:\s*/\s*\[[^\]]+\])*)\s+trait\b", m => "특징" + NamesKo(m.Groups["x"].Value, trait: true), RegexOptions.IgnoreCase);
         s = Regex.Replace(s, @"(?:w/)?(?<x>\[[^\]]+\](?:\s*/\s*\[[^\]]+\])*)\s+in (?:its )?name\b", m => "명칭에 " + NamesKo(m.Groups["x"].Value) + "를 포함", RegexOptions.IgnoreCase);
