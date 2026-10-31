@@ -88,6 +88,15 @@ public static partial class KoreanEvolution47
             string rest = line["[Digivolve]".Length..].Trim();
             while (rest.Length > 0)
             {
+                // v0.49.0 "Cost 1 for each of your security cards" (BT24-101 — 자신의 시큐리티 1장마다 코스트 1, 진화할 때의 장수)
+                var per = Regex.Match(rest, @"^(?<cond>.+?)\s*:\s*Cost\s*(?<n>\d+) for each of your security cards?\s*$", IC);
+                if (per.Success)
+                {
+                    int k = int.Parse(per.Groups["n"].Value);
+                    if (ParseGroupEn(per.Groups["cond"].Value.Trim(), 0) is { } pl) conds.AddRange(pl.Select(x => x with { CostFn = f => k * f.Owner.SecurityStack.Count }));
+                    else bad.Add(rest);
+                    break;
+                }
                 var g = Regex.Match(rest, @"^(?<cond>.+?)\s*:\s*Cost\s*(?<n>\d+)\s*(?<tail>/|$)?");
                 if (!g.Success) { bad.Add(rest); break; }
                 string cond = g.Groups["cond"].Value.Trim();

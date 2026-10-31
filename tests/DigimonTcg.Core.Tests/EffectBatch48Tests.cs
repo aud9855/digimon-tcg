@@ -162,8 +162,8 @@ public class EffectBatch48Tests
         Assert.Empty(p.Unparsed);
         Assert.Equal(new[] { 1, 1, 3 }, p.Conditions.Select(c => c.Cost));   // 이름 조건은 디지몬 쪽 · 테이머 쪽 2개
         var bad = KoreanEvolution47.ParseEnglish(new[] { "[Digivolve] Lv.5 w/[Aegiochusmon] in name: Cost 1 for each of your security cards" });
-        Assert.Empty(bad.Conditions);
-        Assert.Single(bad.Unparsed);
+        Assert.Empty(bad.Unparsed);                                   // v0.49.0 시큐리티 1장마다 코스트 1 (BT24-101) — EffectBatch49Tests
+        Assert.All(bad.Conditions, c => Assert.NotNull(c.CostFn));
         var colors = KoreanEvolution47.ParseEnglish(new[] { "[Digivolve] [Dorimon]/Black Lv.2 w/[X Antibody] trait: Cost 0" });
         Assert.Empty(colors.Unparsed);
         Assert.Equal(3, colors.Conditions.Count);

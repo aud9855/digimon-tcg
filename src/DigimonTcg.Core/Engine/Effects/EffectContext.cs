@@ -129,6 +129,9 @@ public sealed class EffectContext
 
     /// <summary>v0.45.0 바로 앞 문장이 효과 주인의 트래시에 보낸 카드 · 덱 장 수 변화 · 이 디지몬의 진화원 장 수 변화 ("If you trash a purple card" · "If you return 3 or more cards using this effect")</summary>
     internal List<CardData> LastStepTrashed45 { get; set; } = new();
+
+    /// <summary>v0.49.0 이 효과가 덱 아래로 되돌린 카드 ("If this effect returned a white level 7 card" · "If 7 or more cards were returned using this effect")</summary>
+    internal List<CardData> Returned49 { get; set; } = new();
     internal int LastStepDeckDelta45 { get; set; }
     internal int LastStepSourcesDelta45 { get; set; }
 

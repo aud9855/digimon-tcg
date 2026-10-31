@@ -77,7 +77,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse48(rawClause, inherited, card, def);   // v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse49(rawClause, inherited, card, def);   // v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -2371,7 +2371,7 @@ internal static partial class SentenceParser
     {
         var r = ParseStepCore(sentence, card, triggers);
         if (r.Error == null) return r;
-        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? StepFallback40(sentence, card, triggers) ?? StepFallback41(sentence, card, triggers) ?? StepFallback42(sentence, card, triggers) ?? StepFallback43(sentence, card, triggers) ?? StepFallback44(sentence, card, triggers) ?? StepFallback45(sentence, card, triggers) ?? StepFallback46(sentence, card, triggers) ?? StepFallback48(sentence, card, triggers) ?? r;   // v0.48.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42) · v0.41.0 (Batch41) · v0.40.0 (Batch40) · v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
+        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? StepFallback40(sentence, card, triggers) ?? StepFallback41(sentence, card, triggers) ?? StepFallback42(sentence, card, triggers) ?? StepFallback43(sentence, card, triggers) ?? StepFallback44(sentence, card, triggers) ?? StepFallback45(sentence, card, triggers) ?? StepFallback46(sentence, card, triggers) ?? StepFallback48(sentence, card, triggers) ?? StepFallback49(sentence, card, triggers) ?? r;   // v0.49.0 · v0.48.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42) · v0.41.0 (Batch41) · v0.40.0 (Batch40) · v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
     }
 
     private static (Step? Step, string? Error) ParseStepCore(string sentence, CardData card, List<EffectTrigger> triggers)
@@ -2512,7 +2512,8 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction44(s.TrimEnd('.'), card, triggers) is { } act44) act = act44;
         if (act.Error != null && ParseAction45(s.TrimEnd('.'), card, triggers) is { } act45) act = act45;   // v0.45.0 (SentenceParser.Batch45.cs)
         if (act.Error != null && ParseAction46(s.TrimEnd('.'), card, triggers) is { } act46) act = act46;
-        if (act.Error != null && ParseAction48(s.TrimEnd('.'), card, triggers) is { } act48) act = act48;   // v0.48.0 (SentenceParser.Batch48.cs)   // v0.46.0 (SentenceParser.Batch46.cs)   // v0.44.0 (SentenceParser.Batch44.cs)
+        if (act.Error != null && ParseAction48(s.TrimEnd('.'), card, triggers) is { } act48) act = act48;
+        if (act.Error != null && ParseAction49(s.TrimEnd('.'), card, triggers) is { } act49) act = act49;   // v0.49.0 (SentenceParser.Batch49.cs)   // v0.48.0 (SentenceParser.Batch48.cs)   // v0.46.0 (SentenceParser.Batch46.cs)   // v0.44.0 (SentenceParser.Batch44.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -3100,7 +3101,7 @@ internal static partial class SentenceParser
 
     private static Func<EffectContext, bool>? ParseEventCondition(string cond) => DeletionView45(ParseEventConditionChain(cond));   // v0.45.0 【소멸 시】 · "소멸했을 때"의 조건은 소멸 직전 모습으로 (SentenceParser.Batch45.cs)
 
-    private static Func<EffectContext, bool>? ParseEventConditionChain(string cond) => ColorDigimonOrTamer40(cond) ?? ParseEventConditionCore(cond) ?? ParseEventCondition38(cond) ?? ParseEventCondition40(cond) ?? ParseEventCondition41(cond) ?? ParseEventCondition43(cond) ?? ParseEventCondition44(cond) ?? ParseEventCondition45(cond);   // v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.41.0 (Batch41Cond) · v0.40.0 "a blue or green Digimon or Tamer"는 원래 규칙보다 먼저 (원래는 테이머의 색을 보지 않았다)   // v0.40.0 (Batch40Step) · v0.38.0 읽지 못한 조건만 (Batch38b)
+    private static Func<EffectContext, bool>? ParseEventConditionChain(string cond) => ColorDigimonOrTamer40(cond) ?? ParseEventConditionCore(cond) ?? ParseEventCondition38(cond) ?? ParseEventCondition40(cond) ?? ParseEventCondition41(cond) ?? ParseEventCondition43(cond) ?? ParseEventCondition44(cond) ?? ParseEventCondition45(cond) ?? ParseEventCondition49(cond);   // v0.49.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.41.0 (Batch41Cond) · v0.40.0 "a blue or green Digimon or Tamer"는 원래 규칙보다 먼저 (원래는 테이머의 색을 보지 않았다)   // v0.40.0 (Batch40Step) · v0.38.0 읽지 못한 조건만 (Batch38b)
 
     private static Func<EffectContext, bool>? ParseEventConditionCore(string cond)
     {
@@ -4819,13 +4820,16 @@ internal static partial class SentenceParser
 
     // ---- 덱 위 공개 ----
 
-    private enum RevealVerb { Add, Play, Trash, Place, AddOrPlace, Digivolve, Use }   // v0.32.0 Digivolve · Use
+    private enum RevealVerb { Add, Play, Trash, Place, AddOrPlace, Digivolve, Use, PlayOrUse }   // v0.32.0 Digivolve · Use · v0.49.0 PlayOrUse (Gate49)
 
     /// <summary>공개한 카드에 하는 일 하나: "add 1 X to the hand" · "play 1 X without paying the cost" · "trash 1 such card" · "place 1 X under this Digimon"</summary>
     private sealed record RevealAction(RevealVerb Verb, List<(int Count, Func<CardData, bool> Match, bool UpTo)> Picks, Func<EffectContext, CardData, bool>? Place, bool NoOnPlay, bool AnyOwn = false)
     {
         /// <summary>v0.40.0 고른 카드의 등장 코스트 합계 상한 ("whose total play costs add up to 7 or less" · "up to 7 play cost's total worth of ~") — 1장씩 고른다</summary>
         public int? Budget40 { get; init; }
+
+        /// <summary>v0.49.0 "play or use 1 ~ among them with the cost reduced by 3" (BT26-084) — 코스트를 내고 등장 · 사용 (null이면 코스트 없이)</summary>
+        public int? Reduce49 { get; init; }
     }
 
     /// <summary>공개 효과의 마지막 문장: "Return the rest to the bottom of the deck" · "Trash the remaining cards" · "Return the revealed cards to the top or bottom of the deck"</summary>
@@ -4856,6 +4860,7 @@ internal static partial class SentenceParser
             RevealVerb verb;
             string picksText;
             Func<EffectContext, CardData, bool>? place = null;
+            int? reduce49 = null;
             // "add 1 X to the hand or place it under this Digimon as its bottom digivolution card" — 둘 중 하나를 고른다
             if (((am = Regex.Match(a, @"^add (?<p>.+?)(?: (?:from )?among them)? to (?:the|your) hand,? or place (?:it|1 such card) (?<w>(?:face down )?(?:under|as) .+)$", RegexOptions.IgnoreCase)).Success
                  || (am = Regex.Match(a, @"^place (?<p>.+?)(?: among them)? (?<w>(?:face down )?(?:under|as) .+?),? or add it to (?:the|your) hand$", RegexOptions.IgnoreCase)).Success)
@@ -4863,6 +4868,12 @@ internal static partial class SentenceParser
                 (verb, picksText) = (RevealVerb.AddOrPlace, am.Groups["p"].Value);
             else if ((am = Regex.Match(a, @"^add (?<p>.+?)(?: (?:from )?among them)? to (?:the|your) hand$", RegexOptions.IgnoreCase)).Success)
                 (verb, picksText) = (RevealVerb.Add, am.Groups["p"].Value);
+            // v0.49.0 "play or use 1 play or use cost 6 or lower [Three Musketeers] text card among them without paying the cost" (LM-067) · "~ among them with the cost reduced by 3" (BT26-084) — 원래 규칙이 읽지 못한 절만
+            else if (Gate49 && (am = Regex.Match(a, @"^play or use (?<p>.+?)(?: (?:from )?among them)?(?: without paying (?:its|the|their) (?:memory |play |use )?costs?| with the (?:play |use )?cost reduced by (?<red>\d+))$", RegexOptions.IgnoreCase)).Success)
+            {
+                (verb, picksText) = (RevealVerb.PlayOrUse, NormalizePick39(am.Groups["p"].Value));
+                if (am.Groups["red"].Success) reduce49 = int.Parse(am.Groups["red"].Value);
+            }
             else if ((am = Regex.Match(a, @"^play (?<p>.+?)(?: (?:from )?among(?: them)?)?(?: without paying (?:its|the|their) (?:memory |play )?costs?)?$", RegexOptions.IgnoreCase)).Success)
                 (verb, picksText) = (RevealVerb.Play, am.Groups["p"].Value);
             else if ((am = Regex.Match(a, @"^place (?<p>.+?)(?: among them)? (?<w>(?:face down )?(?:under|as) .+)$", RegexOptions.IgnoreCase)).Success
@@ -4904,7 +4915,7 @@ internal static partial class SentenceParser
                 picks.Add((pick.Value.Count, pick.Value.Match, may || IsUpTo(part)));
                 if (!such) prevPart = part;
             }
-            actions.Add(new RevealAction(verb, picks, place, noOnPlay) { Budget40 = budget40 });
+            actions.Add(new RevealAction(verb, picks, place, noOnPlay) { Budget40 = budget40, Reduce49 = reduce49 });
         }
 
         string rest = m.Groups["rest"].Value.TrimEnd('.');
@@ -4927,7 +4938,7 @@ internal static partial class SentenceParser
             {
                 var cards = new List<CardData>();
                 bool play = action.Verb == RevealVerb.Play;
-                string what = action.Verb switch { RevealVerb.Play => "등장시킬", RevealVerb.Trash => "파기할", RevealVerb.Place => "진화원 아래에 놓을", RevealVerb.AddOrPlace => "패에 넣거나 진화원 아래에 놓을", RevealVerb.Digivolve => "진화할", RevealVerb.Use => "사용할", _ => "패에 넣을" };
+                string what = action.Verb switch { RevealVerb.Play => "등장시킬", RevealVerb.Trash => "파기할", RevealVerb.Place => "진화원 아래에 놓을", RevealVerb.AddOrPlace => "패에 넣거나 진화원 아래에 놓을", RevealVerb.Digivolve => "진화할", RevealVerb.Use => "사용할", RevealVerb.PlayOrUse => "등장시키거나 사용할", _ => "패에 넣을" };
                 if (action.Budget40 is int budget)   // v0.40.0 합계 상한 안에서 1장씩 (고르지 않으면 끝)
                 {
                     var (_, bMatch, _) = action.Picks[0];
@@ -4952,7 +4963,8 @@ internal static partial class SentenceParser
                     var pool = Enumerable.Range(0, revealed.Count)
                         .Where(i => !takenIndex.Contains(i) && match(revealed[i]) && (!play || revealed[i].Type is CardType.Digimon or CardType.Tamer)
                             && (action.Verb != RevealVerb.Digivolve || revealed[i].Type == CardType.Digimon && RevealEvoTargets32(c, action.AnyOwn, revealed[i]).Count > 0)
-                            && (action.Verb != RevealVerb.Use || revealed[i].Type == CardType.Option))
+                            && (action.Verb != RevealVerb.Use || revealed[i].Type == CardType.Option)
+                            && (action.Verb != RevealVerb.PlayOrUse || PlayOrUseOk49(c, revealed[i], action.Reduce49)))
                         .OrderByDescending(i => revealed[i].Level).ThenByDescending(i => revealed[i].DP).ToList();
                     foreach (int k in c.Engine.ChooseCardIndexes(c.Owner, CardChoiceZone.Other, pool.Select(i => revealed[i]).ToList(), count, upTo,
                                  $"[{c.Card.Name}] 공개한 카드 중 {what} 카드를 고르세요."))
@@ -4970,6 +4982,7 @@ internal static partial class SentenceParser
             var toPlay = new List<(CardData Card, bool NoOnPlay)>();
             var toEvolve = new List<(CardData Card, bool AnyOwn)>();
             var toUse = new List<CardData>();
+            var toPlayOrUse = new List<(CardData Card, int? Red)>();   // v0.49.0
             foreach (var (action, cards) in chosen)
             {
                 if (cards.Count == 0) continue;
@@ -4995,6 +5008,7 @@ internal static partial class SentenceParser
                         break;
                     case RevealVerb.Digivolve: toEvolve.AddRange(cards.Select(x => (x, action.AnyOwn))); break;   // v0.32.0
                     case RevealVerb.Use: toUse.AddRange(cards); break;
+                    case RevealVerb.PlayOrUse: toPlayOrUse.AddRange(cards.Select(x => (x, action.Reduce49))); break;   // v0.49.0
                     default: toPlay.AddRange(cards.Select(x => (x, action.NoOnPlay))); break;
                 }
             }
@@ -5021,11 +5035,36 @@ internal static partial class SentenceParser
                 c.Engine.UseOptionByEffect(c.Owner, t);
                 log.Add($"옵션 [{t.Name}] 사용");
             }
+            foreach (var (t, red) in toPlayOrUse)   // v0.49.0 등장 또는 사용 (남은 카드를 보낸 뒤)
+            {
+                int pay = red is int r ? (t.Type == CardType.Option ? Math.Max(0, t.PlayCost - r) : c.Engine.ReducedPlayCost(c.Owner, t, Math.Max(0, t.PlayCost - r), t.PlayCost)) : 0;
+                if (t.Type == CardType.Option)
+                {
+                    if (EffectRules.OptionUseBlocked(c.State, c.Owner)) { deck.Add(t); log.Add($"옵션 [{t.Name}] 사용할 수 없음"); continue; }
+                    if (pay > 0) c.AddMemory(-pay);
+                    c.Engine.UseOptionByEffect(c.Owner, t);
+                    log.Add($"옵션 [{t.Name}] 사용{(red != null ? $"(코스트 {pay})" : "")}");
+                }
+                else
+                {
+                    if (c.Owner.BattleArea.Count >= 12 || !c.Engine.TryPlayByEffect(c.Owner, t, PlayOrigin.Revealed, null, payCost: red != null ? pay : null)) { deck.Add(t); continue; }
+                    log.Add($"[{t.Name}] 등장{(red != null ? $"(코스트 {pay})" : " (코스트 없이)")}");
+                }
+                Diag46.Hit("revealPlayOrUse49");
+            }
             if (takenCount == 0) c.LastStepResolved = false;   // "If you added cards, ~"
             bool onlyPlay = actions.All(x => x.Verb == RevealVerb.Play);
             Emit(c, label, log.Count > 0 ? $"덱 위 {total}장 공개 → {string.Join(" · ", log)}"
                 : onlyPlay ? $"덱 위 {total}장 공개 → 등장시킬 카드 없음" : $"덱 위 {total}장 공개 → 조건에 맞는 카드 없음");
         }, null);
+    }
+
+    /// <summary>v0.49.0 공개한 카드를 등장 · 사용할 수 있는지 (코스트를 내면 낼 수 있는 만큼)</summary>
+    private static bool PlayOrUseOk49(EffectContext c, CardData x, int? red)
+    {
+        if (red is int r && Math.Max(0, x.PlayCost - r) > Math.Max(0, c.OwnerMemory)) return false;
+        if (x.Type == CardType.Option) return ActionValidator.MissingOptionColors(c.Owner, x).Count == 0 && !EffectRules.OptionUseBlocked(c.State, c.Owner);
+        return x.Type is CardType.Digimon or CardType.Tamer && c.Engine.CanPlayByEffect(c.Owner, x, PlayOrigin.Revealed);
     }
 
     /// <summary>"1 such Tamer card" — 앞에서 고른 카드의 조건(종류 제외)에 새 종류를 더한다</summary>

@@ -138,11 +138,11 @@ public static class ActionValidator
             return ActionResult.Fail($"[{evoCard.Name}]은(는) 보통 진화 조건이 없는 카드입니다.");   // v0.48.0 공식 카드 리스트에 진화 코스트 칸이 없는 카드
 
         if (!EvoRequirements48.LevelMatches(target, evoCard))
-            return ActionResult.Fail($"Lv.{string.Join("/", reqs.Select(r => r.Level).Distinct())} 디지몬 위에만 진화할 수 있습니다. (현재 대상: Lv.{target.TopCard.Level})");
+            return ActionResult.Fail($"{string.Join("/", reqs.Where(r => r.Form == null).Select(r => r.Level).Distinct().Select(l => "Lv." + l).Take(1).Concat(reqs.Where(r => r.Form == null).Select(r => r.Level).Distinct().Skip(1).Select(l => l.ToString())).Concat(reqs.Where(r => r.Form != null).Select(EvoRequirements48.Label).Distinct()))} 디지몬 위에만 진화할 수 있습니다. (현재 대상: Lv.{target.TopCard.Level})");   // v0.49.0 앱몬 등급 칸은 "Stnd."
 
         // v0.37.0 색 추가 (Q&A BT3-014) · 카드에 적힌 다른 진화 조건 (예: 오메가몬 = Lv.6 레드 · 블루에서) · v0.48.0 여러 색 칸 · 다색의 진화하는 쪽
         if (!MeetsNormalEvolution(target, evoCard))
-            return ActionResult.Fail($"색상이 일치하지 않습니다. ({string.Join("/", reqs.Where(r => r.Level == target.TopCard.Level).SelectMany(r => r.Colors).Distinct().Select(ColorName))} 필요)");
+            return ActionResult.Fail($"색상이 일치하지 않습니다. ({string.Join("/", reqs.Where(r => r.Form == null && r.Level == target.TopCard.Level).SelectMany(r => r.Colors).Distinct().Select(ColorName))} 필요)");
 
         string guide = $"진화 코스트 {EvolutionCost(target, evoCard)} 지불. 진화 성공 시 카드 1장을 추가로 드로우합니다.";
         return ActionResult.Success(guide);

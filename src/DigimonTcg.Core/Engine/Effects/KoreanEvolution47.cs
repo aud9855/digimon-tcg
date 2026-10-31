@@ -26,7 +26,11 @@ namespace DigimonTcg.Core.Engine.Effects;
 public static partial class KoreanEvolution47
 {
     /// <summary>조건 하나: Match(맨 위 카드, 디지몬 — 테이머에서면 null) · Field(필드 조건 "~인 동안", 없으면 null) · TamerName(테이머 이름 조건)</summary>
-    public sealed record Condition(string Text, int Cost, Func<CardData, CardInstance?, bool> Match, Func<StaticContext, bool>? Field, bool TamerName);
+    public sealed record Condition(string Text, int Cost, Func<CardData, CardInstance?, bool> Match, Func<StaticContext, bool>? Field, bool TamerName)
+    {
+        /// <summary>v0.49.0 필드에 따라 바뀌는 코스트 (BT24-101 "Cost 1 for each of your security cards") — 있으면 Cost 대신 (필드에 있는 디지몬 · 테이머 주인의 필드로)</summary>
+        public Func<StaticContext, int>? CostFn { get; init; }
+    }
 
     public sealed record Parsed(IReadOnlyList<Condition> Conditions, IReadOnlyList<string> Unparsed);
 
@@ -58,9 +62,16 @@ public static partial class KoreanEvolution47
         StaticContext? ctx = null;
         foreach (var c in p.Conditions)
         {
-            if (c.TamerName || (best != null && c.Cost >= best) || !c.Match(target.TopCard, target)) continue;
+            if (c.TamerName || (c.CostFn == null && best != null && c.Cost >= best) || !c.Match(target.TopCard, target)) continue;
             if (c.Field != null && ((ctx ??= target.LiveContext42?.Invoke()) is not { } fc || !c.Field(fc))) continue;   // 필드 조건: 필드에 있는 디지몬만 (엔진이 문맥을 채운다)
-            best = c.Cost;
+            int cost = c.Cost;
+            if (c.CostFn != null)   // v0.49.0 필드에 따라 바뀌는 코스트
+            {
+                if ((ctx ??= target.LiveContext42?.Invoke()) is not { } cc) continue;
+                cost = c.CostFn(cc);
+                if (best != null && cost >= best) continue;
+            }
+            best = cost;
         }
         return best;
     }
@@ -75,7 +86,12 @@ public static partial class KoreanEvolution47
         var p = For(evoCard);
         int? best = null;
         foreach (var c in p.Conditions)
-            if (c.TamerName && c.Match(tamer, null) && (best == null || c.Cost < best) && (c.Field == null || (field != null && c.Field(field)))) best = c.Cost;
+            if (c.TamerName && c.Match(tamer, null) && (c.Field == null || (field != null && c.Field(field))))
+            {
+                if (c.CostFn != null && field == null) continue;   // v0.49.0 필드에 따라 바뀌는 코스트는 필드가 있을 때만
+                int cost = c.CostFn != null ? c.CostFn(field!) : c.Cost;
+                if (best == null || cost < best) best = cost;
+            }
         return best;
     }
 
