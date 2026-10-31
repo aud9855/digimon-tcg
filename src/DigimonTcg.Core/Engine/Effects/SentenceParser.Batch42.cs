@@ -230,7 +230,7 @@ internal static partial class SentenceParser
         {
             var d = Pick(evoBase, c, security).FirstOrDefault(x => c.Owner.BattleArea.Contains(x));
             if (d == null || !c.Owner.Hand.Contains(c.Card) || EffectRules.IsDigivolveLocked(c.Engine.State, d)
-                || !(d.Colors.Contains(c.Card.EvoRequirementColor) || CardScripts.MeetsAlternativeEvolution(c.Card, d)))
+                || !EvoRequirements48.ColorOnly(d, c.Card))   // v0.48.0 진화 조건 칸 전부의 색
             { c.LastStepResolved = false; Emit(c, label, "진화할 디지몬이 없습니다"); return; }
             c.Engine.EvolveByEffect(c.Owner, d, c.Card, c.Card.EvoCost, c.Owner.Hand);
             c.LastTargets = new List<CardInstance> { d };

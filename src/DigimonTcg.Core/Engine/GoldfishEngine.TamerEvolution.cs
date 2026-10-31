@@ -32,6 +32,13 @@ public partial class GoldfishEngine
         return thisTurn >= copies;
     }
 
+    /// <summary>
+    /// owner의 테이머 tamer에서 evoCard로 진화하는 코스트 (진화할 수 없으면 null) — v0.48.0 〔진화〕 조건의 필드 조건
+    /// ("자신의 시큐리티가 3장 이하인 동안," · 테이머 아래 카드 장수)을 owner의 필드로 판단한다
+    /// </summary>
+    public int? TamerEvolutionCostFor(PlayerZones owner, CardData evoCard, CardData tamer) =>
+        CardScripts.TamerEvolutionCost(evoCard, tamer, new StaticContext { Engine = this, State = State, Owner = owner, Enemy = EnemyOf(owner), OwnersTurn = IsTurnOf(owner) });
+
     /// <summary>플레이어: 패의 evoCard로 자신의 테이머 tamer를 진화시킬 수 있는지 (메모리는 일반 진화처럼 상대 쪽으로 넘어가도 된다)</summary>
     public ActionResult ValidateTamerEvolution(CardData tamer, CardData evoCard)
     {
@@ -40,7 +47,7 @@ public partial class GoldfishEngine
         if (State.BlitzAttacker != null && State.MemoryGauge < 0) return ActionResult.Fail("지금은 ≪진격≫ 어택이나 턴 종료만 할 수 있습니다.");
         if (!State.Player.Tamers.Contains(tamer)) return ActionResult.Fail("필드에 없는 테이머입니다.");
         if (!State.Player.Hand.Contains(evoCard)) return ActionResult.Fail("패에 없는 카드입니다.");
-        if (CardScripts.TamerEvolutionCost(evoCard, tamer) is not int cost)
+        if (TamerEvolutionCostFor(State.Player, evoCard, tamer) is not int cost)
             return ActionResult.Fail($"[{evoCard.Name}]은(는) [{tamer.Name}]을(를) 디지몬으로 취급하여 진화할 수 없습니다.");
         return ActionResult.Success($"테이머 [{tamer.Name}]을(를) Lv.{evoCard.EvoRequirementLevel} 디지몬으로 취급하여 진화 (진화 코스트 {cost}). 진화 성공 시 카드 1장을 추가로 드로우합니다.");
     }
@@ -52,7 +59,7 @@ public partial class GoldfishEngine
         if (!validation.CanExecute)
             return validation;
         State.CanMulligan = false;
-        int cost = CardScripts.TamerEvolutionCost(evoCard, tamer)!.Value;
+        int cost = TamerEvolutionCostFor(State.Player, evoCard, tamer)!.Value;
         var inst = EvolveTamerCore(State.Player, tamer, evoCard, cost, out int paid);
         State.TotalMemorySpent += paid;
         State.TotalEvolutionsCount++;
@@ -101,7 +108,7 @@ public partial class GoldfishEngine
         foreach (var card in opp.Hand.Where(c => c.Type == CardType.Digimon && !c.IsDual).Distinct().OrderByDescending(c => c.Level).ToList())
             foreach (var tamer in opp.Tamers.Distinct().ToList())
             {
-                if (CardScripts.TamerEvolutionCost(card, tamer) is not int cost || cost > ctx.Memory)
+                if (TamerEvolutionCostFor(opp, card, tamer) is not int cost || cost > ctx.Memory)
                     continue;
                 int before = ctx.Memory;
                 var inst = EvolveTamerCore(opp, tamer, card, cost, out int paid);   // AddMemory가 AI 턴 메모리(ctx)를 줄인다

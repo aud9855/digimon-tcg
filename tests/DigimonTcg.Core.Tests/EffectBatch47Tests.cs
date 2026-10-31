@@ -96,8 +96,10 @@ public class EffectBatch47Tests
         Assert.Equal(new[] { 1, 2 }, p.Conditions.Select(c => c.Cost));
         Assert.Empty(p.Unparsed);
         var bad = KoreanEvolution47.Parse("〔진화〕특징으로 「하이브리드체」를 가진 카드가 아래에 5장 있는 「테스트테이머」 : 코스트 5");
-        Assert.Empty(bad.Conditions);
-        Assert.Single(bad.Unparsed);
+        var under = Assert.Single(bad.Conditions);   // v0.48.0 테이머 아래 카드 조건도 읽는다 (EffectBatch48Tests)
+        Assert.True(under.TamerName);
+        Assert.NotNull(under.Field);
+        Assert.Empty(bad.Unparsed);
         // 이름에 ":"가 들어 있어도
         var colon = KoreanEvolution47.Parse("〔진화〕「저스티몬: 블리츠 암」/「저스티몬: 액셀 암」 : 코스트 1");
         Assert.Equal(1, Assert.Single(colon.Conditions).Cost);

@@ -23,7 +23,7 @@ namespace DigimonTcg.Core.Engine.Effects;
 /// 읽지 못한 조건은 쓰지 않는다 (Unparsed로 보고).
 /// 한글 문구는 로컬 data/kr/cards_ko.json에서 실행할 때 읽는다 (저장소에는 넣지 않는다).
 /// </summary>
-public static class KoreanEvolution47
+public static partial class KoreanEvolution47
 {
     /// <summary>조건 하나: Match(맨 위 카드, 디지몬 — 테이머에서면 null) · Field(필드 조건 "~인 동안", 없으면 null) · TamerName(테이머 이름 조건)</summary>
     public sealed record Condition(string Text, int Cost, Func<CardData, CardInstance?, bool> Match, Func<StaticContext, bool>? Field, bool TamerName);
@@ -43,7 +43,8 @@ public static class KoreanEvolution47
     public static Parsed For(CardData evoCard)
     {
         if (evoCard.Type != CardType.Digimon) return Empty;
-        string? text = KoreanCardData.Get(evoCard.CardId)?.MainText;
+        if (KoreanCardData.Get(evoCard.CardId) is not { } ko) return English48(evoCard);   // v0.48.0 한글 데이터가 없는 카드: 공식 영어 카드 리스트의 [Special Digivolution Condition]
+        string? text = ko.MainText;
         if (string.IsNullOrEmpty(text) || !text.Contains("〔진화〕", StringComparison.Ordinal)) return Empty;
         return Cache.GetOrAdd(text, Parse);
     }
@@ -64,14 +65,17 @@ public static class KoreanEvolution47
         return best;
     }
 
-    /// <summary>테이머 tamer에서 evoCard로 〔진화〕「테이머 이름」 조건으로 진화할 수 있으면 그 코스트 (필드 조건이 붙은 것은 제외)</summary>
-    public static int? TamerCost(CardData evoCard, CardData tamer)
+    /// <summary>
+    /// 테이머 tamer에서 evoCard로 〔진화〕「테이머 이름」 조건으로 진화할 수 있으면 그 코스트.
+    /// 필드 조건이 붙은 것 (v0.48.0 "자신의 시큐리티가 3장 이하인 동안," · 테이머 아래 카드 장수)은 field(테이머 주인의 필드)를 줄 때만
+    /// </summary>
+    public static int? TamerCost(CardData evoCard, CardData tamer, StaticContext? field = null)
     {
         if (tamer.Type != CardType.Tamer) return null;
         var p = For(evoCard);
         int? best = null;
         foreach (var c in p.Conditions)
-            if (c.TamerName && c.Field == null && c.Match(tamer, null) && (best == null || c.Cost < best)) best = c.Cost;
+            if (c.TamerName && c.Match(tamer, null) && (best == null || c.Cost < best) && (c.Field == null || (field != null && c.Field(field)))) best = c.Cost;
         return best;
     }
 
@@ -160,6 +164,7 @@ public static class KoreanEvolution47
             string z = m.Groups["z"].Value; int n = int.Parse(m.Groups["n"].Value); bool le = m.Groups["op"].Value == "이하";
             return f => { int v = z == "시큐리티" ? f.Owner.SecurityStack.Count : z == "트래시" ? f.Owner.Trash.Count : f.Owner.Hand.Count; return le ? v <= n : v >= n; };
         }
+        if (Field48(s) is { } f48) return f48;   // v0.48.0 "특징 「X」를 가진 자신의 테이머가 N명 이상 있는 동안"
         if ((m = Regex.Match(s, @"^DP\s*(?<n>\d+)\s*(?<op>이하|이상)의\s*상대의\s*디지몬이\s*있는\s*동안$")).Success)
         {
             int n = int.Parse(m.Groups["n"].Value); bool le = m.Groups["op"].Value == "이하";
@@ -182,6 +187,12 @@ public static class KoreanEvolution47
         }
         while (rest.Length > 0)
         {
+            if (Extra48(rest, cost, field) is { } extra)   // v0.48.0 테이머 아래 카드 조건
+            {
+                list.Add(extra.Cond);
+                rest = extra.After.Length > 0 ? extra.After[1..].TrimStart() : "";
+                continue;
+            }
             bool ok = false;
             foreach (var atom in Atoms)
             {

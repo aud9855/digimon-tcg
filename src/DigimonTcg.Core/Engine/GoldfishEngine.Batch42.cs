@@ -24,7 +24,11 @@ public partial class GoldfishEngine
     /// <summary>집계: 조건이 붙은 진화 조건 무시 진화로 진화했는지 (진화할 카드 쪽 · 진화하는 디지몬 쪽)</summary>
     private static void NoteSpecialEvo42(CardInstance target, CardData evoCard, int cost)
     {
-        if (target.TopCard.Level == evoCard.EvoRequirementLevel && target.Colors.Contains(evoCard.EvoRequirementColor)) return;   // 보통 진화
+        if (EvoRequirements48.NormalCost(target, evoCard) == cost)   // 보통 진화 (v0.48.0 진화 조건 칸 전부)
+        {
+            if (!(target.TopCard.Level == evoCard.EvoRequirementLevel && target.TopCard.Color == evoCard.EvoRequirementColor && cost == evoCard.EvoCost)) Diag46.Hit("normalEvoExtra48");   // API 칸 하나로는 아니던 진화
+            return;
+        }
         if (KoreanEvolution47.Cost(evoCard, target) == cost) { Diag46.Hit("koreanEvo47"); return; }   // v0.47.0 공식 한글 〔진화〕 조건으로 진화
         if (CardScripts.SpecialEvolutionCost42(evoCard, target) != cost) return;
         if (CardScripts.For(evoCard)?.SpecialEvolutions42.Count > 0) Diag42.Hit(ref Diag42.SpecialEvo);

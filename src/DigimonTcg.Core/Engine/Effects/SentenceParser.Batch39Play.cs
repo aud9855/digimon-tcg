@@ -272,7 +272,7 @@ internal static partial class SentenceParser
                     foreach (var d in c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && ActionValidator.ValidateEvolution(d, x).CanExecute))
                         options.Add((d, null, x, z, Cost(x.EvoCost)));
                     foreach (var t in c.Owner.Tamers.Distinct().ToList())
-                        if (CardScripts.TamerEvolutionCost(x, t) is int tc) options.Add((null, t, x, z, Cost(tc)));
+                        if (c.Engine.TamerEvolutionCostFor(c.Owner, x, t) is int tc) options.Add((null, t, x, z, Cost(tc)));
                 }
             if (options.Count == 0) { c.LastStepResolved = false; Emit(c, label, "진화할 수 있는 디지몬 · 테이머가 없습니다"); return; }
             options = options.OrderByDescending(o => o.Evo.Level).ThenByDescending(o => o.Evo.DP).ThenBy(o => o.Cost).ToList();

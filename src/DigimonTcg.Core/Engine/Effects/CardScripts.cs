@@ -141,12 +141,12 @@ public static class CardScripts
     /// 패의 evoCard로 테이머 tamer를 진화시킬 수 있으면 그 진화 코스트 (v0.30.0): 카드의 "~ Tamers as if the Tamer is a level 3 red Digimon" 이 테이머에 맞고,
     /// 그 레벨 · 색의 디지몬에서 진화하는 진화 조건을 가질 때
     /// </summary>
-    public static int? TamerEvolutionCost(CardData evoCard, CardData tamer)
+    public static int? TamerEvolutionCost(CardData evoCard, CardData tamer, StaticContext? field = null)
     {
         if (tamer.Type != CardType.Tamer || evoCard.Type != CardType.Digimon) return null;
         int? cost = For(evoCard)?.TamerEvolutions.Where(t => t.Tamer(tamer) && evoCard.EvoRequirementLevel == t.Level && evoCard.EvoRequirementColor == t.Color)
             .Select(t => (int?)(t.Cost ?? evoCard.EvoCost)).Min();
-        if (KoreanEvolution47.TamerCost(evoCard, tamer) is int k47) cost = cost == null ? k47 : Math.Min(cost.Value, k47);   // v0.47.0 〔진화〕「테이머 이름」 (BT18-011 「우정훈」)
+        if (KoreanEvolution47.TamerCost(evoCard, tamer, field) is int k47) cost = cost == null ? k47 : Math.Min(cost.Value, k47);   // v0.47.0 〔진화〕「테이머 이름」 (BT18-011 「우정훈」) · v0.48.0 필드 조건 · 테이머 아래 카드 조건은 field(테이머 주인의 필드)가 있을 때
         return cost;
     }
 

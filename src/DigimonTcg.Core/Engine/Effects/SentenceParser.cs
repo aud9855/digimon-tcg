@@ -77,7 +77,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse47(rawClause, inherited, card, def);   // v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse48(rawClause, inherited, card, def);   // v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -499,7 +499,7 @@ internal static partial class SentenceParser
     /// 처리할 때 플레이어에게 앞에서부터 물어 고르게 한다 (AI · 테스트는 첫 번째).
     /// </summary>
     public static string? TryParseChoice(string rawHeader, IReadOnlyList<string> rawOptions, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParseChoice46(rawHeader, rawOptions, inherited, card, def);   // v0.46.0 (Batch46) · v0.45.0 (Batch45) · v0.44.0 원래 규칙이 읽지 못한 고르는 효과만 18차 규칙으로 (SentenceParser.Batch44.cs)
+        TryParseChoice48(rawHeader, rawOptions, inherited, card, def);   // v0.48.0 (Batch48) · v0.46.0 (Batch46) · v0.45.0 (Batch45) · v0.44.0 원래 규칙이 읽지 못한 고르는 효과만 18차 규칙으로 (SentenceParser.Batch44.cs)
 
     private static string? TryParseChoiceCore(string rawHeader, IReadOnlyList<string> rawOptions, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -2371,7 +2371,7 @@ internal static partial class SentenceParser
     {
         var r = ParseStepCore(sentence, card, triggers);
         if (r.Error == null) return r;
-        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? StepFallback40(sentence, card, triggers) ?? StepFallback41(sentence, card, triggers) ?? StepFallback42(sentence, card, triggers) ?? StepFallback43(sentence, card, triggers) ?? StepFallback44(sentence, card, triggers) ?? StepFallback45(sentence, card, triggers) ?? StepFallback46(sentence, card, triggers) ?? r;   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42) · v0.41.0 (Batch41) · v0.40.0 (Batch40) · v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
+        return StepFallback38(sentence, card, triggers) ?? StepFallback39(sentence, card, triggers) ?? StepFallback40(sentence, card, triggers) ?? StepFallback41(sentence, card, triggers) ?? StepFallback42(sentence, card, triggers) ?? StepFallback43(sentence, card, triggers) ?? StepFallback44(sentence, card, triggers) ?? StepFallback45(sentence, card, triggers) ?? StepFallback46(sentence, card, triggers) ?? StepFallback48(sentence, card, triggers) ?? r;   // v0.48.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42) · v0.41.0 (Batch41) · v0.40.0 (Batch40) · v0.39.0 (Batch39) · v0.38.0 읽지 못한 문장만 다른 표기로 (SentenceParser.Batch38.cs)
     }
 
     private static (Step? Step, string? Error) ParseStepCore(string sentence, CardData card, List<EffectTrigger> triggers)
@@ -2511,7 +2511,8 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction43(s.TrimEnd('.'), card, triggers) is { } act43) act = act43;   // v0.43.0 (SentenceParser.Batch43.cs)
         if (act.Error != null && ParseAction44(s.TrimEnd('.'), card, triggers) is { } act44) act = act44;
         if (act.Error != null && ParseAction45(s.TrimEnd('.'), card, triggers) is { } act45) act = act45;   // v0.45.0 (SentenceParser.Batch45.cs)
-        if (act.Error != null && ParseAction46(s.TrimEnd('.'), card, triggers) is { } act46) act = act46;   // v0.46.0 (SentenceParser.Batch46.cs)   // v0.44.0 (SentenceParser.Batch44.cs)
+        if (act.Error != null && ParseAction46(s.TrimEnd('.'), card, triggers) is { } act46) act = act46;
+        if (act.Error != null && ParseAction48(s.TrimEnd('.'), card, triggers) is { } act48) act = act48;   // v0.48.0 (SentenceParser.Batch48.cs)   // v0.46.0 (SentenceParser.Batch46.cs)   // v0.44.0 (SentenceParser.Batch44.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)

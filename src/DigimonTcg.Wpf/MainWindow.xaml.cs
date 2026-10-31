@@ -4165,7 +4165,7 @@ public partial class MainWindow : Window
                 () => ApplyActionResult(_engine.AppFuse(card, fuseHost))));
         // v0.30.0 테이머에서 진화 (하이브리드체): 내 테이머 카드 위에 놓았을 때
         if (_dropTamer is { } tamerKey && _engine.ValidateTamerEvolution(tamerKey.Card, card).CanExecute
-            && CardScripts.TamerEvolutionCost(card, tamerKey.Card) is int tamerCost)
+            && _engine.TamerEvolutionCostFor(_gameState.Player, card, tamerKey.Card) is int tamerCost)
         {
             var tamer = tamerKey.Card;
             actions.Add(($"🧬 테이머에서 진화: [{tamer.DisplayName}] → [{card.DisplayName}] (코스트 {tamerCost})", () => ApplyActionResult(_engine.EvolveTamer(tamer, card))));

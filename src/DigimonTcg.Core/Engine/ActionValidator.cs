@@ -100,16 +100,16 @@ public static class ActionValidator
         _ => color.ToString()
     };
 
-    private static bool MeetsNormalEvolution(CardInstance target, CardData evoCard) =>
-        target.TopCard.Level == evoCard.EvoRequirementLevel
-        && (target.TopCard.Color == evoCard.EvoRequirementColor || target.ExtraColors.Contains(evoCard.EvoRequirementColor) || CardScripts.MeetsAlternativeEvolution(evoCard, target));
+    // v0.48.0 보통 진화 조건은 카드의 진화 코스트 칸 전부 (공식 영어 카드 리스트 — 여러 색 · 두 번째 칸, 진화하는 쪽은 가진 색 전부 — EvoRequirements48)
+    private static bool MeetsNormalEvolution(CardInstance target, CardData evoCard) => EvoRequirements48.NormalCost(target, evoCard) != null;
 
     /// <summary>target에서 evoCard로 진화하는 코스트 — 보통 진화와 카드 효과의 진화 중 싼 쪽 (진화할 수 없으면 카드의 진화 코스트)</summary>
     public static int EvolutionCost(CardInstance target, CardData evoCard)
     {
+        int? normal = EvoRequirements48.NormalCost(target, evoCard);
         int? special = CardScripts.SpecialEvolutionCost(evoCard, target);
-        if (special == null) return evoCard.EvoCost;
-        return MeetsNormalEvolution(target, evoCard) ? Math.Min(evoCard.EvoCost, special.Value) : special.Value;
+        if (special == null) return normal ?? evoCard.EvoCost;
+        return normal is int n ? Math.Min(n, special.Value) : special.Value;
     }
 
     // 2. 진화 유효성 검사 (명세서 기본 시그니처 유지)
@@ -133,14 +133,16 @@ public static class ActionValidator
                 ? $"진화 코스트 {special} 지불 (〔진화〕 조건). 진화 성공 시 카드 1장을 추가로 드로우합니다."   // v0.47.0 공식 한글 〔진화〕 진화 조건
                 : $"진화 코스트 {special} 지불 (카드 효과의 진화). 진화 성공 시 카드 1장을 추가로 드로우합니다.");
 
-        if (target.TopCard.Level != evoCard.EvoRequirementLevel)
-            return ActionResult.Fail($"Lv.{evoCard.EvoRequirementLevel} 디지몬 위에만 진화할 수 있습니다. (현재 대상: Lv.{target.TopCard.Level})");
+        var reqs = EvoRequirements48.For(evoCard);
+        if (reqs.Count == 0)
+            return ActionResult.Fail($"[{evoCard.Name}]은(는) 보통 진화 조건이 없는 카드입니다.");   // v0.48.0 공식 카드 리스트에 진화 코스트 칸이 없는 카드
 
-        bool colorMatches = target.TopCard.Color == evoCard.EvoRequirementColor || target.ExtraColors.Contains(evoCard.EvoRequirementColor)   // v0.37.0 색 추가 (Q&A BT3-014)
-            || CardScripts.MeetsAlternativeEvolution(evoCard, target);   // 카드에 적힌 다른 진화 조건 (예: 오메가몬 = Lv.6 레드 · 블루에서)
+        if (!EvoRequirements48.LevelMatches(target, evoCard))
+            return ActionResult.Fail($"Lv.{string.Join("/", reqs.Select(r => r.Level).Distinct())} 디지몬 위에만 진화할 수 있습니다. (현재 대상: Lv.{target.TopCard.Level})");
 
-        if (!colorMatches)
-            return ActionResult.Fail($"색상이 일치하지 않습니다. ({evoCard.EvoRequirementColor} 필요)");
+        // v0.37.0 색 추가 (Q&A BT3-014) · 카드에 적힌 다른 진화 조건 (예: 오메가몬 = Lv.6 레드 · 블루에서) · v0.48.0 여러 색 칸 · 다색의 진화하는 쪽
+        if (!MeetsNormalEvolution(target, evoCard))
+            return ActionResult.Fail($"색상이 일치하지 않습니다. ({string.Join("/", reqs.Where(r => r.Level == target.TopCard.Level).SelectMany(r => r.Colors).Distinct().Select(ColorName))} 필요)");
 
         string guide = $"진화 코스트 {EvolutionCost(target, evoCard)} 지불. 진화 성공 시 카드 1장을 추가로 드로우합니다.";
         return ActionResult.Success(guide);

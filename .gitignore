@@ -36,3 +36,6 @@ data/images_kr/
 
 # 카드 캐시 임시 · 읽기 실패 사본
 data/cards_cache.json.*
+
+# 공식 영어 카드 리스트에서 받은 진화 조건 (개인 로컬 사용 전용, tools/ensite)
+data/en/
