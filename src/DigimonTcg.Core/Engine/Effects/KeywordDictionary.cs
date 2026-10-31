@@ -262,7 +262,7 @@ public static class KeywordDictionary
     }
 
     /// <summary>선택지 줄 — "・~" · v0.45.0 "• ~" (BT15-098 · BT16-094 영어 데이터의 다른 기호)</summary>
-    private static bool IsOption45(string line) => line.StartsWith("・") || line.StartsWith("•");
+    private static bool IsOption45(string line) => line.StartsWith("・") || line.StartsWith("•") || line.StartsWith("· ");   // v0.50.0 "· ~" (EX12-066 ~ EX12-068)
 
     private static void AddParsed(CardScript script, IEnumerable<ParsedClause> clauses, bool inherited)
     {

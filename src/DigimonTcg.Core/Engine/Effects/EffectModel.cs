@@ -113,6 +113,8 @@ public enum EffectTrigger
     AllyTopStackedTrashed43,        // 자신의 디지몬에 겹쳐져 있는 카드가 위에서부터 파기되었을 때 (Other = 그 디지몬 — 맨 위 카드 파기 · ≪퇴화≫ · ≪아머 퍼지≫, BT21-094)
     // v0.46.0
     AllyEffectAddedToDeck46,        // 자신의 효과로 덱에 카드가 더해졌을 때 (어느 쪽 덱이든 — "When your effects add to decks" BT26-015, 효과 1개마다 1번)
+    // v0.50.0
+    StartOfOpponentsTurn50,         // [상대의 턴 개시 시] (LM-020 · 상대의 턴 개시 시에 자신의 카드)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>

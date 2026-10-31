@@ -996,6 +996,11 @@ public partial class GoldfishEngine
         RunPhaseTamers46(EffectTrigger.StartOfYourTurn, owner, witness46);
         RunPlacedOptions(EffectTrigger.StartOfYourTurn, owner, witness: witness46);
         RunTrashEffects(EffectTrigger.StartOfYourTurn, owner, witness: witness46);   // v0.31.0 [트래시] [~ 시] 효과
+        // v0.50.0 [상대의 턴 개시 시] — 턴 플레이어의 효과 다음에 상대의 디지몬 · 테이머 (LM-020)
+        var other50 = EnemyOf(owner);
+        foreach (var d in other50.BattleArea.ToList())
+            RunEffects(EffectTrigger.StartOfOpponentsTurn50, other50, d, d.TopCard);
+        RunPhaseTamers46(EffectTrigger.StartOfOpponentsTurn50, other50, witness46);
         RecalculateFieldBuffs();
     }
 
@@ -2173,7 +2178,18 @@ public partial class GoldfishEngine
     /// <summary>≪프로그레스≫: 어택 중인 이 디지몬은 상대의 효과를 받지 않는다 (effectOwner = 효과 주인)</summary>
     internal bool IsUnaffectedBy(PlayerZones effectOwner, CardInstance target) =>
         (ReferenceEquals(CurrentAttacker, target) && !OwnerOf(target).Equals(effectOwner) && CardScripts.HasKeyword(target, Keyword.Progress))
-        || UnaffectedByKeyword34(effectOwner, target);   // v0.34.0 "isn't affected by your opponent's (Digimon's) effects"
+        || UnaffectedByKeyword34(effectOwner, target)   // v0.34.0 "isn't affected by your opponent's (Digimon's) effects"
+        || UnaffectedCategory50(target);   // v0.50.0 LM-020 선언한 카드 종류의 효과 (이 디지몬의 효과 이외)
+
+    /// <summary>v0.50.0 그 카드 종류의 효과를 받지 않는다 (이 턴 — 이 디지몬 자신의 효과는 받는다)</summary>
+    private bool UnaffectedCategory50(CardInstance target)
+    {
+        if (target.UnaffectedCategory50 is not { } type || !EffectRules.IsActive(target.UnaffectedCategory50Until, State)) return false;
+        var card = CurrentEffectCard;
+        if (card == null || ReferenceEquals(card, target.TopCard) || target.EvolutionSources.Contains(card)) return false;
+        var effType = card.IsDual ? CardType.Option : card.Type;   // 듀얼 카드의 효과는 옵션 쪽으로 (UnaffectedByKeyword34와 같다)
+        return effType == type;
+    }
 
     private void TriggerWhenAttackingEffects(CardInstance attacker, CardInstance? defender)
     {

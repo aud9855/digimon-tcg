@@ -10,6 +10,22 @@
 
 ---
 
+## v0.50.0 — 2026-11-01
+미지원 문장 24차 묶음 (테이머 아래 카드 파기 사건 · 사건 시점의 고르는 효과 · 상대가 등장시키는 「석화」 토큰 · 레스트 상태의 디지몬에게만 어택 · 색 / 명칭이 서로 다른 카드를 테이머 아래에 · 덱 아래로 · 진화원 파기 · 이 디지몬의 【시큐리티】 효과 · 【상대의 턴 개시 시】) — 도감 효과 문장 지원 9,949 → 9,983 / 10,366 (96.0% → 96.3%, +34)
+- 모든 절이 동작하는 카드 3,940 → 3,965장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다
+- "When any of your opponent's Digimon or Tamers suspend, or effects trash cards from under your Tamers, ~" (BT26-044 · BT26-049 · BT26-091 · ST24-11): 사건 둘 사이의 쉼표 때문에 사건이 끊겼다 — 레스트 사건과 테이머 아래 카드 파기 사건 모두에 유발. BT26-049 "1 play cost or use cost 3 or lower ~ card ~. For each suspended Digimon or Tamer, add 1 to the cost maximum" = 서로의 레스트 상태 디지몬 · 테이머 1개마다 코스트 상한 +1
+- 고르는 효과: 선택지 기호 "· ~" (EX12-066 ~ EX12-068) · 사건 시점 머리말 "[Your Turn] When one of your Digimon ~ attacks, by suspending this Tamer, activate 1 of the effects below:" — 사건 → 비용 → 선택지 1개 (선택지의 "It" = 어택한 디지몬) · "When an opponent's Digimon becomes suspended, you may activate 1 of the effects below." (BT13-059 — 발휘하지 않을 수 있다)
+- 상대가 등장시키는 토큰 "they play 1 [Petrification] Token" (BT21-029 · BT24-017 · EX11-012) — 상대의 배틀 에어리어에 「석화」(화이트 · DP 3000 · 【자신의 턴】 레스트할 수 없다 · 【소멸 시】 자신의 시큐리티 1장 파기). 토큰의 지속 효과 "[Your Turn] This Digimon can't suspend." (새 지속 규칙 ParseStatic50)
+- "all of your opponent's Digimon can only attack suspended Digimon" (EX11-011 · EX8-016): 어택 대상은 원래 플레이어 또는 레스트 상태의 디지몬뿐 (종합 룰의 어택 대상) → 그동안 상대의 디지몬은 플레이어에게 어택할 수 없다
+- 색 / 명칭이 서로 다른 카드를 테이머 아래에 (23차 EX7-037 · EX10-053과 같은 판단 — 색: 서로 같은 색을 갖지 않는다): AD1-020 · AD1-023 (패/트래시에서 2장까지 · "이 테이머 아래에 하이브리드체 카드가 4장 이상" — 테이머 아래 카드는 한 묶음) · BT18-088 (다른 자신의 테이머 1명마다 상한 +2) · BT18-095 · BT18-097 (5장까지 → 아래에 카드가 5장 이상 있는 테이머를 패/트래시의 카이젤그레이몬 · 매그너가루몬으로 진화 조건을 무시하고 코스트 없이 진화)
+- P-024 "place 1 of your [Agumon] at the bottom of its owner's deck to ＜Draw 3＞ ~ Trash that Digimon's digivolution cards" (비용) — 맨 위 카드만 덱 아래로, 진화원은 트래시 (새 BottomDeckAsCost(trashSources50) — 다른 카드의 덱 아래로 되돌리기는 전처럼 진화원째)
+- EX13-036 "이 디지몬의 【시큐리티】 효과 1개를 발휘" (맨 위 카드의 【시큐리티】 효과) · EX6-073 두 번째 절 (명칭이 서로 다른 「7대마왕」 진화원 7장을 덱 아래로 → 상대의 디지몬/테이머 7개 소멸 → 시큐리티 7장에서 소멸시킨 수만큼 줄여 파기) · EX6-015 (블루인 다른 자신의 디지몬을 3마리까지 진화원 아래에 → 놓은 1장마다 Lv. 상한 +1로 Lv.4 이하의 다른 디지몬 전부를 패로)
+- 【상대의 턴 개시 시】 시점 (새 EffectTrigger.StartOfOpponentsTurn50 — 턴 플레이어의 【자신의 턴 개시 시】 다음): LM-020 카드 종류 선언 → 상대의 덱 위 1장 공개 → 같은 종류면 이 턴 동안 이 디지몬은 그 종류의 (이 디지몬 이외의) 효과를 받지 않는다 → 공개한 카드를 상대의 덱 위 또는 아래로 (CardInstance.UnaffectedCategory50)
+- 그 밖: BT7-111 "상대의 테이머 1명 또는 Lv.6 이하의 디지몬 1마리를 소멸" · BT14-048 "이 디지몬보다 DP가 높은 디지몬에게 어택하고 있다면" · BT21-102 "그 후, 이 테이머를 덱 아래로"
+- 동작이 바뀐 기존 카드: 없음 (KeywordDictionary의 선택지 기호에 "· "를 더했지만 이 기호로 시작하는 절은 EX12-066 ~ EX12-068의 6줄뿐)
+- 읽지 않고 남긴 것: AD1-020 · AD1-023 진화원 칸 "By attacking with this Digimon ~" · EX5-065 (【상대의 턴 개시 시】는 읽지만 진화원에서 같은 Lv. 카드를 등장시키는 비용) · 테이머 아래 카드 테이머마다 나누기 (사용자 결정 대기)
+- 테스트 14개 (EffectBatch50Tests), 전체 1,263개 통과 · AI 벤치마크 (720판) 56.5% / 67.6% 그대로
+
 ## v0.49.0 — 2026-11-01
 미지원 문장 23차 묶음 (앱몬 등급 진화 조건 칸 · 시큐리티 장수마다 바뀌는 〔진화〕 코스트 · play or use · 양쪽 트래시를 덱 아래로 · 시큐리티 · 진화원 조작 · 비교 대상 · 고르기) — 도감 효과 문장 지원 9,920 → 9,949 / 10,366 (95.7% → 96.0%, +29)
 - 모든 절이 동작하는 카드 3,914 → 3,940장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 29문장 모두 생성 한글이 붙는다

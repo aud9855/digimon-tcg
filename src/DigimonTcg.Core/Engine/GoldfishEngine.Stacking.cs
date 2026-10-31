@@ -45,7 +45,7 @@ public partial class GoldfishEngine
     }
 
     /// <summary>비용으로 자신의 디지몬을 덱 아래로 (맨 위 카드와 진화원 — "떠나려 할 때" 효과는 발휘하지만 막을 수 없다)</summary>
-    internal void BottomDeckAsCost(PlayerZones zones, CardInstance inst)
+    internal void BottomDeckAsCost(PlayerZones zones, CardInstance inst, bool trashSources50 = false)   // v0.50.0 trashSources50: 맨 위 카드만 덱으로, 진화원은 트래시 (P-024 "Trash that Digimon's digivolution cards")
     {
         TryPreventLeave(zones, inst, deletion: false, inBattle: false, canPrevent: false, LeaveDestination.Deck);
         if (!zones.BattleArea.Remove(inst))
@@ -53,6 +53,8 @@ public partial class GoldfishEngine
         ApplyOverflow(zones, inst.GetFaceUpStackBottomUp().Append(inst.TopCard));
         TrashLinks(zones, inst);
         if (!IsToken(inst.TopCard)) zones.MainDeck.Add(inst.TopCard);
+        if (trashSources50)
+            while (inst.EvolutionSources.Count > 0) zones.Trash.Add(inst.EvolutionSources.Pop());
         foreach (var s in inst.GetEvolutionStackBottomUp().Reverse())
             zones.MainDeck.Add(s);
         inst.EvolutionSources.Clear();

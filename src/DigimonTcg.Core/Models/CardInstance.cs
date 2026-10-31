@@ -40,6 +40,8 @@ public class CardInstance
     public int CannotDigivolveUntil { get; set; } // 진화할 수 없음 ("1 of their Digimon can't digivolve until their turn ends", v0.29.0)
     public int CannotUnsuspendUntil { get; set; } // 액티브가 될 수 없음 — 액티브 페이즈 · 효과 모두 ("can't unsuspend until the end of their turn")
     public int CannotSuspendUntil { get; set; }   // 레스트가 될 수 없음 — 어택 · 블록 · 효과로 레스트 불가 ("can't suspend until their turn ends")
+    public CardType? UnaffectedCategory50 { get; set; }   // v0.50.0 그 카드 종류의 효과를 받지 않음 (이 디지몬의 효과 이외 — LM-020 "isn't affected by that category's effects, other than this Digimon's effects, for the turn")
+    public int UnaffectedCategory50Until { get; set; }
     public bool AttackTargetLocked { get; set; }  // 이 어택 동안 어택 대상이 바뀌지 않음 ("This Digimon's attack target can't be switched") — 어택 종료 시 해제
     public List<CardData> LinkedCards { get; } = new();   // 링크 카드 (디지몬 옆에 가로로 끼운 카드 — 떠나면 트래시)
     public int GrantedBlockerUntil { get; set; }   // ≪블로커≫를 얻음 (메탈그레이몬 ST5-09)
