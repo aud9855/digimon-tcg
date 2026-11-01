@@ -492,8 +492,10 @@ public class EffectBatch46Tests
         int total = CountAll(state.Player);
         engine.DeleteByOpponentEffect(state.Player, eater);
         Assert.DoesNotContain(eater, state.Player.BattleArea);
-        Assert.True(b.HasSource("B46-EATER") && b.HasSource("B46-EATER4"), string.Join(" | ", state.ActionLogs));
+        // v0.77.0 맨 위 카드만 진화원으로 — 그 아래의 카드는 트래시 (종합 룰 4-7-7 · 4-7-8 · Q&A BT11-088). 전에는 진화원째 놓았다
+        Assert.True(b.HasSource("B46-EATER") && !b.HasSource("B46-EATER4"), string.Join(" | ", state.ActionLogs));
         Assert.DoesNotContain(state.Player.Trash, x => x.CardId == "B46-EATER");
+        Assert.Contains(state.Player.Trash, x => x.CardId == "B46-EATER4");
         Assert.Equal(total, CountAll(state.Player));
     }
 

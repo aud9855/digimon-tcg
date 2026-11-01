@@ -398,6 +398,12 @@ public sealed class CardScript
     /// <summary>"(While ~,) cards from your trash may also be placed for this card's DigiXros" — 이 조건(자신의 필드)이면 트래시도 디지크로스 재료</summary>
     public Func<PlayerZones, bool>? XrosFromTrash { get; set; }
 
+    /// <summary>
+    /// v0.77.0 "When you would play this card, by placing 1 [Shoutmon] as a digivolution card under this Digimon, reduce the cost by 1 and you may place cards in your trash as digivolution cards for a DigiXros"
+    /// (BT12-112 · BT21-030) — 배틀 에어리어의 그 이름의 디지몬 1마리(맨 위 카드)를 이 카드 아래에 놓으면 코스트 -Reduce, 그 등장의 디지크로스에 트래시의 카드도 (공식 Q&amp;A BT12-112 Q1 — 배틀 에어리어의 것만)
+    /// </summary>
+    public XrosFieldCost77? XrosFieldCost77 { get; set; }
+
     /// <summary>테이머: "When you would play 1 Digimon (조건) with DigiXros requirements, by suspending this Tamer, you may place cards from under your Tamers ~" — 그 디지몬 조건</summary>
     public Func<CardData, bool>? XrosUnderTamersFor { get; set; }
 
@@ -555,3 +561,6 @@ public sealed record PlayCostOption(int Reduce, Func<EffectContext, bool> CanPay
 
 /// <summary>v0.41.0 링크 코스트 감소 하나: Source = 적힌 곳 (진화원 효과면 그 카드가 진화원에 있을 때), Which = 링크하는 카드 조건, Key = 같은 효과를 두 번 등록하지 않게 (영어 데이터의 중복 문장)</summary>
 public sealed record LinkCostModifier41(EffectSource Source, Func<CardData, bool> Which, int Reduce, bool OncePerTurn, bool YourTurnOnly, bool Optional, string Key);
+
+/// <summary>v0.77.0 BT12-112 · BT21-030 — 등장할 때 놓을 배틀 에어리어의 디지몬 이름 (영어) · 줄일 코스트</summary>
+public sealed record XrosFieldCost77(IReadOnlyList<string> Names, int Reduce);

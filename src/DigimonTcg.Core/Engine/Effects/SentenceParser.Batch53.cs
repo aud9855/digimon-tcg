@@ -167,7 +167,7 @@ internal static partial class SentenceParser
         string c0 = cost.Trim();
         // BT16-090 "trashing 1 of your Digimon in the breeding area" (파기 — 소멸이 아니다)
         if (Regex.IsMatch(c0, @"^trashing (?:1 of )?your Digimon in (?:the|your) breeding area$", I))
-            return (c => c.Owner.BreedingArea is { } b && b.TopCard.Type == CardType.Digimon,
+            return (c => c.Owner.BreedingArea is { } b && GoldfishEngine.IsDigimonInArea77(b),   // v0.77.0 디지타마 카드도 (종합 룰 4-3-1 · Q&A BT16-090 Q1)
                     c =>
                     {
                         if (!c.Engine.TrashBreeding53(c.Owner)) { c.CostFailed = true; return; }

@@ -545,7 +545,8 @@ public partial class GoldfishEngine
         State.CanMulligan = false;
         State.Player.Hand.Remove(card);
         var xros = card.Type == CardType.Digimon && !card.IsDual ? TakeXrosMaterials(State.Player, card) : new List<CardData>();   // 디지크로스 재료 (1장마다 코스트 -N)
-        int cost = Math.Max(0, CardScripts.EffectivePlayCost(State.Player, card, State.DummyOpponent) - (PlayCostReductionBlocked(State.Player, card) ? 0 : XrosReduction(card, xros.Count)));   // 카드의 코스트 감소 효과 반영 (v0.36.0 마이너스할 수 없으면 디지크로스도)
+        int fieldCost77 = TakeXrosFieldCostReduce77();   // v0.77.0 BT12-112 · BT21-030 (막혀도 비운다)
+        int cost = Math.Max(0, CardScripts.EffectivePlayCost(State.Player, card, State.DummyOpponent) - (PlayCostReductionBlocked(State.Player, card) ? 0 : XrosReduction(card, xros.Count) + fieldCost77));   // v0.77.0 BT12-112 · BT21-030   // 카드의 코스트 감소 효과 반영 (v0.36.0 마이너스할 수 없으면 디지크로스도)
         cost = ApplyPlayCostOptions(State.Player, card, cost);   // "by ~ing, reduce the play cost" — 비용을 낼지 묻는다
         State.MemoryGauge -= cost;
         State.TotalMemorySpent += cost;
@@ -1858,7 +1859,8 @@ public partial class GoldfishEngine
         int beforeMem = ctx.Memory;
         var xros = TakeXrosMaterials(opp, card);   // 디지크로스: AI는 패의 카드만
         // 코스트는 필드에 놓기 전에 정한다 (플레이어와 같다 — "by deleting 1 of your Digimon"이 이 카드를 고르지 않게)
-        int cost = Math.Max(0, CardScripts.EffectivePlayCost(opp, card, State.Player) - (PlayCostReductionBlocked(opp, card) ? 0 : XrosReduction(card, xros.Count)));   // v0.36.0
+        int fieldCost77 = TakeXrosFieldCostReduce77();   // v0.77.0 BT12-112 · BT21-030 (막혀도 비운다)
+        int cost = Math.Max(0, CardScripts.EffectivePlayCost(opp, card, State.Player) - (PlayCostReductionBlocked(opp, card) ? 0 : XrosReduction(card, xros.Count) + fieldCost77));   // v0.77.0 BT12-112 · BT21-030   // v0.36.0
         cost = ApplyPlayCostOptions(opp, card, cost);
         var summoned = new CardInstance(card, State.CurrentTurn) { IsOwnersTurn = true };
         PlaceXrosMaterials(summoned, xros);

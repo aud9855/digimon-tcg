@@ -56,10 +56,12 @@ public partial class GoldfishEngine
         var taken = new List<CardData>();
         if (req == null) return taken;
         bool ask = ShouldAskPlayer(owner);
+        bool trash77 = PayXrosFieldCost77(owner, card, req);   // v0.77.0 BT12-112 · BT21-030 등장할 때 효과가 먼저 (종합 룰 7-2-2-2)
         var pool = new List<XrosCandidate>();
         pool.AddRange(owner.Hand.Where(c => c.Type == CardType.Digimon).Select(c => new XrosCandidate(c, null, owner.Hand)));
         if (ask) pool.AddRange(owner.BattleArea.Where(d => !IsToken(d.TopCard)).Select(d => new XrosCandidate(d.TopCard, d, null)));
-        if (CardScripts.For(card)?.XrosFromTrash is { } fromTrash && fromTrash(owner))
+        else pool.AddRange(owner.BattleArea.Where(d => !IsToken(d.TopCard) && IsXrosSubstitute77(owner, d)).Select(d => new XrosCandidate(d.TopCard, d, null)));   // v0.77.0 BT10-111 — AI는 패의 카드로 채우지 못한 칸만 (패 다음 후보)
+        if (CardScripts.For(card)?.XrosFromTrash is { } fromTrash && fromTrash(owner) || trash77)   // v0.77.0 trash77
             pool.AddRange(owner.Trash.Where(c => c.Type == CardType.Digimon).Select(c => new XrosCandidate(c, null, owner.Trash)));
         // 테이머: "by suspending this Tamer, you may place cards from under your Tamers as digivolution cards for a DigiXros"
         var underTamer = owner.Tamers.Distinct().FirstOrDefault(t => owner.HasActiveTamer(t) && CardScripts.For(t)?.XrosUnderTamersFor is { } f && f(card));
@@ -92,7 +94,7 @@ public partial class GoldfishEngine
         var picked = new List<XrosCandidate>();
         foreach (var slot in req.Slots)
         {
-            var cands = pool.Where(p => !used.Contains(p) && slot.Match(p.Card) && !GroupFull54(p, picked)).ToList();
+            var cands = pool.Where(p => !used.Contains(p) && (slot.Match(p.Card) || !slot.Distinct && IsXrosSubstitute77(owner, p.Instance)) && !GroupFull54(p, picked)).ToList();   // v0.77.0 BT10-111 조건 1장 대신 (15-15-6-1 · 카드 넘버가 서로 다른 칸은 안 된다 15-15-6-2)
             if (!ask) cands = cands.Where((p, i) => p.Group54 == null || cands.FindIndex(x => x.Group54 == p.Group54) == i).ToList();   // v0.54.0 같은 묶음은 1장만 후보로
             if (cands.Count == 0) continue;
             int max = Math.Min(slot.Count, cands.Count);

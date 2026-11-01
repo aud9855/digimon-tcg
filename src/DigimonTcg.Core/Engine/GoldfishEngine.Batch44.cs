@@ -12,7 +12,7 @@ public partial class GoldfishEngine
     /// <summary>육성 에어리어의 디지몬을 소멸시킨다 (비용 — 진화원과 함께 트래시로, ≪오버플로우≫). 소멸시켰으면 true</summary>
     internal bool DeleteBreeding44(PlayerZones owner)
     {
-        if (owner.BreedingArea is not { } b || b.TopCard.Type != CardType.Digimon) return false;
+        if (owner.BreedingArea is not { } b || !IsDigimonInArea77(b)) return false;   // v0.77.0 Lv.2 디지타마 카드도 (종합 룰 4-3-1)
         owner.BreedingArea = null;
         var stack = b.GetEvolutionStackBottomUp();
         ApplyOverflow(owner, stack.Append(b.TopCard));

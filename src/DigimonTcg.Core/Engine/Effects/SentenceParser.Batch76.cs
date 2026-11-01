@@ -192,8 +192,15 @@ internal static partial class SentenceParser
             string label = string.Join(" · ", triggers.Select(t => Labels.GetValueOrDefault(t, t.ToString())));
             return (c =>
             {
-                var own = c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && ownOk(d)).OrderByDescending(d => d.PlayCost45).FirstOrDefault();
+                var owns = c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && ownOk(d)).OrderByDescending(d => d.PlayCost45).ToList();
+                var own = owns.FirstOrDefault();
                 if (own == null) { c.LastStepResolved = false; Emit(c, label, "등장 코스트를 볼 자신의 디지몬이 없습니다"); return; }
+                // v0.77.0 여러 마리면 기준으로 할 1마리를 고른다 (추천 = 등장 코스트가 가장 높은 것 — "1 of your Digimon with ~": 고르는 것은 플레이어)
+                if (owns.Select(d => d.PlayCost45).Distinct().Count() > 1)
+                {
+                    own = c.Engine.ChooseTargets(c.Owner, owns, 1, $"[{c.Card.Name}] 등장 코스트를 기준으로 할 자신의 디지몬을 고르세요.", optional: false, preselected: null).FirstOrDefault() ?? owns[0];
+                    Diag46.Hit("costTotalRefChooser77");
+                }
                 DeleteCostTotal76(c, label, Math.Max(0, own.PlayCost45), dg, tm);
             }, null);
         }

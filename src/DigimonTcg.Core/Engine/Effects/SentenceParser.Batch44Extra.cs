@@ -300,7 +300,7 @@ internal static partial class SentenceParser
             if ((m = Regex.Match(s, @"^deleting (?:1|one) of your level (?<lv>\d+) Digimon (?:in|from) (?:the|your) breeding area$", I)).Success)
             {
                 int lv = int.Parse(m.Groups["lv"].Value);
-                return (c => c.Owner.BreedingArea is { } b && b.TopCard.Type == CardType.Digimon && b.TopCard.Level == lv,
+                return (c => c.Owner.BreedingArea is { } b && GoldfishEngine.IsDigimonInArea77(b) && b.TopCard.Level == lv,   // v0.77.0 Lv.2 디지타마 카드도 (종합 룰 4-3-1)
                         c => { if (!c.Engine.DeleteBreeding44(c.Owner)) c.CostFailed = true; else Diag44.Hit("deleteBreedingCost"); },
                         _ => true, $"육성 에어리어의 Lv.{lv} 디지몬을 소멸시켜");
             }

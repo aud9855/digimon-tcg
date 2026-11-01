@@ -120,8 +120,10 @@ public partial class GoldfishEngine
     {
         if (owner.BreedingArea is not { } b || !owner.BattleArea.Contains(target)) return false;
         owner.BreedingArea = null;
-        var stack = b.GetEvolutionStackBottomUp().Append(b.TopCard).ToList();   // 아래 → 위
-        for (int i = stack.Count - 1; i >= 0; i--) target.AddBottomSource(stack[i]);
+        // v0.77.0 맨 위 카드만 진화원으로 — 육성 에어리어를 떠나는 카드 아래에 겹쳐져 있던 카드(디지타마 등)는 동시에 파기 (종합 룰 4-7-7 · 4-7-8).
+        // 전에는 진화원째 놓았다
+        TrashSourcesOfPlaced77(owner, b);
+        target.AddBottomSource(b.TopCard);
         RecalculateFieldBuffs();
         Diag45.Hit("breedingPlacedUnder");
         return true;

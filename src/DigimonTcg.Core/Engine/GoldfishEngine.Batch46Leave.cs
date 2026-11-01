@@ -123,8 +123,11 @@ public partial class GoldfishEngine
         owner.BattleArea.Remove(moving);
         TrashLinks(owner, moving);
         if (ReferenceEquals(CurrentAttacker, moving)) CurrentAttacker = null;
-        var stack = moving.GetEvolutionStackBottomUp().Append(moving.TopCard).ToList();   // 아래 → 위
-        for (int i = stack.Count - 1; i >= 0; i--) host.AddBottomSource(stack[i]);
+        // v0.77.0 맨 위 카드만 진화원으로 — 그 아래에 겹쳐져 있던 카드는 동시에 파기 (종합 룰 4-7-7 · 4-7-8 · Q&A BT11-088 · BT12-102 · BT12-027).
+        // 전에는 진화원째 놓았다. 트래시로 가는 진화원만 ≪오버플로우≫ (4-19-4 — PlaceDigimonUnder와 같다)
+        TrashSourcesOfPlaced77(owner, moving);
+        if (!IsToken(moving.TopCard)) host.AddBottomSource(moving.TopCard);
+        PurgeTokens(owner);
         MarkLeaveEscaped46(moving);
         RecalculateFieldBuffs();
         Diag46.Hit("placeLeavingUnder");
