@@ -72,13 +72,13 @@ public class EffectBatch73Tests
     public void Korean_InAnyOfItsTraits_SaysContains_ExactTraitStaysHave()
     {
         string ko = Ko("[On Play] Reveal the top 3 cards of your deck. Add 1 card with [Avian] or [Bird] in any of its traits and 1 card with the [WG] trait among them to the hand. Return the rest to the bottom of the deck.");
-        Assert.Matches("특징으로 「[^」]+」/「[^」]+」[을를] 포함하는 카드 1장과 특징으로 「[^」]+」[을를] 가진 카드 1장", ko);
+        Assert.Matches("특징으로 「[^」]+」(?:/「[^」]+」)+[을를] 포함하는 카드 1장과 특징으로 「[^」]+」[을를] 가진 카드 1장", ko);   // v0.74.0 [Avian] · [Bird] → 「조」/「새」/「병아리」
         // "~ in any of its traits or the [X] trait" → "포함하거나 ~ 가진"
         string ko2 = Ko("[On Deletion] You may play 1 play cost 5 or lower card with [Avian] or [Bird] in any of its traits or the [DATA SQUAD] trait from your trash without paying the cost.");
-        Assert.Matches("특징으로 「[^」]+」/「[^」]+」[을를] 포함하거나 특징으로 「DATA SQUAD」[을를] 가진", ko2);
+        Assert.Matches("특징으로 「[^」]+」(?:/「[^」]+」)+[을를] 포함하거나 특징으로 「DATA SQUAD」[을를] 가진", ko2);
         // "(other than [Sea Animal])" 괄호가 사이에 있어도
         string ko3 = Ko("[When Digivolving] [When Attacking] [Once Per Turn] You may play 1 play cost 4 or lower Digimon card with [Beast], [Animal] or [Sovereign], other than [Sea Animal], in any of its traits from your hand without paying the cost.");
-        Assert.Contains("포함하는 디지몬 카드", ko3);
+        Assert.Contains("포함(「수장룡형」/「수생형」/「수생포유류형」/「정보수집 타입」은 제외)하는 디지몬 카드", ko3);   // v0.74.0 공식 BT13-048 제외 표기
         Assert.DoesNotContain("가진 디지몬 카드", ko3);
     }
 

@@ -184,7 +184,7 @@ public class EffectBatch70Tests
         if (KoreanCardData.Count > 0)
         {
             Assert.NotNull(ko);
-            Assert.Contains("「마수형」/「4성수」를", ko);
+            Assert.Contains("「수」/「짐승」을 포함", ko);   // v0.74.0 특징 포함은 공식 부분 낱말 (공식 BT13-048 「수」/「짐승」)
             Assert.DoesNotContain("「Animal」", ko);
             Assert.Contains("「룡」", saur);
         }

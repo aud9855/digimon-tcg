@@ -10,6 +10,28 @@
 
 ---
 
+## v0.74.0 — 2026-11-02
+미지원 문장 48차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A · 공식 카드 문구로 근거 확인) — 도감 효과 문장 지원 10,288 → 10,297 / 10,366 (99.3%, +9)
+- 모든 절이 동작하는 카드 4,241 → 4,250장 (수정 전 지원되던 문장 중 깨진 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다
+- 한글 표기 통일 1 (승인된 변경 — 문형): 특징 포함(종합 룰 2-3-2-4)을 공식 카드 문형 "특징으로 「X」를 포함하는"으로. "특징에 「X」를 포함하는" → "특징으로 ~", 제외는 "를 (「Y」는 제외) 포함하는" → 공식 BT13-048 "를 포함(「Y」는 제외)하는". 24줄 · 21장
+  - BT10-056 · BT10-057 · BT11-016 · BT13-048 · BT15-001 · BT15-007 · BT15-013 · BT16-015 · BT23-012 (2줄) · BT24-043 · BT24-050 · BT25-009 · BT25-010 · EX13-038 · EX13-042 · EX3-028 · EX3-030 · EX3-045 (2줄) · P-207 (2줄) · P-208 · RB1-034
+  - 함께 바로잡음: 제외 목록의 조사 "「3대천사」은" → "「3대천사」는" (EX3-028 · EX3-030)
+- 한글 표기 통일 2 (승인된 변경 — 특징 이름): 특징 포함 문맥의 영어 특징 묶음 → 공식 한글 카드가 쓰는 부분 낱말 (포함 문맥 전용 용어집 — 일치 "[X] trait"과 명칭은 그대로). 98줄 · 92장 (위 24줄 포함)
+  - [Avian] · [Bird] → 「조」/「새」/「병아리」 (공식 EX4-064 · BT13-094 · P-133) · [Beast] · [Animal] · [Sovereign] → 「수」/「짐승」 (공식 BT13-048 · RB1-034), 이때 [Sea Animal] 제외는 공식 「수장룡형」/「수생형」/「수생포유류형」/「정보수집 타입」 · [Aqua] · [Sea Animal] → 「수생」 (공식 BT19-082 등) · [Vegetation] · [Plant] → 「식물형」 (공식 BT10-046 · BT18-050) · [Dragon] · [saur] · [Ceratopsian] → 「용」/「룡」 (공식 EX3-003) · 천사 6종 → 「천사형」 (공식 EX3-028) · [Insect] → 「곤충형」 (공식 BT11-102 — 전에는 영어 그대로) · BT18-054 목록 → 「조」/「새」/「병아리」/「요정」
+  - BT10-046 · BT10-048 · BT10-053 · BT10-056 · BT10-057 · BT11-016 · BT11-024 · BT11-089 · BT11-102 · BT12-032 · BT13-048 (2줄) · BT13-049 · BT13-051 · BT13-089 · BT13-094 · BT13-100 · BT14-085 · BT15-001 · BT15-007 · BT15-013 · BT16-015 · BT18-023 · BT18-050 · BT18-054 · BT19-002 · BT19-017 · BT19-024 (2줄) · BT19-028 · BT19-082 · BT20-085 · BT21-033 · BT22-001 · BT22-018 · BT22-021 · BT22-024 · BT22-027 · BT22-028 · BT22-086 · BT22-096 · BT23-012 (2줄) · BT23-044 · BT23-046 · BT23-078 · BT24-020 · BT24-029 · BT24-030 · BT24-043 · BT24-044 · BT24-050 · BT25-009 · BT25-010 · BT25-012 · BT25-051 · BT25-055 · BT26-018 · BT26-065 · BT26-076 · EX11-018 · EX11-026 · EX11-035 · EX11-058 (2줄) · EX11-062 · EX11-072 · EX12-031 · EX12-036 · EX13-038 · EX13-042 · EX3-003 · EX3-006 · EX3-009 · EX3-014 · EX3-023 · EX3-026 · EX3-028 · EX3-030 · EX3-045 (2줄) · EX4-053 · EX4-058 · EX4-064 · EX6-015 · EX6-066 · EX7-031 · P-164 · P-166 · P-168 · P-207 (2줄) · P-208 · RB1-034 · ST18-04 · ST18-05 · ST18-09 · ST18-10
+  - 기계 확인: 바뀐 98줄 모두 영어에 "in any of its traits"가 있고, 특징 포함 구절을 빼면 바뀌기 전과 글자 하나까지 같다 (나머지 10,259줄은 그대로)
+- 화면: 배틀 에어리어의 디지몬 링크 (메인 페이즈 행동 — 종합 룰 6-5-1-4 · 10-1-1). 필드 디지몬 우클릭 → 「🔗 이 디지몬을 [X]에 링크 (코스트 N)」 · [메인] 효과 · 취소 중에서 고른다. 링크 조건에 맞는 자신의 다른 디지몬에 (10-1-3-1), 링크 코스트를 내고 (10-1-3-2 — 링크 코스트 감소 반영), 이 디지몬은 배틀 에어리어를 떠나고 진화원 · 링크 카드는 트래시 (4-9-4 · 4-7-8 — 확인 창에 알린다). 링크할 수 있으면 카드 툴팁에 우클릭 안내
+- AD1-009 "their Digimon's effects don't affect this Digimon and 1 of your Digimon with [Garurumon] in its name" — 이 디지몬과 다른 「가루몬」 1마리 (동시에 고를 때 같은 대상은 고를 수 없다 — 15-10-2-3)
+- EX8-043 "if this Digimon is suspended, ＜De-Digivolve 1＞ ~ and, until ~, their effects can't return this Digimon ~ or affect it with ＜De-Digivolve＞ effects" — 조건은 둘 다에 (공식 한글 EX8-043)
+- BT26-047 "none of your suspended [Insectoid] or [Titan] trait Digimon are affected by your opponent's Option effects, and they get +3000 DP" — 처리할 때 레스트 상태인 그 디지몬 전부
+- BT11-097 "activate 1 of the [On Deletion] effects of 1 of your red Digimon with the [Vaccine] trait" (공식 한글 BT11-097) · BT23-060 "Activate 1 [On Play] effect on a face-up [Zaxon] trait Digimon card in your security stack as an effect of this Digimon" — 앞면 시큐리티 카드는 그대로, 없어도 [턴에 1회]는 쓴다 (공식 Q&A BT23-060 Q1)
+- BT5-109 "At the end of the turn, return the Digimon that digivolved with this effect to the bottom of its owner's deck" — 이 효과의 Lv.6 → Lv.7 감소로 진화한 디지몬, 진화원은 파기 (공식 한글 BT5-109 · Q&A BT5-109 Q1 — 효과로 진화할 때도 감소)
+- EX1-071 "you may trash 1 Digimon card in your hand of the same color as the digivolving Digimon to reduce the memory cost of the digivolution by 4" — 배틀 에어리어에 있는 진화하는 디지몬의 색 (공식 Q&A EX1-071 Q1) · 1색이라도 같으면 (공식 Q&A P-206 Q1)
+- 공식 영어 카드 리스트로 고친 API 문장: BT23-033 링크 효과 "~ or affect it with effects" → "~ with ＜De-Digivolve＞ effects" (공식 한글 〈링크〉 【링크 시】도 《퇴화》) · BT24-056 끝에 붙은 다른 문장 조각 제거
+- 기존 카드 동작 변경: 없음 (1 · 2번은 표시만)
+- 읽지 않고 남긴 것: EX4-014 (【자신의 턴】[턴에 1회] 아래에 시점 둘 — [턴에 1회]를 둘이 함께 쓰는지 따로 쓰는지 룰 · Q&A에 없다) · EX2-007 (디지타마 카드 — 육성 에어리어의 【메인】 효과 처리가 필요) · 남은 문장 69개 (사용자 결정 대기 포함)
+- 테스트 22개 (EffectBatch74Tests), 전체 1,699개 통과 · 시뮬레이션 6,700판 (새 카드 · 영향 카드 1,500판 · 회귀 표본 5,200판) 예외 · 멈춤 · 카드 수 불일치 · 턴 상한 · 중복 객체 0 · AI 벤치마크 (720판) 기존 AI 56.5% · 개선 AI 68.1% (변화 없음)
+
 ## v0.73.0 — 2026-11-02
 미지원 문장 47차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A · 공식 카드 문구로 근거 확인) — 도감 효과 문장 지원 10,281 → 10,288 / 10,366 (99.2%, +7)
 - 모든 절이 동작하는 카드 4,235 → 4,241장 (수정 전 지원되던 문장 중 깨진 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다

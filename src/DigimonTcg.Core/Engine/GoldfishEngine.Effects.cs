@@ -1340,8 +1340,9 @@ public partial class GoldfishEngine
         ApplyOverflow(zones, inst.GetFaceUpStackBottomUp().Append(inst.TopCard));
         TrashLinks(zones, inst);
         zones.MainDeck.Add(inst.TopCard);
+        bool trashSources74 = _trashSourcesOnBottom74.Remove(inst);   // v0.74.0 BT5-109 "그 디지몬이 갖는 진화원은 파기한다" (GoldfishEngine.Batch74)
         foreach (var s in inst.GetEvolutionStackBottomUp().Reverse())
-            zones.MainDeck.Add(s);
+            (trashSources74 ? zones.Trash : zones.MainDeck).Add(s);
         inst.EvolutionSources.Clear();
         PurgeTokens(zones);
         NotifyLeftBattleArea(zones, inst);   // v0.33.0
@@ -2150,6 +2151,7 @@ public partial class GoldfishEngine
         RunTrashEffects(EffectTrigger.EndOfOpponentsTurn, owner, witness: witness46);   // v0.31.0 [트래시] [~ 시] 효과
         PlayFaceUpSecurityAtEndOfOpponentTurn38(owner);   // v0.38.0 [시큐리티]【상대의 턴 종료 시】
         RunScheduledReturns42();   // v0.42.0 "Return this Digimon to your hand at the end of the turn" (EX4-013) · "~ to the bottom of its owner's deck" (BT5-109)
+        _trashSourcesOnBottom74.Clear();   // v0.74.0 막혀서 되돌리지 못한 것은 잊는다
         RunScheduledDeletions();   // "~ is deleted at the end of the turn" (이 효과로 등장한 디지몬) — 턴 종료 시의 마지막
         RunScheduledReturns39();   // v0.39.0 "At the next end of your opponent's turn, return it to the hand"
         ExpireTamerProxies();   // v0.36.0 테이머의 디지몬 취급 기간 끝

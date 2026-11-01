@@ -39,7 +39,7 @@ internal static partial class SentenceParser
     };
 
     internal static string OfficialClause72(CardData card, string clause) =>
-        OfficialClauses72.TryGetValue(card.CardId, out var f) && clause.Trim() == f.Api ? f.Official : clause;
+        OfficialClauses72.TryGetValue(card.CardId, out var f) && clause.Trim() == f.Api ? f.Official : OfficialClause74(card, clause);   // v0.74.0 (SentenceParser.Batch74)
 
     // "(other than [X] trait)" · "other than [A] or [B] trait" — 제외할 특징은 원래부터 일치로 비교한다 (표식을 붙이지 않는다)
     private static readonly Regex OtherThan72 = new(@"other than (?:the |cards? with (?:the )?)?$", RegexOptions.IgnoreCase);

@@ -85,6 +85,7 @@ public partial class GoldfishEngine
             if (mod.OncePerTurn)
                 _evoCostModifierUsedTurn[key] = State.TurnSequence;
             ConsumeTurnEvoCostModifier41(mod);   // v0.41.0 "다음에 진화할 때" 감소는 한 번만
+            TurnEvoUsed74(owner, mod, target);   // v0.74.0 BT5-109 "이 효과로 진화한 디지몬" (GoldfishEngine.Batch74)
             EffectLog(owner, $"[{card.Name}] [{evoCard.Name}]으로 진화 — 진화 코스트 -{reduced} (코스트 {cost})");
         }
         return cost;

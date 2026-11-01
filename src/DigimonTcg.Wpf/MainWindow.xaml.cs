@@ -3350,6 +3350,9 @@ public partial class MainWindow : Window
             && _engine.GetMainAbilities(_gameState.Player).Where(a => ReferenceEquals(a.Digimon, instance)).ToList() is { Count: > 0 } usable
             && usable.Any(a => a.Inherited))
             fieldCardBorder.ToolTip = "우클릭: [메인] 효과 쓰기 — " + string.Join(", ", usable.Select(a => a.Inherited ? $"진화원 [{a.Card.DisplayName}]" : $"[{a.Card.DisplayName}]"));
+        // v0.74.0 배틀 에어리어의 디지몬 링크 (종합 룰 6-5-1-4) — 링크할 수 있으면 우클릭 안내
+        else if (!isBreedingArea && _engine.GetFieldLinkTargets(instance).Count > 0)
+            fieldCardBorder.ToolTip = $"우클릭: 🔗 이 디지몬 [{instance.TopCard.DisplayName}]을(를) 내 다른 디지몬에 링크";
 
         // 우클릭: 이 디지몬의 [메인] 기동 효과 사용 (≪디지버스트≫ 등, 육성 에어리어에서는 ≪트레이닝≫ — 쓸 수 있는지는 엔진이 확인)
         fieldCardBorder.MouseRightButtonUp += (_, e) =>
@@ -4548,6 +4551,13 @@ public partial class MainWindow : Window
         var mine = _gameState.CurrentPhase == Phase.Main
             ? _engine.GetMainAbilities(_gameState.Player).Where(a => ReferenceEquals(a.Digimon, instance)).ToList()
             : new List<GoldfishEngine.MainAbility>();
+        // v0.74.0 배틀 에어리어의 디지몬 링크 (종합 룰 6-5-1-4) — 링크할 수 있으면 [메인] 효과와 함께 고른다
+        var linkTargets = _gameState.Player.BattleArea.Contains(instance) && !IsReplayRunning ? _engine.GetFieldLinkTargets(instance) : Array.Empty<CardInstance>();
+        if (linkTargets.Count > 0)
+        {
+            ChooseDigimonFieldAction(instance, mine, linkTargets);
+            return;
+        }
         if (mine.Count <= 1)
         {
             TryActivateMainAbility(instance, mine.Count == 1 ? mine[0].Card : instance.TopCard);
@@ -4557,6 +4567,33 @@ public partial class MainWindow : Window
         int pick = _engine.PlayerChoices?.ChooseOption(_gameState, $"[{instance.TopCard.DisplayName}] 어느 [메인] 효과를 쓸까요?", labels, 0) ?? 0;
         if (pick >= 0 && pick < mine.Count)
             TryActivateMainAbility(instance, mine[pick].Card);
+    }
+
+    /// <summary>
+    /// v0.74.0 필드 디지몬 우클릭: [메인] 효과 · 🔗 링크 (종합 룰 6-5-1-4 「패/배틀 에어리어의 카드의 링크」) 중에서 고른다.
+    /// 링크하면 이 디지몬은 배틀 에어리어를 떠나 링크 카드가 되고, 진화원은 트래시 (4-7-8) — 확인 창을 한 번 더 띄운다
+    /// </summary>
+    private void ChooseDigimonFieldAction(CardInstance instance, IReadOnlyList<GoldfishEngine.MainAbility> mains, IReadOnlyList<CardInstance> linkTargets)
+    {
+        var labels = mains.Select(a => a.Inherited ? $"🧬 진화원 [{a.Card.DisplayName}]의 [메인] 효과" : $"⚡ [{a.Card.DisplayName}]의 [메인] 효과").ToList();
+        labels.AddRange(linkTargets.Select(t => $"🔗 이 디지몬을 [{t.TopCard.DisplayName}]에 링크" + (_engine.GetFieldLinkCost(instance, t) is int c ? $" (코스트 {c})" : "")));
+        labels.Add("✖ 취소");
+        int pick = _engine.PlayerChoices?.ChooseOption(_gameState, $"[{instance.TopCard.DisplayName}] 무엇을 할까요?", labels, labels.Count - 1) ?? labels.Count - 1;
+        if (pick < 0 || pick >= labels.Count - 1)
+            return;
+        if (pick < mains.Count)
+        {
+            TryActivateMainAbility(instance, mains[pick].Card);
+            return;
+        }
+        var target = linkTargets[pick - mains.Count];
+        int sources = instance.EvolutionSources.Count;
+        string warn = sources + instance.LinkedCards.Count > 0
+            ? $"\n\n이 디지몬은 배틀 에어리어를 떠나 링크 카드가 됩니다. 진화원 {sources}장" + (instance.LinkedCards.Count > 0 ? $" · 링크 카드 {instance.LinkedCards.Count}장" : "") + "은 트래시로 갑니다."
+            : "\n\n이 디지몬은 배틀 에어리어를 떠나 링크 카드가 됩니다.";
+        bool go = _engine.PlayerChoices?.Confirm(_gameState, instance, $"[{instance.TopCard.DisplayName}]을(를) [{target.TopCard.DisplayName}]에 링크할까요?{warn}", true) ?? true;
+        if (go)
+            ApplyActionResult(_engine.LinkFromField(instance, target));
     }
 
     private void TryActivateMainAbility(CardInstance? digimon, CardData card)
