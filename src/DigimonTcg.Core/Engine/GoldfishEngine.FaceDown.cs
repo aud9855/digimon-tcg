@@ -20,7 +20,8 @@ public partial class GoldfishEngine
 {
     /// <summary>v0.35.0 테이머가 "can't suspend" 상태인지 (효과 · 비용 모두 레스트할 수 없다)</summary>
     internal bool TamerSuspendLocked(PlayerZones owner, CardData tamer) =>
-        owner.TamerCannotSuspendUntil.TryGetValue(tamer, out int until) && EffectRules.IsActive(until, State);
+        (owner.TamerCannotSuspendUntil.TryGetValue(tamer, out int until) && EffectRules.IsActive(until, State))
+        || TamerSuspendLockStatic57(owner, tamer);   // v0.57.0 지속 효과 (EX5-052)
 
     /// <summary>v0.35.0 테이머가 "can't unsuspend" 상태인지 (액티브 페이즈에도 액티브가 되지 않는다)</summary>
     internal bool TamerUnsuspendLocked(PlayerZones owner, CardData tamer) =>

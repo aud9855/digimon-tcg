@@ -236,7 +236,7 @@ public static class KeywordDictionary
         }
         if (SentenceParser.IsLinkCard43(card)) SentenceParser.RetagLinkEffects43(script, linkSa43);   // v0.43.0 링크 카드의 하단 = 링크 효과 (링크되어 있는 동안)
         bool any = script.Keywords.Count + script.InheritedKeywords.Count + script.Effects.Count + script.Statics.Count > 0
-                   || script.OverflowMemory > 0 || script.DigisorptionReduction > 0 || script.BlastDigivolve || script.MaterialSave > 0 || script.LinkRequirement != null || script.SpecialEvolutions.Count > 0 || script.TamerEvolutions.Count > 0 || script.IgnoreColorRequirement != null || script.IgnoreColorRequirementVs52 != null || script.DigisorptionOpponent52 || script.SecurityCheckedPlay53 != null || script.VortexPlayers53 || script.PlayCostReduction != null || script.PlayCostOptions.Count > 0 || script.EvoCostModifiers.Count > 0 || script.FieldPlayCostModifiers.Count > 0 || script.GainedSourceEffects.Count > 0 || script.GainedLabeled54.Count > 0 || script.BlockOpponentTamerOnPlay54 != null || script.BlockWhenDigivolvingLevel54 > 0 || script.XrosUnderTamersAndTrash54 != null
+                   || script.OverflowMemory > 0 || script.DigisorptionReduction > 0 || script.BlastDigivolve || script.MaterialSave > 0 || script.LinkRequirement != null || script.SpecialEvolutions.Count > 0 || script.TamerEvolutions.Count > 0 || script.IgnoreColorRequirement != null || script.IgnoreColorRequirementVs52 != null || script.DigisorptionOpponent52 || script.SecurityCheckedPlay53 != null || script.VortexPlayers53 || script.PlayCostReduction != null || script.PlayCostOptions.Count > 0 || script.EvoCostModifiers.Count > 0 || script.FieldPlayCostModifiers.Count > 0 || script.GainedSourceEffects.Count > 0 || script.GainedLabeled54.Count > 0 || script.BlockOpponentTamerOnPlay54 != null || script.BlockWhenDigivolvingLevel54 > 0 || script.XrosUnderTamersAndTrash54 != null || script.OpponentTamerSuspendLock57 != null
                    || script.XrosAliases.Count > 0 || script.XrosFromTrash != null || script.XrosUnderTamersFor != null || script.OverclockSpecified != null
                    || script.EvoOnlyInto.Count > 0 || script.TamerAuras.Count > 0 || script.DnaAliases.Count > 0 || script.DnaAliasesYourTurn55.Count > 0 || script.LinkCostModifiers41.Count > 0 || script.SuccessionSpecs41.Count > 0   // v0.41.0 링크 코스트 감소 · ≪계승≫ · v0.34.0 · v0.37.0 DNA 진화 이름 취급
                    || script.SecurityPlayAtEndOfOpponentTurn38 || script.OpponentEvoCostIncreases40.Count > 0
@@ -267,6 +267,7 @@ public static class KeywordDictionary
         for (int i = 0; i < list.Count; i++)
         {
             bool header = Regex.IsMatch(list[i], @"(?:effects? below|following effects?)(?: twice| \d+ times| instead)?\s*[:.]?\s*$", RegexOptions.IgnoreCase)
+                          || Regex.IsMatch(list[i], @"\bactivate the effect below\. For each [^,]+, activate it again\.?\s*$", RegexOptions.IgnoreCase)   // v0.57.0 EX4-068
                           || list[i].Contains("＜Digi-Burst", StringComparison.OrdinalIgnoreCase) || list[i].Contains("＜Delay", StringComparison.OrdinalIgnoreCase);   // ≪디지버스트 N≫ (설명문 뒤에 ・효과)
             if (header && i + 1 < list.Count && IsOption45(list[i + 1]))
             {

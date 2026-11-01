@@ -97,6 +97,7 @@ public class EffectBatch39Tests
         var me = Put(state.Player, card, sources: opt);
         int confirmsBefore = choices.Confirms;
         engine.RunEffects(EffectTrigger.EndOfYourTurn, state.Player, me, card);
+        engine.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.Equal(confirmsBefore + 1, choices.Confirms);   // 비용 1번만 묻고, 어택은 묻지 않는다
         Assert.Equal(3, state.DummyOpponent.SecurityStack.Count);   // 《S 어택 +1》로 2장 체크
         Assert.True(Diag39.ForcedAttack > 0);
@@ -112,6 +113,7 @@ public class EffectBatch39Tests
         var me = Put(state.Player, card);
         Put(state.DummyOpponent, Digimon("B39-OUNS", 3));
         engine.RunEffects(EffectTrigger.EndOfYourTurn, state.Player, me, card);
+        engine.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.Equal(4, state.DummyOpponent.SecurityStack.Count);
         Assert.True(me.IsSuspended);
     }
@@ -126,6 +128,7 @@ public class EffectBatch39Tests
         AssertFull(card);
         var me = Put(state.Player, card);
         engine.RunEffects(EffectTrigger.WhenDigivolving, state.Player, me, card);
+        engine.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.True(choices.LastOptional);   // 시큐리티에도 어택할 수 있으니 "고르지 않음" = 시큐리티
         Assert.DoesNotContain(victim, state.DummyOpponent.BattleArea);
         Assert.False(me.IsSuspended);
@@ -141,6 +144,7 @@ public class EffectBatch39Tests
         var me = Put(state.Player, card);
         choices.ConfirmAnswer = false;
         engine.RunEffects(EffectTrigger.EndOfYourTurn, state.Player, me, card);
+        engine.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.Equal(5, state.DummyOpponent.SecurityStack.Count);
         Assert.DoesNotContain(me.TimedKeywords, k => k.Keyword == Keyword.Rush);   // 발휘하지 않으면 얻지도 않는다 (v0.38.0은 얻고 어택만 고름)
 
@@ -150,6 +154,7 @@ public class EffectBatch39Tests
         choices2.ConfirmAnswer = true;
         int before = choices2.Confirms;
         engine2.RunEffects(EffectTrigger.EndOfYourTurn, state2.Player, me2, card2);
+        engine2.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.Equal(before + 1, choices2.Confirms);   // "발휘할까요?" 한 번 — 어택은 묻지 않는다 (Q&A BT20-102)
         Assert.Equal(4, state2.DummyOpponent.SecurityStack.Count);
         Assert.False(me2.IsSuspended);
@@ -164,6 +169,7 @@ public class EffectBatch39Tests
         AssertFull(card);
         var me = Put(state.Player, card);
         engine.RunEffects(EffectTrigger.OnPlay, state.Player, me, card);
+        engine.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.DoesNotContain(victim, state.DummyOpponent.BattleArea);   // 10000 > 8000
         Assert.Equal("【등장 시】 이 턴 동안, 자신의 디지몬 1마리의 DP를 +5000 하고, 그 디지몬으로 상대의 디지몬에게 어택할 수 있다.",
             KoreanEffectRenderer.RenderClause("[On Play] 1 of your Digimon may get +5000 DP for the turn and attack your opponent's Digimon."));

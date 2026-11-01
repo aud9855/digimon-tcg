@@ -35,6 +35,7 @@ public partial class GoldfishEngine
         public bool EndPhase;                 // 턴 종료 단계 ([자신의 턴 종료 시] 효과 뒤 ≪볼텍스≫ · ≪에그제큐트≫ 어택)
         public readonly Dictionary<CardInstance, CardInstance?> QueuedTargets = new(ReferenceEqualityComparer.Instance);   // 효과로 큐에 넣은 어택자 → 대상 (null = 시큐리티)
         public readonly HashSet<CardInstance> NoSuspendAttackers = new(ReferenceEqualityComparer.Instance);                // "may attack without suspending"
+        public readonly HashSet<CardInstance> Declared57 = new(ReferenceEqualityComparer.Instance);                        // v0.57.0 효과로 이미 어택 선언한 디지몬 (레스트 · 【어택 시】 끝 — 카운터부터)
     }
 
     private AiTurnContext? _aiTurn;
@@ -116,6 +117,7 @@ public partial class GoldfishEngine
         State.PendingBlock = null;
         State.BlitzAttacker = null;
         _aiTurn = null;
+        _declared57 = null;   // v0.57.0
         _scheduledDeletions.Clear();
         _scheduledReturns39.Clear();
         _scheduledActs39.Clear();
@@ -413,6 +415,7 @@ public partial class GoldfishEngine
         FireUnsuspendPhase(State.Player, woke);
         NotifyTamersUnsuspended(State.Player, wokeTamers);
         TriggerStartOfTurn(State.Player);
+        RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택
     }
 
     /// <summary>
@@ -472,6 +475,7 @@ public partial class GoldfishEngine
 
         State.CurrentPhase = Phase.Main;
         TriggerStartOfMainPhase(State.Player);
+        RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택 ("[Start of Your Main Phase] This Digimon attacks.")
         Log("메인 페이즈로 전환되었습니다.");
         return ActionResult.Success($"{digitama.Name}(Lv.{digitama.Level})을 육성 에어리어에 부화하고 메인 페이즈로 이동했습니다.");
     }
@@ -493,6 +497,7 @@ public partial class GoldfishEngine
 
         State.CurrentPhase = Phase.Main;
         TriggerStartOfMainPhase(State.Player);
+        RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택 ("[Start of Your Main Phase] This Digimon attacks.")
         Log("메인 페이즈로 전환되었습니다.");
         return ActionResult.Success($"{moving.TopCard.Name}(Lv.{moving.TopCard.Level})을 배틀 에어리어로 이동하고 메인 페이즈로 전환했습니다.");
     }
@@ -512,6 +517,7 @@ public partial class GoldfishEngine
         State.BreedingActionTaken = true;
         State.CurrentPhase = Phase.Main;
         TriggerStartOfMainPhase(State.Player);
+        RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택 ("[Start of Your Main Phase] This Digimon attacks.")
         Log("육성 페이즈를 패스하고 메인 페이즈로 진입합니다.");
         return ActionResult.Success("육성 페이즈를 패스하고 메인 페이즈로 진입했습니다.");
     }
@@ -1026,6 +1032,7 @@ public partial class GoldfishEngine
     /// </summary>
     public bool CheckTurnEndAndAutoReset()
     {
+        RunDeclaredEffectAttack57();   // v0.57.0 이 행동의 효과로 선언한 어택: 발휘 대기가 없어졌으니 카운터 · 블록 · 배틀 (GoldfishEngine.Batch57)
         if (State.IsGameOver || State.MemoryGauge >= 0)
             return false;
 
@@ -1043,6 +1050,7 @@ public partial class GoldfishEngine
         State.CurrentPhase = Phase.TurnEnd;
         Log($"메모리가 {State.MemoryGauge}(0 미만)이 되어 플레이어 턴이 종료됩니다.");
         TriggerEndOfTurn(State.Player);
+        RunDeclaredEffectAttack57();   // v0.57.0 [자신의 턴 종료 시] "~ may attack"
         RunPlayerEndOfTurnAttacks();   // ≪볼텍스≫ · ≪에그제큐트≫ (턴 종료 시 어택)
         if (State.IsGameOver)
             return true;
@@ -1238,6 +1246,7 @@ public partial class GoldfishEngine
         // 3-A. [어택 전 메인 페이즈] 정책이 고른 옵션 · 진화 (메모리를 상대 쪽으로 넘기지 않는 것 — 진화 직후 바로 어택 가능!)
         while (ctx.Memory >= 0 && !State.IsGameOver)
         {
+            if (HasDeclaredAiAttack57(ctx)) break;   // v0.57.0 효과로 어택 선언했다 — 그 어택부터 (RunAiTurn)
             if (AiPolicy.ChooseOption(this, ctx.Memory, beforeAttacks: true) is { } option) { AiUseOption(ctx, option); continue; }
             if (AiPolicy.ChooseEvolution(this, ctx.Memory, beforeAttacks: true) is { } evo) { AiEvolve(ctx, evo.Base, evo.Card); continue; }
             if (AiTryTamerEvolution(ctx)) continue;   // v0.30.0 테이머에서 진화 (하이브리드체)
@@ -1295,22 +1304,24 @@ public partial class GoldfishEngine
             var aiAttacker = ctx.Attackers.Dequeue();
             if (ReferenceEquals(aiAttacker, ctx.BlitzAttacker))
                 ctx.BlitzAttacker = null;
+            bool declared57 = ctx.Declared57.Remove(aiAttacker);   // v0.57.0 효과로 이미 어택 선언 (대상은 ctx.AttackTarget — 사라졌으면 어택 실패, 종합 룰 11-2-6)
+            if (declared57) { ctx.QueuedTargets.Remove(aiAttacker); ctx.NoSuspendAttackers.Remove(aiAttacker); }
             // 효과 어택 ("may attack"): 큐에 넣을 때 고른 대상 (그사이 사라졌거나 어택할 수 없게 됐으면 시큐리티)
-            if (ctx.QueuedTargets.Remove(aiAttacker, out var queuedTarget))
+            else if (ctx.QueuedTargets.Remove(aiAttacker, out var queuedTarget))
                 ctx.AttackTarget = queuedTarget != null && State.Player.BattleArea.Contains(queuedTarget) && EffectRules.CanBeAttackTargetFor(aiAttacker, queuedTarget) ? queuedTarget : null;
             bool noSuspend = ctx.NoSuspendAttackers.Remove(aiAttacker);
-            if (!State.DummyOpponent.BattleArea.Contains(aiAttacker) || (aiAttacker.IsSuspended && !noSuspend) || EffectRules.IsAttackLocked(State, aiAttacker)
-                || (ctx.AttackTarget == null && !EffectRules.CanAttackPlayer(aiAttacker)))   // v0.34.0 "can't attack players"
+            if (!declared57 && (!State.DummyOpponent.BattleArea.Contains(aiAttacker) || (aiAttacker.IsSuspended && !noSuspend) || EffectRules.IsAttackLocked(State, aiAttacker)
+                || (ctx.AttackTarget == null && !EffectRules.CanAttackPlayer(aiAttacker))))   // v0.34.0 "can't attack players"
             {
                 ctx.AttackTarget = null;
                 continue;
             }
 
-            if (!noSuspend) SuspendAsAttacker(aiAttacker);
+            if (!declared57 && !noSuspend) SuspendAsAttacker(aiAttacker);
             State.OpponentAttackedThisTurn = true;
 
             // AI 디지몬의 [어택 시] 효과 (플레이어와 같은 카드 스크립트) → ≪연계≫ · ≪돌진≫
-            var attackEffects = CaptureEffectLogs(() =>
+            var attackEffects = declared57 ? CaptureEffectLogs(() => EnsureAiDeclaredTriggers57(ctx, aiAttacker)) : CaptureEffectLogs(() =>
             {
                 TriggerWhenAttackingEffects(aiAttacker, ctx.AttackTarget);
                 FireForSide(EffectTrigger.OpponentDigimonAttacks, State.Player, aiAttacker, triggerCard: ctx.AttackTarget?.TopCard);
@@ -1368,6 +1379,7 @@ public partial class GoldfishEngine
     private void EndAiAttack(AiTurnContext ctx, CardInstance aiAttacker)
     {
         ctx.AttackTarget = null;
+        ClearDeclaredAiAttack57(aiAttacker);   // v0.57.0
         AddEffectEvent(aiAttacker.TopCard, CaptureEffectLogs(() => EndAttack(aiAttacker)));
     }
 
@@ -1620,6 +1632,7 @@ public partial class GoldfishEngine
         bool acted = true;
         while (ctx.Memory >= 0 && acted && !State.IsGameOver)
         {
+            if (HasDeclaredAiAttack57(ctx)) { RunAiTurn(); return; }   // v0.57.0 효과로 어택 선언했다 — 그 어택부터 (끝나면 RunAiTurn이 다시 여기로)
             acted = false;
 
             // 1) 옵션 (정책)
@@ -1682,6 +1695,7 @@ public partial class GoldfishEngine
             _aiTurn = null;
             return;
         }
+        if (HasDeclaredAiAttack57(ctx)) { RunAiTurn(); return; }   // v0.57.0
 
         // ≪진격≫: 메모리가 상대 쪽이 되었어도 그 디지몬으로 어택한다 → 어택이 끝나면 RunAiTurn이 다시 여기로 온다
         if (ctx.BlitzAttacker is { } blitz)

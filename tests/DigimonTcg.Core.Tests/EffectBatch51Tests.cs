@@ -242,11 +242,13 @@ public class EffectBatch51Tests
         var (state, engine) = NewMainPhase();
         var me = Put(state.Player, Digimon("B51-HYB", 5, traits: new[] { "Hybrid" }), src);
         engine.RunEffects(EffectTrigger.EndOfYourTurn, state.Player, me, src);
+        engine.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.True(state.DummyOpponent.SecurityStack.Count <= 3, Logs(state));   // 시큐리티 2장 체크
         // 특징이 없으면 어택하지 않는다
         var (s2, e2) = NewMainPhase();
         var m2 = Put(s2.Player, Digimon("B51-NOHYB", 5), src);
         e2.RunEffects(EffectTrigger.EndOfYourTurn, s2.Player, m2, src);
+        e2.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.Equal(5, s2.DummyOpponent.SecurityStack.Count);
     }
 

@@ -85,6 +85,7 @@ public class EffectBatch52Tests
         var x7 = Put(state.Player, Digimon(Uid("B52-X7-"), 7, name: "Shoutmon X7: Superior Mode", dp: 15000));
         x7.IsSuspended = true;
         engine.RunEffects(EffectTrigger.Main, state.Player, null, opt);
+        engine.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.Equal(4, state.DummyOpponent.SecurityStack.Count);   // 액티브로 한 그 디지몬으로 플레이어에게 어택 (전에는 앞의 소멸 대상을 가리켜 어택하지 않았다)
         Assert.True(x7.IsSuspended, Logs(state));
     }
@@ -98,6 +99,7 @@ public class EffectBatch52Tests
         state.Player.Tamers.Add(tamer);
         var ts = Put(state.Player, Digimon(Uid("B52-TS-"), 5, traits: "TS"));
         engine.RunEffects(EffectTrigger.EndOfYourTurn, state.Player, null, tamer);
+        engine.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.Equal(4, state.DummyOpponent.SecurityStack.Count);
         Assert.True(ts.IsSuspended, Logs(state));
     }

@@ -29,13 +29,22 @@ public partial class GoldfishEngine
         bool canSecurity = EffectRules.CanAttackPlayer(attacker);
         if (targets.Count == 0 && !canSecurity)   // v0.34.0 어택할 수 있는 곳이 없다
             return false;
+        if (RefuseEffectAttackDuringAttack57(owner, attacker))   // v0.57.0 어택 중에는 새로 어택 선언을 할 수 없다
+            return false;
         if (!ReferenceEquals(owner, State.Player))
         {
             if (_aiTurn is not { } ctx || ctx.Attackers.Contains(attacker)) return false;   // 같은 시점의 두 번째 강제 어택은 어택하지 않는다 (Q&A EX5-048)
             var choice = AiPolicy.ChooseEffectAttack(this, attacker, targets, canAttackSecurity: true);
             // v0.39.0 정책이 고르지 않았거나 고를 수 없는 대상이면: 시큐리티에 어택할 수 없을 때는 디지몬 중에서 (전에는 언제나 시큐리티)
-            ctx.QueuedTargets[attacker] = choice is { Target: { } chosen } && targets.Contains(chosen) ? chosen : canSecurity ? null : ForcedAiTarget39(attacker, targets, canSecurity);
+            var aiTarget = choice is { Target: { } chosen } && targets.Contains(chosen) ? chosen : canSecurity ? null : ForcedAiTarget39(attacker, targets, canSecurity);
             Diag39.Hit(ref Diag39.ForcedAttack);
+            if (EffectAttackDeclare57)
+            {
+                Log($"🤖 [{label}] AI [{attacker.TopCard.Name}]이(가) 효과로 어택합니다!");
+                DeclareAiEffectAttack57(ctx, attacker, aiTarget, withoutSuspending: false);   // v0.57.0
+                return true;
+            }
+            ctx.QueuedTargets[attacker] = aiTarget;
             ctx.Attackers.Enqueue(attacker);
             Log($"🤖 [{label}] AI [{attacker.TopCard.Name}]이(가) 효과로 어택합니다!");
             return true;
@@ -45,6 +54,7 @@ public partial class GoldfishEngine
         var defender = ChooseForcedAttackTarget39(owner, attacker, targets, canSecurity,
             $"[{label}] [{attacker.TopCard.Name}]은(는) 반드시 어택합니다. 어택 대상을 고르세요.{(canSecurity ? " (고르지 않으면 시큐리티)" : "")}");
         Log($"[{label}] [{attacker.TopCard.Name}] 효과로 어택!");
+        if (EffectAttackDeclare57) { DeclarePlayerEffectAttack57(owner, attacker, defender, withoutSuspending: false); return true; }   // v0.57.0
         if (defender != null) PlayerAttackOnDigimonCore(attacker, defender);
         else PlayerSecurityAttackCore(attacker);
         return true;

@@ -441,6 +441,9 @@ public sealed class CardScript
     /// <summary>v0.54.0 "all of your opponent's Tamers [On Play] effects don't activate" (BT17-092) — (효과를 가진 쪽, 상대) 조건</summary>
     public Func<PlayerZones, PlayerZones, bool>? BlockOpponentTamerOnPlay54 { get; set; }
 
+    /// <summary>v0.57.0 "[Opponent's Turn] All of your opponent's Tamers with play costs of 2 or less can't suspend." (EX5-052) — 상대의 턴에 이 조건의 상대 테이머는 레스트할 수 없다</summary>
+    public Func<CardData, bool>? OpponentTamerSuspendLock57 { get; set; }
+
     /// <summary>v0.54.0 "The [When Digivolving] effects on level N Digimon don't activate" (BT5-085 — 양쪽 디지몬, 0 = 없음)</summary>
     public int BlockWhenDigivolvingLevel54 { get; set; }
 

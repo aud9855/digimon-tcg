@@ -473,6 +473,7 @@ public class EffectBatch38Tests
         var me = Put(state.Player, card);
         me.TurnPlayed = state.CurrentTurn;   // 이번 턴에 등장 — ≪속공≫으로 어택
         engine.RunEffects(EffectTrigger.OnPlay, state.Player, me, card);
+        engine.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.Contains(me.TimedKeywords, k => k.Keyword == Keyword.Rush);
         Assert.Equal(4, state.DummyOpponent.SecurityStack.Count);
     }

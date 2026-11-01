@@ -185,6 +185,7 @@ public class EffectBatch53Tests
         var old = Put(state.Player, Digimon("B53-OLD", 5, dp: 6000));
         old.IsSuspended = true; old.TurnPlayed = 0;
         engine.RunEffects(EffectTrigger.Main, state.Player, null, opt);
+        engine.RunDeclaredEffectAttack57();   // v0.57.0 효과로 선언한 어택은 행동이 끝날 때 카운터 · 블록 · 배틀
         Assert.Equal(4, state.DummyOpponent.SecurityStack.Count);   // 어택할 수 있는 디지몬을 액티브로 해 어택
         Assert.True(fresh.IsSuspended, Logs(state));
     }

@@ -80,7 +80,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse56(rawClause, inherited, card, def);   // v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse57(rawClause, inherited, card, def);   // v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -502,7 +502,7 @@ internal static partial class SentenceParser
     /// 처리할 때 플레이어에게 앞에서부터 물어 고르게 한다 (AI · 테스트는 첫 번째).
     /// </summary>
     public static string? TryParseChoice(string rawHeader, IReadOnlyList<string> rawOptions, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParseChoice50(rawHeader, rawOptions, inherited, card, def);   // v0.50.0 (Batch50) · v0.48.0 (Batch48) · v0.46.0 (Batch46) · v0.45.0 (Batch45) · v0.44.0 원래 규칙이 읽지 못한 고르는 효과만 18차 규칙으로 (SentenceParser.Batch44.cs)
+        TryParseChoice57(rawHeader, rawOptions, inherited, card, def);   // v0.57.0 (Batch57) · v0.50.0 (Batch50) · v0.48.0 (Batch48) · v0.46.0 (Batch46) · v0.45.0 (Batch45) · v0.44.0 원래 규칙이 읽지 못한 고르는 효과만 18차 규칙으로 (SentenceParser.Batch44.cs)
 
     private static string? TryParseChoiceCore(string rawHeader, IReadOnlyList<string> rawOptions, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -2113,7 +2113,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, @"^your opponent has (?<n>\d+) or more cards in (?:their|your opponent's) trash$", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); return c => c.Enemy.Trash.Count >= n; }
         if (ParseStaticCondition37(cond) is { } c37) return c37;   // v0.37.0 메모리 조건 (SentenceParser.Batch37.cs)
-        return ParseStaticCondition33(cond) ?? ParseStaticCondition51(cond);   // v0.51.0 (Batch51) · v0.33.0 (SentenceParser.Batch33b.cs)
+        return ParseStaticCondition33(cond) ?? ParseStaticCondition51(cond) ?? ParseStaticCondition57(cond);   // v0.57.0   // v0.51.0 (Batch51) · v0.33.0 (SentenceParser.Batch33b.cs)
     }
 
     // =====================================================================
@@ -2533,6 +2533,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction52(s.TrimEnd('.'), card, triggers) is { } act52) act = act52;
         if (act.Error != null && ParseAction53(s.TrimEnd('.'), card, triggers) is { } act53) act = act53;   // v0.53.0 (SentenceParser.Batch53.cs)   // v0.52.0 (SentenceParser.Batch52.cs)   // v0.51.0 (SentenceParser.Batch51.cs)   // v0.50.0 (SentenceParser.Batch50.cs) · v0.49.0 (SentenceParser.Batch49.cs)   // v0.48.0 (SentenceParser.Batch48.cs)   // v0.46.0 (SentenceParser.Batch46.cs)   // v0.44.0 (SentenceParser.Batch44.cs)
         if (act.Error != null && ParseAction55(s.TrimEnd('.'), card, triggers) is { } act55) act = act55;   // v0.55.0 (SentenceParser.Batch55.cs)
+        if (act.Error != null && ParseAction57(s.TrimEnd('.'), card, triggers) is { } act57) act = act57;   // v0.57.0 (SentenceParser.Batch57.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2605,7 +2606,7 @@ internal static partial class SentenceParser
         { int per = Per(m); return (o, e, _) => (o.Trash.Count + e.Trash.Count) / per; }
         if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?(?:total )?cards? in both players' security stacks$", RegexOptions.IgnoreCase)).Success)
         { int per = Per(m); return (o, e, _) => (o.SecurityStack.Count + e.SecurityStack.Count) / per; }
-        return ParseCounter32(counter) ?? ParseCounter34(counter) ?? ParseCounter35(counter) ?? ParseCounter38(counter) ?? ParseCounter39(counter) ?? ParseCounter42(counter) ?? ParseCounter43(counter) ?? ParseCounter44(counter) ?? ParseCounter45(counter) ?? ParseCounter46(counter) ?? ParseCounter50(counter) ?? ParseCounter55(counter);   // v0.55.0   // v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.42.0 (Batch42Count)   // v0.38.0 (Batch38b)   // v0.35.0 뒷면 진화원 (Batch35)   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
+        return ParseCounter32(counter) ?? ParseCounter34(counter) ?? ParseCounter35(counter) ?? ParseCounter38(counter) ?? ParseCounter39(counter) ?? ParseCounter42(counter) ?? ParseCounter43(counter) ?? ParseCounter44(counter) ?? ParseCounter45(counter) ?? ParseCounter46(counter) ?? ParseCounter50(counter) ?? ParseCounter55(counter) ?? ParseCounter57(counter);   // v0.57.0   // v0.55.0   // v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.42.0 (Batch42Count)   // v0.38.0 (Batch38b)   // v0.35.0 뒷면 진화원 (Batch35)   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
     }
 
     private static string Gerund(string verb) => verb.ToLowerInvariant() switch
@@ -2617,7 +2618,7 @@ internal static partial class SentenceParser
 
     /// <summary>비용 구절 → (낼 수 있는지, 내기, AI 추천, 설명)</summary>
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCost(string cost, CardData card) =>
-        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card) ?? ParseCost43(cost, card) ?? ParseCost44(cost, card) ?? ParseCost45(cost, card) ?? ParseCost46(cost, card) ?? ParseCost50(cost, card) ?? ParseCost51(cost, card) ?? ParseCost52(cost, card) ?? ParseCost53(cost, card) ?? ParseCost55(cost, card);   // v0.55.0   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
+        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card) ?? ParseCost43(cost, card) ?? ParseCost44(cost, card) ?? ParseCost45(cost, card) ?? ParseCost46(cost, card) ?? ParseCost50(cost, card) ?? ParseCost51(cost, card) ?? ParseCost52(cost, card) ?? ParseCost53(cost, card) ?? ParseCost55(cost, card) ?? ParseCost57(cost, card);   // v0.57.0   // v0.55.0   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
 
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCostCore(string cost, CardData card)
     {
@@ -3121,7 +3122,7 @@ internal static partial class SentenceParser
 
     private static Func<EffectContext, bool>? ParseEventCondition(string cond) => DeletionView45(ParseEventConditionChain(cond));   // v0.45.0 【소멸 시】 · "소멸했을 때"의 조건은 소멸 직전 모습으로 (SentenceParser.Batch45.cs)
 
-    private static Func<EffectContext, bool>? ParseEventConditionChain(string cond) => ColorDigimonOrTamer40(cond) ?? ParseEventConditionCore(cond) ?? ParseEventCondition38(cond) ?? ParseEventCondition40(cond) ?? ParseEventCondition41(cond) ?? ParseEventCondition43(cond) ?? ParseEventCondition44(cond) ?? ParseEventCondition45(cond) ?? ParseEventCondition49(cond) ?? ParseEventCondition50(cond) ?? ParseEventCondition51(cond);   // v0.51.0 · v0.50.0 · v0.49.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.41.0 (Batch41Cond) · v0.40.0 "a blue or green Digimon or Tamer"는 원래 규칙보다 먼저 (원래는 테이머의 색을 보지 않았다)   // v0.40.0 (Batch40Step) · v0.38.0 읽지 못한 조건만 (Batch38b)
+    private static Func<EffectContext, bool>? ParseEventConditionChain(string cond) => ColorDigimonOrTamer40(cond) ?? ParseEventConditionCore(cond) ?? ParseEventCondition38(cond) ?? ParseEventCondition40(cond) ?? ParseEventCondition41(cond) ?? ParseEventCondition43(cond) ?? ParseEventCondition44(cond) ?? ParseEventCondition45(cond) ?? ParseEventCondition49(cond) ?? ParseEventCondition50(cond) ?? ParseEventCondition51(cond) ?? ParseEventCondition57(cond);   // v0.57.0   // v0.51.0 · v0.50.0 · v0.49.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.41.0 (Batch41Cond) · v0.40.0 "a blue or green Digimon or Tamer"는 원래 규칙보다 먼저 (원래는 테이머의 색을 보지 않았다)   // v0.40.0 (Batch40Step) · v0.38.0 읽지 못한 조건만 (Batch38b)
 
     private static Func<EffectContext, bool>? ParseEventConditionCore(string cond)
     {

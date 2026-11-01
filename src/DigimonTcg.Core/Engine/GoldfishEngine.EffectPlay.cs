@@ -62,13 +62,25 @@ public partial class GoldfishEngine
             return false;
         if (toBreeding)
             return PlayToBreeding(owner, card);
+        List<CardData>? xros57 = null;
+        if (payCost is int xrosCost && EffectXrosFromTrash57 > 0 && origin == PlayOrigin.Trash && card.Type == CardType.Digimon && !card.IsDual && DigiXrosOf(card) is { } req57)
+        {
+            xros57 = TakeXrosFromTrash57(owner, card, req57);   // v0.57.0 트래시의 카드로 디지크로스 (BT10-104)
+            if (xros57.Count > 0 && !PlayCostReductionBlocked(owner, card)) payCost = Math.Max(0, xrosCost - req57.Reduction * xros57.Count);
+        }
         if (payCost is int cost)
         {
             AddMemory(owner, -cost);
             if (ReferenceEquals(owner, State.Player)) State.TotalMemorySpent += cost;
             EffectLog(owner, $"[효과] [{card.Name}] 등장 코스트 {cost} 지불");
         }
-        PlayWithoutCostFrom(owner, card, origin, triggerOnPlay, suspended);
+        _pendingXros57 = xros57 is { Count: > 0 } ? xros57 : null;
+        try { PlayWithoutCostFrom(owner, card, origin, triggerOnPlay, suspended); }
+        finally
+        {
+            if (_pendingXros57 != null) owner.Trash.AddRange(_pendingXros57);   // 놓지 못했으면 트래시로 되돌린다
+            _pendingXros57 = null;
+        }
         return true;
     }
 

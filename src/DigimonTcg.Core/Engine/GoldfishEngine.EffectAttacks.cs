@@ -48,19 +48,28 @@ public partial class GoldfishEngine
             : EnemyOf(owner).BattleArea.Where(t => EffectRules.CanBeAttackTargetFor(attacker, t)).ToList();
         if (!canSecurity && targets.Count == 0)
             return false;
+        if (RefuseEffectAttackDuringAttack57(owner, attacker))   // v0.57.0 어택 중에는 새로 어택 선언을 할 수 없다 (종합 룰 11-2-4 · 공식 Q&A BT20-090)
+            return false;
 
         if (!ReferenceEquals(owner, State.Player))
         {
             if (_aiTurn is not { } ctx)
                 return false;
-            if (forced && ctx.Attackers.Contains(attacker))
+            if (!EffectAttackDeclare57 && forced && ctx.Attackers.Contains(attacker))
                 return false;   // 같은 시점의 두 번째 강제 어택은 어택하지 않는다 (Q&A EX5-048)
             var choice = AiPolicy.ChooseEffectAttack(this, attacker, targets, canSecurity);
             bool legal = choice is { } ch && (ch.Target == null ? canSecurity : targets.Contains(ch.Target));
             if (!legal && !forced)
                 return false;
-            ctx.QueuedTargets[attacker] = legal ? choice!.Value.Target : ForcedAiTarget39(attacker, targets, canSecurity);
+            var aiTarget = legal ? choice!.Value.Target : ForcedAiTarget39(attacker, targets, canSecurity);
             if (forced) Diag39.Hit(ref Diag39.ForcedAttack);
+            if (EffectAttackDeclare57)
+            {
+                Log($"🤖 [{label}] AI [{attacker.TopCard.Name}]이(가) 효과로 어택합니다!");
+                DeclareAiEffectAttack57(ctx, attacker, aiTarget, withoutSuspending);   // v0.57.0 지금 어택 선언 (GoldfishEngine.Batch57)
+                return true;
+            }
+            ctx.QueuedTargets[attacker] = aiTarget;
             if (withoutSuspending) ctx.NoSuspendAttackers.Add(attacker);
             ctx.Attackers.Enqueue(attacker);
             Log($"🤖 [{label}] AI [{attacker.TopCard.Name}]이(가) 효과로 어택합니다!");
@@ -83,6 +92,11 @@ public partial class GoldfishEngine
         if (!canSecurity && defender == null)
             return false;
         Log($"[{label}] [{attacker.TopCard.Name}] 효과로 어택!{(withoutSuspending ? " (레스트하지 않음)" : "")}");
+        if (EffectAttackDeclare57)
+        {
+            DeclarePlayerEffectAttack57(owner, attacker, defender, withoutSuspending);   // v0.57.0 지금 어택 선언 → 【어택 시】는 효과가 끝난 뒤 → 배틀 (GoldfishEngine.Batch57)
+            return true;
+        }
         _nextAttackWithoutSuspending = withoutSuspending;
         if (defender != null) PlayerAttackOnDigimonCore(attacker, defender);
         else PlayerSecurityAttackCore(attacker);

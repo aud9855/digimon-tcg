@@ -1337,6 +1337,12 @@ public partial class GoldfishEngine
             return;
         }
         var inst = new CardInstance(card, State.CurrentTurn) { IsOwnersTurn = IsTurnOf(owner), IsSuspended = suspended, PlayedByEffectCard51 = CurrentEffectCard };   // v0.51.0 등장시킨 효과의 카드
+        if (_pendingXros57 is { } xros57)   // v0.57.0 효과 등장의 디지크로스 재료 (BT10-104)
+        {
+            PlaceXrosMaterials(inst, xros57);
+            _xrosByEffect57[inst] = (card, xros57.Count, State.TurnSequence);
+            _pendingXros57 = null;
+        }
         owner.BattleArea.Add(inst);
         PlayCollector?.Add(inst);
         RecalculateFieldBuffs();

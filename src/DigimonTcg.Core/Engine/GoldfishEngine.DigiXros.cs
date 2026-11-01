@@ -37,7 +37,7 @@ public partial class GoldfishEngine
     private (CardInstance? Digimon, int Count) _xrosPlay;
 
     /// <summary>이 디지몬이 지금 디지크로스로 등장하는 중이면 놓은 장수, 아니면 0</summary>
-    internal int XrosCountOf(CardInstance? digimon) => digimon != null && ReferenceEquals(_xrosPlay.Digimon, digimon) ? _xrosPlay.Count : 0;
+    internal int XrosCountOf(CardInstance? digimon) => digimon == null ? 0 : ReferenceEquals(_xrosPlay.Digimon, digimon) ? _xrosPlay.Count : XrosByEffect57(digimon);   // v0.57.0 효과 등장의 디지크로스 (BT10-104)
 
     /// <summary>재료 후보 1장 — Instance가 있으면 배틀 에어리어의 디지몬, Zone이 있으면 그 영역의 카드</summary>
     private sealed record XrosCandidate(CardData Card, CardInstance? Instance, List<CardData>? Zone)
