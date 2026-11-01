@@ -218,14 +218,7 @@ public partial class GoldfishEngine
         if (ReferenceEquals(owner, State.Player)) { State.TotalMemorySpent += paid; State.TotalEvolutionsCount++; }
         EffectLog(owner, $"[효과로 진화] 테이머 [{tamer.Name}] → [{evoCard.Name}(Lv.{evoCard.Level})] (코스트 {paid})");
         if (owner.BattleArea.Contains(inst))
-        {
-            _whenDigivolvingByEffect++;
-            try { ApplyWhenDigivolvingEffects(owner, inst, evoCard); }
-            finally { _whenDigivolvingByEffect--; }
-            _digivolvingByEffect++;
-            try { FireForSide(EffectTrigger.AllyDigimonDigivolved, owner, inst); }
-            finally { _digivolvingByEffect--; }
-        }
+            FireDigivolvedByEffect54(owner, inst, evoCard, fromTrash: false);   // v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
         return inst;
     }
 

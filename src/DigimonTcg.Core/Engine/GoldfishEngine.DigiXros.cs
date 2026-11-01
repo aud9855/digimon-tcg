@@ -40,7 +40,11 @@ public partial class GoldfishEngine
     internal int XrosCountOf(CardInstance? digimon) => digimon != null && ReferenceEquals(_xrosPlay.Digimon, digimon) ? _xrosPlay.Count : 0;
 
     /// <summary>재료 후보 1장 — Instance가 있으면 배틀 에어리어의 디지몬, Zone이 있으면 그 영역의 카드</summary>
-    private sealed record XrosCandidate(CardData Card, CardInstance? Instance, List<CardData>? Zone);
+    private sealed record XrosCandidate(CardData Card, CardInstance? Instance, List<CardData>? Zone)
+    {
+        /// <summary>v0.54.0 1장만 쓸 수 있는 묶음 (테이머 아래 1장 · 트래시 1장 — BT19-087)</summary>
+        public string? Group54 { get; init; }
+    }
 
     /// <summary>
     /// 패에서 card를 등장시키기 전에 디지크로스 재료를 고르고 떼어 낸다 (아직 아래에 놓지 않음). 반환: 고른 재료(위 → 아래)
@@ -66,11 +70,30 @@ public partial class GoldfishEngine
             pool.AddRange(owner.FaceUpUnderTamers.Where(c => c.Type == CardType.Digimon).Select(c => new XrosCandidate(c, null, owner.UnderTamers)));
         }
 
+        // v0.54.0 테이머: "by suspending this Tamer, 1 card under your Tamers and 1 card in your trash can also be placed for their DigiXros" (BT19-087 · EX10-064 · EX4-062 — 각각 1장까지)
+        var both54 = owner.Tamers.Distinct().FirstOrDefault(t => owner.HasActiveTamer(t) && CardScripts.For(t)?.XrosUnderTamersAndTrash54 is { } f54 && f54(card));
+        if (both54 != null)
+        {
+            bool trashOpen = pool.Any(p => ReferenceEquals(p.Zone, owner.Trash));
+            var under54 = owner.FaceUpUnderTamers.Where(c => c.Type == CardType.Digimon && req.Slots.Any(s => s.Match(c)) && !pool.Any(p => ReferenceEquals(p.Card, c))).ToList();
+            var trash54 = trashOpen ? new List<CardData>() : owner.Trash.Where(c => c.Type == CardType.Digimon && req.Slots.Any(s => s.Match(c))).ToList();
+            if (under54.Count + trash54.Count > 0
+                && AskYesNo(owner, null, $"[{both54.Name}]을(를) 레스트시켜 테이머 아래 · 트래시의 카드도 1장씩 [{card.Name}]의 디지크로스에 쓸까요?", recommended: true))
+            {
+                SuspendTamer(owner, both54);
+                pool.AddRange(under54.Select(c => new XrosCandidate(c, null, owner.UnderTamers) { Group54 = "under" }));
+                pool.AddRange(trash54.Select(c => new XrosCandidate(c, null, owner.Trash) { Group54 = "trash" }));
+                Diag46.Hit("xrosUnderTamersAndTrash54");
+            }
+        }
+        bool GroupFull54(XrosCandidate p, List<XrosCandidate> already) => p.Group54 != null && already.Any(x => x.Group54 == p.Group54);
+
         var used = new HashSet<XrosCandidate>();
         var picked = new List<XrosCandidate>();
         foreach (var slot in req.Slots)
         {
-            var cands = pool.Where(p => !used.Contains(p) && slot.Match(p.Card)).ToList();
+            var cands = pool.Where(p => !used.Contains(p) && slot.Match(p.Card) && !GroupFull54(p, picked)).ToList();
+            if (!ask) cands = cands.Where((p, i) => p.Group54 == null || cands.FindIndex(x => x.Group54 == p.Group54) == i).ToList();   // v0.54.0 같은 묶음은 1장만 후보로
             if (cands.Count == 0) continue;
             int max = Math.Min(slot.Count, cands.Count);
             var chosen = new List<XrosCandidate>();
@@ -86,6 +109,7 @@ public partial class GoldfishEngine
             foreach (var p in chosen)
             {
                 if (slot.Distinct && picked.Any(x => x.Card.CardId == p.Card.CardId)) continue;
+                if (GroupFull54(p, picked)) continue;   // v0.54.0 테이머 아래 · 트래시는 1장씩
                 used.Add(p);
                 picked.Add(p);
             }

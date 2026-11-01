@@ -183,6 +183,17 @@ public partial class GoldfishEngine
                 }
             }
 
+            // v0.54.0 얻은 진화원 카드의 [메인] / 【서로의 턴】 효과만 (BT22-078 · EX10-059 — 그 줄만 읽은 스크립트)
+            if (self != null && mainCard != null && !optionSide && ReferenceEquals(mainCard, self.TopCard) && trigger != EffectTrigger.ActivateMain)
+            {
+                foreach (var (gained, gainedScript) in CardScripts.GainedLabeled54(self, sources).ToList())
+                    foreach (var effect in gainedScript.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Main).ToList())
+                    {
+                        if (sources == null && !self.HasSource(gained.CardId)) break;
+                        Resolve(ctx, gained, effect);
+                    }
+            }
+
             if (includeInherited && self != null)
             {
                 var sourceCards = (sources ?? self.GetEvolutionStackBottomUp()).Where(s => !self.IsFaceDown(s)).GroupBy(s => s.CardId).Select(g => g.First()).ToList();
@@ -354,7 +365,7 @@ public partial class GoldfishEngine
         if (!ctx.Engine.FirstPlayedTrigger47(ctx, card, effect))   // v0.47.0 동시 등장의 "등장했을 때"는 같은 효과 1번만 (공식 Q&A ST12-04 Q1)
             return;
         // [턴에 1회] 기록: 같은 카드의 메인 효과와 진화원 효과는 다른 효과다 (v0.29.0 — 진화원 [메인]과 맨 위가 된 그 카드의 메인 효과, BT22-043)
-        string onceKey = (effect.Source == EffectSource.Inherited ? card.CardId + "#I" : effect.Source == EffectSource.Link43 ? card.CardId + "#L" : card.CardId) + effect.OnceKey53;   // v0.43.0 링크 효과 · v0.53.0 절마다
+        string onceKey = effect.OnceRecordKey(card);   // v0.43.0 링크 효과 · v0.53.0 절마다 · v0.54.0 효과(줄)마다
         if (effect.OncePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey))
             return;
         if (effect.TwicePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey) && !ctx.Self.UsedOncePerTurn.Add(onceKey + "#2"))
@@ -374,18 +385,25 @@ public partial class GoldfishEngine
         var handBefore = ctx.Self != null ? ctx.Owner.Hand.ToArray() : null;   // "one of your Digimon's effects adds cards to your hand" (v0.30.0)
         int drawsBefore = ctx.Engine.DrawSerial.GetValueOrDefault(ctx.Owner);
         var playBatch47 = ctx.Engine.BeginPlayBatch47();   // v0.47.0 이 효과로 등장한 카드는 동시에 — 등장 뒤 유발은 효과가 끝난 뒤 (GoldfishEngine.Batch47Play)
+        var triggerBatch54 = ctx.Engine.BeginTriggerBatch54();   // v0.54.0 이 효과 처리 중에 유발한 효과는 효과가 끝난 뒤 (GoldfishEngine.Batch54)
+        bool resolved54 = false;
         try
         {
             try
             {
-                ctx.Engine.PushEffectSelf53(ctx.Self);   // v0.53.0 "When this Digimon deletes another Digimon" — 이 효과의 디지몬
-                try { effect.Resolve(ctx); }
-                finally { ctx.Engine.PopEffectSelf53(); }
-                if (handBefore != null) ctx.Engine.NoteDigimonHandAdd(ctx.Owner, handBefore, drawsBefore);
+                try
+                {
+                    ctx.Engine.PushEffectSelf53(ctx.Self);   // v0.53.0 "When this Digimon deletes another Digimon" — 이 효과의 디지몬
+                    try { effect.Resolve(ctx); }
+                    finally { ctx.Engine.PopEffectSelf53(); }
+                    if (handBefore != null) ctx.Engine.NoteDigimonHandAdd(ctx.Owner, handBefore, drawsBefore);
+                }
+                finally { ctx.Engine.PlayCollector = outerCollector; if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); ctx.Engine.EndDeckAddWatch46(deckWatch46, ctx.Owner); }
             }
-            finally { ctx.Engine.PlayCollector = outerCollector; if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); ctx.Engine.EndDeckAddWatch46(deckWatch46, ctx.Owner); }
+            finally { ctx.Engine.EndPlayBatch47(playBatch47); }
+            resolved54 = true;
         }
-        finally { ctx.Engine.EndPlayBatch47(playBatch47); }
+        finally { ctx.Engine.EndTriggerBatch54(triggerBatch54, resolved54); }
         // 카드에 적힌 시점([등장 시] · [진화 시] · [어택 시] · [소멸 시])의 효과가 대상 · 조건이 없어 아무것도 안 했으면 그렇다고 남긴다.
         // 조용히 넘어가면 "효과가 안 탔다"로 보인다 (사용자 신고: 로제몬 · 쥬드몬 · 엔젤우몬 등 내장 스크립트의 return)
         if (ctx.State.ActionLogs.Count == logsBefore && ctx.Message == messageBefore && AnnouncedLabel(effect) is { } label)
@@ -534,6 +552,9 @@ public partial class GoldfishEngine
             if (CardScripts.For(gained) is { } gs)
                 foreach (var e in gs.Statics.Where(e => e.Source == EffectSource.Main))
                     yield return e;
+        foreach (var (_, ls) in CardScripts.GainedLabeled54(inst))   // v0.54.0 [메인] / 【서로의 턴】 효과만 (지속 효과)
+            foreach (var e in ls.Statics.Where(e => e.Source == EffectSource.Main))
+                yield return e;
         foreach (var source in inst.FaceUpSources.GroupBy(s => s.CardId).Select(g => g.First()))
         {
             if (CardScripts.For(source) is not { } script) continue;
@@ -1082,8 +1103,13 @@ public partial class GoldfishEngine
         if (n > 0)
         {
             Log($"[효과] {reason}: {SideName(zones)} 덱 위에서 {n}장 파기");
-            FireForSide(EffectTrigger.AllyDeckTrashed, zones, null, triggerCard: first);   // "When a card is trashed from your deck"
-            FireForSide(EffectTrigger.OpponentDeckTrashed, EnemyOf(zones), null, triggerCard: first);   // v0.31.0 "When your opponent's deck is trashed from"
+            var witness54 = DeferWitness54();   // v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
+            Defer54(() =>
+            {
+                if (State.IsGameOver) return;
+                FireForSide(EffectTrigger.AllyDeckTrashed, zones, null, triggerCard: first, witness: witness54);   // "When a card is trashed from your deck"
+                FireForSide(EffectTrigger.OpponentDeckTrashed, EnemyOf(zones), null, triggerCard: first, witness: witness54);   // v0.31.0 "When your opponent's deck is trashed from"
+            });
             FireThisCardTrashed(zones, zones.Trash.Skip(zones.Trash.Count - n).ToList(), EffectTrigger.ThisTrashedFromDeck);   // "When this card is trashed from your deck" (덱에서 직접)
         }
     }
@@ -1148,7 +1174,9 @@ public partial class GoldfishEngine
         PurgeTokens(zones);
         NotifyLeftBattleArea(zones, inst);   // v0.33.0
         if (!IsToken(inst.TopCard)) NotifyReturnedToHand(zones, inst);   // v0.33.0 "When another Digimon is returned to the hand"
-        FireForSide(EffectTrigger.OpponentHandAddedByEffect, EnemyOf(zones), null, triggerCard: inst.TopCard);   // "When an effect adds cards to your opponent's hand"
+        var returned54 = inst.TopCard;
+        var witness54 = DeferWitness54();
+        Defer54(() => { if (!State.IsGameOver) FireForSide(EffectTrigger.OpponentHandAddedByEffect, EnemyOf(zones), null, triggerCard: returned54, witness: witness54); });   // "When an effect adds cards to your opponent's hand" · v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
     }
 
     /// <summary>≪퇴화 N≫ — 버린 매수 반환</summary>
@@ -1300,7 +1328,7 @@ public partial class GoldfishEngine
             EffectLog(owner, $"[효과] 테이머 [{card.Name}] 코스트 없이 등장");
             if (DeferPlayed47(owner, null, card, triggerOnPlay)) { RecalculateFieldBuffs(); return; }   // v0.47.0 효과 하나로 함께 등장 — 효과가 끝난 뒤 한꺼번에 (GoldfishEngine.Batch47Play)
             var witness46 = CaptureWitness46();   // v0.46.0
-            if (triggerOnPlay) RunEffects(EffectTrigger.OnPlay, owner, null, card, includeInherited: false);
+            if (triggerOnPlay && !TamerOnPlayBlocked54(owner, card)) RunEffects(EffectTrigger.OnPlay, owner, null, card, includeInherited: false);   // v0.54.0 BT17-092
             FireForSide(EffectTrigger.AllyTamerPlayed, owner, null, triggerCard: card, witness: witness46);
             FireForSide(EffectTrigger.OpponentTamerPlayed, EnemyOf(owner), null, triggerCard: card, witness: witness46);
             RecalculateFieldBuffs();
@@ -1357,14 +1385,19 @@ public partial class GoldfishEngine
         if (attacker == null || _notifyingTargetSwitch || State.IsGameOver)
             return;
         var owner = OwnerOf(attacker);
-        _notifyingTargetSwitch = true;
-        try
+        var witness54 = DeferWitness54();
+        Defer54(() =>   // v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
         {
-            FireForSide(EffectTrigger.AttackTargetSwitched, owner, attacker);
-            FireForSide(EffectTrigger.AttackTargetSwitched, EnemyOf(owner), attacker);
-            FireForSide(EffectTrigger.AllyAttackTargetSwitched, owner, attacker);
-        }
-        finally { _notifyingTargetSwitch = false; }
+            if (State.IsGameOver || _notifyingTargetSwitch) return;
+            _notifyingTargetSwitch = true;
+            try
+            {
+                FireForSide(EffectTrigger.AttackTargetSwitched, owner, attacker, witness: witness54);
+                FireForSide(EffectTrigger.AttackTargetSwitched, EnemyOf(owner), attacker, witness: witness54);
+                FireForSide(EffectTrigger.AllyAttackTargetSwitched, owner, attacker, witness: witness54);
+            }
+            finally { _notifyingTargetSwitch = false; }
+        });
     }
 
     /// <summary>
@@ -1380,7 +1413,8 @@ public partial class GoldfishEngine
         }
         if (!(from ?? owner.Hand).Remove(evoCard))
             return;
-        cost = ApplyEvoCostModifiers(owner, target, evoCard, cost);   // "When this Digimon would digivolve, reduce the digivolution cost" (코스트 없는 진화는 그대로 0)
+        cost = WithEvoOrigin54(from == null || ReferenceEquals(from, owner.Hand) ? EvoOrigin54.Hand : ReferenceEquals(from, owner.Trash) ? EvoOrigin54.Trash : EvoOrigin54.Other,
+            () => ApplyEvoCostModifiers(owner, target, evoCard, cost));   // "When this Digimon would digivolve, reduce the digivolution cost" (코스트 없는 진화는 그대로 0) · v0.54.0 진화할 카드가 있던 곳
         target.Evolve(evoCard);
         EffectEvolveSerial40++;   // v0.40.0 "If digivolved by this effect"
         AddMemory(owner, -cost);
@@ -1392,21 +1426,8 @@ public partial class GoldfishEngine
         DrawFor(owner);
         RecalculateFieldBuffs();
         EffectLog(owner, $"[효과로 진화] [{evoCard.Name}(Lv.{evoCard.Level})] (코스트 {cost})");
-        if (owner.BattleArea.Contains(target))
-        {
-            bool fromTrash = ReferenceEquals(from, owner.Trash);   // v0.33.0 "When any of your Digimon digivolve from the trash" · "this card is digivolving from the trash"
-            if (fromTrash) _digivolvingFromTrash++;
-            try
-            {
-                _whenDigivolvingByEffect++;   // v0.33.0 [진화 시] "If played or digivolved by effects"
-                try { ApplyWhenDigivolvingEffects(owner, target, evoCard); }
-                finally { _whenDigivolvingByEffect--; }
-                _digivolvingByEffect++;   // v0.31.0 "When effects digivolve your opponent's Digimon"
-                try { FireForSide(EffectTrigger.AllyDigimonDigivolved, owner, target); }
-                finally { _digivolvingByEffect--; }
-            }
-            finally { if (fromTrash) _digivolvingFromTrash--; }
-        }
+        if (owner.BattleArea.Contains(target))   // v0.33.0 "digivolve from the trash" · [진화 시] "If played or digivolved by effects" · v0.31.0 "When effects digivolve ~" — v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
+            FireDigivolvedByEffect54(owner, target, evoCard, fromTrash: ReferenceEquals(from, owner.Trash));
     }
 
     private int _digivolvingByEffect;
@@ -1465,16 +1486,23 @@ public partial class GoldfishEngine
         if (trashed.Count == 0)
             return;
         var first = trashed.First();
-        var outerCards = CurrentHandTrashed;
-        var outerBy = HandTrashedBy;
-        CurrentHandTrashed = trashed.ToList();   // v0.31.0 "When a Digimon card with the [X] trait is trashed from your hand" — 버린 카드 조건
-        HandTrashedBy = CurrentEffectOwner;      // v0.31.0 "~ by your effect"
-        try
+        var cards54 = trashed.ToList();
+        var by54 = CurrentEffectOwner;
+        var witness54 = DeferWitness54();
+        Defer54(() =>   // v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤 (버린 카드 · 버린 효과의 주인은 버린 때의 것)
         {
-            FireForSide(EffectTrigger.AllyHandTrashed, zones, null, triggerCard: first);
-            FireForSide(EffectTrigger.OpponentHandTrashed, EnemyOf(zones), null, triggerCard: first);
-        }
-        finally { CurrentHandTrashed = outerCards; HandTrashedBy = outerBy; }
+            if (State.IsGameOver) return;
+            var outerCards = CurrentHandTrashed;
+            var outerBy = HandTrashedBy;
+            CurrentHandTrashed = cards54;   // v0.31.0 "When a Digimon card with the [X] trait is trashed from your hand" — 버린 카드 조건
+            HandTrashedBy = by54;           // v0.31.0 "~ by your effect"
+            try
+            {
+                FireForSide(EffectTrigger.AllyHandTrashed, zones, null, triggerCard: first, witness: witness54);
+                FireForSide(EffectTrigger.OpponentHandTrashed, EnemyOf(zones), null, triggerCard: first, witness: witness54);
+            }
+            finally { CurrentHandTrashed = outerCards; HandTrashedBy = outerBy; }
+        });
         FireThisCardTrashed(zones, trashed, EffectTrigger.ThisTrashedFromHand);   // "When this card is trashed from your hand"
     }
 
@@ -1538,6 +1566,10 @@ public partial class GoldfishEngine
             foreach (var gained in CardScripts.GainedSources(d))
                 if (HasMainAbility(gained) && !_usedMainAbilities.ContainsKey((d, gained.CardId, "gained")))
                     list.Add(new MainAbility(d, gained, Gained: true));
+            foreach (var (gained54, ls54) in CardScripts.GainedLabeled54(d))   // v0.54.0 "gains all [Main] effects of its digivolution cards with ~" (BT22-078)
+                if (ls54.Effects.Any(e => e.Trigger == EffectTrigger.ActivateMain) && HasMainAbility(gained54) && !_usedMainAbilities.ContainsKey((d, gained54.CardId, "gained"))
+                    && !list.Any(a => ReferenceEquals(a.Digimon, d) && a.Gained && a.Card.CardId == gained54.CardId))
+                    list.Add(new MainAbility(d, gained54, Gained: true));
             // 진화원의 [메인] 기동 효과 (v0.29.0 — "[Main] [Once Per Turn] By placing this Digimon's top stacked card ~"): 진화원 카드마다
             foreach (var source in d.GetFaceUpStackBottomUp().GroupBy(s => s.CardId).Select(g => g.First()))
                 if (HasInheritedMainAbility(source) && !_usedMainAbilities.ContainsKey((d, source.CardId)))
@@ -1646,18 +1678,7 @@ public partial class GoldfishEngine
         if (!owner.BattleArea.Contains(inst))
             return;
         bool tamerToo = inst.TamerProxyOf != null && SuspendProxyTamer(owner, inst);   // v0.36.0 디지몬으로 취급하는 테이머 — 테이머도 레스트
-        WithSuspendCause(() =>   // v0.32.0 "When an effect suspends ~"
-        {
-            RunEffects(EffectTrigger.ThisDigimonSuspends, owner, inst, inst.TopCard);
-            FireForSide(EffectTrigger.AllyDigimonSuspended, owner, inst);
-            FireForSide(EffectTrigger.OpponentDigimonSuspended, EnemyOf(owner), inst);
-            if (tamerToo && inst.TamerProxyOf is { } tamer)
-            {
-                FireForSide(EffectTrigger.AllyTamerSuspended, owner, null, triggerCard: tamer);
-                FireForSide(EffectTrigger.OpponentTamerSuspended, EnemyOf(owner), null, triggerCard: tamer);
-            }
-            return true;
-        });
+        FireSuspended54(owner, inst, tamerToo);   // v0.32.0 "When an effect suspends ~" · v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
     }
 
     /// <summary>
@@ -1681,8 +1702,20 @@ public partial class GoldfishEngine
 
     private void NotifySecurityRemovedCore(PlayerZones zones, CardData? card, bool trashed)
     {
-        FireForSide(EffectTrigger.AllySecurityRemoved, zones, null, triggerCard: card);
-        FireForSide(EffectTrigger.OpponentSecurityRemoved, EnemyOf(zones), null, triggerCard: card);
+        var (byEffect54, trashed54) = (SecurityRemovedByEffect, SecurityRemovedTrashed);
+        var witness54 = DeferWitness54();
+        Defer54(() =>   // v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤 (효과로 빠졌는지 · 파기인지는 빠진 때의 것)
+        {
+            if (State.IsGameOver) return;
+            var (outerEffect, outerTrashed) = (SecurityRemovedByEffect, SecurityRemovedTrashed);
+            (SecurityRemovedByEffect, SecurityRemovedTrashed) = (byEffect54, trashed54);
+            try
+            {
+                FireForSide(EffectTrigger.AllySecurityRemoved, zones, null, triggerCard: card, witness: witness54);
+                FireForSide(EffectTrigger.OpponentSecurityRemoved, EnemyOf(zones), null, triggerCard: card, witness: witness54);
+            }
+            finally { (SecurityRemovedByEffect, SecurityRemovedTrashed) = (outerEffect, outerTrashed); }
+        });
         // 효과가 시큐리티에서 직접 파기한 카드 자신의 "When an effect trashes this card from the security stack" (v0.29.0)
         if (trashed && card != null)
             FireThisCardTrashed(zones, new[] { card }, EffectTrigger.ThisTrashedFromSecurity);
@@ -1720,8 +1753,13 @@ public partial class GoldfishEngine
     /// <summary>zones의 시큐리티에 카드가 놓였다 (≪리커버리≫ 등) — "When a card is added to your security stack"</summary>
     internal void NotifySecurityAdded(PlayerZones zones, CardData? card = null)
     {
-        FireForSide(EffectTrigger.AllySecurityAdded, zones, null, triggerCard: card);
-        FireForSide(EffectTrigger.OpponentSecurityAdded, EnemyOf(zones), null, triggerCard: card);   // v0.33.0 "When a card is added to your opponent's security stack"
+        var witness54 = DeferWitness54();
+        Defer54(() =>   // v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
+        {
+            if (State.IsGameOver) return;
+            FireForSide(EffectTrigger.AllySecurityAdded, zones, null, triggerCard: card, witness: witness54);
+            FireForSide(EffectTrigger.OpponentSecurityAdded, EnemyOf(zones), null, triggerCard: card, witness: witness54);   // v0.33.0 "When a card is added to your opponent's security stack"
+        });
     }
 
     /// <summary>owner 쪽 디지몬(메인 · 진화원)과 테이머 전부에 trigger 시점을 알린다 (other = 그 일을 일으킨 디지몬)</summary>
@@ -1793,12 +1831,7 @@ public partial class GoldfishEngine
             return;
         owner.SuspendedTamers.Add(tamer);
         if (TamerProxyOf(owner, tamer) is { } proxy36) { proxy36.IsSuspended = true; SyncTamerProxies(); }   // v0.36.0 디지몬으로도 취급 중이면 그 디지몬도
-        WithSuspendCause(() =>   // v0.32.0 "When one of your effects suspends a Tamer"
-        {
-            FireForSide(EffectTrigger.AllyTamerSuspended, owner, null, triggerCard: tamer);
-            FireForSide(EffectTrigger.OpponentTamerSuspended, EnemyOf(owner), null, triggerCard: tamer);
-            return true;
-        });
+        FireTamerSuspended54(owner, tamer);   // v0.32.0 "When one of your effects suspends a Tamer" · v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
     }
 
     /// <summary>
@@ -1860,9 +1893,14 @@ public partial class GoldfishEngine
     /// <summary>"When this Tamer becomes unsuspended" (v0.31.0) — 액티브가 된 테이머마다</summary>
     internal void NotifyTamersUnsuspended(PlayerZones owner, IEnumerable<CardData> tamers)
     {
-        foreach (var t in tamers.Distinct().ToList())
-            if (owner.Tamers.Contains(t) && !State.IsGameOver)
-                FireForSide(EffectTrigger.AllyTamerUnsuspended, owner, null, triggerCard: t);
+        var list54 = tamers.Distinct().ToList();
+        var witness54 = DeferWitness54();
+        Defer54(() =>   // v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
+        {
+            foreach (var t in list54)
+                if (owner.Tamers.Contains(t) && !State.IsGameOver)
+                    FireForSide(EffectTrigger.AllyTamerUnsuspended, owner, null, triggerCard: t, witness: witness54);
+        });
     }
 
     /// <summary>효과로 테이머 아래 카드를 파기한 뒤 (v0.31.0) — "When effects trash cards from under your Tamers / this Tamer"</summary>
@@ -1963,9 +2001,9 @@ public partial class GoldfishEngine
     /// <summary>배틀 에어리어 디지몬이 【카운터】 효과(맨 위 카드 · 진화원)를 가졌는지</summary>
     private static bool HasCounterEffect(CardInstance d) =>
         CardScripts.For(d.TopCard)?.Effects.Any(e => e.Trigger == EffectTrigger.Counter && e.Source == EffectSource.Main
-                                                    && !(e.OncePerTurn && d.UsedOncePerTurn.Contains(d.TopCard.CardId))) == true
+                                                    && !(e.OncePerTurn && d.UsedOncePerTurn.Contains(e.OnceRecordKey(d.TopCard)))) == true
         || d.SourcesAny(s => CardScripts.For(s)?.Effects.Any(e => e.Trigger == EffectTrigger.Counter && e.Source == EffectSource.Inherited
-                                                                      && !(e.OncePerTurn && d.UsedOncePerTurn.Contains(s.CardId + "#I"))) == true);
+                                                                      && !(e.OncePerTurn && d.UsedOncePerTurn.Contains(e.OnceRecordKey(s)))) == true);
 
     /// <summary>≪디지버스트 N≫ 비용: 진화원 아래에서 N장 파기 → 그 카드들의 "디지버스트로 트래시되었을 때" 효과 → "디지버스트를 발휘했을 때"</summary>
     internal void PayDigiBurst(PlayerZones owner, CardInstance self, int n)
@@ -2002,10 +2040,7 @@ public partial class GoldfishEngine
         var owner = OwnerOf(inst);
         if (inst.TamerProxyOf != null) UnsuspendProxyTamer(owner, inst);   // v0.36.0
         bool mainPhase = ReferenceEquals(owner, State.Player) ? State.CurrentPhase == Phase.Main && _aiTurn == null : _aiTurn != null;
-        if (owner.BattleArea.Contains(inst) && IsTurnOf(owner) && mainPhase)
-            RunEffects(EffectTrigger.ThisDigimonUnsuspendedInMain, owner, inst, inst.TopCard);
-        if (owner.BattleArea.Contains(inst))
-            FireUnsuspended(owner, inst);
+        FireUnsuspendedByEffect54(owner, inst, mainPhase);   // v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
     }
 
     /// <summary>"When this Digimon becomes unsuspended" · "When a Digimon becomes unsuspended" — 액티브 페이즈 · 효과 모두 (Other = 액티브가 된 디지몬)</summary>
@@ -2182,11 +2217,12 @@ public partial class GoldfishEngine
     }
 
     /// <summary>[진화 시] 효과 (진화한 카드의 메인 효과)</summary>
-    private void ApplyWhenDigivolvingEffects(PlayerZones owner, CardInstance target, CardData evoCard)
+    private void ApplyWhenDigivolvingEffects(PlayerZones owner, CardInstance target, CardData evoCard, EventWitness46? witness54 = null)
     {
         NoteDigivolved51(owner);   // v0.51.0 "If you've digivolved this turn" (BT1-007)
-        NoteDigivolveWitness46(target);   // v0.46.0 진화한 시점에 있던 카드만 "진화했을 때"에 반응 (【진화 시】로 등장한 디지몬은 아니다)
-        if (CardScripts.HasKeyword(target, Keyword.CannotActivateWhenDigivolving))   // v0.34.0 "can't activate [When Digivolving] effects"
+        if (witness54 != null) _digivolveWitness46[target] = witness54;   // v0.54.0 미룬 【진화 시】 — 진화한 때의 기록
+        else NoteDigivolveWitness46(target);   // v0.46.0 진화한 시점에 있던 카드만 "진화했을 때"에 반응 (【진화 시】로 등장한 디지몬은 아니다)
+        if (CardScripts.HasKeyword(target, Keyword.CannotActivateWhenDigivolving) || WhenDigivolvingBlocked54(target))   // v0.34.0 "can't activate [When Digivolving] effects" · v0.54.0 "The [When Digivolving] effects on level 7 Digimon don't activate" (BT5-085)
         {
             EffectLog(owner, $"[{evoCard.Name}]의 【진화 시】 효과는 효과로 발휘하지 않습니다.");
             return;

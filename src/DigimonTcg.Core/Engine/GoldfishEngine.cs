@@ -566,7 +566,7 @@ public partial class GoldfishEngine
                 : $" [🎖️테이머 효과: {card.EffectText.Split('\n')[0]}]";
             Log($"테이머 등장: [{card.Name}] (코스트 {cost} 지불){effectSummary}");
             var witness46 = CaptureWitness46();   // v0.46.0 등장한 시점에 있던 카드만 "테이머가 등장했을 때"에 반응
-            RunEffects(EffectTrigger.OnPlay, State.Player, null, card, includeInherited: false);
+            if (!TamerOnPlayBlocked54(State.Player, card)) RunEffects(EffectTrigger.OnPlay, State.Player, null, card, includeInherited: false);   // v0.54.0 BT17-092
             FireForSide(EffectTrigger.AllyTamerPlayed, State.Player, null, triggerCard: card, witness: witness46);
             FireForSide(EffectTrigger.OpponentTamerPlayed, State.DummyOpponent, null, triggerCard: card, witness: witness46);
             RecalculateFieldBuffs();
@@ -1659,7 +1659,7 @@ public partial class GoldfishEngine
                 AddEffectEvent(tamerCandidate, CaptureEffectLogs(() =>
                 {
                     var witness46 = CaptureWitness46();   // v0.46.0
-                    RunEffects(EffectTrigger.OnPlay, State.DummyOpponent, null, tamerCandidate, includeInherited: false);
+                    if (!TamerOnPlayBlocked54(State.DummyOpponent, tamerCandidate)) RunEffects(EffectTrigger.OnPlay, State.DummyOpponent, null, tamerCandidate, includeInherited: false);   // v0.54.0 BT17-092
                     FireForSide(EffectTrigger.AllyTamerPlayed, State.DummyOpponent, null, triggerCard: tamerCandidate, witness: witness46);
                     FireForSide(EffectTrigger.OpponentTamerPlayed, State.Player, null, triggerCard: tamerCandidate, witness: witness46);
                 }));

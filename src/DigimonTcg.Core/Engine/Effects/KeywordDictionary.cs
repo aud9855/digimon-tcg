@@ -199,25 +199,34 @@ public static class KeywordDictionary
         var script = new CardScript(card.CardId);
         var def = new CardScriptDefinition(script);
         int linkSa43 = 0;
-        foreach (var (inherited, clause, options) in ClausesOf(card))
+        var ordinals54 = new Dictionary<(bool Inherited, bool Field), int>();
+        foreach (var (field54, inherited, clause, options) in ClausesWithFieldOf(card))
         {
             if (card.IsDual && inherited)
                 continue;   // 듀얼 카드의 옵션 쪽 → OptionSideScript
+            // v0.54.0 [턴에 1회]는 효과(줄)마다 — 진화원 효과는 메인 칸의 "Inherited Effect ~" 줄과 진화원 칸의 같은 번째 줄이 같은 효과 (영어 데이터에 둘 다 있는 카드 BT25-001 등)
+            int ord54 = ordinals54.GetValueOrDefault((inherited, field54));
+            ordinals54[(inherited, field54)] = ord54 + 1;
+            string onceKey54 = (inherited ? "#e:I" : field54 ? "#e:S" : "#e:M") + ord54;
+            int before54 = script.Effects.Count;
             if (options != null)
-            {
                 SentenceParser.TryParseChoice(clause, options, inherited, card, def);   // "Activate 1 of the effects below:" + "・~"
-                continue;
-            }
-            var parsed = Parse(StripLabel(clause));
-            if (parsed.Unsupported == null)
-                AddParsed(script, new[] { parsed }, inherited);
             else
-                SentenceParser.TryParse(clause, inherited, card, def);   // 키워드 절이 아니면 문장 파서 (읽지 못하면 등록하지 않음)
-            if (inherited && parsed.Unsupported == null) linkSa43 += parsed.SecurityAttack;
+            {
+                var parsed = Parse(StripLabel(clause));
+                if (parsed.Unsupported == null)
+                    AddParsed(script, new[] { parsed }, inherited);
+                else
+                    SentenceParser.TryParse(clause, inherited, card, def);   // 키워드 절이 아니면 문장 파서 (읽지 못하면 등록하지 않음)
+                if (inherited && parsed.Unsupported == null) linkSa43 += parsed.SecurityAttack;
+            }
+            for (int i = before54; i < script.Effects.Count; i++)
+                if (script.Effects[i] is { OnceKey53: null, OnceKey54: null } e54 && (e54.OncePerTurn || e54.TwicePerTurn))
+                    script.Effects[i] = e54 with { OnceKey54 = onceKey54 };
         }
         if (SentenceParser.IsLinkCard43(card)) SentenceParser.RetagLinkEffects43(script, linkSa43);   // v0.43.0 링크 카드의 하단 = 링크 효과 (링크되어 있는 동안)
         bool any = script.Keywords.Count + script.InheritedKeywords.Count + script.Effects.Count + script.Statics.Count > 0
-                   || script.OverflowMemory > 0 || script.DigisorptionReduction > 0 || script.BlastDigivolve || script.MaterialSave > 0 || script.LinkRequirement != null || script.SpecialEvolutions.Count > 0 || script.TamerEvolutions.Count > 0 || script.IgnoreColorRequirement != null || script.IgnoreColorRequirementVs52 != null || script.DigisorptionOpponent52 || script.SecurityCheckedPlay53 != null || script.VortexPlayers53 || script.PlayCostReduction != null || script.PlayCostOptions.Count > 0 || script.EvoCostModifiers.Count > 0 || script.FieldPlayCostModifiers.Count > 0 || script.GainedSourceEffects.Count > 0
+                   || script.OverflowMemory > 0 || script.DigisorptionReduction > 0 || script.BlastDigivolve || script.MaterialSave > 0 || script.LinkRequirement != null || script.SpecialEvolutions.Count > 0 || script.TamerEvolutions.Count > 0 || script.IgnoreColorRequirement != null || script.IgnoreColorRequirementVs52 != null || script.DigisorptionOpponent52 || script.SecurityCheckedPlay53 != null || script.VortexPlayers53 || script.PlayCostReduction != null || script.PlayCostOptions.Count > 0 || script.EvoCostModifiers.Count > 0 || script.FieldPlayCostModifiers.Count > 0 || script.GainedSourceEffects.Count > 0 || script.GainedLabeled54.Count > 0 || script.BlockOpponentTamerOnPlay54 != null || script.BlockWhenDigivolvingLevel54 > 0 || script.XrosUnderTamersAndTrash54 != null
                    || script.XrosAliases.Count > 0 || script.XrosFromTrash != null || script.XrosUnderTamersFor != null || script.OverclockSpecified != null
                    || script.EvoOnlyInto.Count > 0 || script.TamerAuras.Count > 0 || script.DnaAliases.Count > 0 || script.LinkCostModifiers41.Count > 0 || script.SuccessionSpecs41.Count > 0   // v0.41.0 링크 코스트 감소 · ≪계승≫ · v0.34.0 · v0.37.0 DNA 진화 이름 취급
                    || script.SecurityPlayAtEndOfOpponentTurn38 || script.OpponentEvoCostIncreases40.Count > 0
@@ -391,7 +400,11 @@ public static class KeywordDictionary
     /// 카드의 절 목록 (메인 효과 칸 → 진화원 효과 칸). API 데이터는 칸과 실제 종류가 어긋날 때가 있어 머리말로 고친다:
     /// 메인 칸의 "Inherited Effect ~"는 진화원 효과, 진화원 칸의 "Security Effect ~"(옵션 · 테이머)는 이 카드 자신의 [시큐리티] 효과.
     /// </summary>
-    private static IEnumerable<(bool Inherited, string Clause, List<string>? Options)> ClausesOf(CardData card)
+    private static IEnumerable<(bool Inherited, string Clause, List<string>? Options)> ClausesOf(CardData card) =>
+        ClausesWithFieldOf(card).Select(x => (x.Inherited, x.Clause, x.Options));
+
+    /// <summary>ClausesOf + 그 줄이 있던 칸 (true = 진화원 효과 칸) — v0.54.0 효과마다의 [턴에 1회]</summary>
+    private static IEnumerable<(bool Field, bool Inherited, string Clause, List<string>? Options)> ClausesWithFieldOf(CardData card)
     {
         foreach (var (field, text) in new[] { (false, card.EffectText), (true, card.InheritedEffectText) })
         {
@@ -403,7 +416,7 @@ public static class KeywordDictionary
                     // v0.51.0 테이머 진화원 칸의 "Security Effect ~ this Digimon ~"([시큐리티]가 아닌 것 — AD1-020 · AD1-023 · BT24-086)는 진화원 효과 (테이머가 진화원이 되었을 때의 "이 디지몬")
                     inherited = field && card.Type == CardType.Tamer && !Regex.IsMatch(clause, @"\[Security\]", RegexOptions.IgnoreCase)
                                 && Regex.IsMatch(clause, @"\bthis\b[^.]*?\bDigimon\b", RegexOptions.IgnoreCase);
-                yield return (inherited, clause, options);
+                yield return (field, inherited, clause, options);
             }
         }
     }

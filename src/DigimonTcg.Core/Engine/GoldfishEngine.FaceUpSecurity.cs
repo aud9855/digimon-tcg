@@ -42,8 +42,13 @@ public partial class GoldfishEngine
         owner.FaceUpSecurity.Add(faceUp);
         NotifySecurityAdded(owner, faceUp);
         EffectLog(owner, $"[앞면 시큐리티] [{card.Name}]을(를) 시큐리티 맨 {(top ? "위" : "아래")}에 앞면으로");
-        FireForSide(EffectTrigger.AllyFaceUpSecurityPlaced, owner, null, triggerCard: faceUp);
-        FireForSide(EffectTrigger.OpponentFaceUpSecurityPlaced, EnemyOf(owner), null, triggerCard: faceUp);
+        var witness54 = DeferWitness54();
+        Defer54(() =>   // v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
+        {
+            if (State.IsGameOver) return;
+            FireForSide(EffectTrigger.AllyFaceUpSecurityPlaced, owner, null, triggerCard: faceUp, witness: witness54);
+            FireForSide(EffectTrigger.OpponentFaceUpSecurityPlaced, EnemyOf(owner), null, triggerCard: faceUp, witness: witness54);
+        });
     }
 
     /// <summary>위에서 첫 번째 뒷면 시큐리티 카드를 앞면으로 뒤집는다. 반환: 뒤집은 카드</summary>

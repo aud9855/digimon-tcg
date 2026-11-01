@@ -244,6 +244,13 @@ public sealed record CardEffect(EffectTrigger Trigger, EffectSource Source, Acti
 
     /// <summary>v0.53.0 [턴에 1회] 기록 이름 (null = 카드 번호) — 27차 규칙으로 읽은 절은 절마다 따로 (같은 카드의 다른 [턴에 1회] 효과와 나누지 않는다, BT25-060)</summary>
     public string? OnceKey53 { get; init; }
+
+    /// <summary>v0.54.0 [턴에 1회] 기록 이름 — 효과(카드 문장의 줄)마다 (종합 룰 15-14-1-1: 효과마다 셈. 한 줄에 시점이 여럿이면 한 효과 — 공식 Q&A BT13-056 · EX5-025). null = 카드 번호 (내장 스크립트)</summary>
+    public string? OnceKey54 { get; init; }
+
+    /// <summary>v0.54.0 이 효과의 [턴에 1회] 기록 이름 (같은 카드의 메인 효과 · 진화원 효과 · 링크 효과는 다른 효과)</summary>
+    public string OnceRecordKey(CardData card) =>
+        (Source == EffectSource.Inherited ? card.CardId + "#I" : Source == EffectSource.Link43 ? card.CardId + "#L" : card.CardId) + (OnceKey53 ?? OnceKey54);
 }
 
 /// <summary>지속 효과 한 절 — 필드 상태가 바뀔 때마다 엔진이 다시 계산한다</summary>
@@ -426,6 +433,18 @@ public sealed class CardScript
     /// </summary>
     public List<(EffectSource Source, Func<CardData, bool> Which)> GainedSourceEffects { get; } = new();
 
+    /// <summary>v0.54.0 진화원 카드의 [메인] / 【서로의 턴】 효과만 얻는다 (Label = "[Main]" · "[All Turns]", YourTurnOnly = 【자신의 턴】 동안만 — BT22-078 · EX10-059)</summary>
+    public List<(Func<CardData, bool> Which, string Label, bool YourTurnOnly)> GainedLabeled54 { get; } = new();
+
+    /// <summary>v0.54.0 "all of your opponent's Tamers [On Play] effects don't activate" (BT17-092) — (효과를 가진 쪽, 상대) 조건</summary>
+    public Func<PlayerZones, PlayerZones, bool>? BlockOpponentTamerOnPlay54 { get; set; }
+
+    /// <summary>v0.54.0 "The [When Digivolving] effects on level N Digimon don't activate" (BT5-085 — 양쪽 디지몬, 0 = 없음)</summary>
+    public int BlockWhenDigivolvingLevel54 { get; set; }
+
+    /// <summary>v0.54.0 테이머: 이 조건의 디지몬을 디지크로스할 때 이 테이머를 레스트시켜 테이머 아래 1장 · 트래시 1장도 재료로 (BT19-087 · EX10-064 · EX4-062)</summary>
+    public Func<CardData, bool>? XrosUnderTamersAndTrash54 { get; set; }
+
     /// <summary>v0.37.0 "This Digimon is also treated as Lv.6 [Slayerdramon] for [Examon]'s DNA digivolution" — (DNA 진화할 카드 이름, 취급 이름, 취급 Lv.) — 배틀 에어리어에 있을 때만 (Q&A BT20-025)</summary>
     public List<(string ForName, string AsName, int Level)> DnaAliases { get; } = new();
 }
@@ -478,6 +497,9 @@ public sealed record EvoCostModifier(
 
     /// <summary>v0.40.0 정해진 코스트로 만드는 변화량 (원래 진화 코스트 - 정해진 코스트, 음수면 늘린다 — "the memory cost of the digivolution is equal to the number of cards in your security stack" BT7-040)</summary>
     public Func<EffectContext, CardInstance, int>? Delta40 { get; init; }
+
+    /// <summary>v0.54.0 {시큐리티} 효과 — 이 카드가 시큐리티에 앞면으로 있는 동안만 (종합 룰 15-14-5-1, P-181)</summary>
+    public bool FaceUpSecurity54 { get; init; }
 
     /// <summary>지금 줄이는 양</summary>
     public int ReduceFor(EffectContext ctx, CardInstance target) => Delta40 != null ? Delta40(ctx, target) : Times == null ? Reduce : Reduce * Math.Max(0, Times(ctx, target));

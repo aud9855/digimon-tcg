@@ -110,5 +110,10 @@ public partial class GoldfishEngine
         foreach (var mod in CardScripts.For(evoCard)?.EvoCostModifiers ?? Enumerable.Empty<EvoCostModifier>())
             if (mod.Source == EffectSource.Main && mod.Subject == EvoCostSubject.IntoThisCard)
                 yield return (mod, null, evoCard);
+        // v0.54.0 {시큐리티} 앞면 시큐리티 카드의 감소 (P-181 — 앞면 카드는 장마다 다른 카드)
+        foreach (var sec in FaceUpCards(owner))
+            foreach (var mod in CardScripts.For(sec)?.EvoCostModifiers ?? Enumerable.Empty<EvoCostModifier>())
+                if (mod.FaceUpSecurity54 && mod.Subject == EvoCostSubject.AnyOwnDigimon)
+                    yield return (mod, null, sec);
     }
 }

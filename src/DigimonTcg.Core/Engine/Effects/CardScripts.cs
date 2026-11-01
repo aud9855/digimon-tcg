@@ -62,7 +62,8 @@ public static class CardScripts
         || (For(digimon.TopCard)?.Keywords.Contains(keyword) ?? false)
         || digimon.SourcesAny(s => For(s)?.InheritedKeywords.Contains(keyword) ?? false)
         || digimon.LinkedCards.Count > 0 && digimon.LinkedCards.Any(l => For(l)?.LinkKeywords43.Contains(keyword) ?? false)   // v0.43.0 링크 효과의 키워드
-        || GainedSources(digimon).Any(s => For(s)?.Keywords.Contains(keyword) ?? false);   // v0.31.0 진화원 카드의 효과 전부를 얻는다
+        || GainedSources(digimon).Any(s => For(s)?.Keywords.Contains(keyword) ?? false)   // v0.31.0 진화원 카드의 효과 전부를 얻는다
+        || GainedLabeled54(digimon).Any(g => g.Script.Keywords.Contains(keyword));   // v0.54.0 [메인] / 【서로의 턴】 효과만
 
     /// <summary>
     /// v0.31.0 이 디지몬이 효과를 얻는 진화원 카드 (맨 위 카드의 메인 효과 · 진화원 효과의 "gains all effects of ~ in this Digimon's digivolution cards").
@@ -90,6 +91,39 @@ public static class CardScripts
         return stack.Where(s => !ReferenceEquals(s, digimon.TopCard) && whichList.Any(w => w(s))).Concat(succession)
             .GroupBy(s => s.CardId).Select(g => g.First()).ToList();
     }
+
+    /// <summary>
+    /// v0.54.0 이 디지몬이 얻은 진화원 카드의 표시된 효과만 (맨 위 카드의 "gains all [Main] / [All Turns] effects of ~ digivolution cards" — BT22-078 · EX10-059).
+    /// 같은 카드 번호는 1장, 뒷면 진화원 · 맨 위 카드 자신은 아니다. 돌려주는 스크립트는 그 줄만 읽은 것 (메인 효과로)
+    /// </summary>
+    public static IEnumerable<(CardData Card, CardScript Script)> GainedLabeled54(CardInstance digimon, IReadOnlyList<CardData>? sources = null)
+    {
+        if (For(digimon.TopCard) is not { GainedLabeled54.Count: > 0 } top) yield break;
+        var stack = (sources ?? (IEnumerable<CardData>)digimon.EvolutionSources).Where(s => !digimon.IsFaceDown(s) && !ReferenceEquals(s, digimon.TopCard))
+            .GroupBy(s => s.CardId).Select(g => g.First()).ToList();
+        foreach (var (which, label, yourTurnOnly) in top.GainedLabeled54)
+        {
+            if (yourTurnOnly && !digimon.IsOwnersTurn) continue;
+            foreach (var src in stack)
+                if (which(src) && LabeledScript54(src, label) is { } s)
+                    yield return (src, s);
+        }
+    }
+
+    private static readonly ConcurrentDictionary<string, CardScript?> Labeled54 = new(StringComparer.Ordinal);
+
+    /// <summary>카드의 메인 효과 칸에서 label로 시작하는 줄만 읽은 스크립트 (없으면 null)</summary>
+    internal static CardScript? LabeledScript54(CardData card, string label) =>
+        Labeled54.GetOrAdd(card.CardId + "|" + label, _ =>
+        {
+            if (StarterDecks.IsBuiltInCard(card.CardId)) return null;
+            var lines = KeywordDictionary.SplitClauses(card.EffectText).Where(l => l.StartsWith(label, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (lines.Count == 0) return null;
+            var tmp = (CardData)typeof(object).GetMethod("MemberwiseClone", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.Invoke(card, null)!;
+            tmp.EffectText = string.Join('\n', lines);
+            tmp.InheritedEffectText = string.Empty;
+            return KeywordDictionary.GenerateScript(tmp);
+        });
 
     /// <summary>옵션 [메인] 효과를 쓸 때 고를 대상 종류</summary>
     public static TargetKind MainTargetOf(CardData card) => For(card)?.MainTarget ?? TargetKind.None;
@@ -289,6 +323,13 @@ public sealed class CardScriptDefinition
     public CardScriptDefinition EvoCostModifier(EvoCostModifier modifier)
     {
         _script.EvoCostModifiers.Add(modifier);
+        return this;
+    }
+
+    /// <summary>v0.54.0 진화원 카드의 [메인] / 【서로의 턴】 효과만 얻는다</summary>
+    internal CardScriptDefinition GainLabeled54(Func<CardData, bool> which, string label, bool yourTurnOnly)
+    {
+        _script.GainedLabeled54.Add((which, label, yourTurnOnly));
         return this;
     }
 

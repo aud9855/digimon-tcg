@@ -67,7 +67,7 @@ public partial class GoldfishEngine
                     string summary = RunEffects(EffectTrigger.OnPlay, it.Owner, inst, inst.TopCard, includeInherited: false).Message;
                     if (summary.Length > 0) EffectLog(it.Owner, $"[효과] {inst.TopCard.Name} {summary}");
                 }
-                else if (it.Tamer is { } t && it.Owner.Tamers.Contains(t))
+                else if (it.Tamer is { } t && it.Owner.Tamers.Contains(t) && !TamerOnPlayBlocked54(it.Owner, t))   // v0.54.0 BT17-092
                     RunEffects(EffectTrigger.OnPlay, it.Owner, null, t, includeInherited: false);
             });
         }
