@@ -404,6 +404,9 @@ public sealed class CardScript
     /// </summary>
     public XrosFieldCost77? XrosFieldCost77 { get; set; }
 
+    /// <summary>v0.78.0 BT17-102 "[All Turns] This Digimon has all the names of level 3 and lower cards in its digivolution cards" — 이 Lv. 이하의 앞면 진화원 명칭도 이 디지몬의 명칭 (0이면 없음)</summary>
+    public int SourceNamesMaxLevel78 { get; set; }
+
     /// <summary>테이머: "When you would play 1 Digimon (조건) with DigiXros requirements, by suspending this Tamer, you may place cards from under your Tamers ~" — 그 디지몬 조건</summary>
     public Func<CardData, bool>? XrosUnderTamersFor { get; set; }
 

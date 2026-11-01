@@ -52,7 +52,7 @@ public class KeywordTests
     public void Analyze_ShouldMarkKeywordClausesSupportedAndSentencesUnsupported()
     {
         var card = Api("KW-ANALYZE", 5, 7000,
-            main: "＜Rush＞ ＜Piercing＞ (This Digimon can attack the turn it comes into play.)\n[On Play] [When Digivolving] ＜De-Digivolve 1＞ 1 of your opponent's Digimon. (Trash the top card.)\n[All Turns] This Digimon has all the names of level 3 and lower cards in its digivolution cards.");   // v0.62.0 앞의 예("Players can't ignore digivolution requirements")는 지원됨 · v0.31.0 · v0.40.0 · v0.46.0: 앞의 예("attack targets change or effects trash cards from under your Tamers" · "a purple card is placed under this Tamer" · "When your effects add to decks")는 지원됨
+            main: "＜Rush＞ ＜Piercing＞ (This Digimon can attack the turn it comes into play.)\n[On Play] [When Digivolving] ＜De-Digivolve 1＞ 1 of your opponent's Digimon. (Trash the top card.)\n[Your Turn] While [Phoenixmon] or [X Antibody] is in this Digimon's digivolution cards, attach [End of Attack] to all of this Digimon's [On Deletion] effects.");   // v0.78.0 앞의 예("This Digimon has all the names of level 3 and lower cards ~" BT17-102)는 지원됨 · v0.62.0 앞의 예("Players can't ignore digivolution requirements")는 지원됨 · v0.31.0 · v0.40.0 · v0.46.0: 앞의 예("attack targets change or effects trash cards from under your Tamers" · "a purple card is placed under this Tamer" · "When your effects add to decks")는 지원됨
         var clauses = KeywordDictionary.Analyze(card);
 
         Assert.Equal(3, clauses.Count);

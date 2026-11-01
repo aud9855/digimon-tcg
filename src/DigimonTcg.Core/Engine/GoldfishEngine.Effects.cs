@@ -1411,6 +1411,11 @@ public partial class GoldfishEngine
             _xrosByEffect57[inst] = (card, xros57.Count, State.TurnSequence);
             _pendingXros57 = null;
         }
+        if (_pendingUnderByEffect78 is { } under78)   // v0.78.0 BT12-112 · BT21-030 등장할 때 효과로 놓은 「샤우트몬」 (디지크로스 재료 아래)
+        {
+            foreach (var x in under78) inst.AddBottomSource(x);
+            _pendingUnderByEffect78 = null;
+        }
         owner.BattleArea.Add(inst);
         PlayCollector?.Add(inst);
         RecalculateFieldBuffs();
@@ -2230,11 +2235,11 @@ public partial class GoldfishEngine
         int defDp = defender.GetCurrentDP() + BattleDpBonus(defender, attacker.EvolutionSources.Count > 0);
 
         // ≪빙장≫: 시큐리티 디지몬 이외와의 배틀에서는 DP가 아니라 진화원 매수를 비교한다
-        bool iceclad = CardScripts.HasKeyword(attacker, Keyword.Iceclad) || CardScripts.HasKeyword(defender, Keyword.Iceclad);
+        bool iceclad = CardScripts.HasKeyword(attacker, Keyword.Iceclad) || CardScripts.HasKeyword(defender, Keyword.Iceclad) || _compareSourcesBattle78;   // v0.78.0 EX13-076 "Compare the number of digivolution cards instead of DP in this battle"
         int atkValue = iceclad ? attacker.EvolutionSources.Count : atkDp;
         int defValue = iceclad ? defender.EvolutionSources.Count : defDp;
         if (iceclad)
-            Log($"[≪빙장≫] 진화원 매수로 비교: [{attacker.TopCard.Name}] {atkValue}장 vs [{defender.TopCard.Name}] {defValue}장");
+            Log($"[{(_compareSourcesBattle78 ? "효과" : "≪빙장≫")}] 진화원 매수로 비교: [{attacker.TopCard.Name}] {atkValue}장 vs [{defender.TopCard.Name}] {defValue}장");
         bool attackerLoses = atkValue <= defValue;
         bool defenderLoses = atkValue >= defValue;
 

@@ -10,6 +10,18 @@
 
 ---
 
+## v0.78.0 — 2026-11-02
+미지원 문장 52차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A · 공식 카드 문구로 근거 확인) — 도감 효과 문장 지원 10,321 → 10,325 / 10,366 (99.6%, +4)
+- 모든 절이 동작하는 카드 4,274 → 4,278장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다
+- BT17-102 "[All Turns] This Digimon has all the names of level 3 and lower cards in its digivolution cards" — 진화원에 있는 Lv.3 이하 카드(디지몬 · 디지타마 카드)의 명칭 전부를 이 디지몬도 가진다. 육성 에어리어에서도 (공식 Q&A BT17-102 Q1). 뒷면 진화원은 카드 정보가 없어 세지 않는다 (종합 룰 4-7-9). 필드의 디지몬 이름 판정 한 곳(CardNames)에서 — 이름 조건 · 같은 명칭 판정 모두. 【진화 시】 "이 디지몬의 명칭이 「코로몬」이라면"도 진화원의 「코로몬」으로 성립
+- BT17-050 [패]【메인】 "By paying 4 cost and placing this card as 1 of your level 5 or higher Digimon's bottom digivolution card, you may suspend 1 of your opponent's Digimon and attack an opponent's Digimon with the Digimon this was placed under" — 4 코스트와 Lv.5 이상 디지몬 아래에 놓는 것까지가 비용 (공식 Q&A BT17-050 Q1). 상대의 디지몬 1마리를 레스트 → 놓은 디지몬으로 상대의 디지몬에게 어택. 효과 어택은 지금 엔진의 효과 어택 그대로 (어택 선언 → 효과가 끝난 뒤 배틀 · 등장한 턴 · 레스트 상태면 어택하지 않음 · 어택 중에는 새 어택 선언 불가 11-2-4)
+- BT25-038 "~ from your hand or your Digimon's digivolution cards as the top or bottom security card" — 패 또는 자신의 디지몬(배틀 에어리어)의 앞면 진화원에서 1장, 위 · 아래는 고른다
+- EX13-076 "Then, you may return all digivolution cards of 1 of their Digimon to the bottom of the deck and have this Digimon battle it. Compare the number of digivolution cards instead of DP in this battle." — 상대의 디지몬 1마리의 진화원 전부를 주인의 덱 아래로 (디지타마 카드는 디지타마 덱 아래) 되돌리고 이 디지몬과 배틀, 그 배틀만 DP 대신 진화원 매수로 비교 (≪빙장≫과 같은 비교 — 같으면 둘 다 소멸)
+- BT12-112 · BT21-030 효과로 등장할 때도 "When you would play this card, by placing 1 [Shoutmon] ~" — 효과로 디지크로스 조건을 가진 카드를 등장시킬 때도 디지크로스할 수 있다 (종합 룰 7-2-2-13 · 공식 Q&A P-098 Q1 · BT11-076 Q1). 등장할 때 효과를 먼저 해결하고 (7-2-3-1) 디지크로스를 선언한다 (7-2-3-2). 코스트를 내는 효과 등장 (BT21-021 · BT19-099 · P-224 · BT21-092 등)에서 배틀 에어리어의 「샤우트몬」을 놓아 코스트 -1, 트래시 · 패 · 필드의 카드로 디지크로스. 코스트 없이 등장하면 줄일 코스트가 없어 묻지 않는다
+- 기존 카드 동작 변경: BT12-112 · BT21-030이 코스트를 내는 효과로 등장할 때 (위). 그 밖의 카드는 바뀌지 않음 (52차 규칙은 원래 규칙이 읽지 못한 절만, 이름 판정은 BT17-102가 맨 위에 있을 때만)
+- 그대로 둔 것: BT27-070 · BT27-084 · BT27-103은 공식 영어 카드 리스트에 BT-27이 아직 없어 그대로 (EX-13 · BT-26까지). EX9-062 어셈블리 — 카드 데이터(영어 API · 공식 한글)에 어셈블리 조건이 없어 그대로. 남은 문장 41개 — 사용자 결정 대기 27 (테이머 아래 카드 모델 20 등) · 깨진 데이터 2 · 큰 모델 변경 12
+- 테스트 14개 (EffectBatch78Tests), 전체 1,777개 통과 (KeywordTests · KoreanEffectRendererTests의 "읽지 못하는 문장" 예는 지원된 BT17-102 대신 BT16-015로) · 시뮬레이션 6,700판 (새 카드 · 영향 카드 1,500판 · 회귀 표본 5,200판) 예외 · 멈춤 · 카드 수 불일치 · 턴 상한 · 중복 객체 0 — 회귀 표본 승패는 v0.77.0과 같음 (e1만 1판 차이 — 표본 덱에 BT25-038 · EX13-076이 있다) · AI 벤치마크 (720판) 기존 AI 56.5% · 개선 AI 68.1% — 변화 없음 (벤치마크 추천 덱에 바뀐 카드가 없다)
+
 ## v0.77.0 — 2026-11-02
 미지원 문장 51차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A · 공식 카드 문구로 근거 확인) — 도감 효과 문장 지원 10,312 → 10,321 / 10,366 (99.6%, +9)
 - 모든 절이 동작하는 카드 4,265 → 4,274장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다

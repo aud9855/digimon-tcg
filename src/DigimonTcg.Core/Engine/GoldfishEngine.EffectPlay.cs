@@ -68,6 +68,10 @@ public partial class GoldfishEngine
             xros57 = TakeXrosFromTrash57(owner, card, req57);   // v0.57.0 트래시의 카드로 디지크로스 (BT10-104)
             if (xros57.Count > 0 && !PlayCostReductionBlocked(owner, card)) payCost = Math.Max(0, xrosCost - req57.Reduction * xros57.Count);
         }
+        else if (payCost is int fieldCost78 && card.Type == CardType.Digimon && !card.IsDual && CardScripts.For(card)?.XrosFieldCost77 != null && DigiXrosOf(card) != null)
+        {
+            (payCost, xros57) = PayXrosFieldCostOnEffectPlay78(owner, card, fieldCost78);   // v0.78.0 BT12-112 · BT21-030 효과로 등장할 때도 (종합 룰 7-2-2-13 · 7-2-3-1)
+        }
         if (payCost is int cost)
         {
             AddMemory(owner, -cost);
@@ -80,6 +84,7 @@ public partial class GoldfishEngine
         {
             if (_pendingXros57 != null) owner.Trash.AddRange(_pendingXros57);   // 놓지 못했으면 트래시로 되돌린다
             _pendingXros57 = null;
+            DropPendingUnderByEffect78(owner);   // v0.78.0 놓지 못했으면 트래시로
         }
         return true;
     }

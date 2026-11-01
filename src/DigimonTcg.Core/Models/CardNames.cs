@@ -73,7 +73,8 @@ public static class CardNames
     public static string MatchName(CardInstance d) => d.Changed67 is { } ch ? ch.Name : MatchName(d.TopCard);
 
     /// <summary>필드의 디지몬의 명칭에 x를 포함하는가</summary>
-    public static bool Contains(CardInstance d, string x) => x.IndexOf(TraitExactMark72) >= 0 ? Contains(d, x.Replace(TraitExactMark72.ToString(), "")) : x.Contains(ExceptMark70) ? ContainsExcept70(x, n => Contains(d, n), n => Is(d, n)) : d.Changed67 is { } ch ? ch.Name.Contains(x, StringComparison.OrdinalIgnoreCase) : Contains(d.TopCard, x);
+    public static bool Contains(CardInstance d, string x) => x.IndexOf(TraitExactMark72) >= 0 ? Contains(d, x.Replace(TraitExactMark72.ToString(), "")) : x.Contains(ExceptMark70) ? ContainsExcept70(x, n => Contains(d, n), n => Is(d, n)) : (d.Changed67 is { } ch ? ch.Name.Contains(x, StringComparison.OrdinalIgnoreCase) : Contains(d.TopCard, x))
+        || SourceNames78(d).Any(n => Contains(n, x));   // v0.78.0 BT17-102 진화원의 Lv.3 이하 카드의 명칭도
 
     /// <summary>
     /// v0.70.0 "[Greymon] in its name (other than [DoruGreymon], [BurningGreymon] or [DexDoruGreymon])" — 문장 읽기가 이름 조건 안에 제외할 명칭을 붙인다
@@ -94,9 +95,23 @@ public static class CardNames
     }
 
     /// <summary>필드의 디지몬의 명칭이 정확히 x인가</summary>
-    public static bool Is(CardInstance d, string x) => x.IndexOf(TraitExactMark72) >= 0 ? Is(d, x.Replace(TraitExactMark72.ToString(), "")) : d.Changed67 is { } ch ? ch.Name.Equals(x, StringComparison.OrdinalIgnoreCase) : Is(d.TopCard, x);
+    public static bool Is(CardInstance d, string x) => x.IndexOf(TraitExactMark72) >= 0 ? Is(d, x.Replace(TraitExactMark72.ToString(), "")) : (d.Changed67 is { } ch ? ch.Name.Equals(x, StringComparison.OrdinalIgnoreCase) : Is(d.TopCard, x))
+        || SourceNames78(d).Any(n => Is(n, x));   // v0.78.0 BT17-102
+
+    /// <summary>
+    /// v0.78.0 BT17-102 "[All Turns] This Digimon has all the names of level 3 and lower cards in its digivolution cards" — 맨 위 카드가 이 효과를 가지면 그 Lv. 이하의 앞면 진화원(디지몬 · 디지타마 카드 —
+    /// 뒷면은 카드 정보가 없다 4-7-9). 육성 에어리어에서도 (공식 Q&amp;A BT17-102 Q1). 명칭을 얻는 것이라 효과로 바뀐 원래 명칭(15-12-2)과 함께 가진다
+    /// </summary>
+    public static System.Collections.Generic.IEnumerable<CardData> SourceNames78(CardInstance d)
+    {
+        if (d.EvolutionSources.Count == 0 || d.TopIsFaceDown || d.TopCard.IsTamerProxy) return Array.Empty<CardData>();
+        int lv = DigimonTcg.Core.Engine.Effects.CardScripts.For(d.TopCard)?.SourceNamesMaxLevel78 ?? 0;
+        if (lv <= 0) return Array.Empty<CardData>();
+        return d.FaceUpSources.Where(s => s.Type is CardType.Digimon or CardType.Digitama && s.Level > 0 && s.Level <= lv);
+    }
 
     /// <summary>필드의 두 디지몬이 같은 명칭인가</summary>
     public static bool Same(CardInstance a, CardInstance b) =>
-        a.Changed67 == null && b.Changed67 == null ? Same(a.TopCard, b.TopCard) : string.Equals(MatchName(a), MatchName(b), StringComparison.OrdinalIgnoreCase);
+        (a.Changed67 == null && b.Changed67 == null ? Same(a.TopCard, b.TopCard) : string.Equals(MatchName(a), MatchName(b), StringComparison.OrdinalIgnoreCase))
+        || (SourceNames78(a).Any() || SourceNames78(b).Any()) && SourceNames78(a).Select(MatchName).Append(MatchName(a)).Any(n => Is(b, n));   // v0.78.0 BT17-102 얻은 명칭도
 }
