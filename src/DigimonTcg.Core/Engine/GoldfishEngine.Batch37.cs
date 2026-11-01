@@ -71,6 +71,7 @@ public partial class GoldfishEngine
     private bool OnPlayBlocked37(PlayerZones owner, CardInstance instance)
     {
         if (!owner.BattleArea.Contains(instance)) return false;
+        if (OnPlayPeriodBlocked59(owner)) return true;   // v0.59.0 BT20-037 기간 효과 (GoldfishEngine.Batch59)
         var enemy = EnemyOf(owner);
         return DigimonAuras(enemy, owner, StaticStat.EnemyKeyword).Concat(TamerAuras(enemy, owner, StaticStat.EnemyKeyword))
             .Any(a => a.Effect.Keyword == Keyword.CannotActivateOnPlay && (a.Effect.Subject == null || a.Effect.Subject(instance)) && a.Effect.Value(a.Context) != 0);

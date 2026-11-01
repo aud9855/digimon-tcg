@@ -67,6 +67,14 @@ public class CardInstance
     /// <summary>v0.58.0 지속 효과로 얻은 특징 ("[Your Turn] This Digimon gains the [Three Musketeers] trait" EX7-010) — 엔진이 지속 효과를 계산할 때마다 다시 채운다</summary>
     public HashSet<string> ExtraTraits58 { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>v0.59.0 상대의 효과로 받은 이 턴 DP (TemporaryDpBonus 중 상대 효과의 몫) · 기간 DP (TimedDpBuffs 중 상대 효과의 몫) —
+    /// 상대의 효과를 받지 않는 동안에는 빼고 계산한다 (종합 룰 15-15-5-1 · 15-15-5-2: 받지 않는 동안 영향이 없고, 다시 받게 되면 그때부터 영향을 받는다)</summary>
+    public int OppTempDp59 { get; set; }
+    public List<(int Dp, int Until)> OppTimedDp59 { get; } = new();
+
+    /// <summary>v0.59.0 지금 상대의 효과를 받지 않는 상태인지 (엔진이 지속 효과를 계산할 때마다 채운다 — "isn't affected by your opponent's effects" · BT27-103 어택 중)</summary>
+    public bool OppShield59 { get; set; }
+
     /// <summary>v0.42.0 지금 필드에서의 지속 효과 조건 판단용 (엔진이 지속 효과를 계산할 때 채운다 — 조건이 붙은 진화 조건 무시 진화)</summary>
     public Func<DigimonTcg.Core.Engine.Effects.StaticContext>? LiveContext42 { get; set; }
     internal PlayerZones? LiveOwner42 { get; set; }
@@ -197,6 +205,9 @@ public class CardInstance
         return removed;
     }
 
+    /// <summary>v0.59.0 진화원을 bottomUp(아래 → 위) 순서의 카드로 바꾼다 (≪디지버스트≫로 고른 진화원을 뺀 나머지)</summary>
+    internal void ReplaceSources59(List<CardData> bottomUp) => EvolutionSources = new Stack<CardData>(bottomUp);
+
     /// <summary>진화원 맨 아래에 카드를 넣는다</summary>
     public void AddBottomSource(CardData card)
     {
@@ -264,6 +275,8 @@ public class CardInstance
             TamerProxyOf = TamerProxyOf,
             PlayCostDelta45 = PlayCostDelta45,
             DpFloor45 = DpFloor45,
+            OppTempDp59 = OppTempDp59,
+            OppShield59 = OppShield59,
         };
         v.EvolutionSources = new Stack<CardData>(EvolutionSources.Reverse());
         foreach (var f in FaceDownSources) v.FaceDownSources.Add(f);
@@ -272,6 +285,7 @@ public class CardInstance
         foreach (var t in ExtraTraits58) v.ExtraTraits58.Add(t);
         v.LinkedCards.AddRange(LinkedCards);
         v.TimedDpBuffs.AddRange(TimedDpBuffs);
+        v.OppTimedDp59.AddRange(OppTimedDp59);
         v.TimedKeywords.AddRange(TimedKeywords);
         v.GrantedEffects.AddRange(GrantedEffects);
         return v;
@@ -281,7 +295,7 @@ public class CardInstance
         IsOwnersTurn ? FaceUpSources.Sum(s => s.InheritedDpBonus) : 0;
 
     public int GetTotalBonusDP() =>
-        GetInheritedDpBonus() + TamerDpBonus + TemporaryDpBonus + EffectDpBonus + AttackDpBonus;
+        GetInheritedDpBonus() + TamerDpBonus + TemporaryDpBonus - (OppShield59 ? OppTempDp59 : 0) + EffectDpBonus + AttackDpBonus;   // v0.59.0 상대의 효과를 받지 않는 동안
 
     public int GetCurrentDP() =>
         Math.Max(DpFloor45, TopCard.DP + GetTotalBonusDP());   // v0.45.0 DP 하한 (0이면 원래대로)

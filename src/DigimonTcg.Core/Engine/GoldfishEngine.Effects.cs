@@ -479,6 +479,7 @@ public partial class GoldfishEngine
             // 효과로 얻은 키워드: 기간 효과 + 조건부 지속 효과 (먼저 계산해야 ≪블로커≫ 판정에 들어간다)
             inst.TimedKeywords.RemoveAll(t => t.Until < State.TurnSequence);
             inst.TimedDpBuffs.RemoveAll(t => t.Until < State.TurnSequence);
+            if (inst.OppTimedDp59.Count > 0) inst.OppTimedDp59.RemoveAll(t => t.Until < State.TurnSequence);   // v0.59.0
             inst.TimedSecurityAttackBuffs.RemoveAll(t => t.Until < State.TurnSequence);
             if (inst.TimedPlayCostMods45.Count > 0) inst.TimedPlayCostMods45.RemoveAll(t => t.Until < State.TurnSequence);   // v0.45.0 등장 코스트 변경 (BT16-060)
             inst.PlayCostDelta45 = inst.TimedPlayCostMods45.Sum(t => t.Delta);
@@ -486,7 +487,9 @@ public partial class GoldfishEngine
             foreach (var (k, _) in inst.TimedKeywords) inst.ActiveKeywords.Add(k);
             var statics = StaticEffectsOf(inst).ToList();
             ApplyExtraColors37(inst, statics, ctx);   // v0.37.0 "This Digimon is also treated as yellow" (색 조건보다 먼저)
+            var enemyKwBefore59 = EnemyKeywordProbe59(inst);
             ApplyEnemyKeywordAuras37(inst, owner, enemy);   // v0.37.0 "none of your opponent's Digimon can suspend"
+            var enemyKw59 = EnemyKeywordAdded59(inst, enemyKwBefore59);
             foreach (var effect in statics.Where(e => e.Stat == StaticStat.Keyword && e.Keyword != null))
                 if (effect.Value(ctx) != 0) inst.ActiveKeywords.Add(effect.Keyword!.Value);
             // 다른 카드가 주는 키워드 ("All of your level 4 or lower Digimon gain ＜Jamming＞") — 효과를 가진 카드 기준으로 조건 판단
@@ -494,6 +497,7 @@ public partial class GoldfishEngine
                 if (aura.Keyword != null && aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx) && aura.Value(auraCtx) != 0)
                     inst.ActiveKeywords.Add(aura.Keyword.Value);
 
+            ApplyOppShield59(inst, enemyKw59);   // v0.59.0 상대의 효과를 받지 않는 동안: 상대 카드의 지속 효과 · 이미 받은 상대의 DP 효과를 빼고 계산 (GoldfishEngine.Batch59)
             inst.HasGrantedBlocker = EffectRules.IsActive(inst.GrantedBlockerUntil, State) || CardScripts.HasKeyword(inst, Keyword.Blocker);
 
             int dp = inst.TimedDpBuffs.Sum(t => t.Dp), sec = inst.TimedSecurityAttackBuffs.Sum(t => t.Count);
@@ -516,10 +520,11 @@ public partial class GoldfishEngine
                 if (aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx)) sec += aura.Value(auraCtx);
             // 상대 카드가 주는 효과 ("All of your opponent's Digimon with no digivolution cards gain ＜Security A. -1＞")
             foreach (var (aura, auraCtx) in DigimonAuras(enemy, owner, StaticStat.EnemySecurityAttack).Concat(TamerAuras(enemy, owner, StaticStat.EnemySecurityAttack)))
-                if (aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx)) sec += aura.Value(auraCtx);
+                if (aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx) && !OppAuraShield59(inst, auraCtx)) sec += aura.Value(auraCtx);
             // v0.44.0 상대 카드가 주는 DP ("all of your opponent's suspended Digimon get -4000 DP" BT16-101)
             foreach (var (aura, auraCtx) in DigimonAuras(enemy, owner, StaticStat.EnemyDigimonDp44).Concat(TamerAuras(enemy, owner, StaticStat.EnemyDigimonDp44)))
-                if (aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx)) dp += aura.Value(auraCtx);
+                if (aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx) && !OppAuraShield59(inst, auraCtx)) dp += aura.Value(auraCtx);
+            if (inst.OppShield59 && inst.OppTimedDp59.Count > 0) dp -= inst.OppTimedDp59.Sum(t => t.Dp);   // v0.59.0 이미 받은 상대의 기간 DP 효과도 받지 않는 동안에는 영향이 없다 (15-15-5-2)
 
             dp += DpSetDelta45(owner, enemy, inst);   // v0.45.0 "treated as having 16000 DP" (BT22-007)
             inst.DpFloor45 = statics.Where(e => e.Stat == StaticStat.DpFloor45).Select(e => e.Value(ctx)).DefaultIfEmpty(0).Max();   // v0.45.0 DP 하한 (EX11-070)
@@ -603,6 +608,7 @@ public partial class GoldfishEngine
     private static void ResetTurnScopedState(CardInstance d)
     {
         d.TemporaryDpBonus = 0;
+        d.OppTempDp59 = 0;   // v0.59.0
         d.TemporarySecurityAttackBonus = 0;
         d.HasUsedOncePerTurnEffect = false;
         d.UsedOncePerTurn.Clear();
@@ -1049,6 +1055,7 @@ public partial class GoldfishEngine
     /// </summary>
     private (string Message, bool PlayAfterBattle) ResolveSecurityDigimonEffect(CardData securityCard, PlayerZones owner, CardInstance attacker)
     {
+        _afterBattle59.Clear();   // v0.59.0 배틀이 없었던 앞의 "배틀 종료 시"는 버린다
         if (!(CardScripts.For(securityCard)?.Effects.Any(e => e.Trigger == EffectTrigger.Security) ?? false))
             { SecurityPlayWithoutBattle = false; return (string.Empty, false); }
         var ctx = RunEffects(EffectTrigger.Security, owner, null, securityCard, other: attacker, chosenTarget: attacker, includeInherited: false);
@@ -1214,6 +1221,7 @@ public partial class GoldfishEngine
         if (DpReductionBlocked34(target))   // v0.34.0 "can't have its DP reduced"
             return false;
         target.TemporaryDpBonus -= amount;
+        if (IsOpponentEffectFor(zones)) target.OppTempDp59 -= amount;   // v0.59.0 상대의 효과의 몫 (받지 않는 동안에는 빼고 계산)
         target.ActiveSkillBuffLabels.Add($"🔻{source} (DP -{amount:N0})");
         Log($"[효과] {source}: {SideName(zones)} [{target.TopCard.Name}] DP -{amount:N0}");
 
@@ -1242,6 +1250,7 @@ public partial class GoldfishEngine
             if (dp < 0)
                 return ApplyDpMinus(target, -dp, source);
             target.TemporaryDpBonus += dp;
+            if (IsOpponentEffectFor(OwnerOf(target))) target.OppTempDp59 += dp;   // v0.59.0
             target.ActiveSkillBuffLabels.Add($"✨{source} (DP +{dp:N0})");
             return false;
         }
@@ -1250,6 +1259,7 @@ public partial class GoldfishEngine
         if (dp < 0 && DpReductionBlocked34(target))   // v0.34.0
             return false;
         target.TimedDpBuffs.Add((dp, until));
+        if (IsOpponentEffectFor(zones)) target.OppTimedDp59.Add((dp, until));   // v0.59.0
         RecalculateFieldBuffs();
         if (dp >= 0 || target.GetCurrentDP() > 0)   // v0.45.0 DP 하한
             return false;
@@ -2014,10 +2024,11 @@ public partial class GoldfishEngine
         || d.SourcesAny(s => CardScripts.For(s)?.Effects.Any(e => e.Trigger == EffectTrigger.Counter && e.Source == EffectSource.Inherited
                                                                       && !(e.OncePerTurn && d.UsedOncePerTurn.Contains(e.OnceRecordKey(s)))) == true);
 
-    /// <summary>≪디지버스트 N≫ 비용: 진화원 아래에서 N장 파기 → 그 카드들의 "디지버스트로 트래시되었을 때" 효과 → "디지버스트를 발휘했을 때"</summary>
+    /// <summary>≪디지버스트 N≫ 비용: 진화원 N장 파기 → 그 카드들의 "디지버스트로 트래시되었을 때" 효과 → "디지버스트를 발휘했을 때".
+    /// v0.59.0 어느 진화원을 파기할지는 주인이 고른다 (GoldfishEngine.Batch59 — 종합 룰 16-14-1)</summary>
     internal void PayDigiBurst(PlayerZones owner, CardInstance self, int n)
     {
-        var removed = self.RemoveBottomSources(n);
+        var removed = ChooseDigiBurstSources59(owner, self, n);
         owner.Trash.AddRange(removed);
         FireDigiBurst55(owner, self, removed);   // v0.55.0 효과 처리 중이면 그 효과가 끝난 뒤
     }
@@ -2278,6 +2289,7 @@ public partial class GoldfishEngine
     {
         CurrentAttacker = attacker;   // 어택 종료(EndAttack)까지 — ≪프로그레스≫ 판단
         _attackEndRequested = null;   // v0.34.0 "End the attack"
+        RefreshAttackShield59();   // v0.59.0 BT27-103 어택 중에는 상대의 효과(지속 효과 · 이미 받은 DP 효과)를 받지 않는다
         if (CardScripts.HasKeyword(attacker, Keyword.CannotActivateWhenAttacking))   // v0.34.0 "can't activate [When Attacking] effects"
             EffectLog(OwnerOf(attacker), $"[{attacker.TopCard.Name}]의 【어택 시】 효과는 효과로 발휘하지 않습니다.");
         else

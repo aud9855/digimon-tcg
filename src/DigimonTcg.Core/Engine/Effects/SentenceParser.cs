@@ -80,7 +80,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse58(rawClause, inherited, card, def);   // v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse59(rawClause, inherited, card, def);   // v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -2536,6 +2536,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction55(s.TrimEnd('.'), card, triggers) is { } act55) act = act55;   // v0.55.0 (SentenceParser.Batch55.cs)
         if (act.Error != null && ParseAction57(s.TrimEnd('.'), card, triggers) is { } act57) act = act57;   // v0.57.0 (SentenceParser.Batch57.cs)
         if (act.Error != null && ParseAction58(s.TrimEnd('.'), card, triggers) is { } act58) act = act58;   // v0.58.0 (SentenceParser.Batch58.cs)
+        if (act.Error != null && ParseAction59(s.TrimEnd('.'), card, triggers) is { } act59) act = act59;   // v0.59.0 (SentenceParser.Batch59.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2620,7 +2621,7 @@ internal static partial class SentenceParser
 
     /// <summary>비용 구절 → (낼 수 있는지, 내기, AI 추천, 설명)</summary>
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCost(string cost, CardData card) =>
-        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card) ?? ParseCost43(cost, card) ?? ParseCost44(cost, card) ?? ParseCost45(cost, card) ?? ParseCost46(cost, card) ?? ParseCost50(cost, card) ?? ParseCost51(cost, card) ?? ParseCost52(cost, card) ?? ParseCost53(cost, card) ?? ParseCost55(cost, card) ?? ParseCost57(cost, card);   // v0.57.0   // v0.55.0   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
+        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card) ?? ParseCost43(cost, card) ?? ParseCost44(cost, card) ?? ParseCost45(cost, card) ?? ParseCost46(cost, card) ?? ParseCost50(cost, card) ?? ParseCost51(cost, card) ?? ParseCost52(cost, card) ?? ParseCost53(cost, card) ?? ParseCost55(cost, card) ?? ParseCost57(cost, card) ?? ParseCost59(cost, card);   // v0.59.0   // v0.57.0   // v0.55.0   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
 
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCostCore(string cost, CardData card)
     {
@@ -4728,7 +4729,7 @@ internal static partial class SentenceParser
             {
                 IEnumerable<CardInstance> bases = breed
                     ? (c.Owner.BreedingArea is { } b && b.TopCard.Type == CardType.Digimon && target.Filters.All(f => f(b)) ? new[] { b } : Array.Empty<CardInstance>())
-                    : Pick(target, c, security).Where(x => c.Owner.BattleArea.Contains(x) && (selfTraits == null || selfTraits.Any(t => TargetSpec.HasTrait(x.TopCard, t))) && (!selfFd || x.FaceDownSourceCount > 0));
+                    : Pick(target, c, security).Where(x => c.Owner.BattleArea.Contains(x) && (selfTraits == null || selfTraits.Any(t => TargetSpec.HasTrait(x, t))) && (!selfFd || x.FaceDownSourceCount > 0));
                 foreach (var d in bases.ToList())
                 {
                     var pool = new List<PoolCard>();

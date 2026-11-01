@@ -177,6 +177,7 @@ public partial class GoldfishEngine
     internal bool TamerOnPlayBlocked54(PlayerZones owner, CardData tamer)
     {
         if (CardScripts.For(tamer)?.Effects.Any(e => e.Trigger == EffectTrigger.OnPlay && e.Source == EffectSource.Main) != true) return false;
+        if (OnPlayPeriodBlocked59(owner)) { EffectLog(owner, $"[{tamer.Name}]의 【등장 시】 효과는 상대의 효과로 발휘하지 않습니다."); return true; }   // v0.59.0 BT20-037 기간 효과
         var enemy = EnemyOf(owner);
         bool Blocks(CardData c) => CardScripts.For(c)?.BlockOpponentTamerOnPlay54 is { } f && f(enemy, owner);
         if (!enemy.Tamers.Distinct().Any(Blocks) && !enemy.BattleArea.Any(d => d.TamerProxyOf == null && Blocks(d.TopCard))) return false;

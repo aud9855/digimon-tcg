@@ -47,7 +47,7 @@ public sealed partial class TargetSpec
             && Parse(m.Groups["pre"].Value) is { IsThis: false, IsThat: false } tr)
         {
             var xs = Names(m.Groups["x"].Value);
-            tr.Filters.Add(d => d.TopCard.Traits.Any(t => xs.Any(x => t.Contains(x, StringComparison.OrdinalIgnoreCase))));
+            tr.Filters.Add(d => d.TopCard.Traits.Concat(d.ExtraTraits58).Any(t => xs.Any(x => t.Contains(x, StringComparison.OrdinalIgnoreCase))));
             return tr;
         }
         // "1 of their Digimon or Tamers without cards under it" (LM-005 · RB1-014 · BT16-069 — 공식 "아래에 카드가 없는 상대의 디지몬/테이머") — 테이머는 테이머 아래 카드가 없을 때

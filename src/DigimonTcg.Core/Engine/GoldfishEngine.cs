@@ -973,9 +973,12 @@ public partial class GoldfishEngine
                     securityCard, attacker.TopCard.Name, attackerDp, IsBattleWon: false, OutcomeSummary: $"💀 내 디지몬 소멸 (DP {attackerDp} <= {securityDp})"));
                 battleSummaries.Add(msg);
                 Log(msg);
-                if (DeleteDigimon(attacker))   // ≪방벽≫ 등으로 소멸을 막으면 남은 체크를 계속한다
+                bool removed59 = DeleteDigimon(attacker);
+                RunAfterBattle59();   // v0.59.0 배틀 종료 시 (ST17-13)
+                if (removed59)   // ≪방벽≫ 등으로 소멸을 막으면 남은 체크를 계속한다
                     break;
             }
+            RunAfterBattle59();   // v0.59.0 ST17-13 "At the end of the battle, 1 of your Digimon may digivolve into this card" (GoldfishEngine.Batch59)
         }
         FlushAfterSecurityBattle39();   // v0.39.0
 
@@ -1118,6 +1121,7 @@ public partial class GoldfishEngine
         {
             d.IsSuspended = false;
             d.TemporaryDpBonus = 0;
+            d.OppTempDp59 = 0;   // v0.59.0
             d.TemporarySecurityAttackBonus = 0;
         }
 
@@ -1187,6 +1191,7 @@ public partial class GoldfishEngine
         foreach (var d in AllInstances(State.Player))
         {
             d.TemporaryDpBonus = 0;
+            d.OppTempDp59 = 0;   // v0.59.0
             d.TemporarySecurityAttackBonus = 0;
             d.ActiveSkillBuffLabels.Clear();
         }
@@ -1605,6 +1610,7 @@ public partial class GoldfishEngine
                     mySec, aiAttacker.TopCard.Name, aiDp, IsBattleWon: true, OutcomeSummary: $"💥 AI [{aiAttacker.TopCard.Name}] 역격파!"));
                 Log(winMsg);
                 AddOpponentEvent(OpponentActionKind.SecurityResult, "내 시큐리티 역격파!", $"내 {mySec.Name} (DP {mySecDp:N0}) ≥ {aiAttacker.TopCard.Name} (DP {aiDp:N0}) · 남은 시큐리티 {State.Player.SecurityStack.Count}장", aiAttacker.TopCard, mySec);
+                RunAfterBattle59();   // v0.59.0 배틀 종료 시 (ST17-13)
                 if (aiRemoved)   // ≪방벽≫ 등으로 소멸을 막으면 남은 체크를 계속한다
                     break;
                 continue;
@@ -1617,6 +1623,7 @@ public partial class GoldfishEngine
                     mySec, aiAttacker.TopCard.Name, aiDp, IsBattleWon: false, OutcomeSummary: $"⚔️ 시큐리티 돌파됨 (내 DP {mySecDp} vs AI {aiDp}){why}"));
                 Log(loseMsg);
                 AddOpponentEvent(OpponentActionKind.SecurityResult, "내 시큐리티 파괴", $"내 {mySec.Name} (DP {mySecDp:N0}) vs {aiAttacker.TopCard.Name} (DP {aiDp:N0}){why} · 남은 시큐리티 {State.Player.SecurityStack.Count}장", aiAttacker.TopCard, mySec);
+                RunAfterBattle59();   // v0.59.0 배틀 종료 시 (ST17-13)
             }
         }
         FlushAfterSecurityBattle39();   // v0.39.0

@@ -71,6 +71,9 @@ public class PlayerZones
     public int CannotPlayFromTrashByEffectsUntil { get; set; }
     public int CannotUseOptionsUntil { get; set; }
 
+    /// <summary>v0.59.0 이 쪽의 디지몬 · 테이머는 【등장 시】 효과를 발휘할 수 없다 (기간 — BT20-037 "none of their Digimon or Tamers can activate [On Play] effects until the end of their turn")</summary>
+    public int OnPlayBlockedUntil59 { get; set; }
+
     /// <summary>v0.51.0 이 쪽이 마지막으로 진화한 턴 (GameState.TurnSequence, 없으면 -1) — "If you've digivolved this turn" (BT1-007)</summary>
     public int DigivolvedTurnSeq51 { get; set; } = -1;
 

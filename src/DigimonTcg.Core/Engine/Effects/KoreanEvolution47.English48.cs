@@ -116,16 +116,16 @@ public static partial class KoreanEvolution47
     {
         // Lv.N w/[A] in text or w/[B] trait
         (new Regex($@"^Lv\.(?<lv>\d+) w/(?<n>{ENL}) in text or w/(?<t>{ENL}) trait", IC),
-            m => { var ns = NamesEn(m.Groups["n"].Value); var ts = NamesEn(m.Groups["t"].Value); return (c, _) => IsLvEn(c, m) && (ns.Any(x => TargetSpec.TextHas(c, x)) || ts.Any(t => TraitIsEn(c, t))); }, false),
+            m => { var ns = NamesEn(m.Groups["n"].Value); var ts = NamesEn(m.Groups["t"].Value); return (c, i59) => IsLvEn(c, m) && (ns.Any(x => TargetSpec.TextHas(c, x)) || ts.Any(t => TraitIsEn59(c, t, i59))); }, false),
         // Lv.N w/[A] in name or w/[B] trait
         (new Regex($@"^Lv\.(?<lv>\d+) w/(?<n>{ENL}) in name or w/(?<t>{ENL}) trait", IC),
-            m => { var ns = NamesEn(m.Groups["n"].Value); var ts = NamesEn(m.Groups["t"].Value); return (c, _) => IsLvEn(c, m) && (ns.Any(x => CardNames.Contains(c, x)) || ts.Any(t => TraitIsEn(c, t))); }, false),
+            m => { var ns = NamesEn(m.Groups["n"].Value); var ts = NamesEn(m.Groups["t"].Value); return (c, i59) => IsLvEn(c, m) && (ns.Any(x => CardNames.Contains(c, x)) || ts.Any(t => TraitIsEn59(c, t, i59))); }, false),
         // Lv.N w/[A] in name and [B] trait
         (new Regex($@"^Lv\.(?<lv>\d+) w/(?<n>{ENL}) in name and (?<t>{ENL}) trait", IC),
-            m => { var ns = NamesEn(m.Groups["n"].Value); var ts = NamesEn(m.Groups["t"].Value); return (c, _) => IsLvEn(c, m) && ns.Any(x => CardNames.Contains(c, x)) && ts.Any(t => TraitIsEn(c, t)); }, false),
+            m => { var ns = NamesEn(m.Groups["n"].Value); var ts = NamesEn(m.Groups["t"].Value); return (c, i59) => IsLvEn(c, m) && ns.Any(x => CardNames.Contains(c, x)) && ts.Any(t => TraitIsEn59(c, t, i59)); }, false),
         // Lv.N w/[A] or [B] in any trait or w/[C] trait
         (new Regex($@"^Lv\.(?<lv>\d+) w/(?<x>{ENL}) in any trait or w/(?<t>{ENL}) trait", IC),
-            m => { var xs = NamesEn(m.Groups["x"].Value); var ts = NamesEn(m.Groups["t"].Value); return (c, _) => IsLvEn(c, m) && (xs.Any(x => TargetSpec.HasTrait(c, x)) || ts.Any(t => TraitIsEn(c, t))); }, false),
+            m => { var xs = NamesEn(m.Groups["x"].Value); var ts = NamesEn(m.Groups["t"].Value); return (c, i59) => IsLvEn(c, m) && (xs.Any(x => (TargetSpec.HasTrait(c, x) || Gained59(i59, c, x))) || ts.Any(t => TraitIsEn59(c, t, i59))); }, false),
         // Lv.N w/[A] in text
         (new Regex($@"^Lv\.(?<lv>\d+) w/(?<n>{ENL}) in text", IC),
             m => { var ns = NamesEn(m.Groups["n"].Value); return (c, _) => IsLvEn(c, m) && ns.Any(x => TargetSpec.TextHas(c, x)); }, false),
@@ -134,7 +134,7 @@ public static partial class KoreanEvolution47
             m => { var ns = NamesEn(m.Groups["n"].Value); return (c, _) => IsLvEn(c, m) && ns.Any(x => CardNames.Contains(c, x)); }, false),
         // (Yellow/purple · Non-white) Lv.N w/[A]/[B] trait
         (new Regex($@"^(?:(?<c>{ColsE})\s+|Non-(?<nc>{ColE})\s+)?Lv\.(?<lv>\d+) w/(?<t>{ENL}) trait", IC),
-            m => { var ts = NamesEn(m.Groups["t"].Value); var cs = ColorsEn(m); return (c, _) => IsLvEn(c, m) && ColorOk(c, cs) && NonColorOk(c, m) && ts.Any(t => TraitIsEn(c, t)); }, false),
+            m => { var ts = NamesEn(m.Groups["t"].Value); var cs = ColorsEn(m); return (c, i59) => IsLvEn(c, m) && ColorOk(c, cs) && NonColorOk(c, m) && ts.Any(t => TraitIsEn59(c, t, i59)); }, false),
         // Play cost N [A]
         (new Regex($@"^Play cost (?<pc>\d+) (?<n>{ENL})", IC),
             m => { var ns = NamesEn(m.Groups["n"].Value); int pc = int.Parse(m.Groups["pc"].Value); return (c, _) => c.Type == CardType.Digimon && c.PlayCost == pc && ns.Any(x => CardNames.Is(c, x)); }, false),

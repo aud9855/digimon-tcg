@@ -447,7 +447,7 @@ internal static partial class SentenceParser
             var xs = TargetSpec.Names(m.Groups["x"].Value);
             bool other = m.Groups["other"].Success;
             return (o, _, self) => o.BattleArea.Count(d => d.IsSuspended && d.TamerProxyOf == null && (!other || !ReferenceEquals(d, self))
-                && d.TopCard.Traits.Any(t => xs.Any(x => t.Contains(x, StringComparison.OrdinalIgnoreCase))));
+                && d.TopCard.Traits.Concat(d.ExtraTraits58).Any(t => xs.Any(x => t.Contains(x, StringComparison.OrdinalIgnoreCase))));   // v0.59.0 얻은 특징도
         }
         // "Tamer you have in play with a different color" (BT12-083 — 색이 다른 테이머 수)
         if (Regex.IsMatch(s, @"^Tamer you have in play with a different colou?r$", I))

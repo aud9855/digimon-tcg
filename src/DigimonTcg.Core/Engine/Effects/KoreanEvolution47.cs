@@ -135,10 +135,10 @@ public static partial class KoreanEvolution47
         // 명칭에 「X」을 포함하고(,) 특징(으로) 「Y」를 가진/갖지 않은 Lv.N
         (new Regex($@"^명칭에\s*(?<n>{NL})\s*[을를]?\s*포함하고{J}특징(?:으로|에)?\s*(?<t>{NL})\s*[을를]?\s*(?<neg>갖지\s*않은|가지지\s*않은|가진)\s*{LvP}"),
             m => { var ns = Names(m.Groups["n"].Value); var ts = Names(m.Groups["t"].Value); bool neg = !m.Groups["neg"].Value.StartsWith("가진", StringComparison.Ordinal);
-                   return (c, _) => IsLv(c, m) && ns.Any(x => NameHas(c, x)) && (ts.Any(t => TraitIs(c, t)) != neg); }, false),
+                   return (c, i59) => IsLv(c, m) && ns.Any(x => NameHas(c, x)) && (ts.Any(t => TraitIs59(c, t, i59)) != neg); }, false),
         // 명칭에 「X」을 포함하거나 특징으로 「Y」를 가진 Lv.N
         (new Regex($@"^명칭에\s*(?<n>{NL})\s*[을를]?\s*포함하거나{J}특징(?:으로|에)?\s*(?<t>{NL})\s*[을를]?\s*가진\s*{LvP}"),
-            m => { var ns = Names(m.Groups["n"].Value); var ts = Names(m.Groups["t"].Value); return (c, _) => IsLv(c, m) && (ns.Any(x => NameHas(c, x)) || ts.Any(t => TraitIs(c, t))); }, false),
+            m => { var ns = Names(m.Groups["n"].Value); var ts = Names(m.Groups["t"].Value); return (c, i59) => IsLv(c, m) && (ns.Any(x => NameHas(c, x)) || ts.Any(t => TraitIs59(c, t, i59))); }, false),
         // 명칭에 「X」을 포함하거나 그린을 포함하는 2색의 Lv.N
         (new Regex($@"^명칭에\s*(?<n>{NL})\s*[을를]?\s*포함하거나{J}(?<c1>{Col})\s*[을를]\s*포함하는\s*(?<k>\d+)\s*색의\s*{LvP}"),
             m => { var ns = Names(m.Groups["n"].Value); var col = ColorOf(m.Groups["c1"].Value); int k = int.Parse(m.Groups["k"].Value);
@@ -149,10 +149,10 @@ public static partial class KoreanEvolution47
                    return (c, _) => IsLvOrAny(c, m) && ColorOk(c, cs) && (k == 0 || c.AllColors.Count == k) && ns.Any(x => NameHas(c, x)); }, false),
         // 특징으로 「X」를 갖지 않고(,) 「Y」를 가진 Lv.N
         (new Regex($@"^특징(?:으로|에)?\s*(?<x>{NL})\s*[을를]?\s*갖지\s*않고{J}(?<t>{NL})\s*[을를]?\s*가진\s*{LvP}"),
-            m => { var xs = Names(m.Groups["x"].Value); var ts = Names(m.Groups["t"].Value); return (c, _) => IsLv(c, m) && !xs.Any(x => TraitIs(c, x)) && ts.Any(t => TraitIs(c, t)); }, false),
+            m => { var xs = Names(m.Groups["x"].Value); var ts = Names(m.Groups["t"].Value); return (c, i59) => IsLv(c, m) && !xs.Any(x => TraitIs59(c, x, i59)) && ts.Any(t => TraitIs59(c, t, i59)); }, false),
         // 특징 「X」를 가진 (등장 코스트 13 이하의) (블루/레드인) Lv.N (이상) · 특징「X」Lv.N
         (new Regex($@"^특징(?:으로|에)?\s*(?<t>{NL})\s*(?:[을를]\s*)?(?:가진\s*)?(?:등장\s*코스트\s*(?<pc>\d+)\s*(?<pcop>이하|이상)의\s*)?(?:(?<c>{Cols})\s*인\s*)?{LvP}"),
-            m => { var ts = Names(m.Groups["t"].Value); var cs = ColorsOf(m); return (c, _) => IsLv(c, m) && ColorOk(c, cs) && PlayCostOk(c, m) && ts.Any(t => TraitIs(c, t)); }, false),
+            m => { var ts = Names(m.Groups["t"].Value); var cs = ColorsOf(m); return (c, i59) => IsLv(c, m) && ColorOk(c, cs) && PlayCostOk(c, m) && ts.Any(t => TraitIs59(c, t, i59)); }, false),
         // 그린을 포함하는 2색의 Lv.N
         (new Regex($@"^(?<c1>{Col})\s*[을를]\s*포함하는\s*(?<k>\d+)\s*색의\s*{LvP}"),
             m => { var col = ColorOf(m.Groups["c1"].Value); int k = int.Parse(m.Groups["k"].Value); return (c, _) => IsLv(c, m) && c.AllColors.Count == k && c.AllColors.Contains(col); }, false),

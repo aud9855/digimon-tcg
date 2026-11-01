@@ -86,7 +86,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(s, @"^colou?r in (?:this (?<x>\[[^\]]+\](?: or \[[^\]]+\])*) trait Digimon's|this Digimon's|its) digivolution cards$", I)).Success)
         {
             var traits = m.Groups["x"].Success ? TargetSpec.Names(m.Groups["x"].Value) : null;
-            return (_, _, self) => self == null || traits != null && !traits.Any(t => TargetSpec.HasTrait(self.TopCard, t)) ? 0
+            return (_, _, self) => self == null || traits != null && !traits.Any(t => TargetSpec.HasTrait(self, t)) ? 0
                 : self.FaceUpSources.SelectMany(x => x.AllColors).Distinct().Count();
         }
         return null;
