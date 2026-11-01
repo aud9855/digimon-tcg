@@ -335,7 +335,7 @@ internal static partial class SentenceParser
             return (c =>
             {
                 int mem = Math.Max(0, c.OwnerMemory);
-                bool Usable(CardData x) => x.Type == CardType.Option && match(x) && !ReferenceEquals(x, c.Card) && ActionValidator.MissingOptionColors(c.Owner, x).Count == 0
+                bool Usable(CardData x) => x.Type == CardType.Option && match(x) && !ReferenceEquals(x, c.Card) && ActionValidator.MissingOptionColors(c.Owner, x, c.Enemy).Count == 0
                                            && !EffectRules.OptionUseBlocked(c.State, c.Owner) && Math.Max(0, x.PlayCost - red) <= mem;
                 var pool = c.Owner.Hand.Where(Usable).Distinct().OrderByDescending(x => x.PlayCost).ToList();
                 if (pool.Count == 0) { c.LastStepResolved = false; Emit(c, label, "코스트를 내고 사용할 수 있는 옵션 카드가 없습니다"); return; }

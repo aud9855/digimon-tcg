@@ -79,7 +79,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse51(rawClause, inherited, card, def);   // v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse52(rawClause, inherited, card, def);   // v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -1338,7 +1338,7 @@ internal static partial class SentenceParser
                 && (!mine || ReferenceEquals(c.Engine.CurrentSourceEffectOwner, c.Owner))
                 && c.Engine.CurrentSourceCards.Any(what));
         }
-        return ParseEventPhrase31(ev) ?? ParseEventPhrase32(ev) ?? ParseEventPhrase33(ev) ?? ParseEventPhrase40(ev) ?? ParseEventPhrase43(ev) ?? ParseEventPhrase44(ev) ?? ParseEventPhrase45(ev) ?? ParseEventPhrase46(ev);   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44Extra) · v0.43.0 (Batch43Extra)   // v0.40.0 (SentenceParser.Batch40.cs) · v0.31.0 (SentenceParser.Batch31.cs) · v0.32.0 (SentenceParser.Batch32.cs)
+        return ParseEventPhrase31(ev) ?? ParseEventPhrase32(ev) ?? ParseEventPhrase33(ev) ?? ParseEventPhrase40(ev) ?? ParseEventPhrase43(ev) ?? ParseEventPhrase44(ev) ?? ParseEventPhrase45(ev) ?? ParseEventPhrase46(ev) ?? ParseEventPhrase52(ev);   // v0.52.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44Extra) · v0.43.0 (Batch43Extra)   // v0.40.0 (SentenceParser.Batch40.cs) · v0.31.0 (SentenceParser.Batch31.cs) · v0.32.0 (SentenceParser.Batch32.cs)
     }
 
     /// <summary>
@@ -2477,7 +2477,14 @@ internal static partial class SentenceParser
                 Action<EffectContext> scaled = c =>
                 {
                     int k = Math.Min(counter(c.Owner, c.Enemy, c.Self), 20);
-                    if (k <= 0) return;
+                    if (k <= 0)
+                    {
+                        // v0.52.0 셈이 0이어도 대상은 고른다 (+0) — 뒤의 "Then, it may attack" (BT25-086 상대 메모리 0)이 그 디지몬을 가리키도록. 전에는 대상을 고르지 않아 어택하지 않았다
+                        if (!dpm.Groups["t"].Value.StartsWith("1 of ", StringComparison.OrdinalIgnoreCase)) return;
+                        if (!byK.TryGetValue(0, out var z)) byK[0] = z = ParseAction($"{dpm.Groups["t"].Value} gets +0 DP{dpm.Groups["rest"].Value}", card, triggers).Act;
+                        z?.Invoke(c);
+                        return;
+                    }
                     if (!byK.TryGetValue(k, out var a))
                         byK[k] = a = ParseAction($"{dpm.Groups["t"].Value} gets {dpm.Groups["sign"].Value}{unit * k} DP{dpm.Groups["rest"].Value}", card, triggers).Act;
                     a?.Invoke(c);
@@ -2519,7 +2526,8 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction48(s.TrimEnd('.'), card, triggers) is { } act48) act = act48;
         if (act.Error != null && ParseAction49(s.TrimEnd('.'), card, triggers) is { } act49) act = act49;
         if (act.Error != null && ParseAction50(s.TrimEnd('.'), card, triggers) is { } act50) act = act50;
-        if (act.Error != null && ParseAction51(s.TrimEnd('.'), card, triggers) is { } act51) act = act51;   // v0.51.0 (SentenceParser.Batch51.cs)   // v0.50.0 (SentenceParser.Batch50.cs) · v0.49.0 (SentenceParser.Batch49.cs)   // v0.48.0 (SentenceParser.Batch48.cs)   // v0.46.0 (SentenceParser.Batch46.cs)   // v0.44.0 (SentenceParser.Batch44.cs)
+        if (act.Error != null && ParseAction51(s.TrimEnd('.'), card, triggers) is { } act51) act = act51;
+        if (act.Error != null && ParseAction52(s.TrimEnd('.'), card, triggers) is { } act52) act = act52;   // v0.52.0 (SentenceParser.Batch52.cs)   // v0.51.0 (SentenceParser.Batch51.cs)   // v0.50.0 (SentenceParser.Batch50.cs) · v0.49.0 (SentenceParser.Batch49.cs)   // v0.48.0 (SentenceParser.Batch48.cs)   // v0.46.0 (SentenceParser.Batch46.cs)   // v0.44.0 (SentenceParser.Batch44.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2604,7 +2612,7 @@ internal static partial class SentenceParser
 
     /// <summary>비용 구절 → (낼 수 있는지, 내기, AI 추천, 설명)</summary>
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCost(string cost, CardData card) =>
-        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card) ?? ParseCost43(cost, card) ?? ParseCost44(cost, card) ?? ParseCost45(cost, card) ?? ParseCost46(cost, card) ?? ParseCost50(cost, card) ?? ParseCost51(cost, card);   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
+        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card) ?? ParseCost43(cost, card) ?? ParseCost44(cost, card) ?? ParseCost45(cost, card) ?? ParseCost46(cost, card) ?? ParseCost50(cost, card) ?? ParseCost51(cost, card) ?? ParseCost52(cost, card);   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
 
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCostCore(string cost, CardData card)
     {
@@ -3508,7 +3516,7 @@ internal static partial class SentenceParser
             bool fromHand = from.Contains("hand"), fromTrash = from.Contains("trash"), fromUnder = from.Contains("under");
             return (c =>
             {
-                bool Usable(CardData x) => x.Type == CardType.Option && pickMatch(x) && ActionValidator.MissingOptionColors(c.Owner, x).Count == 0 && !EffectRules.OptionUseBlocked(c.State, c.Owner);   // v0.36.0 옵션 사용 제한
+                bool Usable(CardData x) => x.Type == CardType.Option && pickMatch(x) && ActionValidator.MissingOptionColors(c.Owner, x, c.Enemy).Count == 0 && !EffectRules.OptionUseBlocked(c.State, c.Owner);   // v0.36.0 옵션 사용 제한
                 var pool = new List<PoolCard>();
                 if (fromHand) pool.AddRange(PoolFrom(c.Owner.Hand, Usable));
                 if (fromTrash) pool.AddRange(PoolFrom(c.Owner.Trash, Usable));
@@ -5069,7 +5077,7 @@ internal static partial class SentenceParser
     private static bool PlayOrUseOk49(EffectContext c, CardData x, int? red)
     {
         if (red is int r && Math.Max(0, x.PlayCost - r) > Math.Max(0, c.OwnerMemory)) return false;
-        if (x.Type == CardType.Option) return ActionValidator.MissingOptionColors(c.Owner, x).Count == 0 && !EffectRules.OptionUseBlocked(c.State, c.Owner);
+        if (x.Type == CardType.Option) return ActionValidator.MissingOptionColors(c.Owner, x, c.Enemy).Count == 0 && !EffectRules.OptionUseBlocked(c.State, c.Owner);
         return x.Type is CardType.Digimon or CardType.Tamer && c.Engine.CanPlayByEffect(c.Owner, x, PlayOrigin.Revealed);
     }
 

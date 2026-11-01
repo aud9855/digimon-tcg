@@ -145,7 +145,7 @@ internal static partial class SentenceParser
                 return pool;
             }
             int CostOf(CardData x) => red is int r ? (x.Type == CardType.Option ? Math.Max(0, x.PlayCost - r) : c.Engine.ReducedPlayCost(c.Owner, x, Math.Max(0, x.PlayCost - r), x.PlayCost)) : 0;
-            bool Usable(CardData x) => x.Type == CardType.Option && ActionValidator.MissingOptionColors(c.Owner, x).Count == 0 && !EffectRules.OptionUseBlocked(c.State, c.Owner);
+            bool Usable(CardData x) => x.Type == CardType.Option && ActionValidator.MissingOptionColors(c.Owner, x, c.Enemy).Count == 0 && !EffectRules.OptionUseBlocked(c.State, c.Owner);
             bool Ok(Src39 src)
             {
                 var x = src.Card;

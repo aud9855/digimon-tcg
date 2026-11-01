@@ -115,6 +115,8 @@ public enum EffectTrigger
     AllyEffectAddedToDeck46,        // 자신의 효과로 덱에 카드가 더해졌을 때 (어느 쪽 덱이든 — "When your effects add to decks" BT26-015, 효과 1개마다 1번)
     // v0.50.0
     StartOfOpponentsTurn50,         // [상대의 턴 개시 시] (LM-020 · 상대의 턴 개시 시에 자신의 카드)
+    // v0.52.0
+    AllyDigimonWouldDigivolve52,    // 자신의 디지몬이 진화하려 할 때 (코스트를 내기 전 — Other = 진화할 디지몬, TriggerCard = 진화할 카드 · EX2-056)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
@@ -355,6 +357,12 @@ public sealed class CardScript
 
     /// <summary>옵션: 이 조건(자신의 필드)을 만족하면 색 조건을 무시하고 [메인]으로 쓸 수 있다</summary>
     public Func<PlayerZones, bool>? IgnoreColorRequirement { get; set; }
+
+    /// <summary>v0.52.0 옵션: 상대의 필드를 보는 색 조건 무시 — (자신의 필드, 상대의 필드) (EX6-072 "While your opponent has a level 6 or higher Digimon" · BT19-089)</summary>
+    public Func<PlayerZones, PlayerZones, bool>? IgnoreColorRequirementVs52 { get; set; }
+
+    /// <summary>v0.52.0 BT3-056 "[Your Turn] [Once Per Turn] When your ＜Digisorption＞ effect would suspend one of your Digimon, you may suspend your opponent's Digimon with that effect instead"</summary>
+    public bool DigisorptionOpponent52 { get; set; }
 
     /// <summary>"이 카드를 등장시킬 때 / 사용할 때 코스트 -N" — (자신의 필드, 상대의 필드)를 받아 줄일 코스트를 돌려준다</summary>
     public Func<PlayerZones, PlayerZones, int>? PlayCostReduction { get; set; }

@@ -186,7 +186,14 @@ internal static partial class SentenceParser
                         if (d != null) { c.Engine.Unsuspend(d); done.Add(d.TopCard.Name); }
                     }
                     if (tamers.Count > 0) { var t = PickTamer38(c, tamers); c.Engine.UnsuspendTamer38(c.Owner, t); done.Add(t.Name); }
-                    else if (namedDigis.Count > 0) { c.Engine.Unsuspend(namedDigis[0]); done.Add(namedDigis[0].TopCard.Name); }
+                    else if (namedDigis.Count > 0)
+                    {
+                        // v0.52.0 이름으로 고른 디지몬을 액티브로 했으면 뒤의 "it" · "that Digimon"은 그 디지몬 (BT12-100 "~ unsuspend 1 of your [Shoutmon X7: Superior Mode] cards, and it may attack a player" —
+                        // 전에는 앞 단계의 대상(소멸시킨 상대 디지몬)을 가리켜 어택하지 않았다). 여럿이면 어택할 수 있는 것 먼저
+                        var nd = namedDigis.OrderByDescending(x => x.TurnPlayed < c.Engine.State.CurrentTurn || CardScripts.HasKeyword(x, Keyword.Rush)).First();
+                        c.Engine.Unsuspend(nd); done.Add(nd.TopCard.Name);
+                        c.LastTargets = new List<CardInstance> { nd };
+                    }
                 }
                 if (done.Count == 0) c.LastStepResolved = false;
                 Emit(c, label, done.Count > 0 ? $"[{string.Join(", ", done)}] 액티브" : "액티브로 할 대상이 없습니다");

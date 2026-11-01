@@ -54,10 +54,18 @@ public partial class GoldfishEngine
     {
         if (_wouldDigivolveDepth40 > 0 || State.IsGameOver || !owner.BattleArea.Contains(target) || target.TamerProxyOf != null)
             return;
-        if (!AnyScriptHas40(target, EffectTrigger.ThisDigimonWouldDigivolve))
+        bool self = AnyScriptHas40(target, EffectTrigger.ThisDigimonWouldDigivolve);
+        // v0.52.0 "When one of your Digimon would digivolve into ~" (EX2-056 테이머) — 자신의 필드에 그 효과가 있을 때만 알린다
+        bool ally = owner.Tamers.Any(t => CardScripts.For(t)?.Effects.Any(e => e.Trigger == EffectTrigger.AllyDigimonWouldDigivolve52) == true)
+                    || owner.BattleArea.Any(d => AnyScriptHas40(d, EffectTrigger.AllyDigimonWouldDigivolve52));
+        if (!self && !ally)
             return;
         _wouldDigivolveDepth40++;
-        try { RunEffects(EffectTrigger.ThisDigimonWouldDigivolve, owner, target, target.TopCard, triggerCard: evoCard); }
+        try
+        {
+            if (self) RunEffects(EffectTrigger.ThisDigimonWouldDigivolve, owner, target, target.TopCard, triggerCard: evoCard);
+            if (ally && !State.IsGameOver && owner.BattleArea.Contains(target)) FireForSide(EffectTrigger.AllyDigimonWouldDigivolve52, owner, target, triggerCard: evoCard);
+        }
         finally { _wouldDigivolveDepth40--; }
     }
 

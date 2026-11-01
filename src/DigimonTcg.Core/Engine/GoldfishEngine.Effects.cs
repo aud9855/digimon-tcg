@@ -346,6 +346,7 @@ public partial class GoldfishEngine
             or EffectTrigger.AllyDigimonDigivolved or EffectTrigger.AllyDigimonSuspended or EffectTrigger.OpponentDigimonAttacks
             or EffectTrigger.OpponentDigimonSuspended or EffectTrigger.OpponentDigimonPlayed
             or EffectTrigger.AllyDigimonUnsuspended or EffectTrigger.OpponentDigimonUnsuspended or EffectTrigger.AllyDeletedOpponentInBattle
+            or EffectTrigger.AllyDigimonWouldDigivolve52   // v0.52.0 "When one of your Digimon would digivolve into ~, that Digimon gains ~" (EX2-056)
             or EffectTrigger.AllySourcesAdded   // v0.35.0 "When face-down cards are placed in any of your Digimon's digivolution cards, any of those Digimon may digivolve ~"
             ? new List<CardInstance> { ctx.Other } : new List<CardInstance>();
         if (effect.Condition != null && !EvalWithDeletionView45(ctx, effect.Condition))   // v0.45.0 소멸한 디지몬은 소멸 직전 모습으로
@@ -1884,18 +1885,34 @@ public partial class GoldfishEngine
     /// ≪디지섭션 -N≫: 패에서 이 카드로 진화할 때 자신의 다른 액티브 디지몬 1마리를 레스트시켜 진화 코스트 -N.
     /// 추천(AI)은 그대로 내면 메모리가 상대 쪽으로 넘어갈 때만 쓴다. 반환: 줄인 코스트
     /// </summary>
+    private const string DigisorptionOpponentKey52 = "digisorption-opponent-52";
+
     private int TryDigisorption(PlayerZones owner, CardInstance target, CardData evoCard, int baseCost, int memoryBefore)
     {
         int n = CardScripts.For(evoCard)?.DigisorptionReduction ?? 0;
         if (n <= 0 || baseCost <= 0 || !CanReduceEvoCost(owner))
             return 0;
         var pool = owner.BattleArea.Where(d => !ReferenceEquals(d, target) && !d.IsSuspended).OrderBy(d => d.GetCurrentDP()).ToList();
-        if (pool.Count == 0)
+        // v0.52.0 BT3-056 "[Your Turn] [Once Per Turn] When your ＜Digisorption＞ effect would suspend one of your Digimon, you may suspend your opponent's Digimon with that effect instead"
+        //  (공식 "자신의 《흡수진화》로 레스트시킬 디지몬을 상대 디지몬으로 할 수 있다") — 자신의 턴 · 이 효과를 가진 디지몬 1마리마다 턴에 1회. 레스트시킬 수 있는 액티브 상대 디지몬
+        var substitute = IsTurnOf(owner)
+            ? owner.BattleArea.FirstOrDefault(d => CardScripts.For(d.TopCard)?.DigisorptionOpponent52 == true && !d.UsedOncePerTurn.Contains(DigisorptionOpponentKey52))
+            : null;
+        var enemyPool = substitute == null ? new List<CardInstance>()
+            : EnemyOf(owner).BattleArea.Where(d => d.TamerProxyOf == null && !d.IsSuspended && !EffectRules.IsSuspendLocked(State, d) && !IsUnaffectedBy(owner, d)).OrderByDescending(d => d.GetCurrentDP()).ToList();
+        if (pool.Count == 0 && enemyPool.Count == 0)
             return 0;
-        bool recommended = memoryBefore - baseCost < 0;
-        var pick = AskDigimon(owner, $"≪디지섭션 -{n}≫ [{evoCard.Name}] 진화 코스트를 줄이려면 레스트시킬 디지몬을 고르세요.", pool, recommended ? pool[0] : null, optional: true);
+        bool recommended = memoryBefore - baseCost < 0 || enemyPool.Count > 0;   // 상대 디지몬을 레스트시킬 수 있으면 언제나 이득
+        var options = enemyPool.Concat(pool).ToList();
+        var pick = AskDigimon(owner, $"≪디지섭션 -{n}≫ [{evoCard.Name}] 진화 코스트를 줄이려면 레스트시킬 디지몬을 고르세요.{(enemyPool.Count > 0 ? $" ([{substitute!.TopCard.Name}]의 효과로 상대의 디지몬도 고를 수 있습니다)" : "")}",
+            options, recommended ? options[0] : null, optional: true);
         if (pick == null)
             return 0;
+        if (enemyPool.Contains(pick))
+        {
+            substitute!.UsedOncePerTurn.Add(DigisorptionOpponentKey52);
+            EffectLog(owner, $"[{substitute.TopCard.Name}] ≪디지섭션≫으로 레스트시킬 디지몬을 상대의 [{pick.TopCard.Name}](으)로 합니다");
+        }
         Suspend(pick);
         int reduced = Math.Min(n, baseCost);   // 실제 진화 코스트(카드 효과 진화 포함)보다 많이 줄이지 않는다
         EffectLog(owner, $"[≪디지섭션 -{n}≫] [{pick.TopCard.Name}]을(를) 레스트시켜 [{evoCard.Name}] 진화 코스트 -{reduced}");

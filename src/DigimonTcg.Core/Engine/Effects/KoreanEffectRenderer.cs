@@ -41,16 +41,20 @@ public static partial class KoreanEffectRenderer
         return translated == 0 ? null : string.Join("\n", lines);
     }
 
-    /// <summary>절 하나 → 한글 (번역할 수 없으면 null)</summary>
-    public static string? RenderClause(string rawClause)
+    /// <summary>절 하나 → 한글 (번역할 수 없으면 null) — v0.52.0 같은 절 · 같은 상태는 한 번만 (KoreanEffectRenderer.Memo52.cs)</summary>
+    public static string? RenderClause(string rawClause) => Memo52(0, rawClause, 0, static (x, _) => RenderClauseUncached52(x));
+
+    private static string? RenderClauseUncached52(string rawClause)
     {
         // v0.38.0 시큐리티 에어리어의 효과 표시 — 공식 BT20-052 "[시큐리티]【상대의 턴 종료 시】" (【시큐리티】 효과가 아니다)
         if (Regex.IsMatch(rawClause.TrimStart(), @"^\[Security\]\s*\[End of Opponent's Turn\]", RegexOptions.IgnoreCase) && RenderClauseCore(rawClause) is { } zoneKo)
             return TamerCount41(Regex.Replace(zoneKo, @"^【시큐리티】\s*", "[시큐리티]"));
-        return TamerCount41(RenderClause47Fixed(rawClause) ?? RenderBrokenText43(rawClause) ?? FixItAfterPlay40(rawClause, RenderClauseCore(rawClause)) ?? RenderClause40(rawClause) ?? RenderClause41(rawClause) ?? RenderClause42(rawClause) ?? RenderClause43(rawClause) ?? RenderClause44(rawClause) ?? RenderClause45(rawClause) ?? RenderClause46(rawClause) ?? RenderClause47(rawClause) ?? RenderClause48(rawClause) ?? RenderClause49(rawClause) ?? RenderClause50(rawClause) ?? RenderClause51(rawClause));   // v0.51.0 · v0.50.0 · v0.49.0 · v0.48.0   // v0.47.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42)   // v0.41.0 테이머는 "명" · 원래 규칙이 읽지 못한 절만 (Batch41) · v0.40.0 (KoreanEffectRenderer.Batch40.cs)
+        return TamerCount41(RenderClause47Fixed(rawClause) ?? RenderBrokenText43(rawClause) ?? FixItAfterPlay40(rawClause, RenderClauseCore(rawClause)) ?? RenderClause40(rawClause) ?? RenderClause41(rawClause) ?? RenderClause42(rawClause) ?? RenderClause43(rawClause) ?? RenderClause44(rawClause) ?? RenderClause45(rawClause) ?? RenderClause46(rawClause) ?? RenderClause47(rawClause) ?? RenderClause48(rawClause) ?? RenderClause49(rawClause) ?? RenderClause50(rawClause) ?? RenderClause51(rawClause) ?? RenderClause52(rawClause));   // v0.52.0   // v0.51.0 · v0.50.0 · v0.49.0 · v0.48.0   // v0.47.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42)   // v0.41.0 테이머는 "명" · 원래 규칙이 읽지 못한 절만 (Batch41) · v0.40.0 (KoreanEffectRenderer.Batch40.cs)
     }
 
-    private static string? RenderClauseCore(string rawClause)
+    private static string? RenderClauseCore(string rawClause) => Memo52(8, rawClause, 0, static (x, _) => RenderClauseCoreUncached52(x));
+
+    private static string? RenderClauseCoreUncached52(string rawClause)
     {
         _mentionedTarget = false;
         _eventOther = false;
@@ -177,7 +181,9 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>문장 하나 → 한글 (마침표 없이)</summary>
-    private static string? Sentence(string s, bool nested = false) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested) ?? SentenceFallback39(s, nested) ?? SentenceFallback40(s, nested) ?? SentenceFallback41(s, nested) ?? SentenceFallback42(s, nested) ?? SentenceFallback43(s, nested) ?? SentenceFallback44(s, nested) ?? SentenceFallback45(s, nested) ?? SentenceFallback46(s, nested) ?? SentenceFallback48(s, nested) ?? SentenceFallback49(s, nested) ?? SentenceFallback50(s, nested) ?? SentenceFallback51(s, nested);   // v0.51.0 · v0.50.0 · v0.49.0 · v0.48.0   // v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.42.0   // v0.41.0 · v0.40.0   // v0.39.0 · v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
+    private static string? Sentence(string s, bool nested = false) => Memo52(1, s, nested ? 1 : 0, static (x, n) => SentenceUncached52(x, n != 0));
+
+    private static string? SentenceUncached52(string s, bool nested) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested) ?? SentenceFallback39(s, nested) ?? SentenceFallback40(s, nested) ?? SentenceFallback41(s, nested) ?? SentenceFallback42(s, nested) ?? SentenceFallback43(s, nested) ?? SentenceFallback44(s, nested) ?? SentenceFallback45(s, nested) ?? SentenceFallback46(s, nested) ?? SentenceFallback48(s, nested) ?? SentenceFallback49(s, nested) ?? SentenceFallback50(s, nested) ?? SentenceFallback51(s, nested);   // v0.51.0 · v0.50.0 · v0.49.0 · v0.48.0   // v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.42.0   // v0.41.0 · v0.40.0   // v0.39.0 · v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
 
     private static string? SentenceCore(string s, bool nested = false)
     {
@@ -328,7 +334,9 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>동작 문장 → 한글 (기간 · 두 동작 포함)</summary>
-    private static string? Action(string s, Form form)
+    private static string? Action(string s, Form form) => Memo52(2, s, (int)form, static (x, f) => ActionUncached52(x, (Form)f));
+
+    private static string? ActionUncached52(string s, Form form)
     {
         s = s.Trim().TrimEnd('.');
         if (Act(s, form) is { } direct)
@@ -860,7 +868,9 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>비용 "~ing ..." → "~하는 것으로,"</summary>
-    private static string? CostKo(string cost) => CostKoCore(cost) ?? CostKo38(cost) ?? CostKo39(cost) ?? CostKo43(cost) ?? CostKo44(cost) ?? CostKo45(cost) ?? CostKo46(cost) ?? CostKo50(cost) ?? CostKo51(cost);   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.38.0 읽지 못한 비용만 (KoreanEffectRenderer.Batch38.cs)
+    private static string? CostKo(string cost) => Memo52(3, cost, 0, static (x, _) => CostKoUncached52(x));
+
+    private static string? CostKoUncached52(string cost) => CostKoCore(cost) ?? CostKo38(cost) ?? CostKo39(cost) ?? CostKo43(cost) ?? CostKo44(cost) ?? CostKo45(cost) ?? CostKo46(cost) ?? CostKo50(cost) ?? CostKo51(cost) ?? CostKo52(cost);   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.38.0 읽지 못한 비용만 (KoreanEffectRenderer.Batch38.cs)
 
     private static string? CostKoCore(string cost)
     {
@@ -971,7 +981,9 @@ public static partial class KoreanEffectRenderer
     private static Cond NotHave(string subject) => new($"{subject} 없을 때,", $"{subject} 없는 동안,", $"{subject} 없다면,");
     private static Cond Be(string noun) => new($"{noun}일 때,", $"{noun}인 동안,", $"{noun}{(Batchim(noun) ? "이라면" : "라면")},");
 
-    private static Cond? CondKo(string cond) => ColorDigimonOrTamerKo40(cond) ?? CondKoCore(cond);   // v0.40.0 "a blue or green Digimon or Tamer" (KoreanEffectRenderer.Batch40.cs)
+    private static Cond? CondKo(string cond) => Memo52(4, cond, 0, static (x, _) => CondKoUncached52(x));
+
+    private static Cond? CondKoUncached52(string cond) => ColorDigimonOrTamerKo40(cond) ?? CondKoCore(cond);   // v0.40.0 "a blue or green Digimon or Tamer" (KoreanEffectRenderer.Batch40.cs)
 
     private static Cond? CondKoCore(string cond)
     {
@@ -1161,7 +1173,9 @@ public static partial class KoreanEffectRenderer
     }
 
     /// <summary>"When ~," 사건 → "~했을 때,"</summary>
-    private static string? EventKo(string ev) => FixEventKo39(ev, EventKoCore(ev)) ?? EventKo39(ev) ?? EventKo40(ev) ?? EventKo43(ev) ?? EventKo44(ev) ?? EventKo45(ev) ?? EventKo46(ev);   // v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.40.0   // v0.39.0 읽지 못한 사건만 (KoreanEffectRenderer.Batch39.cs)
+    private static string? EventKo(string ev) => Memo52(5, ev, 0, static (x, _) => EventKoUncached52(x));
+
+    private static string? EventKoUncached52(string ev) => FixEventKo39(ev, EventKoCore(ev)) ?? EventKo39(ev) ?? EventKo40(ev) ?? EventKo43(ev) ?? EventKo44(ev) ?? EventKo45(ev) ?? EventKo46(ev) ?? EventKo52(ev);   // v0.52.0   // v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.40.0   // v0.39.0 읽지 못한 사건만 (KoreanEffectRenderer.Batch39.cs)
 
     private static string? EventKoCore(string ev)
     {
@@ -1617,7 +1631,9 @@ public static partial class KoreanEffectRenderer
     /// <summary>대상 구절의 한글 ("1 of your opponent's suspended Digimon" → 상대의 레스트 상태 디지몬 1마리) — 옵션 대상 안내(MainTargetRule)용</summary>
     internal static string? TargetPhraseKo(string phrase) => TargetKo(phrase);
 
-    private static string? TargetKo(string phrase, bool bare = false) => TargetKoCore(phrase, bare) ?? TargetKo39(phrase, bare) ?? TargetKo40(phrase, bare) ?? TargetKo44(phrase, bare) ?? TargetKo45(phrase, bare) ?? TargetKo46(phrase, bare);   // v0.46.0 · v0.45.0   // v0.44.0 · v0.40.0   // v0.39.0 읽지 못한 대상만 (KoreanEffectRenderer.Batch39.cs)
+    private static string? TargetKo(string phrase, bool bare = false) => Memo52(6, phrase, bare ? 1 : 0, static (x, b) => TargetKoUncached52(x, b != 0));
+
+    private static string? TargetKoUncached52(string phrase, bool bare) => TargetKoCore(phrase, bare) ?? TargetKo39(phrase, bare) ?? TargetKo40(phrase, bare) ?? TargetKo44(phrase, bare) ?? TargetKo45(phrase, bare) ?? TargetKo46(phrase, bare);   // v0.46.0 · v0.45.0   // v0.44.0 · v0.40.0   // v0.39.0 읽지 못한 대상만 (KoreanEffectRenderer.Batch39.cs)
 
     private static string? TargetKoCore(string phrase, bool bare = false)
     {
@@ -1761,7 +1777,9 @@ public static partial class KoreanEffectRenderer
     /// 카드 고르기 → 한글. v0.28.0: SentenceParser.ParseCardPick과 같은 다른 표기 — "1 yellow" · "1 [Angel] trait"(뒤의 card 생략) ·
     /// "1 card with the [Hybrid] trait, or [Susanoomon] or [Takuya Kanbara]" (공식 BT7-008: "특징으로 「하이브리드체」를 갖는 카드 또는 「스사노오몬」 또는 「우정훈」 1장")
     /// </summary>
-    private static string? PickKo(string part)
+    private static string? PickKo(string part) => Memo52(7, part, 0, static (x, _) => PickKoUncached52(x));
+
+    private static string? PickKoUncached52(string part)
     {
         if (PickKoCore(part) is { } ko) return ko;
         string p = part.Trim();

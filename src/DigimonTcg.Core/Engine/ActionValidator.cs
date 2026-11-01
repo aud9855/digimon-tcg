@@ -45,7 +45,7 @@ public static class ActionValidator
                 return ActionResult.Fail($"[{card.Name}]은(는) 듀얼 카드입니다 — 디지몬 쪽으로 진화하거나 옵션 쪽으로 사용합니다 (이 카드의 옵션 쪽 효과는 아직 지원하지 않습니다).");
             if (EffectRules.OptionUseBlocked(state, state.Player))   // v0.36.0 "Your opponent can't use Option cards"
                 return ActionResult.Fail("상대의 효과로 지금은 옵션 카드를 사용할 수 없습니다.");
-            var missing = MissingOptionColors(state.Player, card);
+            var missing = MissingOptionColors(state.Player, card, state.DummyOpponent);
             if (missing.Count > 0)
                 return ActionResult.Fail($"[{card.Name}]을(를) {(card.IsDual ? "옵션 쪽으로 " : "")}사용하려면 내 필드에 {string.Join(" · ", missing.Select(ColorName))} 디지몬 또는 테이머가 있어야 합니다{(card.IsDual ? " (또는 옵션 쪽의 사용 조건)" : "")}.");
         }
@@ -65,10 +65,13 @@ public static class ActionValidator
     }
 
     /// <summary>옵션 카드의 색 중 자신의 필드(배틀 · 육성 에어리어의 디지몬, 테이머)에 없는 색</summary>
-    public static List<CardColor> MissingOptionColors(PlayerZones zones, CardData option)
+    public static List<CardColor> MissingOptionColors(PlayerZones zones, CardData option, PlayerZones? opponent = null)
     {
         // 카드에 적힌 사용 조건 ("While you have a Tamer, you can ignore this card's color requirements")
         if (CardScripts.ForUse(option)?.IgnoreColorRequirement is { } ignore && ignore(zones))
+            return new List<CardColor>();
+        // v0.52.0 상대의 필드를 보는 사용 조건 (EX6-072 "While your opponent has a level 6 or higher Digimon" · BT19-089)
+        if (opponent != null && CardScripts.ForUse(option)?.IgnoreColorRequirementVs52 is { } vs && vs(zones, opponent))
             return new List<CardColor>();
 
         var fieldColors = new HashSet<CardColor>(zones.BattleArea.Select(d => d.TopCard.Color));

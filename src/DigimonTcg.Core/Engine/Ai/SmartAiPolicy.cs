@@ -79,7 +79,7 @@ public sealed class SmartAiPolicy : IAiPolicy
         foreach (var card in ai.Hand.Where(CardScripts.IsUsableAsOption).Distinct())
         {
             int cost = CardScripts.EffectivePlayCost(ai, card, engine.State.Player);
-            if (cost > limit || ActionValidator.MissingOptionColors(ai, card).Count > 0)
+            if (cost > limit || ActionValidator.MissingOptionColors(ai, card, engine.State.Player).Count > 0)
                 continue;
             string main = AiBoard.MainPart(card.IsDual ? card.InheritedEffectText : card.EffectText);   // 듀얼 카드 = 옵션 쪽 문장
             if (!AiBoard.HasUsefulTarget(state, ai, main))
@@ -129,7 +129,7 @@ public sealed class SmartAiPolicy : IAiPolicy
             if (BuffThisTurn.Match(AiBoard.MainPart(card.IsDual ? card.InheritedEffectText : card.EffectText)) is not { Success: true } m)
                 continue;
             int cost = CardScripts.EffectivePlayCost(ai, card, state.Player);
-            if (cost > memory || ActionValidator.MissingOptionColors(ai, card).Count > 0)
+            if (cost > memory || ActionValidator.MissingOptionColors(ai, card, state.Player).Count > 0)
                 continue;
             int bonus = int.Parse(m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value);
             foreach (var a in attackers)
