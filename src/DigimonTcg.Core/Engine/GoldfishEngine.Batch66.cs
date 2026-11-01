@@ -22,7 +22,7 @@ public partial class GoldfishEngine
         foreach (var side in new[] { State.Player, State.DummyOpponent })
         {
             foreach (var d in side.BattleArea)
-                if (d.BaseColor66 is { } bc && !EffectRules.IsActive(bc.Until, State))
+                if (d.BaseColor66Raw is { } bc && !EffectRules.IsActive(bc.Until, State))   // v0.68.0 받지 않는 동안의 기록도
                     d.BaseColor66 = null;
             if (side.TamerColors66.Count > 0)
                 side.TamerColors66.RemoveAll(x => !EffectRules.IsActive(x.Until, State) || !side.Tamers.Any(t => ReferenceEquals(t, x.Tamer)));

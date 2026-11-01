@@ -21,7 +21,7 @@ public partial class GoldfishEngine
             foreach (var d in side.BattleArea)
             {
                 if (d.TimedColors67.Count > 0) d.TimedColors67.RemoveAll(x => !EffectRules.IsActive(x.Until, State));
-                if (d.Changed67 is { } ch && !EffectRules.IsActive(ch.Until, State)) d.Changed67 = null;
+                if (d.Changed67Raw is { } ch && !EffectRules.IsActive(ch.Until, State)) d.Changed67 = null;   // v0.68.0 받지 않는 동안의 기록도
             }
     }
 

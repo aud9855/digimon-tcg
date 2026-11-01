@@ -207,6 +207,7 @@ internal static partial class SentenceParser
         string before = d.TopCard.Name;
         d.Changed67 = (name, dp, until);
         d.BaseColor66 = (col, until);
+        d.ChangeSrc68 = d.ColorSrc68 = c.Engine.ChangeSource68(d);   // v0.68.0 받지 않는 동안에는 원래대로 (15-15-5-2)
         c.LastTargets = new List<CardInstance> { d };
         c.RecalculateFieldBuffs();
         Diag46.Hit("changeName67");

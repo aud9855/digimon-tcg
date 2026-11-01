@@ -124,7 +124,7 @@ public enum EffectTrigger
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
-public enum EffectSource { Main, Inherited, Trash, Breeding42, BreedingInherited42, Link43 }   // Link43 = v0.43.0 링크 카드의 링크 효과 (링크되어 있는 동안 — 그 디지몬의 효과로) · Trash = 트래시의 이 카드로 발휘하는 [트래시] 시점 효과 (v0.31.0) · v0.42.0 [육성] 효과 (육성 에어리어의 디지몬 — 맨 위 카드 · 진화원)
+public enum EffectSource { Main, Inherited, Trash, Breeding42, BreedingInherited42, Link43, FaceUpSecurity68, Hand68 }   // v0.68.0 FaceUpSecurity68 = 앞면 시큐리티의 이 카드의 [시큐리티]【자신의 턴】 시점 효과 · Hand68 = 패의 이 카드의 시점 효과 (LM-068 옵션 쪽)   // Link43 = v0.43.0 링크 카드의 링크 효과 (링크되어 있는 동안 — 그 디지몬의 효과로) · Trash = 트래시의 이 카드로 발휘하는 [트래시] 시점 효과 (v0.31.0) · v0.42.0 [육성] 효과 (육성 에어리어의 디지몬 — 맨 위 카드 · 진화원)
 
 /// <summary>규칙이 정해져 있어서 이름만으로 동작하는 키워드 효과</summary>
 public enum Keyword

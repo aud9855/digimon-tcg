@@ -2315,6 +2315,9 @@ public partial class MainWindow : Window
                 FontSize = 11.5
             });
 
+            if (ChangedInfoBadge(opp, OpponentZoneSlotWidth - 14) is { } oppChanged)   // v0.68.0 효과로 바뀐 정보
+                infoStack.Children.Add(oppChanged);
+
             if (opp.LinkedCards.Count > 0)
             {
                 infoStack.Children.Add(new TextBlock
@@ -3094,6 +3097,10 @@ public partial class MainWindow : Window
             };
             stack.Children.Add(linkStrip);
         }
+
+        // 3-2) v0.68.0 효과로 바뀐 정보 (원래 명칭 · 색 · DP) 배지
+        if (ChangedInfoBadge(instance, FieldCardArtWidth) is { } changedBadge)
+            stack.Children.Add(changedBadge);
 
         // 4) 카드 하단 1줄 컴팩트 전투력 배지 (상세 내역은 호버/클릭 시 우측 사이드바에서 확인!)
         if (instance.TopCard.Type == CardType.Digimon)

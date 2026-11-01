@@ -374,6 +374,7 @@ internal static partial class SentenceParser
     internal static Func<EffectContext, bool> RestValue66(string rest)
     {
         string r = rest.Trim();
+        if (r.Contains("⟦chg67:") && StrongRest68(r) is { } rename68) return rename68;   // v0.68.0 원래 명칭 · DP 변경 — 받을 상대의 디지몬이 있을 때
         if (Regex.IsMatch(r, @"\b(?:delete|return)\b[^.]*\bopponent's\b|＜De-Digivolve \d+＞|\bsuspend (?:1|up to \d+) of (?:your opponent's|their)\b|\btrash [^.]*digivolution cards? (?:of|from) [^.]*opponent's|\bopponent's Digimon(?: or Tamers)? can't\b|\bgive 1 of your opponent's Digimon\b", RegexOptions.IgnoreCase))
             return c => c.Enemy.BattleArea.Any(d => d.TamerProxyOf == null && !c.Engine.IsUnaffectedBy(c.Owner, d)) && Diag46.HitTrue("handCostRemoval66");
         if (Regex.IsMatch(r, @"^＜Draw \d+＞", RegexOptions.IgnoreCase) || Regex.IsMatch(r, @"\b(?:play|activate)\b", RegexOptions.IgnoreCase))
@@ -412,6 +413,7 @@ internal static partial class SentenceParser
         {
             var d = digimon[pick];
             d.BaseColor66 = (color, until);
+            d.ColorSrc68 = c.Engine.ChangeSource68(d);   // v0.68.0 받지 않는 동안에는 원래 색 (15-15-5-2)
             c.LastTargets = new List<CardInstance> { d };
             c.RecalculateFieldBuffs();
             Emit(c, label, $"상대의 [{d.TopCard.Name}]의 원래 색을 {ColorTo66(color)} (상대의 턴 종료까지)");

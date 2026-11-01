@@ -179,7 +179,23 @@ public class CardInstance
     }
 
     /// <summary>v0.66.0 효과로 바뀐 원래 색 (BT18-078 "change 1 of their Digimon or Tamers into a color other than white" — 값 = (색, 끝나는 TurnSequence)). 엔진이 기간이 끝나면 지운다</summary>
-    public (CardColor Color, int Until)? BaseColor66 { get; set; }
+    /// <remarks>v0.68.0 그 효과를 받지 않는 동안 (상대의 효과 · LM-020 카드 종류 — ColorSrc68)에는 null로 본다 (종합 룰 15-15-5-1 · 15-15-5-2). 넣으면 준 효과 기록을 지운다 (넣는 쪽이 다시 적는다)</remarks>
+    public (CardColor Color, int Until)? BaseColor66
+    {
+        get => _baseColor66 != null && Shielded68(ColorSrc68) ? null : _baseColor66;
+        set { _baseColor66 = value; ColorSrc68 = default; }
+    }
+    private (CardColor Color, int Until)? _baseColor66;
+
+    /// <summary>v0.68.0 받지 않는 동안에도 남아 있는 바뀐 원래 색 (기간이 끝났는지 볼 때)</summary>
+    internal (CardColor Color, int Until)? BaseColor66Raw => _baseColor66;
+
+    /// <summary>v0.68.0 BaseColor66 · Changed67을 준 효과 — 상대의 효과인지 · 효과가 적힌 카드의 종류 (이 디지몬 자신의 효과 · 모르면 null)</summary>
+    public (bool Opp, CardType? Type) ColorSrc68 { get; set; }
+    public (bool Opp, CardType? Type) ChangeSrc68 { get; set; }
+
+    /// <summary>v0.68.0 지금 그 효과를 받지 않는지 — 상대의 효과를 받지 않는 동안의 상대의 효과 (OppShield59) · LM-020 받지 않는 카드 종류 (CatShield61)</summary>
+    internal bool Shielded68((bool Opp, CardType? Type) src) => OppShield59 && src.Opp || CatShield61 is { } t && src.Type == t;
 
     /// <summary>v0.66.0 이 디지몬의 원래 색 (효과로 바뀌었으면 그 색, 아니면 맨 위 카드의 색)</summary>
     public IReadOnlyList<CardColor> BaseColors66 => BaseColor66 is { } bc ? new[] { bc.Color } : TopCard.AllColors;
@@ -188,7 +204,16 @@ public class CardInstance
     public List<(CardColor Color, int Until)> TimedColors67 { get; } = new();
 
     /// <summary>v0.67.0 효과로 바뀐 원래 명칭 · DP (BT11-043 · BT14-097 · EX13-031 "원래 명칭 「스카몬」 · 화이트 · DP 3000으로 변경" — 종합 룰 15-12-2). 색은 BaseColor66. 엔진이 기간이 끝나면 지운다</summary>
-    public (string Name, int Dp, int Until)? Changed67 { get; set; }
+    /// <remarks>v0.68.0 그 효과를 받지 않는 동안 (ChangeSrc68)에는 null로 본다 — 원래 명칭 · DP로 돌아간다 (종합 룰 15-15-5-1 · 15-15-5-2)</remarks>
+    public (string Name, int Dp, int Until)? Changed67
+    {
+        get => _changed67 != null && Shielded68(ChangeSrc68) ? null : _changed67;
+        set { _changed67 = value; ChangeSrc68 = default; }
+    }
+    private (string Name, int Dp, int Until)? _changed67;
+
+    /// <summary>v0.68.0 받지 않는 동안에도 남아 있는 바뀐 원래 명칭 · DP (기간이 끝났는지 볼 때 · 화면 표시)</summary>
+    internal (string Name, int Dp, int Until)? Changed67Raw => _changed67;
 
     public CardInstance(CardData baseCard, int currentTurn)
     {
@@ -390,9 +415,9 @@ public class CardInstance
             SaFlip62 = SaFlip62,
             SaNeg62 = SaNeg62,
             NoIgnoreReq62 = NoIgnoreReq62,
-            BaseColor66 = BaseColor66,
-            Changed67 = Changed67,
         };
+        v._baseColor66 = _baseColor66; v.ColorSrc68 = ColorSrc68;   // v0.68.0 받지 않는 동안의 기록도 그대로
+        v._changed67 = _changed67; v.ChangeSrc68 = ChangeSrc68;
         v.TimedColors67.AddRange(TimedColors67);
         v.AttackSaParts62.AddRange(AttackSaParts62);
         v.EvolutionSources = new Stack<CardData>(EvolutionSources.Reverse());

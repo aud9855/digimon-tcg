@@ -1874,6 +1874,7 @@ public partial class GoldfishEngine
         if (witness == null || owner.BreedingArea is not { } b46 || witness.SawBreeding(owner, b46))
             RunBreedingEffects42(trigger, owner, other, triggerCard);   // v0.42.0 [육성] 효과 (육성 에어리어의 디지몬 — GoldfishEngine.Batch42)
         else NoteWitnessSkip46(trigger, null, b46);   // v0.46.0 사건 뒤에 육성 에어리어에 온 디지몬
+        RunZoneEffects68(trigger, owner, other, triggerCard);   // v0.68.0 앞면 시큐리티 · 패의 이 카드의 시점 효과 (GoldfishEngine.Batch68 — [트래시] 시점 효과와 같은 때)
         if (owner.Trash.Count == 0)
             return;
         var cards = owner.Trash.Where(c => CardScripts.For(c)?.Effects.Any(e => e.Source == EffectSource.Trash && e.Trigger == trigger) == true)
