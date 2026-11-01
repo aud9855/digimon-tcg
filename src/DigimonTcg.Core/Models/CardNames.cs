@@ -18,12 +18,47 @@ public static class CardNames
     public static bool Contains(CardData card, string x) =>
         x.Contains(ExceptMark70) ? ContainsExcept70(x, n => Contains(card, n), n => Is(card, n)) :
         card.Name.Contains(x, StringComparison.OrdinalIgnoreCase)
-        || (!string.IsNullOrWhiteSpace(card.EnglishName) && card.EnglishName!.Contains(x, StringComparison.OrdinalIgnoreCase));
+        || (!string.IsNullOrWhiteSpace(card.EnglishName) && card.EnglishName!.Contains(x, StringComparison.OrdinalIgnoreCase))
+        || AlsoNames71(card).Any(a => a.Contains(x, StringComparison.OrdinalIgnoreCase));   // v0.71.0 〈룰〉 명칭도
 
-    /// <summary>이름이 정확히 x인가 — Name · EnglishName 둘 다 본다</summary>
+    /// <summary>이름이 정확히 x인가 — Name · EnglishName 둘 다 본다 (v0.71.0 〈룰〉 명칭도)</summary>
     public static bool Is(CardData card, string x) =>
         card.Name.Equals(x, StringComparison.OrdinalIgnoreCase)
-        || (!string.IsNullOrWhiteSpace(card.EnglishName) && card.EnglishName!.Equals(x, StringComparison.OrdinalIgnoreCase));
+        || (!string.IsNullOrWhiteSpace(card.EnglishName) && card.EnglishName!.Equals(x, StringComparison.OrdinalIgnoreCase))
+        || AlsoNames71(card).Any(a => a.Equals(x, StringComparison.OrdinalIgnoreCase));
+
+    // ---- v0.71.0 〈룰〉 명칭: 「A」/「B」로도 취급한다 (종합 룰 2-3-1-2 · 공식 Q&A — 이 룰을 가진 카드는 그 명칭으로도 참조된다).
+    //      영어 카드 데이터에는 이 룰 문장이 없어, 공식 카드의 룰을 영어 명칭으로 옮겨 둔다 (카드 번호 → 영어 명칭).
+    //      목록에 없는 "A & B" 이름의 테이머는 A · B로도 본다 (공식 BT18-088 · EX4-062 · EX10-064 · BT20-087 · BT20-089와 같은 룰) ----
+
+    private static readonly System.Collections.Generic.Dictionary<string, string[]> AlsoNamed71 = new(StringComparer.Ordinal)
+    {
+        ["BT17-091"] = new[] { "Eiji Nagasumi" }, ["BT16-086"] = new[] { "Leon Alexander" },
+        ["P-152"] = new[] { "Shoutmon", "Dorulumon" }, ["BT11-009"] = new[] { "Shoutmon", "Starmons" },
+        ["BT11-018"] = new[] { "OmniShoutmon", "ZeigGreymon" }, ["BT11-030"] = new[] { "MetalGreymon", "Cyberdramon" },
+        ["BT11-071"] = new[] { "DarkKnightmon", "Tuwarmon" }, ["BT15-012"] = new[] { "Shoutmon", "Ballistamon" },
+        ["BT21-016"] = new[] { "Shoutmon" },
+        ["EX3-064"] = new[] { "ChaosGallantmon" }, ["LM-026"] = new[] { "ChaosGallantmon" }, ["BT21-079"] = new[] { "ChaosGallantmon" },
+        ["EX4-026"] = new[] { "Kyubimon" }, ["EX4-028"] = new[] { "Taomon" }, ["EX4-030"] = new[] { "Sakuyamon" },
+        ["EX4-033"] = new[] { "Terriermon" }, ["EX4-048"] = new[] { "Greymon" }, ["P-183"] = new[] { "Greymon" },
+        ["EX4-062"] = new[] { "Kiriha Aonuma", "Nene Amano" },
+        ["BT14-052"] = new[] { "Leomon" }, ["EX5-030"] = new[] { "Leomon" }, ["BT14-060"] = new[] { "Commandramon" },
+        ["BT14-097"] = new[] { "Sukamon" }, ["EX5-046"] = new[] { "Etemon", "Sukamon" },
+        ["EX5-070"] = new[] { "X Antibody" }, ["BT20-083"] = new[] { "X Antibody" },
+        ["BT15-035"] = new[] { "Numemon" }, ["P-141"] = new[] { "Mamemon", "Tyrannomon" },
+        ["BT18-088"] = new[] { "Takuya Kanbara", "Koji Minamoto" }, ["BT20-087"] = new[] { "Kota Domoto", "Yuji Musya" },
+        ["BT20-089"] = new[] { "Eiji Nagasumi", "Leon Alexander" }, ["EX10-064"] = new[] { "Yuu Amano", "Nene Amano" },
+        ["EX10-068"] = new[] { "Ken Ichijoji" },
+    };
+
+    /// <summary>v0.71.0 이 카드가 〈룰〉로 함께 가지는 명칭 (없으면 빈 목록)</summary>
+    public static System.Collections.Generic.IReadOnlyList<string> AlsoNames71(CardData card)
+    {
+        if (AlsoNamed71.TryGetValue(card.CardId, out var xs)) return xs;
+        if (card.Type == CardType.Tamer && card.Name.Contains(" & ", StringComparison.Ordinal))
+            return card.Name.Split(new[] { " & ", ", " }, StringSplitOptions.RemoveEmptyEntries).Select(n => n.Trim().TrimStart('&').Trim()).Where(n => n.Length > 0).ToArray();
+        return Array.Empty<string>();
+    }
 
     /// <summary>두 카드가 같은 명칭인가 (내장 한글 "그레이몬"과 API "Greymon"도 같은 명칭)</summary>
     public static bool Same(CardData a, CardData b) =>

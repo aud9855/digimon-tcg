@@ -365,6 +365,7 @@ public partial class GoldfishEngine
         ctx.EffectTrashStart45 = ctx.Owner.Trash.Count;
         ctx.LastStepTrashed45 = new List<CardData>();   // v0.45.0 "If this effect trashed a card with ~"
         ctx.EvolveSerialAtStart40 = ctx.Engine.EffectEvolveSerial40;   // v0.40.0 "If digivolved by this effect" — 효과마다
+        ctx.DnaSerialAtStart71 = ctx.Engine.DnaSerial71;   // v0.71.0
         ctx.Engine.CurrentEffectCard = card;   // v0.34.0 "상대의 디지몬 · 옵션 카드의 효과를 받지 않는다"
         // "When one of your Digimon attacks, ~ give that Digimon +1000 DP" — 사건의 주인공 디지몬이 "that Digimon"
         ctx.LastTargets = ctx.Other != null && effect.Trigger is EffectTrigger.AllyDigimonAttacks or EffectTrigger.AllyDigimonPlayed

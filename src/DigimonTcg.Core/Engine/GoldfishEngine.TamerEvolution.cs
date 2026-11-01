@@ -86,7 +86,7 @@ public partial class GoldfishEngine
         // 테이머 아래의 카드 → 진화원 (테이머가 이 1명뿐일 때만 — 누구 아래인지 나누어 두지 않는다)
         if (owner.Tamers.Count == 0)
         {
-            foreach (var under in owner.UnderTamers) { inst.AddBottomSource(under); if (owner.IsFaceDownUnderTamer(under)) inst.FaceDownSources.Add(under); }   // v0.35.0 뒷면은 뒷면 그대로
+            foreach (var under in owner.UnderTamers) { var placed = inst.AddBottomSource(under); if (owner.IsFaceDownUnderTamer(under)) inst.FaceDownSources.Add(placed); }   // v0.35.0 뒷면은 뒷면 그대로
             owner.UnderTamers.Clear();
             owner.FaceDownUnderTamers.Clear();
         }

@@ -87,10 +87,10 @@ public class EffectBatch55Tests
         var src = Digimon(Uid("B55-DPSRC-"), 3, inherited: "[Your Turn] While you have 3 or more security cards, this Digimon gets +1000 DP.");
         var (state, engine) = NewMainPhase();
         var two = Put(state.Player, Digimon("B55-TOP5", 5, dp: 6000), src, Copy(src));
-        var shared = Put(state.Player, Digimon("B55-TOP5B", 5, dp: 6000), src, src);   // 같은 객체 2번 (직접 만든 필드) — 전처럼 1장
+        var shared = Put(state.Player, Digimon("B55-TOP5B", 5, dp: 6000), src, src);   // 같은 객체 2번 (직접 만든 필드) — v0.71.0부터 겹칠 때 복사본이라 2장
         engine.RecalculateFieldBuffs();
         Assert.Equal(8000, two.GetCurrentDP());   // 전에는 같은 카드 번호는 1장만 (+1000)
-        Assert.Equal(7000, shared.GetCurrentDP());
+        Assert.Equal(8000, shared.GetCurrentDP());   // v0.71.0 진화원은 겹쳐진 카드마다 (앞/뒷면도 카드마다)
     }
 
     [Fact]

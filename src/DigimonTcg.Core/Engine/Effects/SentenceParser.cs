@@ -122,7 +122,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse70(rawClause, inherited, card, def);   // v0.70.0 괄호 안의 명칭 제외 · 원래 규칙(43차까지)이 읽지 못한 절만 (SentenceParser.Batch70.cs) · v0.69.0 원래 규칙(42차까지)이 읽지 못한 절만 43차 규칙으로 (SentenceParser.Batch69.cs) · v0.68.0 원래 규칙(41차까지)이 읽지 못한 절만 42차 규칙으로 (SentenceParser.Batch68.cs) · v0.67.0 원래 규칙(40차까지)이 읽지 못한 절만 41차 규칙으로 (SentenceParser.Batch67.cs) · v0.66.0 원래 규칙(39차까지)이 읽지 못한 절만 40차 규칙으로 (SentenceParser.Batch66.cs) · v0.65.0 원래 규칙(38차까지)이 읽지 못한 절만 39차 규칙으로 (SentenceParser.Batch65.cs) · v0.64.0 원래 규칙(37차까지)이 읽지 못한 절만 38차 규칙으로 (SentenceParser.Batch64.cs) · v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse71(rawClause, inherited, card, def);   // v0.71.0 원래 규칙(44차까지)이 읽지 못한 절만 (SentenceParser.Batch71.cs) · v0.70.0 괄호 안의 명칭 제외 · 원래 규칙(43차까지)이 읽지 못한 절만 (SentenceParser.Batch70.cs) · v0.69.0 원래 규칙(42차까지)이 읽지 못한 절만 43차 규칙으로 (SentenceParser.Batch69.cs) · v0.68.0 원래 규칙(41차까지)이 읽지 못한 절만 42차 규칙으로 (SentenceParser.Batch68.cs) · v0.67.0 원래 규칙(40차까지)이 읽지 못한 절만 41차 규칙으로 (SentenceParser.Batch67.cs) · v0.66.0 원래 규칙(39차까지)이 읽지 못한 절만 40차 규칙으로 (SentenceParser.Batch66.cs) · v0.65.0 원래 규칙(38차까지)이 읽지 못한 절만 39차 규칙으로 (SentenceParser.Batch65.cs) · v0.64.0 원래 규칙(37차까지)이 읽지 못한 절만 38차 규칙으로 (SentenceParser.Batch64.cs) · v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -867,7 +867,7 @@ internal static partial class SentenceParser
             if (named.Success)
             {
                 var xs = TargetSpec.Names(named.Groups["x"].Value); bool other = named.Groups["other"].Success;
-                who = (c, d) => (!other || !ReferenceEquals(d, c.Self)) && xs.Any(x => TargetSpec.NameHas(d, x));
+                who = (c, d) => (!other || !ReferenceEquals(d, c.Self)) && xs.Any(x => TargetSpec.NameIs71(d, x));   // v0.71.0 명칭 일치
             }
             else who = ParseAllySubject(subj);
             if (who != null)
@@ -1904,13 +1904,13 @@ internal static partial class SentenceParser
             int n = m.Groups["n"].Success ? int.Parse(m.Groups["n"].Value) : 1;
             CardColor? color = m.Groups["color"].Success ? Enum.Parse<CardColor>(m.Groups["color"].Value, ignoreCase: true) : null;
             var xs = m.Groups["x"].Success ? TargetSpec.Names(m.Groups["x"].Value) : null;
-            Func<CardData, bool> ok = x => (color == null || x.AllColors.Contains(color.Value)) && (xs == null || xs.Any(v => TargetSpec.NameHas(x, v) || TargetSpec.HasTrait(x, v)));
+            Func<CardData, bool> ok = x => (color == null || x.AllColors.Contains(color.Value)) && (xs == null || xs.Any(v => TargetSpec.NameOrTrait71(x, v)));   // v0.71.0
             return z => none ? !GoldfishEngine.FaceUpCards(z).Any(ok) : GoldfishEngine.FaceUpCards(z).Count(ok) >= n;
         }
         if ((m = Regex.Match(cond, $@"^(?<x>{TargetSpec.NameList}) is face[- ]up in your security stack$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return z => GoldfishEngine.FaceUpCards(z).Any(x => xs.Any(v => TargetSpec.NameHas(x, v)));
+            return z => GoldfishEngine.FaceUpCards(z).Any(x => xs.Any(v => TargetSpec.NameIs71(x, v)));   // v0.71.0 명칭 일치
         }
         // 육성: "your breeding area is empty" · "you have a Digimon in your breeding area" · "you have [Mother Eater] in the breeding area"
         if (Regex.IsMatch(cond, @"^(?:your breeding area is empty|you have no (?:Digimon|cards) in (?:the|your) breeding area|you don't have (?:a Digimon|any cards) in (?:the|your) breeding area)$", RegexOptions.IgnoreCase))
@@ -2101,14 +2101,14 @@ internal static partial class SentenceParser
         { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && xs.Any(x => TargetSpec.NameHas(d, x)); }
         if ((m = Regex.Match(cond, $@"^(?:this Digimon|it) has (?<x>{TargetSpec.NameList}) in its texts?$", RegexOptions.IgnoreCase)).Success)
         { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && xs.Any(x => TargetSpec.TextHas(d, x)); }
-        if ((m = Regex.Match(cond, $@"^(?:(?:a|an) (?:Digimon |Tamer )?card with )?(?<x>{TargetSpec.NameList})(?: in its name)? (?:is|are) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
-        { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && d.SourcesAny(s => xs.Any(x => TargetSpec.NameHas(s, x))); }
-        if ((m = Regex.Match(cond, $@"^this Digimon's digivolution cards include (?:a card with )?(?<x>{TargetSpec.NameList})(?: in its name)?$", RegexOptions.IgnoreCase)).Success)
-        { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && d.SourcesAny(s => xs.Any(x => TargetSpec.NameHas(s, x))); }
+        if ((m = Regex.Match(cond, $@"^(?:(?:a|an) (?:Digimon |Tamer )?card with )?(?<x>{TargetSpec.NameList})(?<inname> in its name)? (?:is|are) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
+        { var xs = TargetSpec.Names(m.Groups["x"].Value); bool inName71 = m.Groups["inname"].Success; return d => d != null && d.SourcesAny(s => xs.Any(x => inName71 ? TargetSpec.NameHas(s, x) : TargetSpec.NameIs71(s, x))); }   // v0.71.0 「X」만이면 명칭 일치 (공식 Q&A)
+        if ((m = Regex.Match(cond, $@"^this Digimon's digivolution cards include (?:a card with )?(?<x>{TargetSpec.NameList})(?<inname> in its name)?$", RegexOptions.IgnoreCase)).Success)
+        { var xs = TargetSpec.Names(m.Groups["x"].Value); bool inName71 = m.Groups["inname"].Success; return d => d != null && d.SourcesAny(s => xs.Any(x => inName71 ? TargetSpec.NameHas(s, x) : TargetSpec.NameIs71(s, x))); }   // v0.71.0
         if ((m = Regex.Match(cond, @"^(?:this Digimon|it) has (?<n>\d+) or (?<dir>more|fewer|less) digivolution cards$", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); bool more = m.Groups["dir"].Value == "more"; return d => d != null && (more ? d.EvolutionSources.Count >= n : d.EvolutionSources.Count <= n); }
         if ((m = Regex.Match(cond, $@"^(?:this Digimon|it) has (?<x>{TargetSpec.NameList}) in its digivolution cards$", RegexOptions.IgnoreCase)).Success)
-        { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && d.SourcesAny(s => xs.Any(x => TargetSpec.NameHas(s, x))); }
+        { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && d.SourcesAny(s => xs.Any(x => TargetSpec.NameIs71(s, x))); }   // v0.71.0 명칭 일치
         if (Regex.IsMatch(cond, @"^(?:this Digimon|it) has no digivolution cards$", RegexOptions.IgnoreCase)) return d => d != null && d.EvolutionSources.Count == 0;
         if (Regex.IsMatch(cond, @"^(?:this Digimon|it) is suspended$", RegexOptions.IgnoreCase)) return d => d?.IsSuspended == true;
         if (Regex.IsMatch(cond, @"^(?:this Digimon|it) is unsuspended$", RegexOptions.IgnoreCase)) return d => d?.IsSuspended == false;
@@ -2592,6 +2592,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction68(s.TrimEnd('.'), card, triggers) is { } act68) act = act68;   // v0.68.0 (SentenceParser.Batch68.cs)
         if (act.Error != null && ParseAction69(s.TrimEnd('.'), card, triggers) is { } act69) act = act69;   // v0.69.0 (SentenceParser.Batch69.cs)
         if (act.Error != null && ParseAction70(s.TrimEnd('.'), card, triggers) is { } act70) act = act70;   // v0.70.0 (SentenceParser.Batch70.cs)
+        if (act.Error != null && ParseAction71(s.TrimEnd('.'), card, triggers) is { } act71) act = act71;   // v0.71.0 (SentenceParser.Batch71.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2648,7 +2649,7 @@ internal static partial class SentenceParser
             return (_, _, _) => 1;
         // "[OmniShoutmon] or [ZeigGreymon] in this Digimon's digivolution cards"
         if ((m = Regex.Match(counter, $@"^(?<x>{TargetSpec.NameList}) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
-        { var xs = TargetSpec.Names(m.Groups["x"].Value); return (_, _, self) => self?.SourcesCount(s => xs.Any(x => TargetSpec.NameHas(s, x))) ?? 0; }
+        { var xs = TargetSpec.Names(m.Groups["x"].Value); return (_, _, self) => self?.SourcesCount(s => xs.Any(x => TargetSpec.NameIs71(s, x))) ?? 0; }   // v0.71.0 명칭 일치
         if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?cards? in your trash$", RegexOptions.IgnoreCase)).Success)
         { int per = Per(m); return (o, _, _) => o.Trash.Count / per; }
         if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?cards? in your opponent's trash$", RegexOptions.IgnoreCase)).Success)
@@ -2959,7 +2960,7 @@ internal static partial class SentenceParser
             if (Regex.IsMatch(what, @"^\[[^\]]+\](?:,? (?:or )?\[[^\]]+\])*$"))
             {
                 var names = Regex.Matches(what, @"\[([^\]]+)\]").Select(x => x.Groups[1].Value).ToList();
-                filter = d => names.Any(n => TargetSpec.NameHas(d, n));
+                filter = d => names.Any(n => TargetSpec.NameIs71(d, n));   // v0.71.0 명칭 일치
             }
             else if (TargetSpec.Parse("all of your " + what) is { } spec) filter = d => spec.Filters.All(f => f(d));
             if (filter == null) return ParseCost34(cost, card) ?? ParseCost35(cost, card) ?? ParseCost36(cost, card);   // v0.34.0 테이머 ("returning 1 of your yellow Tamers to the hand") 등
@@ -3176,7 +3177,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(phrase, $@"^1 of your (?<x>{TargetSpec.NameList})$", RegexOptions.IgnoreCase)).Success)
         {
             var names = TargetSpec.Names(m.Groups["x"].Value);
-            return d => names.Any(x => TargetSpec.NameHas(d, x));
+            return d => names.Any(x => TargetSpec.NameIs71(d, x));   // v0.71.0 "1 of your [X]" 명칭 일치
         }
         return null;
     }
@@ -5228,7 +5229,7 @@ internal static partial class SentenceParser
         if (!m.Success) return null;
         int count = int.TryParse(m.Groups["n"].Value, out int k) ? k : 1;
         var names = Regex.Matches(m.Groups["names"].Value, @"\[([^\]]+)\]").Select(x => x.Groups[1].Value).ToList();
-        return (count, c => names.Any(n => TargetSpec.NameHas(c, n)));
+        return (count, c => names.Any(n => TargetSpec.NameIs71(c, n)));   // v0.71.0 명칭 일치 (종합 룰 2-3-1-2)
     }
 
     private const string Colors = "red|blue|yellow|green|black|purple|white";
@@ -5327,7 +5328,7 @@ internal static partial class SentenceParser
             else if (a.Groups["names"].Success)
             {
                 var xs = TargetSpec.Names(a.Groups["names"].Value);
-                filters.Add(a.Groups["trait"].Success ? c => xs.Any(x => TargetSpec.HasTrait(c, x)) : c => xs.Any(x => TargetSpec.NameHas(c, x) || TargetSpec.HasTrait(c, x)));
+                filters.Add(a.Groups["trait"].Success ? c => xs.Any(x => TargetSpec.HasTrait(c, x)) : c => xs.Any(x => TargetSpec.NameOrTrait71(c, x)));   // v0.71.0 명칭 일치
             }
             else if (a.Groups["pc"].Success)
             {
@@ -5376,7 +5377,7 @@ internal static partial class SentenceParser
             else if ((f = Regex.Match(rest, $@"^(?:,\s*)?other than (?<x>{TargetSpec.NameList})", RegexOptions.IgnoreCase)).Success)
             { var xs = TargetSpec.Names(f.Groups["x"].Value); filters.Add(c => !xs.Any(x => CardNames.Is(c, x))); }
             else if ((f = Regex.Match(rest, $@"^(?<x>{TargetSpec.NameList})", RegexOptions.IgnoreCase)).Success)
-            { var xs = TargetSpec.Names(f.Groups["x"].Value); filters.Add(c => xs.Any(x => TargetSpec.NameHas(c, x) || TargetSpec.HasTrait(c, x))); }
+            { var xs = TargetSpec.Names(f.Groups["x"].Value); filters.Add(c => xs.Any(x => TargetSpec.NameOrTrait71(c, x))); }   // v0.71.0 명칭 일치
             else if ((f = Regex.Match(rest, @"^(?:with |and )?(?<n>\d+) or more colou?rs", RegexOptions.IgnoreCase)).Success)
             { int v = int.Parse(f.Groups["n"].Value); filters.Add(c => c.AllColors.Count >= v); }
             else if ((f = Regex.Match(rest, @"^with (?:an? )?inherited effects?", RegexOptions.IgnoreCase)).Success)

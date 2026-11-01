@@ -20,12 +20,16 @@ public sealed class EffectContext
         Other = other;
         ChosenTarget = chosenTarget;
         EvolveSerialAtStart40 = engine.EffectEvolveSerial40;   // v0.40.0
+        DnaSerialAtStart71 = engine.DnaSerial71;   // v0.71.0
     }
 
     internal GoldfishEngine Engine { get; }
 
     /// <summary>v0.40.0 이 효과를 처리하기 시작할 때의 엔진 효과 진화 횟수 — "If digivolved by this effect" (GoldfishEngine.EffectEvolveSerial40과 비교)</summary>
     internal int EvolveSerialAtStart40 { get; set; }
+
+    /// <summary>v0.71.0 이 효과를 처리하기 시작할 때의 조그레스 진화 횟수 (GoldfishEngine.DnaSerial71과 비교)</summary>
+    internal int DnaSerialAtStart71 { get; set; }
     public GameState State => Engine.State;
 
     /// <summary>효과 주인의 필드</summary>

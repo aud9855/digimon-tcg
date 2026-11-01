@@ -245,8 +245,8 @@ public partial class GoldfishEngine
         var nd = new CardInstance(card, field.TurnPlayed) { IsSuspended = false, IsOwnersTurn = field.IsOwnersTurn };
         foreach (var x in order)
         {
-            nd.AddBottomSource(x);
-            if (field.IsFaceDown(x)) nd.FaceDownSources.Add(x);
+            var placed = nd.AddBottomSource(x);   // v0.71.0 같은 객체가 겹치면 복사본
+            if (field.IsFaceDown(x)) nd.FaceDownSources.Add(placed);
         }
         int idx = owner.BattleArea.IndexOf(field);
         owner.BattleArea[idx] = nd;

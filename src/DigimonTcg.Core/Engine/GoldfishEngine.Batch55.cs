@@ -57,6 +57,14 @@ public partial class GoldfishEngine
             if (z == null) continue;
             foreach (var list in new[] { z.Hand, z.MainDeck, z.SecurityStack, z.Trash, z.Tamers })
                 for (int i = 0; i < list.Count; i++) list[i] = Own(list[i]);
+            // v0.71.0 필드 · 육성 · 테이머 아래도 (Stage 2 수비대처럼 시작할 때 필드에 놓인 카드 — 앞/뒷면 · 기록이 카드마다 따로)
+            for (int i = 0; i < z.UnderTamers.Count; i++) z.UnderTamers[i] = Own(z.UnderTamers[i]);
+            foreach (var d in z.BattleArea.Append(z.BreedingArea))
+            {
+                if (d == null) continue;
+                if (!seen.Add(d.TopCard)) Diag46.Hit("distinctField71");   // 맨 위 카드가 겹치면 기록만 (맨 위 카드는 바꾸지 않는다)
+                foreach (var x in d.EvolutionSources) seen.Add(x);
+            }
             if (z.DigitamaDeck.Count > 0)
             {
                 var eggs = z.DigitamaDeck.ToArray();   // 위 → 아래

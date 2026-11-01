@@ -123,9 +123,10 @@ public partial class GoldfishEngine
         owner.BattleArea.Remove(right);
         TrashLinks(owner, right);
         left.AddBottomSource(right.TopCard);
-        foreach (var s in right.EvolutionSources.ToList()) { left.AddBottomSource(s); if (right.IsFaceDown(s)) left.FaceDownSources.Add(s); }   // v0.35.0 뒷면 진화원은 뒷면 그대로
+        foreach (var s in right.EvolutionSources.ToList()) { var placed = left.AddBottomSource(s); if (right.IsFaceDown(s)) left.FaceDownSources.Add(placed); }   // v0.35.0 뒷면 진화원은 뒷면 그대로
         if (ReferenceEquals(CurrentAttacker, right)) CurrentAttacker = null;
         left.Evolve(card);
+        DnaSerial71++; LastDna71 = left;   // v0.71.0 "the Digimon this effect DNA digivolved" (BT16-091)
         left.IsSuspended = false;   // 액티브로 진화
         left.TurnPlayed = Math.Min(left.TurnPlayed, right.TurnPlayed);
         string msg = $"[DNA 진화] [{left.EvolutionSources.ElementAt(0).Name}] + [{right.TopCard.Name}] → [{card.Name}] (코스트 {cost})";

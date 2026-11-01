@@ -277,8 +277,20 @@ public class CardInstance
     /// <summary>진화원 맨 위(맨 위 카드 바로 아래)에 앞면으로 놓는다</summary>
     public void AddTopSource(CardData card)
     {
+        card = Distinct71(card);
         FaceDownSources.Remove(card);
         EvolutionSources.Push(card);
+    }
+
+    /// <summary>
+    /// v0.71.0 같은 CardData 객체가 이미 이 디지몬에 겹쳐져 있으면 복사본을 놓는다 — 앞면 · 뒷면은 겹쳐진 카드(물리적인 카드)마다 따로 (종합 룰 4-7-4 · 4-7-9).
+    /// 전에는 같은 객체를 앞면으로 하나 더 놓으면 FaceDownSources.Remove가 이미 놓인 뒷면 카드까지 앞면으로 바꿨다 (같은 객체를 쓰는 테스트 · 시나리오 — 게임은 시작할 때 MakeCardsDistinct55로 나눈다)
+    /// </summary>
+    private CardData Distinct71(CardData card)
+    {
+        if (!ReferenceEquals(card, TopCard) && !EvolutionSources.Any(s => ReferenceEquals(s, card))) return card;
+        DigimonTcg.Core.Engine.Diag46.Hit("distinctSource71");
+        return CopyCard(card);
     }
 
     /// <summary>맨 위 카드가 뒷면 카드가 되었는지 (≪퇴화≫ 등으로 드러남 — 종합 룰 17-1-3-2-4: 에어리어의 뒷면 카드는 룰 처리로 파기)</summary>
@@ -289,6 +301,7 @@ public class CardInstance
 
     public void Evolve(CardData newCard)
     {
+        if (EvolutionSources.Any(s => ReferenceEquals(s, newCard))) newCard = Distinct71(newCard);   // v0.71.0 진화원에 같은 객체가 있으면 복사본 (그 진화원의 앞/뒷면은 그대로)
         FaceDownSources.Remove(newCard);
         EvolutionSources.Push(TopCard);
         TopCard = newCard;
@@ -341,13 +354,15 @@ public class CardInstance
     /// <summary>v0.59.0 진화원을 bottomUp(아래 → 위) 순서의 카드로 바꾼다 (≪디지버스트≫로 고른 진화원을 뺀 나머지)</summary>
     internal void ReplaceSources59(List<CardData> bottomUp) => EvolutionSources = new Stack<CardData>(bottomUp);
 
-    /// <summary>진화원 맨 아래에 카드를 넣는다</summary>
-    public void AddBottomSource(CardData card)
+    /// <summary>진화원 맨 아래에 카드를 넣는다 (놓인 카드 반환 — 같은 객체가 이미 겹쳐져 있으면 복사본, v0.71.0)</summary>
+    public CardData AddBottomSource(CardData card)
     {
+        card = Distinct71(card);
         FaceDownSources.Remove(card);
         var bottomUp = EvolutionSources.Reverse().ToList();
         bottomUp.Insert(0, card);
         EvolutionSources = new Stack<CardData>(bottomUp);
+        return card;
     }
 
     /// <summary>진화원에서 조건에 맞는 카드 1장을 꺼낸다 (순서 유지)</summary>

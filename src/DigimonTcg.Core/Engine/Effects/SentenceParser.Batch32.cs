@@ -239,7 +239,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(subj, $@"^(?<other>other )?(?<x>{TargetSpec.NameList})$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); bool other = m.Groups["other"].Success;
-            return (c, d) => (!other || !ReferenceEquals(d, c.Self)) && xs.Any(x => TargetSpec.NameHas(d, x));
+            return (c, d) => (!other || !ReferenceEquals(d, c.Self)) && xs.Any(x => TargetSpec.NameIs71(d, x));   // v0.71.0 명칭 일치
         }
         return ParseAllySubject(subj);
     }

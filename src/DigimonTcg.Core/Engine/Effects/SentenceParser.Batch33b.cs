@@ -24,7 +24,7 @@ internal static partial class SentenceParser
         if (Regex.IsMatch(p, $@"^{TargetSpec.NameList}$"))
         {
             var xs = TargetSpec.Names(p);
-            return x => xs.Any(n => TargetSpec.NameHas(x, n));
+            return x => xs.Any(n => TargetSpec.NameIs71(x, n));   // v0.71.0 명칭 일치 (종합 룰 2-3-1-2)
         }
         // "A or [B]" · "[A] or B" — 이름만 쓴 쪽은 카드명
         foreach (Match or in Regex.Matches(p, @"\s+or\s+"))
