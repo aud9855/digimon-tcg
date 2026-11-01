@@ -423,11 +423,13 @@ internal static partial class SentenceParser
             var xs = m.Groups["x"].Success ? TargetSpec.Names(m.Groups["x"].Value) : null;
             return (o, e, _) =>
             {
-                IEnumerable<CardData> cards = who.StartsWith("your opponent's") ? e.BattleArea.Where(d => d.TamerProxyOf == null).Select(d => d.TopCard).Concat(e.Tamers)
-                    : who.StartsWith("your digimon") ? o.BattleArea.Where(d => d.TamerProxyOf == null).Select(d => d.TopCard).Concat(o.Tamers)
-                    : who.StartsWith("your tamers") ? o.Tamers.Where(t => xs!.Any(x => TargetSpec.HasTrait(t, x)))
-                    : o.BattleArea.Concat(e.BattleArea).Where(d => d.TamerProxyOf == null).Select(d => d.TopCard).Concat(o.Tamers).Concat(e.Tamers);
-                return cards.SelectMany(x => x.AllColors).Distinct().Count() / per;
+                // v0.56.0 디지몬은 효과로 얻은 색도 (EX13-077 "This Digimon gains all colors in its digivolution cards")
+                static IEnumerable<CardColor> Colors(IEnumerable<CardInstance> ds) => ds.Where(d => d.TamerProxyOf == null).SelectMany(d => d.TopCard.AllColors.Concat(d.ExtraColors));
+                IEnumerable<CardColor> colors = who.StartsWith("your opponent's") ? Colors(e.BattleArea).Concat(e.Tamers.SelectMany(t => t.AllColors))
+                    : who.StartsWith("your digimon") ? Colors(o.BattleArea).Concat(o.Tamers.SelectMany(t => t.AllColors))
+                    : who.StartsWith("your tamers") ? o.Tamers.Where(t => xs!.Any(x => TargetSpec.HasTrait(t, x))).SelectMany(t => t.AllColors)
+                    : Colors(o.BattleArea.Concat(e.BattleArea)).Concat(o.Tamers.SelectMany(t => t.AllColors)).Concat(e.Tamers.SelectMany(t => t.AllColors));
+                return colors.Distinct().Count() / per;
             };
         }
         // "color in trashes" (EX13-020 — 서로의 트래시의 색 수)

@@ -252,7 +252,7 @@ public sealed record CardEffect(EffectTrigger Trigger, EffectSource Source, Acti
 
     /// <summary>v0.54.0 이 효과의 [턴에 1회] 기록 이름 (같은 카드의 메인 효과 · 진화원 효과 · 링크 효과는 다른 효과)</summary>
     public string OnceRecordKey(CardData card) =>
-        (Source == EffectSource.Inherited ? card.CardId + "#I" + (CardIdentity55.PerCard ? CardIdentity55.Of(card) : "") : Source == EffectSource.Link43 ? card.CardId + "#L" : card.CardId) + (OnceKey53 ?? OnceKey54);   // v0.55.0 진화원 효과는 진화원 카드(객체)마다 (종합 룰 15-14-1-3)
+        (Source == EffectSource.Inherited ? card.CardId + "#I" + (CardIdentity55.PerCard ? CardIdentity55.Of(card) : "") : Source == EffectSource.Link43 ? card.CardId + "#L" + (CardIdentity55.PerCard ? CardIdentity55.Of(card) : "") : card.CardId) + (OnceKey53 ?? OnceKey54);   // v0.55.0 진화원 효과는 진화원 카드(객체)마다 (종합 룰 15-14-1-3) · v0.56.0 링크 효과도 링크 카드(객체)마다 (4-3-5)
 }
 
 /// <summary>지속 효과 한 절 — 필드 상태가 바뀔 때마다 엔진이 다시 계산한다</summary>

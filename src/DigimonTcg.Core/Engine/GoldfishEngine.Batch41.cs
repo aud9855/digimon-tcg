@@ -197,7 +197,7 @@ public partial class GoldfishEngine
             foreach (var e in effects)
             {
                 var ctx = new EffectContext(this, owner, host, null, null) { Trigger = e.Trigger };
-                Resolve(ctx, card, e);
+                AsPartOfOuterEffect56(() => { Resolve(ctx, card, e); return 0; });   // v0.56.0 이 효과의 처리 일부
             }
         }
         finally

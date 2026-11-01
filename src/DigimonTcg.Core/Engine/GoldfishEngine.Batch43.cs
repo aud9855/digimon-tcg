@@ -22,15 +22,15 @@ public partial class GoldfishEngine
     // 링크 효과 (링크되어 있는 동안)
     // =====================================================================
 
-    /// <summary>self에 링크된 카드들의 링크 효과 중 trigger 시점 효과 (같은 카드 번호는 1번, 처리 직전에 아직 링크되어 있을 때만)</summary>
+    /// <summary>self에 링크된 카드들의 링크 효과 중 trigger 시점 효과 (v0.56.0 링크 카드마다 — 전에는 같은 카드 번호는 1번, 처리 직전에 아직 링크되어 있을 때만)</summary>
     private void RunLinkEffects43(EffectContext ctx, CardInstance self, EffectTrigger trigger)
     {
-        foreach (var link in self.LinkedCards.GroupBy(c => c.CardId).Select(g => g.First()).ToList())
+        foreach (var link in CardIdentity55.Each(self.LinkedCards).ToList())   // v0.56.0 링크 카드(객체)마다 (종합 룰 4-3-5 · 15-14-1-3)
         {
             if (CardScripts.For(link) is not { } script) continue;
             foreach (var effect in script.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Link43).ToList())
             {
-                if (!self.LinkedCards.Contains(link)) break;
+                if (!CardIdentity55.StillIn(self.LinkedCards, link)) break;
                 Diag43.Hit(ref Diag43.LinkEffect);
                 Resolve(ctx, link, effect);
             }

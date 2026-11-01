@@ -67,7 +67,7 @@ public static class CardScripts
 
     /// <summary>
     /// v0.31.0 이 디지몬이 효과를 얻는 진화원 카드 (맨 위 카드의 메인 효과 · 진화원 효과의 "gains all effects of ~ in this Digimon's digivolution cards").
-    /// 같은 카드 번호는 1장, 맨 위 카드 자신은 아니다 (공식 Q&A BT16-062 · BT16-014: 진화할 때 얻은 [진화 시]도 발휘)
+    /// 같은 카드가 2장이면 장마다 (v0.56.0 — 전에는 같은 카드 번호는 1장), 맨 위 카드 자신은 아니다 (공식 Q&A BT16-062 · BT16-014: 진화할 때 얻은 [진화 시]도 발휘)
     /// </summary>
     public static IEnumerable<CardData> GainedSources(CardInstance digimon, IReadOnlyList<CardData>? sources = null)
     {
@@ -87,20 +87,18 @@ public static class CardScripts
                 var topmost = sources == null ? stack.FirstOrDefault(s => !ReferenceEquals(s, digimon.TopCard) && spec(s)) : stack.LastOrDefault(s => !ReferenceEquals(s, digimon.TopCard) && spec(s));
                 if (topmost != null) succession.Add(topmost);
             }
-        if (whichList.Count == 0) return succession.GroupBy(s => s.CardId).Select(g => g.First()).ToList();
-        return stack.Where(s => !ReferenceEquals(s, digimon.TopCard) && whichList.Any(w => w(s))).Concat(succession)
-            .GroupBy(s => s.CardId).Select(g => g.First()).ToList();
+        if (whichList.Count == 0) return CardIdentity55.Each(succession).ToList();
+        return CardIdentity55.Each(stack.Where(s => !ReferenceEquals(s, digimon.TopCard) && whichList.Any(w => w(s))).Concat(succession)).ToList();   // v0.56.0 같은 카드가 2장이면 장마다 (종합 룰 4-3-3 · 15-14-1-3)
     }
 
     /// <summary>
     /// v0.54.0 이 디지몬이 얻은 진화원 카드의 표시된 효과만 (맨 위 카드의 "gains all [Main] / [All Turns] effects of ~ digivolution cards" — BT22-078 · EX10-059).
-    /// 같은 카드 번호는 1장, 뒷면 진화원 · 맨 위 카드 자신은 아니다. 돌려주는 스크립트는 그 줄만 읽은 것 (메인 효과로)
+    /// 같은 카드가 2장이면 장마다 (v0.56.0), 뒷면 진화원 · 맨 위 카드 자신은 아니다. 돌려주는 스크립트는 그 줄만 읽은 것 (메인 효과로)
     /// </summary>
     public static IEnumerable<(CardData Card, CardScript Script)> GainedLabeled54(CardInstance digimon, IReadOnlyList<CardData>? sources = null)
     {
         if (For(digimon.TopCard) is not { GainedLabeled54.Count: > 0 } top) yield break;
-        var stack = (sources ?? (IEnumerable<CardData>)digimon.EvolutionSources).Where(s => !digimon.IsFaceDown(s) && !ReferenceEquals(s, digimon.TopCard))
-            .GroupBy(s => s.CardId).Select(g => g.First()).ToList();
+        var stack = CardIdentity55.Each((sources ?? (IEnumerable<CardData>)digimon.EvolutionSources).Where(s => !digimon.IsFaceDown(s) && !ReferenceEquals(s, digimon.TopCard))).ToList();   // v0.56.0 장마다
         foreach (var (which, label, yourTurnOnly) in top.GainedLabeled54)
         {
             if (yourTurnOnly && !digimon.IsOwnersTurn) continue;

@@ -50,6 +50,12 @@ public partial class GoldfishEngine
     {
         if (b == null) return;
         _playBatch47 = b.Outer;
+        ProcessPlayBatch47(b);
+    }
+
+    /// <summary>모은 등장의 【등장 시】 · "등장했을 때"를 발휘한다</summary>
+    private void ProcessPlayBatch47(PlayBatch47 b)
+    {
         if (b.Items.Count == 0 || State.IsGameOver) return;
         if (b.Items.Count > 1) Diag46.Hit("simultaneousPlay47");
         var witness = CaptureWitness46();

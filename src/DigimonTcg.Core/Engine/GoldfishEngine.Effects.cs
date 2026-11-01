@@ -178,7 +178,7 @@ public partial class GoldfishEngine
                     if (CardScripts.For(gained) is not { } gainedScript) continue;
                     foreach (var effect in gainedScript.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Main).ToList())
                     {
-                        if (sources == null && !self.HasSource(gained.CardId)) break;
+                        if (sources == null && !CardIdentity55.StillIn(self.FaceUpSources, gained)) break;   // v0.56.0 얻은 카드(객체)마다
                         Resolve(ctx, gained, effect);
                     }
                 }
@@ -190,7 +190,7 @@ public partial class GoldfishEngine
                 foreach (var (gained, gainedScript) in CardScripts.GainedLabeled54(self, sources).ToList())
                     foreach (var effect in gainedScript.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Main).ToList())
                     {
-                        if (sources == null && !self.HasSource(gained.CardId)) break;
+                        if (sources == null && !CardIdentity55.StillIn(self.FaceUpSources, gained)) break;   // v0.56.0 얻은 카드(객체)마다
                         Resolve(ctx, gained, effect);
                     }
             }
@@ -366,7 +366,7 @@ public partial class GoldfishEngine
         if (!ctx.Engine.FirstPlayedTrigger47(ctx, card, effect))   // v0.47.0 동시 등장의 "등장했을 때"는 같은 효과 1번만 (공식 Q&A ST12-04 Q1)
             return;
         // [턴에 1회] 기록: 같은 카드의 메인 효과와 진화원 효과는 다른 효과다 (v0.29.0 — 진화원 [메인]과 맨 위가 된 그 카드의 메인 효과, BT22-043)
-        string onceKey = effect.OnceRecordKey(card);   // v0.43.0 링크 효과 · v0.53.0 절마다 · v0.54.0 효과(줄)마다
+        string onceKey = ctx.Engine.GainedOnceKey56(ctx, card, effect, effect.OnceRecordKey(card));   // v0.56.0 얻은 진화원 카드의 효과는 그 카드(객체)마다   // v0.43.0 링크 효과 · v0.53.0 절마다 · v0.54.0 효과(줄)마다
         if (effect.OncePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey))
             return;
         if (effect.TwicePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey) && !ctx.Self.UsedOncePerTurn.Add(onceKey + "#2"))
@@ -386,7 +386,8 @@ public partial class GoldfishEngine
         var handBefore = ctx.Self != null ? ctx.Owner.Hand.ToArray() : null;   // "one of your Digimon's effects adds cards to your hand" (v0.30.0)
         int drawsBefore = ctx.Engine.DrawSerial.GetValueOrDefault(ctx.Owner);
         var playBatch47 = ctx.Engine.BeginPlayBatch47();   // v0.47.0 이 효과로 등장한 카드는 동시에 — 등장 뒤 유발은 효과가 끝난 뒤 (GoldfishEngine.Batch47Play)
-        var triggerBatch54 = ctx.Engine.BeginTriggerBatch54();   // v0.54.0 이 효과 처리 중에 유발한 효과는 효과가 끝난 뒤 (GoldfishEngine.Batch54)
+        int joinSaved56 = ctx.Engine.EnterResolve56(out bool joined56);   // v0.56.0 다른 효과의 처리 일부(효과로 사용한 옵션의 【메인】 · 효과로 발휘한 효과)면 바깥 효과가 끝난 뒤 (GoldfishEngine.Batch56)
+        var triggerBatch54 = joined56 ? null : ctx.Engine.BeginTriggerBatch54();   // v0.54.0 이 효과 처리 중에 유발한 효과는 효과가 끝난 뒤 (GoldfishEngine.Batch54)
         bool resolved54 = false;
         try
         {
@@ -401,10 +402,10 @@ public partial class GoldfishEngine
                 }
                 finally { ctx.Engine.PlayCollector = outerCollector; if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); ctx.Engine.EndDeckAddWatch46(deckWatch46, ctx.Owner); }
             }
-            finally { ctx.Engine.EndPlayBatch47(playBatch47); }
+            finally { if (joined56) ctx.Engine.EndPlayBatchJoined56(playBatch47); else ctx.Engine.EndPlayBatch47(playBatch47); }
             resolved54 = true;
         }
-        finally { ctx.Engine.EndTriggerBatch54(triggerBatch54, resolved54); }
+        finally { ctx.Engine.ExitResolve56(joinSaved56); if (!joined56) ctx.Engine.EndTriggerBatch54(triggerBatch54, resolved54); }
         // 카드에 적힌 시점([등장 시] · [진화 시] · [어택 시] · [소멸 시])의 효과가 대상 · 조건이 없어 아무것도 안 했으면 그렇다고 남긴다.
         // 조용히 넘어가면 "효과가 안 탔다"로 보인다 (사용자 신고: 로제몬 · 쥬드몬 · 엔젤우몬 등 내장 스크립트의 return)
         if (ctx.State.ActionLogs.Count == logsBefore && ctx.Message == messageBefore && AnnouncedLabel(effect) is { } label)
@@ -562,7 +563,7 @@ public partial class GoldfishEngine
             foreach (var e in script.Statics.Where(e => e.Source == EffectSource.Inherited))
                 yield return e;
         }
-        foreach (var link in inst.LinkedCards.GroupBy(s => s.CardId).Select(g => g.First()))   // v0.43.0 링크 효과 (링크되어 있는 동안)
+        foreach (var link in CardIdentity55.Each(inst.LinkedCards))   // v0.43.0 링크 효과 (링크되어 있는 동안) · v0.56.0 링크 카드(객체)마다
         {
             if (CardScripts.For(link) is not { } script) continue;
             foreach (var e in script.Statics.Where(e => e.Source == EffectSource.Link43))
@@ -1565,11 +1566,11 @@ public partial class GoldfishEngine
                 list.Add(new MainAbility(d, d.TopCard));
             // v0.31.0 얻은 진화원 카드의 [메인] ("gains all effects of ~ in this Digimon's digivolution cards") — 그 카드마다
             foreach (var gained in CardScripts.GainedSources(d))
-                if (HasMainAbility(gained) && !_usedMainAbilities.ContainsKey((d, gained.CardId, "gained")))
+                if (HasMainAbility(gained) && !_usedMainAbilities.ContainsKey(GainedMainKey56(d, gained)))
                     list.Add(new MainAbility(d, gained, Gained: true));
             foreach (var (gained54, ls54) in CardScripts.GainedLabeled54(d))   // v0.54.0 "gains all [Main] effects of its digivolution cards with ~" (BT22-078)
-                if (ls54.Effects.Any(e => e.Trigger == EffectTrigger.ActivateMain) && HasMainAbility(gained54) && !_usedMainAbilities.ContainsKey((d, gained54.CardId, "gained"))
-                    && !list.Any(a => ReferenceEquals(a.Digimon, d) && a.Gained && a.Card.CardId == gained54.CardId))
+                if (ls54.Effects.Any(e => e.Trigger == EffectTrigger.ActivateMain) && HasMainAbility(gained54) && !_usedMainAbilities.ContainsKey(GainedMainKey56(d, gained54))
+                    && !list.Any(a => ReferenceEquals(a.Digimon, d) && a.Gained && SameGained56(a.Card, gained54)))
                     list.Add(new MainAbility(d, gained54, Gained: true));
             // 진화원의 [메인] 기동 효과 (v0.29.0 — "[Main] [Once Per Turn] By placing this Digimon's top stacked card ~"): 진화원 카드마다
             foreach (var source in CardIdentity55.Each(d.GetFaceUpStackBottomUp()))   // v0.55.0 장마다
@@ -1627,7 +1628,7 @@ public partial class GoldfishEngine
         bool used = ctx.AnyEffectRan && !(ctx.StepsRan && !ctx.AnyStepResolved);
         if (used)
         {
-            object key = gained && digimon != null ? (digimon, card.CardId, "gained") : inherited && digimon != null ? InheritedMainKey55(digimon, card) : (object?)digimon ?? card;
+            object key = gained && digimon != null ? GainedMainKey56(digimon, card) : inherited && digimon != null ? InheritedMainKey55(digimon, card) : (object?)digimon ?? card;
             _usedMainAbilities[key] = _usedMainAbilities.GetValueOrDefault(key) + 1;
         }
         else
@@ -1857,7 +1858,7 @@ public partial class GoldfishEngine
         _effectDepth++;
         var outerEffectOwner = CurrentEffectOwner;
         CurrentEffectOwner = owner;
-        try { Resolve(ctx, list[pick].Card, list[pick].Effect); }
+        try { AsPartOfOuterEffect56(() => { Resolve(ctx, list[pick].Card, list[pick].Effect); return 0; }); }   // v0.56.0 이 효과의 처리 일부
         finally
         {
             _effectDepth--;
@@ -2290,7 +2291,7 @@ public partial class GoldfishEngine
         EffectContext optionCtx;
         var witness46 = CaptureWitness46(options: false);   // v0.46.0 옵션을 사용한 시점에 있던 디지몬 · 테이머 · 트래시만 "옵션을 사용했을 때"에 반응
         _effectDepth++;
-        try { optionCtx = RunEffects(EffectTrigger.Main, owner, null, optionCard, chosenTarget: target, includeInherited: false, optionSide: optionCard.IsDual); }
+        try { optionCtx = AsPartOfOuterEffect56(() => RunEffects(EffectTrigger.Main, owner, null, optionCard, chosenTarget: target, includeInherited: false, optionSide: optionCard.IsDual)); }   // v0.56.0 효과로 사용했으면 그 효과의 처리 일부
         finally { _effectDepth--; }
         string msg = optionCtx.Message;
         if (msg.Length > 0)
