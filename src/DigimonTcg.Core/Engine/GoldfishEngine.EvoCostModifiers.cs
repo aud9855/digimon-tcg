@@ -52,7 +52,7 @@ public partial class GoldfishEngine
                 || (mod.YourTurnOnly && !IsTurnOf(owner))
                 || (mod.Condition != null && !mod.Condition(owner, enemy)))
                 continue;
-            if (mod.OncePerTurn && _evoCostModifierUsedTurn.TryGetValue((mod, (object?)holder ?? card), out int usedTurn) && usedTurn == State.TurnSequence)
+            if (mod.OncePerTurn && _evoCostModifierUsedTurn.TryGetValue((mod, OnceHolder55(mod.Source, holder, card)), out int usedTurn) && usedTurn == State.TurnSequence)
                 continue;
             yield return (mod, holder, card, ctx);
         }
@@ -72,7 +72,7 @@ public partial class GoldfishEngine
         {
             if (cost <= 0)
                 break;
-            var key = (mod, (object?)holder ?? card);
+            var key = (mod, OnceHolder55(mod.Source, holder, card));   // v0.55.0 진화원 효과는 진화원 카드마다
             if (mod.Cost is { } pay)
             {
                 if (!pay.CanPay(ctx) || !AskYesNo(owner, holder, $"[{card.Name}] {pay.Describe} [{evoCard.Name}] 진화 코스트를 {mod.Reduce}{(pay.PerCount ? "씩" : "")} 줄일까요?", pay.Recommend(ctx)))

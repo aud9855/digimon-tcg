@@ -64,6 +64,7 @@ internal static partial class SentenceParser
         ["Iceclad"] = Keyword.Iceclad, ["Progress"] = Keyword.Progress,
         ["Link +1"] = Keyword.LinkPlusOne, ["Vortex"] = Keyword.Vortex, ["Execute"] = Keyword.Execute, ["Engage"] = Keyword.Engage,
         ["Guard"] = Keyword.Guard, ["Ascension"] = Keyword.Ascension,   // v0.38.0 얻는 ≪가드≫ · ≪천승≫
+        ["CanAttackUnsuspendedLowLevelInternal"] = Keyword.CanAttackUnsuspendedLevel4OrLower55,   // v0.55.0 내부용 (EX1-061 — SentenceParser.Batch55)
         ["CanAttackUnsuspendedInternal"] = Keyword.CanAttackUnsuspended,   // v0.38.0 내부용: "gain ＜Piercing＞ and can also attack unsuspended Digimon" (ParseStatic38)
     };
 
@@ -79,7 +80,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse54(rawClause, inherited, card, def);   // v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse55(rawClause, inherited, card, def);   // v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -2531,6 +2532,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction51(s.TrimEnd('.'), card, triggers) is { } act51) act = act51;
         if (act.Error != null && ParseAction52(s.TrimEnd('.'), card, triggers) is { } act52) act = act52;
         if (act.Error != null && ParseAction53(s.TrimEnd('.'), card, triggers) is { } act53) act = act53;   // v0.53.0 (SentenceParser.Batch53.cs)   // v0.52.0 (SentenceParser.Batch52.cs)   // v0.51.0 (SentenceParser.Batch51.cs)   // v0.50.0 (SentenceParser.Batch50.cs) · v0.49.0 (SentenceParser.Batch49.cs)   // v0.48.0 (SentenceParser.Batch48.cs)   // v0.46.0 (SentenceParser.Batch46.cs)   // v0.44.0 (SentenceParser.Batch44.cs)
+        if (act.Error != null && ParseAction55(s.TrimEnd('.'), card, triggers) is { } act55) act = act55;   // v0.55.0 (SentenceParser.Batch55.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2603,7 +2605,7 @@ internal static partial class SentenceParser
         { int per = Per(m); return (o, e, _) => (o.Trash.Count + e.Trash.Count) / per; }
         if ((m = Regex.Match(counter, @"^(?:(?<n>\d+) )?(?:total )?cards? in both players' security stacks$", RegexOptions.IgnoreCase)).Success)
         { int per = Per(m); return (o, e, _) => (o.SecurityStack.Count + e.SecurityStack.Count) / per; }
-        return ParseCounter32(counter) ?? ParseCounter34(counter) ?? ParseCounter35(counter) ?? ParseCounter38(counter) ?? ParseCounter39(counter) ?? ParseCounter42(counter) ?? ParseCounter43(counter) ?? ParseCounter44(counter) ?? ParseCounter45(counter) ?? ParseCounter46(counter) ?? ParseCounter50(counter);   // v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.42.0 (Batch42Count)   // v0.38.0 (Batch38b)   // v0.35.0 뒷면 진화원 (Batch35)   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
+        return ParseCounter32(counter) ?? ParseCounter34(counter) ?? ParseCounter35(counter) ?? ParseCounter38(counter) ?? ParseCounter39(counter) ?? ParseCounter42(counter) ?? ParseCounter43(counter) ?? ParseCounter44(counter) ?? ParseCounter45(counter) ?? ParseCounter46(counter) ?? ParseCounter50(counter) ?? ParseCounter55(counter);   // v0.55.0   // v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.42.0 (Batch42Count)   // v0.38.0 (Batch38b)   // v0.35.0 뒷면 진화원 (Batch35)   // v0.32.0 (SentenceParser.Batch32.cs) · v0.34.0 (Batch34b)
     }
 
     private static string Gerund(string verb) => verb.ToLowerInvariant() switch
@@ -2615,7 +2617,7 @@ internal static partial class SentenceParser
 
     /// <summary>비용 구절 → (낼 수 있는지, 내기, AI 추천, 설명)</summary>
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCost(string cost, CardData card) =>
-        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card) ?? ParseCost43(cost, card) ?? ParseCost44(cost, card) ?? ParseCost45(cost, card) ?? ParseCost46(cost, card) ?? ParseCost50(cost, card) ?? ParseCost51(cost, card) ?? ParseCost52(cost, card) ?? ParseCost53(cost, card);   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
+        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card) ?? ParseCost43(cost, card) ?? ParseCost44(cost, card) ?? ParseCost45(cost, card) ?? ParseCost46(cost, card) ?? ParseCost50(cost, card) ?? ParseCost51(cost, card) ?? ParseCost52(cost, card) ?? ParseCost53(cost, card) ?? ParseCost55(cost, card);   // v0.55.0   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
 
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCostCore(string cost, CardData card)
     {
@@ -3057,7 +3059,8 @@ internal static partial class SentenceParser
             return (c => Able(c).Count >= n,
                     c =>
                     {
-                        var picked = c.Engine.ChooseCards(c.Owner, CardChoiceZone.DigivolutionCards, Able(c).OrderBy(x => x.Level).ToList(), n, upTo: false,
+                        // v0.55.0 같은 카드의 다른 장은 뒤로 — 그 장의 진화원 효과도 발휘할 수 있게 (공식 Q&A P-146 Q1: 2장이면 양쪽 발휘)
+                        var picked = c.Engine.ChooseCards(c.Owner, CardChoiceZone.DigivolutionCards, Able(c).OrderBy(x => CardIdentity55.PerCard && !ReferenceEquals(x, c.Card) && x.CardId == c.Card.CardId ? 1 : 0).ThenBy(x => x.Level).ToList(), n, upTo: false,
                             $"[{c.Card.Name}] 비용으로 {(toSecurity ? "시큐리티에 놓을" : "파기할")} 진화원 {n}장을 고르세요.");
                         foreach (var x in picked)
                         {

@@ -97,7 +97,8 @@ public static partial class EffectRules
     public static bool CanBeAttackTargetFor(CardInstance attacker, CardInstance target) =>
         !CardScripts.HasKeyword(attacker, Keyword.CannotAttackDigimon) && !CardScripts.HasKeyword(target, Keyword.CannotBeAttacked)
         && (target.IsSuspended || CardScripts.HasKeyword(attacker, Keyword.CanAttackUnsuspended)
-            || (CardScripts.HasKeyword(attacker, Keyword.CanAttackUnsuspendedSourceless) && target.EvolutionSources.Count == 0));
+            || (CardScripts.HasKeyword(attacker, Keyword.CanAttackUnsuspendedSourceless) && target.EvolutionSources.Count == 0)
+            || (target.TopCard.Level is > 0 and <= 4 && CardScripts.HasKeyword(attacker, Keyword.CanAttackUnsuspendedLevel4OrLower55)));   // v0.55.0 EX1-061
 
     /// <summary>v0.34.0 attacker가 플레이어(시큐리티)에게 어택할 수 있는지 — "can't attack players"</summary>
     public static bool CanAttackPlayer(CardInstance attacker) => !CardScripts.HasKeyword(attacker, Keyword.CannotAttackPlayers);
@@ -196,14 +197,14 @@ public partial class GoldfishEngine
 
             if (includeInherited && self != null)
             {
-                var sourceCards = (sources ?? self.GetEvolutionStackBottomUp()).Where(s => !self.IsFaceDown(s)).GroupBy(s => s.CardId).Select(g => g.First()).ToList();
+                var sourceCards = CardIdentity55.Each((sources ?? self.GetEvolutionStackBottomUp()).Where(s => !self.IsFaceDown(s))).ToList();   // v0.55.0 같은 카드가 2장이면 장마다 (종합 룰 15-14-1-3)
                 foreach (var source in sourceCards)
                 {
                     if (CardScripts.For(source) is not { } script)
                         continue;
                     foreach (var effect in script.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Inherited).ToList())
                     {
-                        if (sources == null && !self.HasSource(source.CardId))
+                        if (sources == null && !CardIdentity55.StillIn(self.FaceUpSources, source))
                             break;
                         Resolve(ctx, source, effect);
                     }
@@ -555,7 +556,7 @@ public partial class GoldfishEngine
         foreach (var (_, ls) in CardScripts.GainedLabeled54(inst))   // v0.54.0 [메인] / 【서로의 턴】 효과만 (지속 효과)
             foreach (var e in ls.Statics.Where(e => e.Source == EffectSource.Main))
                 yield return e;
-        foreach (var source in inst.FaceUpSources.GroupBy(s => s.CardId).Select(g => g.First()))
+        foreach (var source in CardIdentity55.Each(inst.FaceUpSources))   // v0.55.0 같은 카드가 2장이면 장마다 (DP +N은 2번)
         {
             if (CardScripts.For(source) is not { } script) continue;
             foreach (var e in script.Statics.Where(e => e.Source == EffectSource.Inherited))
@@ -1571,8 +1572,8 @@ public partial class GoldfishEngine
                     && !list.Any(a => ReferenceEquals(a.Digimon, d) && a.Gained && a.Card.CardId == gained54.CardId))
                     list.Add(new MainAbility(d, gained54, Gained: true));
             // 진화원의 [메인] 기동 효과 (v0.29.0 — "[Main] [Once Per Turn] By placing this Digimon's top stacked card ~"): 진화원 카드마다
-            foreach (var source in d.GetFaceUpStackBottomUp().GroupBy(s => s.CardId).Select(g => g.First()))
-                if (HasInheritedMainAbility(source) && !_usedMainAbilities.ContainsKey((d, source.CardId)))
+            foreach (var source in CardIdentity55.Each(d.GetFaceUpStackBottomUp()))   // v0.55.0 장마다
+                if (HasInheritedMainAbility(source) && !_usedMainAbilities.ContainsKey(InheritedMainKey55(d, source)))
                     list.Add(new MainAbility(d, source, Inherited: true));
         }
         // ≪트레이닝≫처럼 육성 에어리어에서도 쓸 수 있는 기동 효과
@@ -1626,7 +1627,7 @@ public partial class GoldfishEngine
         bool used = ctx.AnyEffectRan && !(ctx.StepsRan && !ctx.AnyStepResolved);
         if (used)
         {
-            object key = gained && digimon != null ? (digimon, card.CardId, "gained") : inherited && digimon != null ? (digimon, card.CardId) : (object?)digimon ?? card;
+            object key = gained && digimon != null ? (digimon, card.CardId, "gained") : inherited && digimon != null ? InheritedMainKey55(digimon, card) : (object?)digimon ?? card;
             _usedMainAbilities[key] = _usedMainAbilities.GetValueOrDefault(key) + 1;
         }
         else
@@ -1646,7 +1647,7 @@ public partial class GoldfishEngine
             if (State.IsGameOver || (_aiTurn?.Memory ?? 0) < 0) break;
             if (ability.Zone != MainAbilityZone.Field && !GetZoneAbilities(State.DummyOpponent, ability.Zone).Any(a => ReferenceEquals(a.Card, ability.Card)))
                 continue;   // 앞의 효과로 패 · 트래시를 떠났거나 이미 썼다
-            if (ability.Inherited && (ability.Digimon == null || !State.DummyOpponent.BattleArea.Contains(ability.Digimon) || !ability.Digimon.HasSource(ability.Card.CardId)))
+            if (ability.Inherited && (ability.Digimon == null || !State.DummyOpponent.BattleArea.Contains(ability.Digimon) || !CardIdentity55.StillIn(ability.Digimon.FaceUpSources, ability.Card)))
                 continue;   // 앞의 효과로 그 디지몬이 떠났거나 그 카드가 진화원이 아니게 되었다
             if (!AiPolicy.ShouldUseMainAbility(this, ability, _aiTurn?.Memory ?? 0)) continue;
             AddEffectEvent(ability.Card, CaptureEffectLogs(() =>
@@ -2010,8 +2011,7 @@ public partial class GoldfishEngine
     {
         var removed = self.RemoveBottomSources(n);
         owner.Trash.AddRange(removed);
-        RunEffects(EffectTrigger.DigiBurstTrashedThis, owner, self, null, sources: removed);
-        FireForSide(EffectTrigger.AllyDigiBurst, owner, self);
+        FireDigiBurst55(owner, self, removed);   // v0.55.0 효과 처리 중이면 그 효과가 끝난 뒤
     }
 
     /// <summary>"When this Digimon becomes unsuspended during your unsuspend phase" — 액티브 페이즈에 액티브가 된 배틀 에어리어 디지몬</summary>
@@ -2308,8 +2308,13 @@ public partial class GoldfishEngine
         else if (optionCtx.PlaceInBattleArea) PlaceOption(owner, optionCard);
         else owner.Trash.Add(optionCard);
         // "When you use an Option card" / "When a player uses an Option card"
-        FireForSide(EffectTrigger.AllyOptionUsed, owner, null, triggerCard: optionCard, witness: witness46);
-        FireForSide(EffectTrigger.OpponentOptionUsed, EnemyOf(owner), null, triggerCard: optionCard, witness: witness46);
+        Defer54(() =>   // v0.55.0 효과로 사용한 옵션이면 그 효과가 끝난 뒤
+        {
+            if (State.IsGameOver) return;
+            FireForSide(EffectTrigger.AllyOptionUsed, owner, null, triggerCard: optionCard, witness: witness46);
+            FireForSide(EffectTrigger.OpponentOptionUsed, EnemyOf(owner), null, triggerCard: optionCard, witness: witness46);
+        });
+        if (Deferring54) Diag46.Hit("optionUsedDeferred55");
         RecalculateFieldBuffs();
         return msg;
     }

@@ -155,6 +155,7 @@ public partial class GoldfishEngine
 
         // 스테이지별 상대방 세팅 (기초 덱 또는 사용자 지정 덱)
         SetupOpponentForStage(rng, opponentMainDeck, opponentDigitamaDeck, opponentDeckName);
+        MakeCardsDistinct55();   // v0.55.0 같은 카드가 여러 장이면 카드마다 다른 객체 (종합 룰 15-14-1-3 — GoldfishEngine.Batch55)
 
         string stageTitle = State.CurrentStage switch
         {

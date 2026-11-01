@@ -81,7 +81,7 @@ public partial class GoldfishEngine
         {
             if (!mod.Which(card) || (mod.YourTurnOnly && !IsTurnOf(owner)))
                 continue;
-            if (mod.OncePerTurn && _fieldPlayCostUsedTurn.TryGetValue((mod, (object?)holder ?? source), out int used) && used == State.TurnSequence)
+            if (mod.OncePerTurn && _fieldPlayCostUsedTurn.TryGetValue((mod, OnceHolder55(mod.Source, holder, source)), out int used) && used == State.TurnSequence)
                 continue;
             yield return (mod, new EffectContext(this, owner, holder, null, null) { Card = source, TriggerCard = card });
         }
@@ -108,7 +108,7 @@ public partial class GoldfishEngine
             int reduced = Math.Min(reduce, cost);
             cost -= reduced;
             if (mod.OncePerTurn)
-                _fieldPlayCostUsedTurn[(mod, (object?)ctx.Self ?? ctx.Card)] = State.TurnSequence;
+                _fieldPlayCostUsedTurn[(mod, OnceHolder55(mod.Source, ctx.Self, ctx.Card))] = State.TurnSequence;   // v0.55.0 진화원 효과는 진화원 카드마다
             EffectLog(owner, $"[{ctx.Card.Name}] [{card.Name}] 등장 코스트 -{reduced} (코스트 {cost})");
         }
         return cost;

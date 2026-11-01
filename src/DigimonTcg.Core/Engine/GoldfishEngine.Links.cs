@@ -36,11 +36,7 @@ public partial class GoldfishEngine
         target.LinkedCards.Add(card);
         RecalculateFieldBuffs();
         EffectLog(owner, $"[링크] [{card.Name}]을(를) [{target.TopCard.Name}]에 링크");
-        RunEffects(EffectTrigger.OnLinked, owner, target, card, includeInherited: false);
-        if (owner.BattleArea.Contains(target))
-            RunEffects(EffectTrigger.ThisDigimonLinked, owner, target, target.TopCard);
-        if (owner.BattleArea.Contains(target))
-            FireForSide(EffectTrigger.AllyDigimonLinked, owner, target, triggerCard: card);   // TriggerCard = 링크한 카드 (v0.31.0)
+        FireLinked55(owner, target, card);   // v0.55.0 효과로 링크했으면 그 효과가 끝난 뒤
         RecalculateFieldBuffs();
     }
 

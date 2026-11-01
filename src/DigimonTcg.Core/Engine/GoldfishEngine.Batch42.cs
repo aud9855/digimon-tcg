@@ -132,7 +132,7 @@ public partial class GoldfishEngine
         if (CardScripts.For(b.TopCard) is { } top)
             foreach (var e in top.Effects.Where(e => e.Source == EffectSource.Breeding42 && e.Trigger == trigger))
                 list.Add((b.TopCard, e));
-        foreach (var src in b.FaceUpSources.GroupBy(x => x.CardId).Select(g => g.First()))
+        foreach (var src in CardIdentity55.Each(b.FaceUpSources))
             if (CardScripts.For(src) is { } ss)
                 foreach (var e in ss.Effects.Where(e => e.Source == EffectSource.BreedingInherited42 && e.Trigger == trigger))
                     list.Add((src, e));
@@ -167,7 +167,7 @@ public partial class GoldfishEngine
         if (CardScripts.For(b.TopCard) is { } top)
             foreach (var e in top.Statics.Where(e => e.Source == EffectSource.Breeding42 && e.Stat == stat))
                 yield return (e, ctx);
-        foreach (var src in b.FaceUpSources.GroupBy(x => x.CardId).Select(g => g.First()))
+        foreach (var src in CardIdentity55.Each(b.FaceUpSources))
             if (CardScripts.For(src) is { } ss)
                 foreach (var e in ss.Statics.Where(e => e.Source == EffectSource.BreedingInherited42 && e.Stat == stat))
                     yield return (e, ctx);

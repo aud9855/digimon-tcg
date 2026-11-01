@@ -181,7 +181,7 @@ public partial class GoldfishEngine
         {
             IEnumerable<(EffectSource Source, System.Func<CardInstance, bool> Who, int Amount, bool OpponentsTurnOnly)> mods =
                 (CardScripts.For(d.TopCard)?.OpponentEvoCostIncreases40.Where(x => x.Source == EffectSource.Main) ?? Enumerable.Empty<(EffectSource, System.Func<CardInstance, bool>, int, bool)>())
-                .Concat(d.FaceUpSources.GroupBy(s => s.CardId).Select(g => g.First())
+                .Concat(CardIdentity55.Each(d.FaceUpSources)
                     .SelectMany(s => CardScripts.For(s)?.OpponentEvoCostIncreases40.Where(x => x.Source == EffectSource.Inherited) ?? Enumerable.Empty<(EffectSource, System.Func<CardInstance, bool>, int, bool)>()));
             foreach (var (_, who, amount, oppTurn) in mods)
                 if ((!oppTurn || IsTurnOf(owner)) && who(target)) { total += amount; Diag40.Hit(ref Diag40.OpponentEvoCost); }

@@ -99,6 +99,14 @@ public partial class GoldfishEngine
     internal static IEnumerable<CardData> DnaFacets(CardInstance d, CardData dnaCard)
     {
         yield return d.TopCard;
+        if (CardScripts.For(d.TopCard) is { DnaAliasesYourTurn55.Count: > 0 } s55 && d.IsOwnersTurn)   // v0.55.0 자신의 턴에만 (EX3-020)
+            foreach (var (forName, asName, level) in s55.DnaAliasesYourTurn55)
+                if (CardNames.Is(dnaCard, forName))
+                    yield return new CardData
+                    {
+                        CardId = d.TopCard.CardId + "#DNA", Name = asName, EnglishName = d.TopCard.EnglishName, Type = CardType.Digimon, Level = level, Color = d.TopCard.Color, SecondaryColor = d.TopCard.SecondaryColor,
+                        DP = d.TopCard.DP, PlayCost = d.TopCard.PlayCost, Traits = d.TopCard.Traits,
+                    };
         if (CardScripts.For(d.TopCard) is not { DnaAliases.Count: > 0 } script) yield break;
         foreach (var (forName, asName, level) in script.DnaAliases)
             if (CardNames.Is(dnaCard, forName))

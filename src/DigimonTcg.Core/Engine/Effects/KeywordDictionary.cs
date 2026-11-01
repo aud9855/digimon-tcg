@@ -200,6 +200,7 @@ public static class KeywordDictionary
         var def = new CardScriptDefinition(script);
         int linkSa43 = 0;
         var ordinals54 = new Dictionary<(bool Inherited, bool Field), int>();
+        var mainInheritedRead55 = new HashSet<int>();   // v0.55.0 메인 칸의 "Inherited Effect ~" 줄 중 읽은 것 (번째)
         foreach (var (field54, inherited, clause, options) in ClausesWithFieldOf(card))
         {
             if (card.IsDual && inherited)
@@ -207,19 +208,28 @@ public static class KeywordDictionary
             // v0.54.0 [턴에 1회]는 효과(줄)마다 — 진화원 효과는 메인 칸의 "Inherited Effect ~" 줄과 진화원 칸의 같은 번째 줄이 같은 효과 (영어 데이터에 둘 다 있는 카드 BT25-001 등)
             int ord54 = ordinals54.GetValueOrDefault((inherited, field54));
             ordinals54[(inherited, field54)] = ord54 + 1;
+            // v0.55.0 같은 효과를 두 번 등록하지 않는다: 메인 칸의 "Inherited Effect ~" 줄을 읽었으면 진화원 칸의 같은 번째 줄은 건너뛴다
+            // (영어 데이터에 둘 다 있는 30장 — 진화원 칸 쪽은 머리말이 빠지거나 잘린 문장. BT26-005 · EX12-001 · EX12-003 · EX12-004는 [턴에 1회]가 아니라 2번 발휘되었다)
+            if (inherited && field54 && mainInheritedRead55.Contains(ord54))
+                continue;
             string onceKey54 = (inherited ? "#e:I" : field54 ? "#e:S" : "#e:M") + ord54;
             int before54 = script.Effects.Count;
+            bool read55;
             if (options != null)
-                SentenceParser.TryParseChoice(clause, options, inherited, card, def);   // "Activate 1 of the effects below:" + "・~"
+                read55 = SentenceParser.TryParseChoice(clause, options, inherited, card, def) == null;   // "Activate 1 of the effects below:" + "・~"
             else
             {
                 var parsed = Parse(StripLabel(clause));
                 if (parsed.Unsupported == null)
+                {
                     AddParsed(script, new[] { parsed }, inherited);
+                    read55 = true;
+                }
                 else
-                    SentenceParser.TryParse(clause, inherited, card, def);   // 키워드 절이 아니면 문장 파서 (읽지 못하면 등록하지 않음)
+                    read55 = SentenceParser.TryParse(clause, inherited, card, def) == null;   // 키워드 절이 아니면 문장 파서 (읽지 못하면 등록하지 않음)
                 if (inherited && parsed.Unsupported == null) linkSa43 += parsed.SecurityAttack;
             }
+            if (read55 && inherited && !field54) mainInheritedRead55.Add(ord54);
             for (int i = before54; i < script.Effects.Count; i++)
                 if (script.Effects[i] is { OnceKey53: null, OnceKey54: null } e54 && (e54.OncePerTurn || e54.TwicePerTurn))
                     script.Effects[i] = e54 with { OnceKey54 = onceKey54 };
@@ -228,7 +238,7 @@ public static class KeywordDictionary
         bool any = script.Keywords.Count + script.InheritedKeywords.Count + script.Effects.Count + script.Statics.Count > 0
                    || script.OverflowMemory > 0 || script.DigisorptionReduction > 0 || script.BlastDigivolve || script.MaterialSave > 0 || script.LinkRequirement != null || script.SpecialEvolutions.Count > 0 || script.TamerEvolutions.Count > 0 || script.IgnoreColorRequirement != null || script.IgnoreColorRequirementVs52 != null || script.DigisorptionOpponent52 || script.SecurityCheckedPlay53 != null || script.VortexPlayers53 || script.PlayCostReduction != null || script.PlayCostOptions.Count > 0 || script.EvoCostModifiers.Count > 0 || script.FieldPlayCostModifiers.Count > 0 || script.GainedSourceEffects.Count > 0 || script.GainedLabeled54.Count > 0 || script.BlockOpponentTamerOnPlay54 != null || script.BlockWhenDigivolvingLevel54 > 0 || script.XrosUnderTamersAndTrash54 != null
                    || script.XrosAliases.Count > 0 || script.XrosFromTrash != null || script.XrosUnderTamersFor != null || script.OverclockSpecified != null
-                   || script.EvoOnlyInto.Count > 0 || script.TamerAuras.Count > 0 || script.DnaAliases.Count > 0 || script.LinkCostModifiers41.Count > 0 || script.SuccessionSpecs41.Count > 0   // v0.41.0 링크 코스트 감소 · ≪계승≫ · v0.34.0 · v0.37.0 DNA 진화 이름 취급
+                   || script.EvoOnlyInto.Count > 0 || script.TamerAuras.Count > 0 || script.DnaAliases.Count > 0 || script.DnaAliasesYourTurn55.Count > 0 || script.LinkCostModifiers41.Count > 0 || script.SuccessionSpecs41.Count > 0   // v0.41.0 링크 코스트 감소 · ≪계승≫ · v0.34.0 · v0.37.0 DNA 진화 이름 취급
                    || script.SecurityPlayAtEndOfOpponentTurn38 || script.OpponentEvoCostIncreases40.Count > 0
                    || script.SpecialEvolutions42.Count > 0 || script.HolderEvolutions42.Count > 0
                    || script.LinkKeywords43.Count > 0 || script.LinkSecurityAttack43 != 0 || script.BlastDna43 != null;   // v0.43.0   // v0.42.0   // v0.40.0   // v0.38.0 [시큐리티]【상대의 턴 종료 시】

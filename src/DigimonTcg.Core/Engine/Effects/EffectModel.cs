@@ -191,6 +191,8 @@ public enum Keyword
     DecoyRed, DecoyBlue, DecoyYellow, DecoyGreen, DecoyBlack, DecoyPurple, DecoyWhite,   // ≪디코이 (색)≫: 그 색의 다른 자신의 디지몬이 상대의 효과로 소멸할 때
     // v0.42.0
     StackProtectedFromOpponent,        // 겹쳐진 카드(맨 위 카드 · 진화원)가 상대의 효과로 파기되지 않는다 (공식 BT21-060 "이 디지몬에 겹쳐져 있는 카드는 상대의 효과로 파기되지 않는다" — ≪퇴화≫도)
+    // v0.55.0
+    CanAttackUnsuspendedLevel4OrLower55, // 액티브 상태인 Lv.4 이하의 상대 디지몬에게도 어택할 수 있다 (EX1-061 진화원 효과)
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>
@@ -250,7 +252,7 @@ public sealed record CardEffect(EffectTrigger Trigger, EffectSource Source, Acti
 
     /// <summary>v0.54.0 이 효과의 [턴에 1회] 기록 이름 (같은 카드의 메인 효과 · 진화원 효과 · 링크 효과는 다른 효과)</summary>
     public string OnceRecordKey(CardData card) =>
-        (Source == EffectSource.Inherited ? card.CardId + "#I" : Source == EffectSource.Link43 ? card.CardId + "#L" : card.CardId) + (OnceKey53 ?? OnceKey54);
+        (Source == EffectSource.Inherited ? card.CardId + "#I" + (CardIdentity55.PerCard ? CardIdentity55.Of(card) : "") : Source == EffectSource.Link43 ? card.CardId + "#L" : card.CardId) + (OnceKey53 ?? OnceKey54);   // v0.55.0 진화원 효과는 진화원 카드(객체)마다 (종합 룰 15-14-1-3)
 }
 
 /// <summary>지속 효과 한 절 — 필드 상태가 바뀔 때마다 엔진이 다시 계산한다</summary>
@@ -447,6 +449,9 @@ public sealed class CardScript
 
     /// <summary>v0.37.0 "This Digimon is also treated as Lv.6 [Slayerdramon] for [Examon]'s DNA digivolution" — (DNA 진화할 카드 이름, 취급 이름, 취급 Lv.) — 배틀 에어리어에 있을 때만 (Q&A BT20-025)</summary>
     public List<(string ForName, string AsName, int Level)> DnaAliases { get; } = new();
+
+    /// <summary>v0.55.0 "[Your Turn] [Examon] in your hand can treat this Digimon as level 6 for DNA digivolution" (EX3-020 · EX3-041) — 자신의 턴에만</summary>
+    public List<(string ForName, string AsName, int Level)> DnaAliasesYourTurn55 { get; } = new();
 }
 
 /// <summary>

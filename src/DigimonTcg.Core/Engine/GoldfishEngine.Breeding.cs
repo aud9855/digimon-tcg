@@ -21,7 +21,7 @@ public partial class GoldfishEngine
             return null;
         var egg = owner.DigitamaDeck.Pop();
         owner.BreedingArea = new CardInstance(egg, State.CurrentTurn) { IsOwnersTurn = IsTurnOf(owner) };
-        FireForSide(EffectTrigger.AllyHatched, owner, owner.BreedingArea, triggerCard: egg);
+        FireHatched55(owner, owner.BreedingArea, egg);   // v0.55.0 효과로 부화했으면 그 효과가 끝난 뒤
         return egg;
     }
 
@@ -39,12 +39,7 @@ public partial class GoldfishEngine
         moving.TurnPlayed = Math.Min(moving.TurnPlayed, State.CurrentTurn - 1);
         owner.BattleArea.Add(moving);
         RecalculateFieldBuffs();
-        RunEffects(EffectTrigger.WhenMoving, owner, moving, moving.TopCard);
-        if (owner.BattleArea.Contains(moving))
-        {
-            FireForSide(EffectTrigger.AllyDigimonMovedFromBreeding, owner, moving);
-            FireForSide(EffectTrigger.OpponentDigimonMovedFromBreeding, EnemyOf(owner), moving);
-        }
+        FireMovedFromBreeding55(owner, moving);   // v0.55.0 효과로 옮겼으면 그 효과가 끝난 뒤
         return moving;
     }
 
