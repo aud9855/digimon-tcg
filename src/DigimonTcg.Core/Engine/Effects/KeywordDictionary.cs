@@ -268,6 +268,7 @@ public static class KeywordDictionary
         {
             bool header = Regex.IsMatch(list[i], @"(?:effects? below|following effects?)(?: twice| \d+ times| instead)?\s*[:.]?\s*$", RegexOptions.IgnoreCase)
                           || Regex.IsMatch(list[i], @"\bactivate the effect below\. For each [^,]+, activate it again\.?\s*$", RegexOptions.IgnoreCase)   // v0.57.0 EX4-068
+                          || Regex.IsMatch(list[i], @"\bfor each (?:card|one) trashed, activate the effect below\. Then, [^・]+$", RegexOptions.IgnoreCase)   // v0.64.0 EX4-073 (뒤에 "그 후, ~" 문장)
                           || list[i].Contains("＜Digi-Burst", StringComparison.OrdinalIgnoreCase) || list[i].Contains("＜Delay", StringComparison.OrdinalIgnoreCase);   // ≪디지버스트 N≫ (설명문 뒤에 ・효과)
             if (header && i + 1 < list.Count && IsOption45(list[i + 1]))
             {

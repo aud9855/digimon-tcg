@@ -44,7 +44,7 @@ public partial class GoldfishEngine
     {
         if (State.IsGameOver) return ActionResult.Fail("이미 종료된 게임입니다.");
         if (State.CurrentPhase != Phase.Main) return ActionResult.Fail("메인 페이즈에만 진화할 수 있습니다.");
-        if (State.BlitzAttacker != null && State.MemoryGauge < 0) return ActionResult.Fail("지금은 ≪진격≫ 어택이나 턴 종료만 할 수 있습니다.");
+        if (State.BlitzAttacker != null && PlayerTurnEndMet64()) return ActionResult.Fail("지금은 ≪진격≫ 어택이나 턴 종료만 할 수 있습니다.");
         if (!State.Player.Tamers.Contains(tamer)) return ActionResult.Fail("필드에 없는 테이머입니다.");
         if (!State.Player.Hand.Contains(evoCard)) return ActionResult.Fail("패에 없는 카드입니다.");
         if (TamerEvolutionCostFor(State.Player, evoCard, tamer) is not int cost)

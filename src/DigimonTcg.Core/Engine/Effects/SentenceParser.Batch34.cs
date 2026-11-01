@@ -659,9 +659,18 @@ internal static partial class SentenceParser
         {
             int n = int.Parse(m.Groups["n"].Value);
             List<CardInstance> Hosts(EffectContext c) => c.Owner.BattleArea.Where(d => hostSpec.Filters.All(f => f(d))).ToList();
+            bool oneHost64 = Regex.IsMatch(cost, @"\b(?:1|one) of your\b", I);   // v0.64.0 "of 1 of your ~ Digimon" — 뒤의 "that Digimon"은 진화원을 버린 그 디지몬 (EX8-070)
             return (c => Hosts(c).Sum(d => d.EvolutionSources.Count) >= n,
-                    c => { c.PaidCount = TrashChosenSources34(c, Hosts(c), _ => true, n, upTo: false); if (c.PaidCount < n) c.CostFailed = true; },
-                    c => Hosts(c).Sum(d => d.EvolutionSources.Count) > n,
+                    c =>
+                    {
+                        var hosts = Hosts(c);
+                        var before64 = oneHost64 ? hosts.ToDictionary(d => d, d => d.EvolutionSources.Count) : null;
+                        c.PaidCount = TrashChosenSources34(c, hosts, _ => true, n, upTo: false);
+                        if (c.PaidCount < n) c.CostFailed = true;
+                        else if (before64 != null && hosts.Where(d => d.EvolutionSources.Count < before64[d]).ToList() is { Count: > 0 } paidFrom)
+                            c.LastTargets = paidFrom;
+                    },
+                    c => Hosts(c).Sum(d => d.EvolutionSources.Count) is var avail && (avail > n || oneHost64 && c.Card.Type == CardType.Option && avail >= n),   // v0.64.0 옵션은 이미 쓴 카드 — 마지막 진화원이어도 낸다
                     $"진화원을 선택하여 {n}장 파기하여");
         }
         // "returning 2 cards from your opponent's trash to the bottom of the deck" · "returning 1 Digimon card from your opponent's trash to the bottom of their deck" · "~ to the top of the deck"
@@ -680,6 +689,7 @@ internal static partial class SentenceParser
                         if (top) c.Enemy.MainDeck.InsertRange(0, picked); else c.Enemy.MainDeck.AddRange(picked);
                         c.Engine.NotifyTrashMoved(c.Enemy, picked, toHand: false);
                         c.PaidCount = picked.Count;
+                        c.PaidCards64 = picked;   // v0.64.0 "those returned cards' colors" (EX12-047)
                     },
                     _ => true, $"상대의 트래시의 카드 {n}장을 덱 {(top ? "위" : "아래")}로 되돌려");
         }

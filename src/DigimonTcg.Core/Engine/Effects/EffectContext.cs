@@ -92,6 +92,9 @@ public sealed class EffectContext
     /// <summary>v0.34.0 앞의 비용 · 동작이 옮긴 매수 ("for each card trashed / placed / returned" · "reduce the play cost by 4 for each one")</summary>
     public int PaidCount { get; set; }
 
+    /// <summary>v0.64.0 비용으로 옮긴 카드 ("returning 2 cards from their trash to the bottom of the deck" — "those returned cards' colors", EX12-047)</summary>
+    public List<CardData> PaidCards64 { get; set; } = new();
+
     /// <summary>v0.34.0 "Your opponent may delete ~"의 결과 ("If this effect didn't delete") — 읽으면 지운다</summary>
     internal bool? LastDidDelete34 { get; set; }
 

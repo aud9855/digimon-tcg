@@ -1019,7 +1019,7 @@ public partial class GoldfishEngine
     /// <summary>어택 중 [어택 시] 효과 등으로 메모리가 0 미만이 되었다면, 어택이 끝난 뒤 턴이 넘어간다</summary>
     private void EndTurnIfMemoryNegative()
     {
-        if (!State.IsGameOver && State.MemoryGauge < 0)
+        if (!State.IsGameOver && PlayerTurnEndMet64())
             CheckTurnEndAndAutoReset();
     }
 
@@ -1036,7 +1036,7 @@ public partial class GoldfishEngine
             return ActionResult.Fail("지금은 내 턴이 아닙니다.");
 
         State.CanMulligan = false;
-        if (State.BlitzAttacker != null && State.MemoryGauge < 0)
+        if (State.BlitzAttacker != null && PlayerTurnEndMet64())
             State.BlitzAttacker = null;   // ≪진격≫ 어택을 하지 않고 끝냄 — 메모리는 이미 상대 쪽
         else
             State.MemoryGauge = -3;
@@ -1054,8 +1054,14 @@ public partial class GoldfishEngine
     public bool CheckTurnEndAndAutoReset()
     {
         RunDeclaredEffectAttack57();   // v0.57.0 이 행동의 효과로 선언한 어택: 발휘 대기가 없어졌으니 카운터 · 블록 · 배틀 (GoldfishEngine.Batch57)
-        if (State.IsGameOver || State.MemoryGauge >= 0)
+        if (State.IsGameOver)
             return false;
+        if (!PlayerTurnEndMet64())
+        {
+            // v0.64.0 턴 종료 조건이 상대 쪽의 3 이상인 동안 (BT14-081): 메모리가 상대 쪽의 1 · 2여도 턴이 이어지므로 ≪진격≫ 어택만 하는 상태가 아니다 (그 디지몬은 보통 어택할 수 있다)
+            if (State.BlitzAttacker != null && State.MemoryGauge < 0) State.BlitzAttacker = null;
+            return false;
+        }
 
         // ≪진격≫: 메모리가 상대 쪽이어도 그 디지몬의 어택 1번이 끝날 때까지 턴이 이어진다
         if (State.BlitzAttacker is { } blitz)
@@ -1069,7 +1075,7 @@ public partial class GoldfishEngine
         }
 
         State.CurrentPhase = Phase.TurnEnd;
-        Log($"메모리가 {State.MemoryGauge}(0 미만)이 되어 플레이어 턴이 종료됩니다.");
+        Log(TurnEndMemory64(State.Player) is > 1 and var te64 ? $"메모리가 상대 쪽의 {-State.MemoryGauge}(턴 종료 조건: 상대 쪽의 {te64} 이상)이 되어 플레이어 턴이 종료됩니다." : $"메모리가 {State.MemoryGauge}(0 미만)이 되어 플레이어 턴이 종료됩니다.");
         TriggerEndOfTurn(State.Player);
         RunDeclaredEffectAttack57();   // v0.57.0 [자신의 턴 종료 시] "~ may attack"
         RunPlayerEndOfTurnAttacks();   // ≪볼텍스≫ · ≪에그제큐트≫ (턴 종료 시 어택)
@@ -1272,13 +1278,13 @@ public partial class GoldfishEngine
             CaptureEffectLogs(() => TriggerStartOfMainPhase(State.DummyOpponent)));
 
         // 3-A. [어택 전 메인 페이즈] 정책이 고른 옵션 · 진화 (메모리를 상대 쪽으로 넘기지 않는 것 — 진화 직후 바로 어택 가능!)
-        while (ctx.Memory >= 0 && !State.IsGameOver)
+        while (AiMem64(ctx) >= 0 && !State.IsGameOver)
         {
             if (HasDeclaredAiAttack57(ctx)) break;   // v0.57.0 효과로 어택 선언했다 — 그 어택부터 (RunAiTurn)
-            if (AiPolicy.ChooseOption(this, ctx.Memory, beforeAttacks: true) is { } option) { AiUseOption(ctx, option); continue; }
-            if (AiPolicy.ChooseEvolution(this, ctx.Memory, beforeAttacks: true) is { } evo) { AiEvolve(ctx, evo.Base, evo.Card); continue; }
+            if (AiPolicy.ChooseOption(this, AiMem64(ctx), beforeAttacks: true) is { } option) { AiUseOption(ctx, option); continue; }
+            if (AiPolicy.ChooseEvolution(this, AiMem64(ctx), beforeAttacks: true) is { } evo) { AiEvolve(ctx, evo.Base, evo.Card); continue; }
             if (AiTryTamerEvolution(ctx)) continue;   // v0.30.0 테이머에서 진화 (하이브리드체)
-            if (AiPolicy.ChooseDnaEvolution(this, ctx.Memory, beforeAttacks: true) is { } dna && AiDnaEvolve(dna)) continue;
+            if (AiPolicy.ChooseDnaEvolution(this, AiMem64(ctx), beforeAttacks: true) is { } dna && AiDnaEvolve(dna)) continue;
             if (AiTryLink41(ctx)) continue;   // v0.41.0 링크 (메모리를 넘기지 않는 것만)
             if (AiTryAppFusion43(ctx)) continue;   // v0.43.0 어플 합체 (GoldfishEngine.Batch43)
             break;
@@ -1307,9 +1313,9 @@ public partial class GoldfishEngine
                 if (ctx.EndPhase)
                     break;   // 턴 종료 시 어택(≪볼텍스≫ · ≪에그제큐트≫)이 끝났다
                 if (ctx.IsOpeningTurn || State.IsGameOver || ctx.AttacksDeclared >= MaxAiAttacksPerTurn
-                    || AiPolicy.ChooseNextAttack(this, ctx.Memory) is not { } next)
+                    || AiPolicy.ChooseNextAttack(this, AiMem64(ctx)) is not { } next)
                     break;
-                if (ctx.Memory < 0)
+                if (AiMem64(ctx) < 0)
                 {
                     // 어택 도중 효과로 AI 메모리가 0 미만이 되면 남은 어택 없이 AI 턴의 메인 페이즈도 끝난다
                     Log($"⚡ AI 메모리가 {ctx.Memory}(0 미만)이 되어 AI의 추가 공격 및 메인 페이즈가 즉시 종료됩니다!");
@@ -1322,7 +1328,7 @@ public partial class GoldfishEngine
             }
 
             // 공격 도중 내 시큐리티 해머 스파크 등으로 AI 메모리가 0 미만이 되면 즉시 AI 턴 종료! (≪진격≫ 어택은 예외)
-            if (ctx.Memory < 0 && !ctx.EndPhase && !ReferenceEquals(ctx.Attackers.Peek(), ctx.BlitzAttacker) && !ctx.QueuedTargets.ContainsKey(ctx.Attackers.Peek()))
+            if (AiMem64(ctx) < 0 && !ctx.EndPhase && !ReferenceEquals(ctx.Attackers.Peek(), ctx.BlitzAttacker) && !ctx.QueuedTargets.ContainsKey(ctx.Attackers.Peek()))
             {
                 Log($"⚡ AI 메모리가 {ctx.Memory}(0 미만)이 되어 AI의 추가 공격 및 메인 페이즈가 즉시 종료됩니다!");
                 ctx.Attackers.Clear();
@@ -1660,13 +1666,13 @@ public partial class GoldfishEngine
         // 3-C. [어택 후 메인 페이즈] AI가 남은 메모리를 사용하여 진화/등장 (메모리가 마이너스(-)로 넘어가면 그 절대값이 플레이어의 다음 턴 메모리가 됨!)
         AiUseMainAbilities();   // 테이머 · 디지몬의 [메인] 기동 효과
         bool acted = true;
-        while (ctx.Memory >= 0 && acted && !State.IsGameOver)
+        while (AiMem64(ctx) >= 0 && acted && !State.IsGameOver)
         {
             if (HasDeclaredAiAttack57(ctx)) { RunAiTurn(); return; }   // v0.57.0 효과로 어택 선언했다 — 그 어택부터 (끝나면 RunAiTurn이 다시 여기로)
             acted = false;
 
             // 1) 옵션 (정책)
-            if (AiPolicy.ChooseOption(this, ctx.Memory, beforeAttacks: false) is { } option)
+            if (AiPolicy.ChooseOption(this, AiMem64(ctx), beforeAttacks: false) is { } option)
             {
                 AiUseOption(ctx, option);
                 acted = true;
@@ -1674,23 +1680,23 @@ public partial class GoldfishEngine
             }
 
             // 2) 진화 (코스트를 지불하여 AI 메모리가 음수로 내려갈 수 있음 — 상한은 정책의 MaxMemoryHandOver)
-            if (AiPolicy.ChooseEvolution(this, ctx.Memory, beforeAttacks: false) is { } evo)
+            if (AiPolicy.ChooseEvolution(this, AiMem64(ctx), beforeAttacks: false) is { } evo)
             {
                 AiEvolve(ctx, evo.Base, evo.Card);
                 acted = true;
             }
             // 2-B) DNA 진화 (정책)
-            if (ctx.Memory >= 0 && AiPolicy.ChooseDnaEvolution(this, ctx.Memory, beforeAttacks: false) is { } dna && AiDnaEvolve(dna))
+            if (AiMem64(ctx) >= 0 && AiPolicy.ChooseDnaEvolution(this, AiMem64(ctx), beforeAttacks: false) is { } dna && AiDnaEvolve(dna))
                 acted = true;
 
-            if (ctx.Memory < 0) break;
+            if (AiMem64(ctx) < 0) break;
 
             // 2-C) 링크 (v0.41.0 — 메모리를 상대 쪽으로 넘기지 않는 것만, ≪분리≫의 지정 링크 카드 먼저)
             if (AiTryLink41(ctx)) { acted = true; continue; }
             if (AiTryAppFusion43(ctx)) { acted = true; continue; }   // v0.43.0
 
             // 3) 테이머 등장
-            var tamerCandidate = AiPolicy.ChooseTamerToPlay(this, ctx.Memory);
+            var tamerCandidate = AiPolicy.ChooseTamerToPlay(this, AiMem64(ctx));
             if (tamerCandidate != null && State.DummyOpponent.Hand.Contains(tamerCandidate))
             {
                 State.DummyOpponent.Hand.Remove(tamerCandidate);
@@ -1708,11 +1714,11 @@ public partial class GoldfishEngine
                     FireForSide(EffectTrigger.OpponentTamerPlayed, State.Player, null, triggerCard: tamerCandidate, witness: witness46);
                 }));
                 acted = true;
-                if (ctx.Memory < 0) break;
+                if (AiMem64(ctx) < 0) break;
             }
 
             // 4) 패에서 디지몬 등장 (메모리가 0 미만이 되어 플레이어에게 메모리가 넘어가도록 코스트 지불!)
-            var playCandidate = AiPolicy.ChooseDigimonToPlay(this, ctx.Memory);
+            var playCandidate = AiPolicy.ChooseDigimonToPlay(this, AiMem64(ctx));
             if (playCandidate != null && State.DummyOpponent.Hand.Contains(playCandidate) && !EffectRules.PlayDpBlocked(State, State.DummyOpponent, playCandidate))   // v0.37.0
             {
                 AiPlayDigimon(ctx, playCandidate);
@@ -1775,7 +1781,7 @@ public partial class GoldfishEngine
         AddEffectEvent(endLabel, CaptureEffectLogs(() => TriggerEndOfOpponentTurn(State.Player)));
         int aiMemory = ctx.Memory;
         int aiEndOfTurnMemoryLoss = ctx.EndOfTurnMemoryLoss;
-        if (aiMemory >= 0)
+        if (aiMemory > -TurnEndMemory64(State.DummyOpponent))   // v0.64.0 턴 종료 조건 (BT14-081 — 상대 쪽의 1 · 2에서 끝내면 패스)
         {
             // AI가 더 이상 낼 카드가 없어 패스(Pass)를 선언한 경우 -> 공식 룰에 따라 상대(플레이어)에게 3메모리 제공
             aiMemory = -3;

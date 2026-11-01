@@ -27,7 +27,7 @@ public static class ActionValidator
         if (state.CurrentPhase != Phase.Main)
             return ActionResult.Fail("메인 페이즈에만 카드를 등장시킬 수 있습니다.");
 
-        if (state.BlitzAttacker != null && state.MemoryGauge < 0)
+        if (state.BlitzAttacker != null && EffectRules.PlayerTurnEndMet64(state))
             return ActionResult.Fail("지금은 ≪진격≫ 어택이나 턴 종료만 할 수 있습니다.");
 
         if (card.Type == CardType.Digitama)
@@ -56,7 +56,7 @@ public static class ActionValidator
 
         string guide = card.IsDual ? $"[{card.Name}] 옵션 쪽 사용 코스트 {cost}를 사용합니다." : $"[{card.Name}] 등장 코스트 {cost}를 사용합니다.";
 
-        if (projectedMemory < 0)
+        if (projectedMemory <= -Math.Max(1, state.Player.TurnEndMemory64))   // v0.64.0 턴 종료 조건 (BT14-081)
             guide += $" (주의: 메모리가 {projectedMemory}가 되어 카드 처리 후 턴이 종료됩니다)";
         else
             guide += $" (남은 메모리: {projectedMemory})";
@@ -160,7 +160,7 @@ public static class ActionValidator
         if (state.CurrentPhase != Phase.Main)
             return ActionResult.Fail("메인 페이즈에만 진화할 수 있습니다.");
 
-        if (state.BlitzAttacker != null && state.MemoryGauge < 0)
+        if (state.BlitzAttacker != null && EffectRules.PlayerTurnEndMet64(state))
             return ActionResult.Fail("지금은 ≪진격≫ 어택이나 턴 종료만 할 수 있습니다.");
 
         if (target != null && !state.Player.BattleArea.Contains(target) && !ReferenceEquals(state.Player.BreedingArea, target))
@@ -175,7 +175,7 @@ public static class ActionValidator
         int projectedMemory = Math.Max(state.MemoryGauge - EvolutionCost(target!, evoCard), -10);
 
         string guide = baseCheck.GuideMessage;
-        if (projectedMemory < 0)
+        if (projectedMemory <= -Math.Max(1, state.Player.TurnEndMemory64))   // v0.64.0 턴 종료 조건 (BT14-081)
             guide += $" (주의: 메모리가 {projectedMemory}가 되어 진화 및 1드로우 후 턴이 종료됩니다)";
 
         return ActionResult.Success(guide);

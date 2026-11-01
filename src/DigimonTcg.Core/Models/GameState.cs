@@ -86,6 +86,9 @@ public class PlayerZones
     /// <summary>v0.37.0 상대 필드의 지속 효과 "they can't play Digimon with N DP or less" (BT14-017) — 엔진이 지속 효과를 계산할 때 채운다 (0 = 없음)</summary>
     public int StaticPlayDpLock { get; set; }
 
+    /// <summary>v0.64.0 이 쪽의 턴 종료 조건: 메모리가 상대 쪽의 N 이상 (기본 1 — 종합 룰 6-1-4-1, BT14-081 · BT17-069는 3) — 엔진이 지속 효과를 계산할 때 채운다</summary>
+    public int TurnEndMemory64 { get; set; } = 1;
+
     /// <summary>테이머 아래 카드가 뒷면인지</summary>
     public bool IsFaceDownUnderTamer(CardData card) => FaceDownUnderTamers.Count > 0 && FaceDownUnderTamers.Contains(card);
 

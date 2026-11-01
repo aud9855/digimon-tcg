@@ -1836,7 +1836,9 @@ public partial class MainWindow : Window
 
         TxtMemoryStatus.Text = _gameState.MemoryGauge >= 0
             ? $"메모리 +{_gameState.MemoryGauge} · 내 턴 유지"
-            : $"메모리 {_gameState.MemoryGauge} · 상대 턴 전환";
+            : !DigimonTcg.Core.Engine.EffectRules.PlayerTurnEndMet64(_gameState)   // v0.64.0 턴 종료 조건이 상대 쪽의 3 이상 (BT14-081 · BT17-069)
+                ? $"메모리 {_gameState.MemoryGauge} · 내 턴 유지 (턴 종료 조건: 상대 쪽의 {_gameState.Player.TurnEndMemory64} 이상)"
+                : $"메모리 {_gameState.MemoryGauge} · 상대 턴 전환";
     }
 
     private void PlaceMemoryCoreIndicator(int memory, bool animate)

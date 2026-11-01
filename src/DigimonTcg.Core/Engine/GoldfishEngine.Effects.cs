@@ -552,6 +552,7 @@ public partial class GoldfishEngine
         }
 
         enemy.StaticPlayDpLock = StaticPlayDpLock37(owner, enemy);   // v0.37.0 "they can't play Digimon with 6000 DP or less" (BT14-017)
+        owner.TurnEndMemory64 = TurnEndMemory64(owner);   // v0.64.0 턴 종료 조건 (BT14-081 · BT17-069 — GoldfishEngine.Batch64)
 
         if (owner.BreedingArea != null)
         {
@@ -1702,12 +1703,12 @@ public partial class GoldfishEngine
             .Concat(GetTrashMainAbilities(State.DummyOpponent)).ToList();
         foreach (var ability in abilities)
         {
-            if (State.IsGameOver || (_aiTurn?.Memory ?? 0) < 0) break;
+            if (State.IsGameOver || (_aiTurn is { } t64 && AiMem64(t64) < 0)) break;
             if (ability.Zone != MainAbilityZone.Field && !GetZoneAbilities(State.DummyOpponent, ability.Zone).Any(a => ReferenceEquals(a.Card, ability.Card)))
                 continue;   // 앞의 효과로 패 · 트래시를 떠났거나 이미 썼다
             if (ability.Inherited && (ability.Digimon == null || !State.DummyOpponent.BattleArea.Contains(ability.Digimon) || !CardIdentity55.StillIn(ability.Digimon.FaceUpSources, ability.Card)))
                 continue;   // 앞의 효과로 그 디지몬이 떠났거나 그 카드가 진화원이 아니게 되었다
-            if (!AiPolicy.ShouldUseMainAbility(this, ability, _aiTurn?.Memory ?? 0)) continue;
+            if (!AiPolicy.ShouldUseMainAbility(this, ability, _aiTurn is { } t64b ? AiMem64(t64b) : 0)) continue;
             AddEffectEvent(ability.Card, CaptureEffectLogs(() =>
             {
                 if (ability.Zone == MainAbilityZone.Field) UseMainAbility(State.DummyOpponent, ability.Digimon, ability.Card, ability.Inherited, ability.Gained);

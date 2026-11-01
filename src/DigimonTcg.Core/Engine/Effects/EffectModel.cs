@@ -246,6 +246,8 @@ public enum StaticStat
     EnemyGrant61,       // 상대의 디지몬 전부(Subject 조건)가 효과 문장을 얻는다 (BT8-031 · BT7-055)
     // v0.62.0
     AllySaFlip62,       // 자신의 디지몬 전부(Subject 조건)의 ≪시큐리티 어택 -N≫을 ≪시큐리티 어택 +N≫으로 (EX6-031)
+    // v0.64.0
+    TurnEndMemory64,    // 자신의 턴 종료 조건: 메모리가 상대 쪽의 N 이상 (값 = N, 0이면 없음 — 기본 1, 종합 룰 6-1-4-1 · BT14-081 · BT17-069)
 }
 
 /// <summary>옵션 [메인] 효과를 쓸 때 UI가 고르게 할 대상</summary>
