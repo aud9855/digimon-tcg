@@ -48,6 +48,7 @@ public partial class GoldfishEngine
             foreach (CardColor col in Enum.GetValues(typeof(CardColor)))
                 if ((mask & (1 << (int)col)) != 0) inst.ExtraColors.Add(col);
         }
+        foreach (var (col, _) in inst.TimedColors67) inst.ExtraColors.Add(col);   // v0.67.0 BT8-040 이 턴 동안 더해진 색 (기간이 끝난 것은 ExpireChanges67이 먼저 지운다)
     }
 
     /// <summary>상대 카드가 주는 키워드 ("none of your opponent's Digimon can suspend")</summary>

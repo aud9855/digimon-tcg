@@ -201,7 +201,7 @@ internal static partial class SentenceParser
         {
             string name = m.Groups["name"].Value;
             List<CardData> Tamers(EffectContext c) => c.Owner.Tamers.Distinct().Where(t => CardNames.Is(t, name) && c.Owner.HasActiveTamer(t) && !c.Engine.TamerSuspendLocked(c.Owner, t)).ToList();
-            List<CardInstance> Digimon(EffectContext c) => c.Owner.BattleArea.Where(d => !d.IsSuspended && CardNames.Is(d.TopCard, name) && !EffectRules.IsSuspendLocked(c.State, d)).ToList();
+            List<CardInstance> Digimon(EffectContext c) => c.Owner.BattleArea.Where(d => !d.IsSuspended && CardNames.Is(d, name) && !EffectRules.IsSuspendLocked(c.State, d)).ToList();
             return (c => Tamers(c).Count > 0 || Digimon(c).Count > 0,
                     c =>
                     {

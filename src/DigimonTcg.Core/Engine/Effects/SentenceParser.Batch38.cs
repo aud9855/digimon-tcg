@@ -99,7 +99,7 @@ internal static partial class SentenceParser
         if (m.Groups["nm"].Success)
         {
             var names = TargetSpec.Names(m.Groups["nm"].Value);
-            ok = d => names.Any(n => CardNames.Is(d.TopCard, n));
+            ok = d => names.Any(n => CardNames.Is(d, n));
         }
         else
         {
@@ -165,7 +165,7 @@ internal static partial class SentenceParser
                     : digSpec.IsThis ? (c.Self != null && c.Owner.BattleArea.Contains(c.Self) && c.Self.IsSuspended ? new List<CardInstance> { c.Self } : new List<CardInstance>())
                     : c.Owner.BattleArea.Where(d => d.IsSuspended && digSpec.Filters.All(f => f(d))).ToList();
                 // 이름이 테이머가 아니면 (LM-004 「이청솔」이 디지몬일 때) 그 이름의 디지몬
-                var namedDigis = names != null ? c.Owner.BattleArea.Where(d => d.IsSuspended && names.Any(n => CardNames.Is(d.TopCard, n))).ToList() : new List<CardInstance>();
+                var namedDigis = names != null ? c.Owner.BattleArea.Where(d => d.IsSuspended && names.Any(n => CardNames.Is(d, n))).ToList() : new List<CardInstance>();
                 var done = new List<string>();
                 if (orForm)
                 {

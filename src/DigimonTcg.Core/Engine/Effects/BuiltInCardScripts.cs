@@ -751,7 +751,7 @@ internal static class BuiltInCardScripts
             {
                 var chosen = c.PickEnemy();
                 if (chosen == null) return;
-                var victims = c.Enemy.BattleArea.Where(d => CardNames.Same(d.TopCard, chosen.TopCard)).ToList();
+                var victims = c.Enemy.BattleArea.Where(d => CardNames.Same(d, chosen)).ToList();
                 foreach (var v in victims) c.DeleteEnemy(v);
                 c.Log($"👑 [진화 시] 오메가몬: 상대 [{chosen.TopCard.Name}] 명칭의 디지몬 {victims.Count}마리 전부 소멸!");
             })
@@ -822,7 +822,7 @@ internal static class BuiltInCardScripts
         {
             c.AddMemory(1);
             c.Log($"[진화원 효과] 크리사리몬: 같은 명칭 [{c.Other!.TopCard.Name}] 등장 → 메모리 +1");
-        }, when: c => c.Other != null && CardNames.Same(c.Self!.TopCard, c.Other.TopCard));
+        }, when: c => c.Other != null && CardNames.Same(c.Self!, c.Other));
 
         b.Card("BT2-065").Keyword(Keyword.Reboot);   // 워그레이몬(BT2) ≪재기동≫
 

@@ -104,7 +104,7 @@ public sealed partial class TargetSpec
             else
             {
                 string x = a.Groups[3].Value;
-                spec.Filters.Add(word.EndsWith("trait") ? d => HasTrait(d, x) : d => NameHas(d.TopCard, x) || HasTrait(d, x));
+                spec.Filters.Add(word.EndsWith("trait") ? d => HasTrait(d, x) : d => NameHas(d, x) || HasTrait(d, x));
             }
         }
         // 색: "your blue Digimon" · "red or black Digimon"
@@ -204,7 +204,7 @@ public sealed partial class TargetSpec
             else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?<x>{NameList}) in (?:its|their) names?", RegexOptions.IgnoreCase)).Success)
             {
                 var xs = Names(m.Groups["x"].Value);
-                spec.Filters.Add(d => xs.Any(x => NameHas(d.TopCard, x)));
+                spec.Filters.Add(d => xs.Any(x => NameHas(d, x)));
             }
             else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?:the )?(?<x>{NameList}) traits?|^(?:with |or )?(?:the )?(?<x>{NameList}) in any of (?:its|their) traits(?: other than (?<ex>\[[^\]]+\]))?", RegexOptions.IgnoreCase)).Success)
             {
@@ -215,7 +215,7 @@ public sealed partial class TargetSpec
             else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?<x>{NameList}) in (?:its|their) texts?", RegexOptions.IgnoreCase)).Success)
             {
                 var xs = Names(m.Groups["x"].Value);
-                spec.Filters.Add(d => xs.Any(x => TextHas(d.TopCard, x)));
+                spec.Filters.Add(d => xs.Any(x => TextHas(d, x)));
             }
             else if ((m = Regex.Match(rest, @"^(?:with |and )?the (?<which>fewest|most) digivolution cards", RegexOptions.IgnoreCase)).Success)
             {
@@ -335,7 +335,7 @@ public sealed partial class TargetSpec
         if ((m = Regex.Match(rest, $@"^without (?:the )?(?<x>{NameList}) traits?", RegexOptions.IgnoreCase)).Success)
         { var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => !xs.Any(x => HasTrait(d, x))); return m; }
         if ((m = Regex.Match(rest, $@"^without (?<x>{NameList}) in (?:its|their) names?", RegexOptions.IgnoreCase)).Success)
-        { var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => !xs.Any(x => NameHas(d.TopCard, x))); return m; }
+        { var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => !xs.Any(x => NameHas(d, x))); return m; }
         return null;
     }
 
@@ -356,6 +356,14 @@ public sealed partial class TargetSpec
         Regex.Matches(text, @"\[([^\]]+)\]").Select(m => m.Groups[1].Value.Trim()).ToList();
 
     public static bool NameHas(CardData card, string x) => CardNames.Contains(card, x);   // 내장 한글 카드는 공식 영어 이름도 본다
+
+    /// <summary>v0.67.0 필드의 디지몬: 효과로 바뀐 원래 명칭이 있으면 그 명칭으로 (BT11-043 등)</summary>
+    public static bool NameHas(CardInstance d, string x) => CardNames.Contains(d, x);
+
+    /// <summary>v0.67.0 필드의 디지몬의 텍스트 (명칭은 바뀐 명칭으로)</summary>
+    public static bool TextHas(CardInstance d, string x) =>
+        d.Changed67 == null ? TextHas(d.TopCard, x)
+        : NameHas(d, x) || d.TopCard.EffectText.Contains($"[{x}]", StringComparison.OrdinalIgnoreCase) || d.TopCard.InheritedEffectText.Contains($"[{x}]", StringComparison.OrdinalIgnoreCase);
 
     public static bool TextHas(CardData card, string x) =>
         NameHas(card, x) || card.EffectText.Contains($"[{x}]", StringComparison.OrdinalIgnoreCase)

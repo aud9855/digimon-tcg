@@ -283,7 +283,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cost, @"^returning 1 of your (?<n>\[[^\]]+\]) to the bottom of the deck and trashing its digivolution cards$", I)).Success)
         {
             string name = TargetSpec.Names(m.Groups["n"].Value)[0];
-            IEnumerable<CardInstance> Able(EffectContext c) => c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && CardNames.Is(d.TopCard, name));
+            IEnumerable<CardInstance> Able(EffectContext c) => c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && CardNames.Is(d, name));
             return (c => Able(c).Any(),
                     c =>
                     {

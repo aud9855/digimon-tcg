@@ -203,7 +203,7 @@ internal static partial class SentenceParser
             return (c =>
             {
                 var tamers = c.Owner.Tamers.Distinct().Where(t => names.Any(n => CardNames.Is(t, n)) && c.Owner.HasActiveTamer(t) && !c.Engine.TamerSuspendLocked(c.Owner, t)).ToList();
-                var digis = c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && !d.IsSuspended && names.Any(n => CardNames.Is(d.TopCard, n)) && !EffectRules.IsSuspendLocked(c.State, d)).ToList();
+                var digis = c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && !d.IsSuspended && names.Any(n => CardNames.Is(d, n)) && !EffectRules.IsSuspendLocked(c.State, d)).ToList();
                 if (tamers.Count + digis.Count == 0) { c.LastStepResolved = false; Emit(c, label, "레스트시킬 카드가 없습니다"); return; }
                 if (!c.Engine.AskYesNo(c.Owner, null, $"[{c.Card.Name}] 자신의 {string.Join("/", names)} 1장을 레스트시킬까요?", recommended: true))
                 { c.LastStepResolved = false; Emit(c, label, "레스트시키지 않았습니다"); return; }

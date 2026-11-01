@@ -53,12 +53,12 @@ internal static partial class SentenceParser
         }
         // "other Digimon you have in play with the same name as this Digimon"
         if (Regex.IsMatch(c0, @"^other Digimon you have in play with the same name as this Digimon$", I))
-            return (o, _, self) => self == null ? 0 : o.BattleArea.Count(d => !ReferenceEquals(d, self) && string.Equals(CardNames.MatchName(d.TopCard), CardNames.MatchName(self.TopCard), StringComparison.OrdinalIgnoreCase));
+            return (o, _, self) => self == null ? 0 : o.BattleArea.Count(d => !ReferenceEquals(d, self) && string.Equals(CardNames.MatchName(d), CardNames.MatchName(self), StringComparison.OrdinalIgnoreCase));
         // "[Diaboromon] you have" · "[Diaboromon] you have in play"
         if ((m = Regex.Match(c0, $@"^(?<x>{TargetSpec.NameList}) you have(?: in play)?$", I)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return (o, _, _) => o.BattleArea.Count(d => xs.Any(x => CardNames.Is(d.TopCard, x)));
+            return (o, _, _) => o.BattleArea.Count(d => xs.Any(x => CardNames.Is(d, x)));
         }
         // "of your Digimon with the [Appmon] trait" · "of your [Hudie] trait Digimon" · "of your Digimon with [Chuumon], [Sukamon] or [Etemon] in their names"
         if ((m = Regex.Match(c0, @"^of your (?<other>other )?(?<spec>(?:[^,]*? )?Digimon(?: with .+)?)$", I)).Success

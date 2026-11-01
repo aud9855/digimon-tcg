@@ -272,8 +272,8 @@ internal static partial class SentenceParser
             {
                 var that = c.LastTargets.FirstOrDefault(d => c.Owner.BattleArea.Contains(d)) ?? c.Other;   // 진화한 디지몬
                 var wants = new List<string>();
-                if (that != null && TargetSpec.NameHas(that.TopCard, x)) wants.Add(a);
-                if (that != null && TargetSpec.NameHas(that.TopCard, y)) wants.Add(b);
+                if (that != null && TargetSpec.NameHas(that, x)) wants.Add(a);
+                if (that != null && TargetSpec.NameHas(that, y)) wants.Add(b);
                 if (wants.Count == 0) { c.LastStepResolved = false; Emit(c, label, "진화한 디지몬의 이름이 맞지 않습니다"); return; }
                 if (!both && wants.Count > 1)
                 {

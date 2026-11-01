@@ -463,6 +463,7 @@ public partial class GoldfishEngine
         ForgetTamerGrants65(State.Player);   // v0.65.0 떠난 테이머에게 준 효과 (EX10-058)
         ForgetTamerGrants65(State.DummyOpponent);
         ExpireColors66();   // v0.66.0 BT18-078 바뀐 원래 색의 기간 (GoldfishEngine.Batch66)
+        ExpireChanges67();   // v0.67.0 BT8-040 이 턴 동안의 색 · 「스카몬」으로 바뀐 원래 명칭 · DP의 기간 (GoldfishEngine.Batch67)
         SyncTamerProxies();   // v0.36.0 디지몬으로 취급하는 테이머 (GoldfishEngine.TamerAsDigimon.cs)
         ApplyExtraTraits58();   // v0.58.0 지속 효과로 얻은 특징 (GoldfishEngine.Batch58.cs)
         ApplyContinuousEffects(State.Player, State.DummyOpponent, State.PlayerAllSecurityAttackUntil);

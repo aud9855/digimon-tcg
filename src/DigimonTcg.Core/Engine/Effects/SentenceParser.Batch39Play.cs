@@ -38,7 +38,7 @@ internal static partial class SentenceParser
             else if ((m = Regex.Match(rest, $@"^(?:from )?(?<one>(?:1|one|any) of )?your (?<x>{TargetSpec.NameList})(?:'s|s') digivolution cards", I)).Success)
             {
                 var xs = TargetSpec.Names(m.Groups["x"].Value);
-                z = new("hosts", d => xs.Any(x => CardNames.Is(d.TopCard, x)), true);
+                z = new("hosts", d => xs.Any(x => CardNames.Is(d, x)), true);
             }
             else return null;
             list.Add((z, m));

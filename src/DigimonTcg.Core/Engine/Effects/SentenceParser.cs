@@ -80,7 +80,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse66(rawClause, inherited, card, def);   // v0.66.0 원래 규칙(39차까지)이 읽지 못한 절만 40차 규칙으로 (SentenceParser.Batch66.cs) · v0.65.0 원래 규칙(38차까지)이 읽지 못한 절만 39차 규칙으로 (SentenceParser.Batch65.cs) · v0.64.0 원래 규칙(37차까지)이 읽지 못한 절만 38차 규칙으로 (SentenceParser.Batch64.cs) · v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse67(rawClause, inherited, card, def);   // v0.67.0 원래 규칙(40차까지)이 읽지 못한 절만 41차 규칙으로 (SentenceParser.Batch67.cs) · v0.66.0 원래 규칙(39차까지)이 읽지 못한 절만 40차 규칙으로 (SentenceParser.Batch66.cs) · v0.65.0 원래 규칙(38차까지)이 읽지 못한 절만 39차 규칙으로 (SentenceParser.Batch65.cs) · v0.64.0 원래 규칙(37차까지)이 읽지 못한 절만 38차 규칙으로 (SentenceParser.Batch64.cs) · v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -114,7 +114,7 @@ internal static partial class SentenceParser
             bool exact = special.Groups["names"].Success;
             var names = Regex.Matches(special.Groups[exact ? "names" : "inname"].Value, @"\[([^\]]+)\]").Select(x => x.Groups[1].Value).ToList();
             // "Your [Agumon]"은 카드명이 정확히 같은 디지몬만 ("SnowAgumon"은 아님), "with [Agumon] in its name"은 이름에 포함하면 된다
-            def?.SpecialEvolution(d => names.Any(n => exact ? CardNames.Is(d.TopCard, n) : TargetSpec.NameHas(d.TopCard, n)), cost);
+            def?.SpecialEvolution(d => names.Any(n => exact ? CardNames.Is(d, n) : TargetSpec.NameHas(d, n)), cost);
             return null;
         }
         // v0.30.0 테이머에서 진화 (하이브리드체): "You may digivolve this card from your hand onto one of your red Tamers as if the Tamer is a level 3 red Digimon (for a memory cost of 2)" ·
@@ -187,7 +187,7 @@ internal static partial class SentenceParser
                 req = d => dir == "higher" ? d.TopCard.Level >= lv : dir == "lower" ? d.TopCard.Level <= lv : d.TopCard.Level == lv;
             }
             else if ((rm = Regex.Match(linkReq.Groups["req"].Value, $@"^(?<x>{TargetSpec.NameList})(?: in (?:its|their) names?)?$", RegexOptions.IgnoreCase)).Success)
-            { var xs = TargetSpec.Names(rm.Groups["x"].Value); req = d => xs.Any(x => TargetSpec.NameHas(d.TopCard, x)); }
+            { var xs = TargetSpec.Names(rm.Groups["x"].Value); req = d => xs.Any(x => TargetSpec.NameHas(d, x)); }
             if (req == null) return $"미지원 링크 조건: {linkReq.Groups["req"].Value}";
             def?.Link(req, int.Parse(linkReq.Groups["n"].Value));
             return null;
@@ -239,7 +239,7 @@ internal static partial class SentenceParser
             if (evoMod.Groups["names"].Success)   // v0.31.0 "one of your [Paildramon] or [Dinobeemon]" (BT3-111)
             {
                 var evoNames = TargetSpec.Names(evoMod.Groups["names"].Value);
-                filter = (_, d) => evoNames.Any(x => CardNames.Is(d.TopCard, x));
+                filter = (_, d) => evoNames.Any(x => CardNames.Is(d, x));
             }
             if (evoMod.Groups["spec"].Success && (filter = AttackerSubject(evoMod.Groups["spec"].Value)) == null)
                 return $"미지원 진화 코스트 감소 대상: {evoMod.Groups["spec"].Value}";
@@ -825,7 +825,7 @@ internal static partial class SentenceParser
             if (named.Success)
             {
                 var xs = TargetSpec.Names(named.Groups["x"].Value); bool other = named.Groups["other"].Success;
-                who = (c, d) => (!other || !ReferenceEquals(d, c.Self)) && xs.Any(x => TargetSpec.NameHas(d.TopCard, x));
+                who = (c, d) => (!other || !ReferenceEquals(d, c.Self)) && xs.Any(x => TargetSpec.NameHas(d, x));
             }
             else who = ParseAllySubject(subj);
             if (who != null)
@@ -897,7 +897,7 @@ internal static partial class SentenceParser
             && TargetSpec.Parse("all of your opponent's " + m.Groups["spec"].Value) is { } delSpec)
             return One(EffectTrigger.DeletedOpponentInBattle, c => c.Other == null || delSpec.Filters.All(f => f(c.Other)));
         if (Regex.IsMatch(ev, @"^you play another Digimon with the same name as this Digimon$", RegexOptions.IgnoreCase))
-            return One(EffectTrigger.AllySameNamePlayed, c => c.Other != null && c.Self != null && CardNames.Same(c.Self.TopCard, c.Other.TopCard));
+            return One(EffectTrigger.AllySameNamePlayed, c => c.Other != null && c.Self != null && CardNames.Same(c.Self, c.Other));
         if ((m = Regex.Match(ev, @"^(?:an|one of your) opponent's (?<spec>[^,]*?)Digimon (?:is|are) played$", RegexOptions.IgnoreCase)).Success
             && TargetSpec.Parse("all of your opponent's " + m.Groups["spec"].Value + "Digimon") is { } oppPlayed)
             return One(EffectTrigger.OpponentDigimonPlayed, c => c.Other != null && oppPlayed.Filters.All(f => f(c.Other)));
@@ -1019,7 +1019,7 @@ internal static partial class SentenceParser
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
             bool other = m.Groups["other"].Success;
-            Func<EffectContext, bool> named = c => c.Other != null && (!other || !ReferenceEquals(c.Other, c.Self)) && xs.Any(x => TargetSpec.NameHas(c.Other.TopCard, x));
+            Func<EffectContext, bool> named = c => c.Other != null && (!other || !ReferenceEquals(c.Other, c.Self)) && xs.Any(x => TargetSpec.NameHas(c.Other, x));
             return One(m.Groups["what"].Value.StartsWith("attack", StringComparison.OrdinalIgnoreCase) ? EffectTrigger.AllyDigimonAttacks : EffectTrigger.AllyDigimonDeleted, named);
         }
         if ((m = Regex.Match(ev, $@"^(?:one of |any of )?your (?:(?<color>(?:{Colors})(?: or (?:{Colors}))*) )?Tamers? (?:becomes suspended|suspends|is suspended|become suspended)$", RegexOptions.IgnoreCase)).Success)
@@ -1038,7 +1038,7 @@ internal static partial class SentenceParser
             return One(trig, c => c.Other != null
                 && (!other || !ReferenceEquals(c.Other, c.Self))
                 && (traits == null || traits.Any(x => TargetSpec.HasTrait(c.Other, x)))
-                && (names == null || names.Any(x => TargetSpec.NameHas(c.Other.TopCard, x))));
+                && (names == null || names.Any(x => TargetSpec.NameHas(c.Other, x))));
         }
         if (Regex.IsMatch(ev, @"^this Digimon (?:suspends|becomes suspended|is suspended)$", RegexOptions.IgnoreCase))
             return One(EffectTrigger.ThisDigimonSuspends);
@@ -1065,7 +1065,7 @@ internal static partial class SentenceParser
             Func<EffectContext, bool> cond = c => c.Other != null
                 && (!other || !ReferenceEquals(c.Other, c.Self))
                 && (traits == null || traits.Any(x => TargetSpec.HasTrait(c.Other, x)))
-                && (names == null || names.Any(x => TargetSpec.NameHas(c.Other.TopCard, x)));
+                && (names == null || names.Any(x => TargetSpec.NameHas(c.Other, x)));
             return (triggers, cond);
         }
         return ParseEventPhraseMore(ev);
@@ -1878,7 +1878,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, $@"^you (?<neg>have|don't have) (?:an? )?(?<x>{TargetSpec.NameList}) in (?:the|your) breeding area$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); bool neg = m.Groups["neg"].Value.StartsWith("don't", StringComparison.OrdinalIgnoreCase);
-            return z => (z.BreedingArea is { } b && xs.Any(x => TargetSpec.NameHas(b.TopCard, x))) != neg;
+            return z => (z.BreedingArea is { } b && xs.Any(x => TargetSpec.NameHas(b, x))) != neg;
         }
         if ((m = Regex.Match(cond, @"^you have (?:a |an )?(?:\[(?<x>[^\]]+)\] trait (?<kind>Digimon or Tamer|Digimon|Tamer)|(?<kind>Digimon or Tamer|Digimon|Tamer) with the \[(?<x>[^\]]+)\] trait)(?: on the field| in play)?$", RegexOptions.IgnoreCase)).Success)
         {
@@ -1891,7 +1891,7 @@ internal static partial class SentenceParser
             && (m.Groups["where"].Success || !m.Groups["neg"].Value.Equals("have", StringComparison.OrdinalIgnoreCase)))
         {
             string x = m.Groups["x"].Value; bool neg = !m.Groups["neg"].Value.Equals("have", StringComparison.OrdinalIgnoreCase);
-            return z => (z.BattleArea.Any(d => TargetSpec.NameHas(d.TopCard, x)) || z.Tamers.Any(t => TargetSpec.NameHas(t, x)) || z.OptionsInPlay.Any(p => TargetSpec.NameHas(p.Card, x))) != neg;
+            return z => (z.BattleArea.Any(d => TargetSpec.NameHas(d, x)) || z.Tamers.Any(t => TargetSpec.NameHas(t, x)) || z.OptionsInPlay.Any(p => TargetSpec.NameHas(p.Card, x))) != neg;
         }
         if ((m = Regex.Match(cond, $@"^(?:you have|there are) (?<n>\d+) or more (?:cards )?(?:with (?<x>{TargetSpec.NameList}) in (?:its|their) (?<where>texts?|names?) |(?:(?<t>{TargetSpec.NameList}) trait )?cards )?in your trash$", RegexOptions.IgnoreCase)).Success)
         {
@@ -1909,7 +1909,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, @"^you have (?:a |an )?(?<kind>Digimon|Tamer) with \[(?<x>[^\]]+)\] in its name(?: on the field| in play)?$", RegexOptions.IgnoreCase)).Success)
         {
             string x = m.Groups["x"].Value; bool tamer = m.Groups["kind"].Value.Equals("Tamer", StringComparison.OrdinalIgnoreCase);
-            return z => tamer ? z.Tamers.Any(t => TargetSpec.NameHas(t, x)) : z.BattleArea.Any(d => TargetSpec.NameHas(d.TopCard, x));
+            return z => tamer ? z.Tamers.Any(t => TargetSpec.NameHas(t, x)) : z.BattleArea.Any(d => TargetSpec.NameHas(d, x));
         }
         return ParseZoneCondition32(cond);   // v0.32.0 (SentenceParser.Batch32.cs)
     }
@@ -1952,8 +1952,8 @@ internal static partial class SentenceParser
             var xs = TargetSpec.Names(m.Groups["x"].Value); bool neg = m.Groups["neg"].Success; bool opp = m.Groups["who"].Value.Contains("opponent", StringComparison.OrdinalIgnoreCase);
             // v0.33.0 "you have [Davis Motomiya] and [Ken Ichijoji] in play" (P-022) — "and"로 이은 이름은 둘 다 (공식 한글: "「최산해」와 「서정우」가 있을 때")
             bool all = Regex.IsMatch(m.Groups["x"].Value, @"\] and \[", RegexOptions.IgnoreCase);
-            if (all) return (o, e) => { var z = opp ? e : o; return xs.All(x => z.BattleArea.Any(d => TargetSpec.NameHas(d.TopCard, x)) || z.Tamers.Any(t => TargetSpec.NameHas(t, x))) != neg; };
-            return (o, e) => { var z = opp ? e : o; return xs.Any(x => z.BattleArea.Any(d => TargetSpec.NameHas(d.TopCard, x)) || z.Tamers.Any(t => TargetSpec.NameHas(t, x))) != neg; };
+            if (all) return (o, e) => { var z = opp ? e : o; return xs.All(x => z.BattleArea.Any(d => TargetSpec.NameHas(d, x)) || z.Tamers.Any(t => TargetSpec.NameHas(t, x))) != neg; };
+            return (o, e) => { var z = opp ? e : o; return xs.Any(x => z.BattleArea.Any(d => TargetSpec.NameHas(d, x)) || z.Tamers.Any(t => TargetSpec.NameHas(t, x))) != neg; };
         }
         // "your opponent has a level 6 or higher Digimon in play" · "you have a Digimon with ＜Blocker＞ in play" · "you have a Digimon in play with [Omnimon] in its name"
         if ((m = Regex.Match(cond, @"^(?<who>you|your opponent) (?:(?<neg>don't|doesn't|do not|does not) )?ha(?:ve|s) (?:a|an|any|1) (?<spec>[^,]*?Digimon)(?: in play)?(?<with> with [^,]+?)?(?: in play)?$", RegexOptions.IgnoreCase)).Success)
@@ -2056,9 +2056,9 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, $@"^(?:this Digimon|it) has (?:the )?(?<x>{TargetSpec.NameList}) traits?$", RegexOptions.IgnoreCase)).Success)
         { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && xs.Any(x => TargetSpec.HasTrait(d, x)); }
         if ((m = Regex.Match(cond, $@"^(?:this Digimon|it) has (?<x>{TargetSpec.NameList}) in its names?$", RegexOptions.IgnoreCase)).Success)
-        { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && xs.Any(x => TargetSpec.NameHas(d.TopCard, x)); }
+        { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && xs.Any(x => TargetSpec.NameHas(d, x)); }
         if ((m = Regex.Match(cond, $@"^(?:this Digimon|it) has (?<x>{TargetSpec.NameList}) in its texts?$", RegexOptions.IgnoreCase)).Success)
-        { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && xs.Any(x => TargetSpec.TextHas(d.TopCard, x)); }
+        { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && xs.Any(x => TargetSpec.TextHas(d, x)); }
         if ((m = Regex.Match(cond, $@"^(?:(?:a|an) (?:Digimon |Tamer )?card with )?(?<x>{TargetSpec.NameList})(?: in its name)? (?:is|are) in this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
         { var xs = TargetSpec.Names(m.Groups["x"].Value); return d => d != null && d.SourcesAny(s => xs.Any(x => TargetSpec.NameHas(s, x))); }
         if ((m = Regex.Match(cond, $@"^this Digimon's digivolution cards include (?:a card with )?(?<x>{TargetSpec.NameList})(?: in its name)?$", RegexOptions.IgnoreCase)).Success)
@@ -2081,7 +2081,7 @@ internal static partial class SentenceParser
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
             var ts = m.Groups["t"].Success ? TargetSpec.Names(m.Groups["t"].Value) : new List<string>();
-            return d => d != null && (xs.Any(x => CardNames.Is(d.TopCard, x)) || ts.Any(t => TargetSpec.HasTrait(d, t)));
+            return d => d != null && (xs.Any(x => CardNames.Is(d, x)) || ts.Any(t => TargetSpec.HasTrait(d, t)));
         }
         return null;
     }
@@ -2093,13 +2093,13 @@ internal static partial class SentenceParser
         if (ParseSideCondition(cond) is { } sc) return c => sc(c.Owner, c.Enemy);
         Match m;
         if (Regex.IsMatch(cond, @"^you have another Digimon with the same name as this Digimon(?: in play)?$", RegexOptions.IgnoreCase))
-            return c => c.Digimon != null && c.Owner.BattleArea.Any(d => !ReferenceEquals(d, c.Digimon) && CardNames.Same(d.TopCard, c.Digimon.TopCard));
+            return c => c.Digimon != null && c.Owner.BattleArea.Any(d => !ReferenceEquals(d, c.Digimon) && CardNames.Same(d, c.Digimon));
         if (Regex.IsMatch(cond, @"^(?:this Digimon|it) is suspended$", RegexOptions.IgnoreCase)) return c => c.Digimon?.IsSuspended == true;
         if (Regex.IsMatch(cond, @"^(?:this Digimon|it) is unsuspended$", RegexOptions.IgnoreCase)) return c => c.Digimon?.IsSuspended == false;
         if ((m = Regex.Match(cond, @"^(?:this Digimon|it) has (?<n>\d+) or more digivolution cards$", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); return c => (c.Digimon?.EvolutionSources.Count ?? 0) >= n; }
         if ((m = Regex.Match(cond, @"^(?:this Digimon|it) has \[(?<x>[^\]]+)\] in its name$", RegexOptions.IgnoreCase)).Success)
-        { string x = m.Groups["x"].Value; return c => c.Digimon != null && TargetSpec.NameHas(c.Digimon.TopCard, x); }
+        { string x = m.Groups["x"].Value; return c => c.Digimon != null && TargetSpec.NameHas(c.Digimon, x); }
         if ((m = Regex.Match(cond, @"^(?:this Digimon|it) has the \[(?<x>[^\]]+)\] trait$", RegexOptions.IgnoreCase)).Success)
         { string x = m.Groups["x"].Value; return c => c.Digimon != null && TargetSpec.HasTrait(c.Digimon, x); }
         if ((m = Regex.Match(cond, @"^you have (?<n>\d+) or (?<dir>fewer|less|more) security cards$", RegexOptions.IgnoreCase)).Success)
@@ -2544,6 +2544,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction64(s.TrimEnd('.'), card, triggers) is { } act64) act = act64;   // v0.64.0 (SentenceParser.Batch64.cs)
         if (act.Error != null && ParseAction65(s.TrimEnd('.'), card, triggers) is { } act65) act = act65;   // v0.65.0 (SentenceParser.Batch65.cs)
         if (act.Error != null && ParseAction66(s.TrimEnd('.'), card, triggers) is { } act66) act = act66;   // v0.66.0 (SentenceParser.Batch66.cs)
+        if (act.Error != null && ParseAction67(s.TrimEnd('.'), card, triggers) is { } act67) act = act67;   // v0.67.0 (SentenceParser.Batch67.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2911,7 +2912,7 @@ internal static partial class SentenceParser
             if (Regex.IsMatch(what, @"^\[[^\]]+\](?:,? (?:or )?\[[^\]]+\])*$"))
             {
                 var names = Regex.Matches(what, @"\[([^\]]+)\]").Select(x => x.Groups[1].Value).ToList();
-                filter = d => names.Any(n => TargetSpec.NameHas(d.TopCard, n));
+                filter = d => names.Any(n => TargetSpec.NameHas(d, n));
             }
             else if (TargetSpec.Parse("all of your " + what) is { } spec) filter = d => spec.Filters.All(f => f(d));
             if (filter == null) return ParseCost34(cost, card) ?? ParseCost35(cost, card) ?? ParseCost36(cost, card);   // v0.34.0 테이머 ("returning 1 of your yellow Tamers to the hand") 등
@@ -3128,7 +3129,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(phrase, $@"^1 of your (?<x>{TargetSpec.NameList})$", RegexOptions.IgnoreCase)).Success)
         {
             var names = TargetSpec.Names(m.Groups["x"].Value);
-            return d => names.Any(x => TargetSpec.NameHas(d.TopCard, x));
+            return d => names.Any(x => TargetSpec.NameHas(d, x));
         }
         return null;
     }
@@ -3172,7 +3173,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, @"^you have (?:a|an) (?<kind>Digimon|Tamer) with \[(?<x>[^\]]+)\] in its name$", RegexOptions.IgnoreCase)).Success)
         {
             string x = m.Groups["x"].Value; bool tamer = m.Groups["kind"].Value.Equals("Tamer", StringComparison.OrdinalIgnoreCase);
-            return c => tamer ? c.Owner.Tamers.Any(t => TargetSpec.NameHas(t, x)) : c.Owner.BattleArea.Any(d => TargetSpec.NameHas(d.TopCard, x));
+            return c => tamer ? c.Owner.Tamers.Any(t => TargetSpec.NameHas(t, x)) : c.Owner.BattleArea.Any(d => TargetSpec.NameHas(d, x));
         }
         if ((m = Regex.Match(cond, @"^you have (?:a|an) (?:\[(?<x>[^\]]+)\] trait (?<kind>Digimon|Tamer)|(?<kind>Digimon|Tamer) with the \[(?<x>[^\]]+)\] trait)$", RegexOptions.IgnoreCase)).Success)
         {
@@ -3242,7 +3243,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, $@"^(?:any of them|it|that Digimon) (?:have|has) (?:the )?(?<x>{TargetSpec.NameList}) traits?$", RegexOptions.IgnoreCase)).Success)
         { var xs = TargetSpec.Names(m.Groups["x"].Value); return c => c.Other != null && xs.Any(x => TargetSpec.HasTrait(c.Other, x)); }
         if ((m = Regex.Match(cond, $@"^(?:any of them|it|that Digimon) (?:have|has) (?<x>{TargetSpec.NameList}) in (?:its|their) names?$", RegexOptions.IgnoreCase)).Success)
-        { var xs = TargetSpec.Names(m.Groups["x"].Value); return c => c.Other != null && xs.Any(x => TargetSpec.NameHas(c.Other.TopCard, x)); }
+        { var xs = TargetSpec.Names(m.Groups["x"].Value); return c => c.Other != null && xs.Any(x => TargetSpec.NameHas(c.Other, x)); }
         if ((m = Regex.Match(cond, @"^you have (?<n>\d+) or (?<dir>fewer|less|more) Tamers$", RegexOptions.IgnoreCase)).Success)
         { int n = int.Parse(m.Groups["n"].Value); bool more = m.Groups["dir"].Value == "more"; return c => more ? c.Owner.Tamers.Count >= n : c.Owner.Tamers.Count <= n; }
         if ((m = Regex.Match(cond, @"^you have (?<n>\d+) or (?<dir>fewer|less|more) cards in your hand$", RegexOptions.IgnoreCase)).Success)
@@ -4102,7 +4103,7 @@ internal static partial class SentenceParser
                     return;
                 }
                 var blockedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                if (sameZones.Contains("battle area")) blockedNames.UnionWith(c.Owner.BattleArea.Select(d => CardNames.MatchName(d.TopCard)).Concat(c.Owner.Tamers.Select(CardNames.MatchName)));
+                if (sameZones.Contains("battle area")) blockedNames.UnionWith(c.Owner.BattleArea.Select(d => CardNames.MatchName(d)).Concat(c.Owner.Tamers.Select(CardNames.MatchName)));
                 if (sameZones.Contains("trash")) blockedNames.UnionWith(c.Owner.Trash.Select(CardNames.MatchName));
                 if (noTamerName) blockedNames.UnionWith(c.Owner.Tamers.Select(CardNames.MatchName));
                 Func<CardData, bool> match = x => baseMatch(x) && !blockedNames.Contains(CardNames.MatchName(x));
@@ -4112,7 +4113,7 @@ internal static partial class SentenceParser
                 if (fromHand) pool.AddRange(PoolFrom(c.Owner.Hand, playable));
                 if (fromTrash) pool.AddRange(PoolFrom(c.Owner.Trash, playable));
                 if (fromSources && c.Self != null) pool.AddRange(c.Self.SourcesWhere(x => x.Type == CardType.Digimon && match(x)).Select(x => new PoolCard(x, null)));
-                if (fromBreedSrc && c.Owner.BreedingArea is { } breedSrc && (bsrc == null || TargetSpec.NameHas(breedSrc.TopCard, bsrc)))
+                if (fromBreedSrc && c.Owner.BreedingArea is { } breedSrc && (bsrc == null || TargetSpec.NameHas(breedSrc, bsrc)))
                     pool.AddRange(breedSrc.SourcesWhere(x => x.Type == CardType.Digimon && match(x)).Select(x => new PoolCard(x, null)));
                 pool.RemoveAll(x => !c.Engine.CanPlayByEffect(c.Owner, x.Card, OriginOf(c, x)));   // v0.36.0 효과로 등장할 수 있는 것만
                 var zone = fromSources || fromBreedSrc ? CardChoiceZone.DigivolutionCards : fromUnder ? CardChoiceZone.Other : fromHand && fromTrash ? CardChoiceZone.HandOrTrash : fromHand ? CardChoiceZone.Hand : CardChoiceZone.Trash;
@@ -4324,7 +4325,7 @@ internal static partial class SentenceParser
             return (c =>
             {
                 var b = c.Owner.BreedingArea;
-                if (b == null || !xs.Any(x => TargetSpec.NameHas(b.TopCard, x))) { c.LastStepResolved = false; Emit(c, label, "육성 에어리어에 대상이 없습니다"); return; }
+                if (b == null || !xs.Any(x => TargetSpec.NameHas(b, x))) { c.LastStepResolved = false; Emit(c, label, "육성 에어리어에 대상이 없습니다"); return; }
                 var placed = new List<CardData>();
                 if (self)
                 {

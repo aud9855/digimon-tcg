@@ -368,7 +368,7 @@ internal static partial class SentenceParser
         {
             var color = Enum.Parse<CardColor>(m.Groups["c"].Value, true);
             var names = TargetSpec.Names(m.Groups["x"].Value);
-            return (o, _) => o.BattleArea.Any(d => d.TamerProxyOf == null && !d.Colors.Contains(color) && names.Any(n => TargetSpec.NameHas(d.TopCard, n)));
+            return (o, _) => o.BattleArea.Any(d => d.TamerProxyOf == null && !d.Colors.Contains(color) && names.Any(n => TargetSpec.NameHas(d, n)));
         }
         return null;
     }

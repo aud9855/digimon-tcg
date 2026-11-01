@@ -17,7 +17,7 @@ public sealed partial class TargetSpec
         {
             var xs = Names(m.Groups["a"].Value + " or " + m.Groups["b"].Value);
             var spec = new TargetSpec { Count = 0, Text = phrase };
-            spec.Filters.Add(d => xs.Any(x => CardNames.Is(d.TopCard, x)));
+            spec.Filters.Add(d => xs.Any(x => CardNames.Is(d, x)));
             return spec;
         }
         // "all of your Digimon with the [Royal Knight] trait and all your green Digimon" (BT13-056) · "All of your Digimon with the [Xros Heart] trait or with ＜Retaliation＞" — 어느 쪽 조건이든

@@ -36,7 +36,7 @@ internal static partial class SentenceParser
             var names = TargetSpec.Names(m.Groups["who"].Value);
             string? src = m.Groups["srcname"].Success ? m.Groups["srcname"].Value.Trim('[', ']') : null;
             int cost = int.Parse(m.Groups["n"].Value);
-            def?.Script41.SpecialEvolutions42.Add((cond, d => names.Any(n => CardNames.Is(d.TopCard, n)) && (src == null || d.SourcesAny(x => TargetSpec.NameHas(x, src))), cost));
+            def?.Script41.SpecialEvolutions42.Add((cond, d => names.Any(n => CardNames.Is(d, n)) && (src == null || d.SourcesAny(x => TargetSpec.NameHas(x, src))), cost));
             return true;
         }
         if ((m = HolderSideRe42.Match(clause)).Success)

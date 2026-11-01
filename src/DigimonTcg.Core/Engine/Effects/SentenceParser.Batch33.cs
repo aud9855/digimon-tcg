@@ -128,7 +128,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(p, $@"^1 of your (?<x>{TargetSpec.NameList})$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return ((c, d) => !ReferenceEquals(d, c.Self) && xs.Any(x => CardNames.Is(d.TopCard, x)), t => xs.Any(x => CardNames.Is(t, x)));
+            return ((c, d) => !ReferenceEquals(d, c.Self) && xs.Any(x => CardNames.Is(d, x)), t => xs.Any(x => CardNames.Is(t, x)));
         }
         if ((m = Regex.Match(p, $@"^1 of your (?<spec>[^,]*?)Tamers?(?: with (?<x>{TargetSpec.NameList}) in (?:its|their) names?)?$", RegexOptions.IgnoreCase)).Success
             && TamerFilter33(m.Groups["spec"].Value, null) is { } tf)

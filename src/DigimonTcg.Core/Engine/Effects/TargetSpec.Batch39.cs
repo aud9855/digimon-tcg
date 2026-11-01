@@ -23,7 +23,7 @@ public sealed partial class TargetSpec
         if (m.Success && ParseCore(m.Groups["pre"].Value + "Digimon" + m.Groups["rest"].Value) is { IsThis: false, IsThat: false } named)
         {
             var xs = Names(m.Groups["x"].Value);
-            named.Filters.Add(d => xs.Any(x => CardNames.Is(d.TopCard, x)));
+            named.Filters.Add(d => xs.Any(x => CardNames.Is(d, x)));
             return named;
         }
         return null;

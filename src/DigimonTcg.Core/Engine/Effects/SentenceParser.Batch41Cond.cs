@@ -50,7 +50,7 @@ internal static partial class SentenceParser
             if ((m = Regex.Match(c0, @"^(?:you have an? (?<x>\[[^\]]+\]) with (?<n>\d+) or more digivolution cards(?: in play)?|one of your (?<x>\[[^\]]+\])s? has (?<n>\d+) or more digivolution cards)$", I)).Success)
             {
                 string x = m.Groups["x"].Value.Trim('[', ']'); int n = int.Parse(m.Groups["n"].Value);
-                return c => c.Owner.BattleArea.Any(d => CardNames.Is(d.TopCard, x) && d.EvolutionSources.Count >= n);
+                return c => c.Owner.BattleArea.Any(d => CardNames.Is(d, x) && d.EvolutionSources.Count >= n);
             }
             // "your opponent has a Digimon with a digivolution card in play" (BT8-029)
             if (Regex.IsMatch(c0, @"^your opponent has a Digimon with (?:a digivolution card|digivolution cards)(?: in play)?$", I))
@@ -78,7 +78,7 @@ internal static partial class SentenceParser
             if ((m = Regex.Match(c0, @"^you don't have any Digimon other than Digimon with (?<x>\[[^\]]+\]) in their texts?$", I)).Success)
             {
                 string x = m.Groups["x"].Value.Trim('[', ']');
-                return c => c.Owner.BattleArea.All(d => TargetSpec.TextHas(d.TopCard, x));
+                return c => c.Owner.BattleArea.All(d => TargetSpec.TextHas(d, x));
             }
             // "A or B" — 어느 한쪽 (BT21-010 · BT21-040 · EX3-033 · BT7-062 · ST20-10 · ST21-10 · BT9-075 · BT17-073)
             foreach (var (a, b) in OrSplits41(c0))

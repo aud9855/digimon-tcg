@@ -212,7 +212,7 @@ public static partial class KoreanEvolution47
         if ((m = Regex.Match(s, $@"^(?<n>{ENL})$", IC)).Success)
         {
             var ns = NamesEn(m.Groups["n"].Value);
-            return f => f.Owner.BattleArea.Any(d => d.TamerProxyOf == null && ns.Any(x => CardNames.Is(d.TopCard, x))) || f.Owner.Tamers.Any(t => ns.Any(x => CardNames.Is(t, x)));
+            return f => f.Owner.BattleArea.Any(d => d.TamerProxyOf == null && ns.Any(x => CardNames.Is(d, x))) || f.Owner.Tamers.Any(t => ns.Any(x => CardNames.Is(t, x)));
         }
         if ((m = Regex.Match(s, @"^(?<n>\d+) or (?<op>fewer|less|more) security cards?$", IC)).Success)
         {

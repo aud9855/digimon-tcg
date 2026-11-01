@@ -56,7 +56,7 @@ internal static partial class SentenceParser
                 foreach (var a in deferred.ToList()) { if (c.State.IsGameOver) break; a(); }
                 if (c.Message != before) c.Log($"[{c.Card.Name} 시큐리티 · 배틀 종료 시] {c.Message[(before.Length > 0 && c.Message.StartsWith(before) ? before.Length : 0)..].TrimStart(' ', '/')}");
             });
-            c.Log($"[{c.Card.Name}] 배틀이 끝나면 발휘합니다: {x}");
+            c.Log($"[{c.Card.Name}] 배틀이 끝나면 발휘합니다: {UnMark67(x)}");   // v0.67.0 이 묶음의 동작 표시는 문장으로
         }, false, s);
     }
 

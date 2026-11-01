@@ -64,7 +64,7 @@ public sealed partial class TargetSpec
         {
             var xs = Names(m.Groups["a"].Value);
             if (ParseCore(m.Groups["pre"].Value + " Digimon") is not { } baseSpec) return null;
-            baseSpec.Filters.Add(d => xs.Any(x => NameHas(d.TopCard, x) || HasTrait(d, x)));
+            baseSpec.Filters.Add(d => xs.Any(x => NameHas(d, x) || HasTrait(d, x)));
             return baseSpec;
         }
         if ((m = Regex.Match(phrase, @"^(?<pre>(?:\d+|all) of your) (?<a>\[[^\]]+\]) or (?<b>Digimon with .+)$", I44)).Success
@@ -72,7 +72,7 @@ public sealed partial class TargetSpec
         {
             var x = m.Groups["a"].Value.Trim('[', ']');
             var fo = other.Filters.ToList();
-            bs.Filters.Add(d => NameHas(d.TopCard, x) || fo.All(f => f(d)));
+            bs.Filters.Add(d => NameHas(d, x) || fo.All(f => f(d)));
             return bs;
         }
         // DP · Lv. 비교 — 자신의 디지몬 1마리

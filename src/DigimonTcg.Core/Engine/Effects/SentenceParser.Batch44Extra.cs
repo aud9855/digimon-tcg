@@ -402,7 +402,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(s, $@"^of your (?<x>{TargetSpec.NameList})(?:'s|’s) digivolution cards in the breeding area$", I)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return (o, _, _) => o.BreedingArea is { } b && xs.Any(x => CardNames.Is(b.TopCard, x)) ? b.EvolutionSources.Count : 0;
+            return (o, _, _) => o.BreedingArea is { } b && xs.Any(x => CardNames.Is(b, x)) ? b.EvolutionSources.Count : 0;
         }
         // "2 [Negamon] in your trash or your Digimon's digivolution cards" (EX9-054 · EX9-005 — 트래시와 디지몬의 진화원의 합계)
         if ((m = Regex.Match(s, $@"^(?:(?<n>\d+) )?(?<x>{TargetSpec.NameList}) in your trash (?:or|and) your Digimon's digivolution cards$", I)).Success)

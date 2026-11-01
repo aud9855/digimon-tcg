@@ -98,7 +98,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cost, $@"^returning the top card of (?:1|one) of your (?<x>{TargetSpec.NameList}) to (?:the |your |its owner's )?hand$", I)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
-            IEnumerable<CardInstance> Pool(EffectContext c) => c.Owner.BattleArea.Where(d => d.EvolutionSources.Count > 0 && xs.Any(x => CardNames.Is(d.TopCard, x)));
+            IEnumerable<CardInstance> Pool(EffectContext c) => c.Owner.BattleArea.Where(d => d.EvolutionSources.Count > 0 && xs.Any(x => CardNames.Is(d, x)));
             return (c => Pool(c).Any(),
                     c =>
                     {

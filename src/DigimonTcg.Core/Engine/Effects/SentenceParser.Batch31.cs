@@ -202,7 +202,7 @@ internal static partial class SentenceParser
             return Many(c => c.Other != null && !ReferenceEquals(c.Other, c.Self) && otherDel.Filters.All(f => f(c.Other)), EffectTrigger.AllyDigimonDeleted, EffectTrigger.OpponentDigimonDeleted);
         // "When one of your other Digimon with the same name as this Digimon is deleted"
         if (Regex.IsMatch(ev, @"^(?:one of |any of )?your other Digimon with the same name as this Digimon (?:is|are) deleted$", RegexOptions.IgnoreCase))
-            return One(EffectTrigger.AllyDigimonDeleted, c => c.Other != null && c.Self != null && !ReferenceEquals(c.Other, c.Self) && CardNames.Same(c.Self.TopCard, c.Other.TopCard));
+            return One(EffectTrigger.AllyDigimonDeleted, c => c.Other != null && c.Self != null && !ReferenceEquals(c.Other, c.Self) && CardNames.Same(c.Self, c.Other));
         // "When one of your level 6 or higher Digimon with digivolution cards is deleted"
         if ((m = Regex.Match(ev, @"^(?:one of |any of )?your (?<spec>[^,]*?Digimon) with digivolution cards (?:is|are) deleted$", RegexOptions.IgnoreCase)).Success
             && ParseAllySubject(m.Groups["spec"].Value) is { } withSources)
@@ -401,7 +401,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(s, $@"^Digimon (?:that has|with) (?<x>{TargetSpec.NameList}) in (?:its|their) names? or is level (?<lv>\d+) or (?<dir>higher|lower)$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); int lv = int.Parse(m.Groups["lv"].Value); bool higher = m.Groups["dir"].Value.Equals("higher", StringComparison.OrdinalIgnoreCase);
-            return (_, d) => xs.Any(x => TargetSpec.NameHas(d.TopCard, x)) || (higher ? d.TopCard.Level >= lv : d.TopCard.Level <= lv);
+            return (_, d) => xs.Any(x => TargetSpec.NameHas(d, x)) || (higher ? d.TopCard.Level >= lv : d.TopCard.Level <= lv);
         }
         // "Digimon with [Gammamon] in its digivolution cards"
         if ((m = Regex.Match(s, $@"^Digimon with (?<x>{TargetSpec.NameList}) in (?:its|their) digivolution cards$", RegexOptions.IgnoreCase)).Success)

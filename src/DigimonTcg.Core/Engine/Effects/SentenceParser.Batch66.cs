@@ -245,7 +245,7 @@ internal static partial class SentenceParser
         string? hostName = spec.VerbA.StartsWith("host:", StringComparison.Ordinal) ? spec.VerbA[5..] : null;
         // EX2-049 "under 1 of your [Mother D-Reaper]s" — 그 이름의 자신의 디지몬 (배틀 에어리어 또는 육성 에어리어 — 「마더 디・리퍼」는 디지타마)
         List<CardInstance> Hosts(EffectContext c) => hostName == null ? new List<CardInstance>()
-            : c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && CardNames.Is(d.TopCard, hostName)).Concat(c.Owner.BreedingArea is { } br && CardNames.Is(br.TopCard, hostName) ? new[] { br } : Array.Empty<CardInstance>()).ToList();
+            : c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && CardNames.Is(d, hostName)).Concat(c.Owner.BreedingArea is { } br && CardNames.Is(br, hostName) ? new[] { br } : Array.Empty<CardInstance>()).ToList();
         if ((spec.VerbA == "place" || spec.VerbB == "place") && card.Type != CardType.Digimon) return (null, "미지원: 디지몬이 아닌 카드의 진화원 놓기");
         var matchA = RevealAlias66.Wrap(pa.Value.Match);
         var matchB = RevealAlias66.Wrap(pb.Value.Match);

@@ -179,7 +179,7 @@ internal static partial class SentenceParser
         var q = Qualifier58(m.Groups["q"].Value);
         if (!m.Groups["x"].Success) return q;
         var names = TargetSpec.Names(m.Groups["x"].Value);
-        return c => q(c) && c.Digimon != null && names.Any(x => CardNames.Is(c.Digimon.TopCard, x));
+        return c => q(c) && c.Digimon != null && names.Any(x => CardNames.Is(c.Digimon, x));
     }
 
     // =====================================================================

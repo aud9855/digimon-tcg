@@ -66,7 +66,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(ev, $@"^this Digimon has (?<x>{TargetSpec.NameList}) in its name and (?:(?<eff>an effect would delete it or return it to (?:your|the|its owner's) hand or deck)|(?<battle>would be deleted in battle))$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
-            bool Named(EffectContext c) => c.Self != null && xs.Any(x => TargetSpec.NameHas(c.Self.TopCard, x));
+            bool Named(EffectContext c) => c.Self != null && xs.Any(x => TargetSpec.NameHas(c.Self, x));
             if (m.Groups["battle"].Success)
                 return One(EffectTrigger.ThisDigimonWouldBeDeleted, c => c.Engine.CurrentLeave is { } l && ReferenceEquals(l.Digimon, c.Self) && l.InBattle && Named(c));
             return One(EffectTrigger.ThisDigimonWouldLeave, c => c.Engine.CurrentLeave is { } l && ReferenceEquals(l.Digimon, c.Self) && Named(c)
@@ -143,7 +143,7 @@ internal static partial class SentenceParser
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
             return (new List<EffectTrigger> { EffectTrigger.AllyDigimonPlayed, EffectTrigger.OpponentDigimonPlayed },
-                c => c.Other != null && !ReferenceEquals(c.Other, c.Self) && xs.Any(x => CardNames.Is(c.Other.TopCard, x)));
+                c => c.Other != null && !ReferenceEquals(c.Other, c.Self) && xs.Any(x => CardNames.Is(c.Other, x)));
         }
         // "When one of your Digimon or Tamers that have the [SoC] trait or [Pulsemon] in its text is played" (BT17-069)
         if ((m = Regex.Match(ev, $@"^(?:one of |any of )?your Digimon or Tamers (?:that|which) (?:have|has) the (?<t>{TargetSpec.NameList}) trait or (?<x>{TargetSpec.NameList}) in (?:its|their) texts? (?:is|are) played$", RegexOptions.IgnoreCase)).Success)
@@ -163,7 +163,7 @@ internal static partial class SentenceParser
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); var col = Enum.Parse<CardColor>(m.Groups["col"].Value, ignoreCase: true);
             return (new List<EffectTrigger> { EffectTrigger.AllyDigimonPlayed, EffectTrigger.AllyTamerPlayed },
-                c => c.Engine.PlayingByEffect && (c.Other != null ? xs.Any(x => CardNames.Is(c.Other.TopCard, x)) : c.TriggerCard != null && (c.TriggerCard.AllColors.Contains(col) || xs.Any(x => CardNames.Is(c.TriggerCard, x)))));
+                c => c.Engine.PlayingByEffect && (c.Other != null ? xs.Any(x => CardNames.Is(c.Other, x)) : c.TriggerCard != null && (c.TriggerCard.AllColors.Contains(col) || xs.Any(x => CardNames.Is(c.TriggerCard, x)))));
         }
         // "When effects play one of your Tokens or a Digimon with the [Puppet] trait" (ST19-14)
         if ((m = Regex.Match(ev, @"^(?:an effect plays|effects play) (?:one of |any of )?your Tokens? or (?:an? )?(?<d>Digimon with .+)$", RegexOptions.IgnoreCase)).Success
@@ -234,12 +234,12 @@ internal static partial class SentenceParser
             && ParseAllySubject(m.Groups["rest"].Value) is { } restWho)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return (c, d) => xs.Any(x => CardNames.Is(d.TopCard, x)) || restWho(c, d);
+            return (c, d) => xs.Any(x => CardNames.Is(d, x)) || restWho(c, d);
         }
         if ((m = Regex.Match(subj, $@"^(?<other>other )?(?<x>{TargetSpec.NameList})$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); bool other = m.Groups["other"].Success;
-            return (c, d) => (!other || !ReferenceEquals(d, c.Self)) && xs.Any(x => TargetSpec.NameHas(d.TopCard, x));
+            return (c, d) => (!other || !ReferenceEquals(d, c.Self)) && xs.Any(x => TargetSpec.NameHas(d, x));
         }
         return ParseAllySubject(subj);
     }
@@ -445,7 +445,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(counter, $@"^(?<other>other )?Digimon with (?<x>{TargetSpec.NameList}) in (?:its|their) names? in play$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); bool other = m.Groups["other"].Success;
-            return (o, e, self) => o.BattleArea.Concat(e.BattleArea).Count(d => (!other || !ReferenceEquals(d, self)) && xs.Any(x => TargetSpec.NameHas(d.TopCard, x)));
+            return (o, e, self) => o.BattleArea.Concat(e.BattleArea).Count(d => (!other || !ReferenceEquals(d, self)) && xs.Any(x => TargetSpec.NameHas(d, x)));
         }
         return null;
     }
@@ -526,13 +526,13 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, $@"^you have (?:a|an) (?<kind>Digimon|Tamer) with (?<x>{TargetSpec.NameList}) in (?:its|their) names?(?: on the field| in play)?$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); bool tamer = m.Groups["kind"].Value.Equals("Tamer", StringComparison.OrdinalIgnoreCase);
-            return z => tamer ? z.Tamers.Any(t => xs.Any(x => TargetSpec.NameHas(t, x))) : z.BattleArea.Any(d => xs.Any(x => TargetSpec.NameHas(d.TopCard, x)));
+            return z => tamer ? z.Tamers.Any(t => xs.Any(x => TargetSpec.NameHas(t, x))) : z.BattleArea.Any(d => xs.Any(x => TargetSpec.NameHas(d, x)));
         }
         // "you have [Yuuko Kamishiro] or a [CS] trait Digimon" (BT23-044)
         if ((m = Regex.Match(cond, $@"^you have (?<x>{TargetSpec.NameList}) or (?:a|an) (?<t>{TargetSpec.NameList}) trait Digimon$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); var ts = TargetSpec.Names(m.Groups["t"].Value);
-            return z => z.Tamers.Any(t => xs.Any(x => CardNames.Is(t, x))) || z.BattleArea.Any(d => xs.Any(x => CardNames.Is(d.TopCard, x)) || ts.Any(t => TargetSpec.HasTrait(d, t)));
+            return z => z.Tamers.Any(t => xs.Any(x => CardNames.Is(t, x))) || z.BattleArea.Any(d => xs.Any(x => CardNames.Is(d, x)) || ts.Any(t => TargetSpec.HasTrait(d, t)));
         }
         // v0.40.0 "you have a Tamer with inherited effects" (BT21-091 — 색 조건 무시. 사건 · 지속 효과 쪽의 같은 조건과 같은 판정)
         if (Regex.IsMatch(cond, @"^you have an? Tamer with inherited effects$", RegexOptions.IgnoreCase))

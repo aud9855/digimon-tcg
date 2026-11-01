@@ -124,7 +124,7 @@ internal static partial class SentenceParser
             if (Regex.Match(ct, @"^you have (?<n>\[[^\]]+\](?:,? (?:or )?\[[^\]]+\])*)$", RegexOptions.IgnoreCase) is { Success: true } have)
             {
                 var names = TargetSpec.Names(have.Groups["n"].Value);   // "자신의 「에오스몬」이 있는 동안" — 배틀 에어리어의 디지몬 · 테이머
-                cond = z => z.BattleArea.Any(d => names.Any(x => TargetSpec.NameHas(d.TopCard, x))) || z.Tamers.Any(c => names.Any(x => TargetSpec.NameHas(c, x)));
+                cond = z => z.BattleArea.Any(d => names.Any(x => TargetSpec.NameHas(d, x))) || z.Tamers.Any(c => names.Any(x => TargetSpec.NameHas(c, x)));
             }
             cond ??= ParseZoneCondition(ct);
             if (cond == null) return null;
@@ -233,7 +233,7 @@ internal static partial class SentenceParser
         if ((m = XrosTrashOnlyRe54.Match(t)).Success && card.Type == CardType.Digimon)
         {
             var names = TargetSpec.Names(m.Groups["n"].Value);
-            def?.XrosFromTrash(z => z.BattleArea.All(d => names.Any(x => CardNames.Is(d.TopCard, x))));   // "「벰몬」 이외의 자신의 디지몬이 없는 동안"
+            def?.XrosFromTrash(z => z.BattleArea.All(d => names.Any(x => CardNames.Is(d, x))));   // "「벰몬」 이외의 자신의 디지몬이 없는 동안"
             return "";
         }
         if ((m = XrosUnderAndTrashRe54.Match(t)).Success && card.Type == CardType.Tamer && XrosTraits54(m.Groups["spec"].Value) is { } traits)

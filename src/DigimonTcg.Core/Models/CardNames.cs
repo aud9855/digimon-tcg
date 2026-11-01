@@ -27,4 +27,19 @@ public static class CardNames
     public static bool Same(CardData a, CardData b) =>
         string.Equals(MatchName(a), MatchName(b), StringComparison.OrdinalIgnoreCase)
         || string.Equals(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
+
+    // ---- v0.67.0 필드의 디지몬: 효과로 원래 명칭이 바뀌었으면 그 명칭 (BT11-043 · BT14-097 · EX13-031 — 종합 룰 15-12-2). 바뀌지 않았으면 맨 위 카드 그대로 ----
+
+    /// <summary>필드의 디지몬의 판정 기준 이름</summary>
+    public static string MatchName(CardInstance d) => d.Changed67 is { } ch ? ch.Name : MatchName(d.TopCard);
+
+    /// <summary>필드의 디지몬의 명칭에 x를 포함하는가</summary>
+    public static bool Contains(CardInstance d, string x) => d.Changed67 is { } ch ? ch.Name.Contains(x, StringComparison.OrdinalIgnoreCase) : Contains(d.TopCard, x);
+
+    /// <summary>필드의 디지몬의 명칭이 정확히 x인가</summary>
+    public static bool Is(CardInstance d, string x) => d.Changed67 is { } ch ? ch.Name.Equals(x, StringComparison.OrdinalIgnoreCase) : Is(d.TopCard, x);
+
+    /// <summary>필드의 두 디지몬이 같은 명칭인가</summary>
+    public static bool Same(CardInstance a, CardInstance b) =>
+        a.Changed67 == null && b.Changed67 == null ? Same(a.TopCard, b.TopCard) : string.Equals(MatchName(a), MatchName(b), StringComparison.OrdinalIgnoreCase);
 }

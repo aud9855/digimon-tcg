@@ -20,6 +20,7 @@ public partial class GoldfishEngine
     /// <summary>테이머를 필드에 놓는다 (등장 · 효과 · [시큐리티]) — 나온 턴을 적어 둔다</summary>
     internal void AddTamer(PlayerZones zones, CardData tamer)
     {
+        ForgetTamerRecords67(zones, tamer);   // v0.67.0 새로 놓인 테이머는 다른 테이머 (종합 룰 3-4-4) — 같은 카드가 전에 받은 색 · 효과는 넘기지 않는다
         zones.Tamers.Add(tamer);
         _tamerEntries.Add((zones, tamer, State.TurnSequence));
     }

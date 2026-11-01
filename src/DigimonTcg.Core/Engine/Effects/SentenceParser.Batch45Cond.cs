@@ -73,7 +73,7 @@ internal static partial class SentenceParser
             bool opp = m.Groups["who"].Value.StartsWith("your", StringComparison.OrdinalIgnoreCase);
             var names = TargetSpec.Names(m.Groups["x"].Value);
             int n = int.Parse(m.Groups["n"].Value);
-            return (o, e) => (opp ? e : o).BattleArea.Any(d => names.Any(x => CardNames.Is(d.TopCard, x)) && d.EvolutionSources.Count >= n);
+            return (o, e) => (opp ? e : o).BattleArea.Any(d => names.Any(x => CardNames.Is(d, x)) && d.EvolutionSources.Count >= n);
         }
         return null;
     }

@@ -180,7 +180,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(ev, @"^this card is trashed as a digivolution card by the effect of (?<x>\[[^\]]+\])$", I)).Success)
         {
             string x = m.Groups["x"].Value.Trim('[', ']');
-            return One(EffectTrigger.DigiBurstTrashedThis, c => c.Self != null && CardNames.Is(c.Self.TopCard, x) && Hit40(ref Diag40.EventMisc));
+            return One(EffectTrigger.DigiBurstTrashedThis, c => c.Self != null && CardNames.Is(c.Self, x) && Hit40(ref Diag40.EventMisc));
         }
         // "When effects add cards to your opponent's hand or trash cards from under your Tamers" (BT25-029)
         if (Regex.IsMatch(ev, @"^effects add cards to your opponent's hand or trash cards from under your Tamers$", I))
@@ -209,7 +209,7 @@ internal static partial class SentenceParser
         int from = def.StaticCount;
         TryParseCore(alt, inherited, card, def);
         bool other = m.Groups["other"].Success;
-        def.PatchStatics(from, e => e with { ExcludeSource = e.ExcludeSource || other, SubjectOf = (ctx, d) => ctx.Digimon != null && CardNames.Same(ctx.Digimon.TopCard, d.TopCard) && Hit40(ref Diag40.OwnerAura) });
+        def.PatchStatics(from, e => e with { ExcludeSource = e.ExcludeSource || other, SubjectOf = (ctx, d) => ctx.Digimon != null && CardNames.Same(ctx.Digimon, d) && Hit40(ref Diag40.OwnerAura) });
         return true;
     }
 

@@ -197,7 +197,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(s, @"^(?<n>\d+) (?<x>\[[^\]]+\])s? (?:are|is) placed in your battle area$", I)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value); string x = TargetSpec.Names(m.Groups["x"].Value)[0];
-            return c => c.Owner.OptionsInPlay.Count(p => CardNames.Is(p.Card, x)) + c.Owner.BattleArea.Count(d => CardNames.Is(d.TopCard, x)) >= n && Diag46.HitTrue("condPlacedCount51");
+            return c => c.Owner.OptionsInPlay.Count(p => CardNames.Is(p.Card, x)) + c.Owner.BattleArea.Count(d => CardNames.Is(d, x)) >= n && Diag46.HitTrue("condPlacedCount51");
         }
         // "this card was played by [Trial of the Four Great Dragons]'s effect" (EX3-025 · EX3-036)
         if ((m = Regex.Match(s, @"^this card was played by (?<x>\[[^\]]+\])'s effect$", I)).Success)
@@ -230,7 +230,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond.Trim(), @"^(?<a>.+?), or (?<x>\[[^\]]+\]) is in your battle area$", I)).Success && ParseStaticCondition(m.Groups["a"].Value) is { } ca)
         {
             string x = TargetSpec.Names(m.Groups["x"].Value)[0];
-            return c => ca(c) || c.Owner.OptionsInPlay.Any(p => CardNames.Is(p.Card, x)) || c.Owner.BattleArea.Any(d => CardNames.Is(d.TopCard, x));
+            return c => ca(c) || c.Owner.OptionsInPlay.Any(p => CardNames.Is(p.Card, x)) || c.Owner.BattleArea.Any(d => CardNames.Is(d, x));
         }
         return null;
     }
@@ -426,7 +426,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cost, @"^trashing (?<n>\d+) digivolution cards from the bottom of 1 of your (?<x>\[[^\]]+\])$", I)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value); string x = TargetSpec.Names(m.Groups["x"].Value)[0];
-            List<CardInstance> Able(EffectContext c) => c.Owner.BattleArea.Where(d => CardNames.Is(d.TopCard, x) && c.Engine.TrashableSourceCount61(d) >= n).ToList();   // v0.61.0 파기할 수 없는 카드를 빼고 셈 (공식 Q&A EX2-055 Q1)
+            List<CardInstance> Able(EffectContext c) => c.Owner.BattleArea.Where(d => CardNames.Is(d, x) && c.Engine.TrashableSourceCount61(d) >= n).ToList();   // v0.61.0 파기할 수 없는 카드를 빼고 셈 (공식 Q&A EX2-055 Q1)
             return (c => Able(c).Count > 0,
                     c =>
                     {

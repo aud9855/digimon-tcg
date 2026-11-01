@@ -75,7 +75,7 @@ internal static partial class SentenceParser
             if ((m = Regex.Match(s, @"^(?:digivolution card of (?:1|one) of your (?<x>\[[^\]]+\])s?|of (?:1|one) of your (?<x>\[[^\]]+\])(?:'s|s') digivolution cards)$", I)).Success)
             {
                 string x = m.Groups["x"].Value.Trim('[', ']');
-                return (o, _, _) => o.BattleArea.Where(d => CardNames.Is(d.TopCard, x)).Select(d => d.EvolutionSources.Count).DefaultIfEmpty(0).Max();
+                return (o, _, _) => o.BattleArea.Where(d => CardNames.Is(d, x)).Select(d => d.EvolutionSources.Count).DefaultIfEmpty(0).Max();
             }
             // "other Digimon with the [Royal Knight] trait or [Sistermon] in their names you have in play" (BT13-017)
             if ((m = Regex.Match(s, @"^(?<other>other )?(?<x>(?:[^,]*? )?Digimon with .+?) you have(?: in play)?$", I)).Success

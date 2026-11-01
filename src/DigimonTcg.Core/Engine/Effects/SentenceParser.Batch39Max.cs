@@ -70,7 +70,7 @@ internal static partial class SentenceParser
         string s = counter.Trim().TrimEnd('.');
         Match m;
         if ((m = Regex.Match(s, @"^(?:of )?your (?<t>Digimon .+?) with different names$", I)).Success && TargetSpec.Parse("all of your " + m.Groups["t"].Value) is { ContextFilters.Count: 0 } spec)
-            return (own, _, _) => own.BattleArea.Where(d => spec.Filters.All(f => f(d))).Select(d => CardNames.MatchName(d.TopCard)).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+            return (own, _, _) => own.BattleArea.Where(d => spec.Filters.All(f => f(d))).Select(d => CardNames.MatchName(d)).Distinct(StringComparer.OrdinalIgnoreCase).Count();
         if (Regex.IsMatch(s, @"^of (?:your opponent's|their) security cards$", I))
             return (_, enemy, _) => enemy.SecurityStack.Count;
         if ((m = Regex.Match(s, @"^of (?<w>your opponent's|their|your) Digimon and Tamers$", I)).Success)
@@ -83,7 +83,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(s, $@"^of your (?<x>{TargetSpec.NameList})s?$", I)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return (own, _, _) => own.BattleArea.Count(d => xs.Any(x => CardNames.Is(d.TopCard, x)));
+            return (own, _, _) => own.BattleArea.Count(d => xs.Any(x => CardNames.Is(d, x)));
         }
         return null;
     }

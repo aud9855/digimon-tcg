@@ -58,7 +58,7 @@ internal static partial class SentenceParser
             else if (nameX.Length > 0)
             {
                 foreach (var t in c.Owner.Tamers.Distinct().Where(t => CardNames.Is(t, nameX))) cands.Add((null, t));
-                foreach (var d in c.Owner.BattleArea.Where(d => CardNames.Is(d.TopCard, nameX))) cands.Add((d, d.TopCard));
+                foreach (var d in c.Owner.BattleArea.Where(d => CardNames.Is(d, nameX))) cands.Add((d, d.TopCard));
             }
             else if (what.Equals("the Digimon this effect played", StringComparison.OrdinalIgnoreCase))
             { foreach (var d in c.PlayedThisEffect.Where(c.Owner.BattleArea.Contains)) cands.Add((d, d.TopCard)); }

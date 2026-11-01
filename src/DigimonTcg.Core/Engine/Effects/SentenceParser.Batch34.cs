@@ -587,7 +587,7 @@ internal static partial class SentenceParser
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value);
             if (xs.Any(KoreanEffectRenderer.IsTamerName33)) return "테이머를 디지몬으로 취급";   // 「마사루」 등 — 테이머를 디지몬으로 취급하는 모델이 없다
-            aura = d => xs.Any(x => CardNames.Is(d.TopCard, x));
+            aura = d => xs.Any(x => CardNames.Is(d, x));
             excludeSource = m.Groups["other"].Success;
         }
         else return "주어";

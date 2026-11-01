@@ -184,6 +184,12 @@ public class CardInstance
     /// <summary>v0.66.0 이 디지몬의 원래 색 (효과로 바뀌었으면 그 색, 아니면 맨 위 카드의 색)</summary>
     public IReadOnlyList<CardColor> BaseColors66 => BaseColor66 is { } bc ? new[] { bc.Color } : TopCard.AllColors;
 
+    /// <summary>v0.67.0 이 턴 동안 효과로 더해진 색 (BT8-040 "treat this Digimon as also having the colors of the trashed card for the turn" — 값 = (색, 끝나는 TurnSequence)). 엔진이 ExtraColors에 더하고 기간이 끝나면 지운다</summary>
+    public List<(CardColor Color, int Until)> TimedColors67 { get; } = new();
+
+    /// <summary>v0.67.0 효과로 바뀐 원래 명칭 · DP (BT11-043 · BT14-097 · EX13-031 "원래 명칭 「스카몬」 · 화이트 · DP 3000으로 변경" — 종합 룰 15-12-2). 색은 BaseColor66. 엔진이 기간이 끝나면 지운다</summary>
+    public (string Name, int Dp, int Until)? Changed67 { get; set; }
+
     public CardInstance(CardData baseCard, int currentTurn)
     {
         InstanceId = Guid.NewGuid().ToString();
@@ -385,7 +391,9 @@ public class CardInstance
             SaNeg62 = SaNeg62,
             NoIgnoreReq62 = NoIgnoreReq62,
             BaseColor66 = BaseColor66,
+            Changed67 = Changed67,
         };
+        v.TimedColors67.AddRange(TimedColors67);
         v.AttackSaParts62.AddRange(AttackSaParts62);
         v.EvolutionSources = new Stack<CardData>(EvolutionSources.Reverse());
         foreach (var f in FaceDownSources) v.FaceDownSources.Add(f);
@@ -410,7 +418,7 @@ public class CardInstance
         GetInheritedDpBonus() + TamerDpBonus + TemporaryDpBonus - (OppShield59 ? OppTempDp59 : 0) - CatShieldSum61(0) + EffectDpBonus + AttackDpBonus;   // v0.59.0 상대의 효과를 받지 않는 동안 · v0.61.0 LM-020 카드 종류
 
     public int GetCurrentDP() =>
-        Math.Max(DpFloor45, TopCard.DP + GetTotalBonusDP());   // v0.45.0 DP 하한 (0이면 원래대로)
+        Math.Max(DpFloor45, (Changed67 is { } ch67 ? ch67.Dp : TopCard.DP) + GetTotalBonusDP());   // v0.67.0 바뀐 원래 DP (BT11-043 등)   // v0.45.0 DP 하한 (0이면 원래대로)
 
     public int GetInheritedSecurityAttackBonus() =>
         FaceUpSources.Sum(s => s.InheritedSecurityAttackBonus);

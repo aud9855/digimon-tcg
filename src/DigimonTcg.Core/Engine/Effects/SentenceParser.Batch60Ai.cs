@@ -48,7 +48,7 @@ internal static partial class SentenceParser
             if (Regex.IsMatch(t, @"^\[[^\]]+\](?:,? (?:or )?\[[^\]]+\])*$"))
             {
                 var names = Regex.Matches(t, @"\[([^\]]+)\]").Select(x => x.Groups[1].Value).ToList();
-                filter = d => names.Any(x => TargetSpec.NameHas(d.TopCard, x));
+                filter = d => names.Any(x => TargetSpec.NameHas(d, x));
             }
             else if (TargetSpec.Parse("all of your " + t) is { ContextFilters.Count: 0, Opponent: false, AnySide: false } spec) filter = d => spec.Filters.All(f => f(d));
             if (filter == null) return (pay, recommend);
