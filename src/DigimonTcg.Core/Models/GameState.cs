@@ -95,6 +95,18 @@ public class PlayerZones
     /// <summary>v0.65.0 효과로 이 쪽의 테이머에게 준 효과 문장 (EX10-058 "give 1 of their Digimon or Tamers "~"") — 그 테이머(카드 객체)가 필드에 있는 동안 기간 안에 그 테이머의 효과처럼 발휘</summary>
     public List<(CardData Tamer, CardData Effect, int Until, PlayerZones? Granter)> TamerGrants65 { get; } = new();
 
+    /// <summary>v0.66.0 효과로 원래 색이 바뀐 이 쪽의 테이머 (BT18-078 — 테이머 카드 객체 · 색 · 끝나는 TurnSequence). 엔진이 기간이 끝나거나 테이머가 떠나면 지운다</summary>
+    public List<(CardData Tamer, CardColor Color, int Until)> TamerColors66 { get; } = new();
+
+    /// <summary>v0.66.0 이 쪽의 테이머 t의 지금 색 (효과로 원래 색이 바뀌었으면 그 색)</summary>
+    public IReadOnlyList<CardColor> TamerColorsOf66(CardData t)
+    {
+        if (TamerColors66.Count > 0)
+            foreach (var x in TamerColors66)
+                if (ReferenceEquals(x.Tamer, t)) return new[] { x.Color };
+        return t.AllColors;
+    }
+
     /// <summary>테이머 아래 카드가 뒷면인지</summary>
     public bool IsFaceDownUnderTamer(CardData card) => FaceDownUnderTamers.Count > 0 && FaceDownUnderTamers.Contains(card);
 

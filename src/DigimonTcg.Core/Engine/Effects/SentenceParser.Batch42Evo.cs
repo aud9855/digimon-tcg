@@ -102,7 +102,7 @@ internal static partial class SentenceParser
             if (tc.Success)
             {
                 int n = int.Parse(tc.Groups["n"].Value);
-                return c => c.Owner.Tamers.SelectMany(t => t.AllColors).Distinct().Count() >= n;
+                return c => c.Owner.Tamers.SelectMany(t => c.Owner.TamerColorsOf66(t)).Distinct().Count() >= n;
             }
             // 사건 조건 규칙 ("you have a Tamer with [Three Musketeers] in its text" 등 — BT25-082)
             if (ParseEventCondition(cond) is { } ec)

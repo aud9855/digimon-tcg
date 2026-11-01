@@ -384,7 +384,7 @@ internal static partial class SentenceParser
         var m = Regex.Match(cond.Trim(), $@"^you have (?:a|an) (?<c>(?:{Colors})(?:,? (?:or )?(?:{Colors}))*) Digimon or Tamer(?: in play)?$", I);
         if (!m.Success) return null;
         var colors = Regex.Matches(m.Groups["c"].Value, Colors, I).Select(x => Enum.Parse<CardColor>(x.Value, true)).ToList();
-        return c => c.Owner.BattleArea.Any(d => d.Colors.Any(colors.Contains)) || c.Owner.Tamers.Any(t => t.AllColors.Any(colors.Contains));
+        return c => c.Owner.BattleArea.Any(d => d.Colors.Any(colors.Contains)) || c.Owner.Tamers.Any(t => c.Owner.TamerColorsOf66(t).Any(colors.Contains));
     }
 }
 

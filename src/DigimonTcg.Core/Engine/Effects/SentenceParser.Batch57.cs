@@ -411,7 +411,7 @@ internal static partial class SentenceParser
                 int before = c.Owner.SuspendedTamers.Count;
                 for (int guard = 0; guard < 20; guard++)
                 {
-                    var t = c.Owner.Tamers.FirstOrDefault(x => (suspendColor == null || x.AllColors.Contains(suspendColor.Value)) && c.Owner.HasActiveTamer(x) && !c.Engine.TamerSuspendLocked(c.Owner, x));
+                    var t = c.Owner.Tamers.FirstOrDefault(x => (suspendColor == null || c.Owner.TamerColorsOf66(x).Contains(suspendColor.Value)) && c.Owner.HasActiveTamer(x) && !c.Engine.TamerSuspendLocked(c.Owner, x));
                     if (t == null) break;
                     int b = c.Owner.SuspendedTamers.Count;
                     c.Engine.SuspendTamer(c.Owner, t);

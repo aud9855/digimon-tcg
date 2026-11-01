@@ -80,7 +80,7 @@ internal static partial class SentenceParser
         {
             string pickText = Regex.Replace(m.Groups["pick"].Value.Trim(), @"^an? ", "1 ", RegexOptions.IgnoreCase);
             if ((ParseCardPick(pickText) ?? ParseNamePick(pickText)) is not { } pick) return (null, $"미지원 공개 조건: {pickText}");
-            var match = pick.Match;
+            var match = RevealAlias66.Wrap(pick.Match);   // v0.66.0 공개 중의 명칭 · Lv.
             return (c =>
             {
                 if (c.Owner.MainDeck.Count == 0) { c.LastStepResolved = false; Emit(c, label, "덱이 없습니다"); return; }
@@ -164,7 +164,7 @@ internal static partial class SentenceParser
     /// 이 효과를 받는 디지몬이 지킬 만하면 (Lv.6 이상이거나 진화원이 4장 이상) 낸다. 패에 남는 카드가 없어지면 내지 않는다
     /// </summary>
     internal static bool HandSourceWorth65(EffectContext c) =>
-        c.Self is { } d && c.Owner.BattleArea.Contains(d) && c.Owner.Hand.Count >= 2 && (d.TopCard.Level >= 6 || d.EvolutionSources.Count >= 4) && Diag46.HitTrue("handSourceWorth65");
+        c.HandCostValue66 is { } value66 ? c.Owner.Hand.Count >= 1 && value66(c) : c.Self is { } d && c.Owner.BattleArea.Contains(d) && c.Owner.Hand.Count >= 2 && (d.TopCard.Level >= 6 || d.EvolutionSources.Count >= 4) && Diag46.HitTrue("handSourceWorth65");
 
     /// <summary>
     /// v0.65.0 EX12-047 "those returned cards' colors" — 비용으로 되돌릴 카드 추천: 색이 많아지는 카드부터 (되돌린 카드들이 가진 색의 수를 크게), 같으면 Lv.가 높은 것

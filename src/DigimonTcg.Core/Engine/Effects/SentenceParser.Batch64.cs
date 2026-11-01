@@ -124,8 +124,8 @@ internal static partial class SentenceParser
         if (!m.Success) return ParseCounter(cnt.Trim());
         int per = m.Groups["n"].Success ? Math.Max(1, int.Parse(m.Groups["n"].Value)) : 1;
         // 자신의 디지몬(효과로 얻은 색도 — EX13-077 "진화원의 색을 전부 얻는다")과 테이머의 색 수 (Batch44Extra "colors your Digimon and Tamers have"와 같은 셈)
-        return (o, _, _) => o.BattleArea.Where(d => d.TamerProxyOf == null).SelectMany(d => d.TopCard.AllColors.Concat(d.ExtraColors))
-            .Concat(o.Tamers.SelectMany(t => t.AllColors)).Distinct().Count() / per;
+        return (o, _, _) => o.BattleArea.Where(d => d.TamerProxyOf == null).SelectMany(d => d.BaseColors66.Concat(d.ExtraColors))
+            .Concat(o.Tamers.SelectMany(t => o.TamerColorsOf66(t))).Distinct().Count() / per;
     }
 
     private static string? TryParseChoice64(string rawHeader, IReadOnlyList<string> rawOptions, bool inherited, CardData card, CardScriptDefinition? def)

@@ -14,7 +14,7 @@ internal static partial class SentenceParser
     private static int SuspendedDigimonAndTamers42(PlayerZones z) =>
         z.BattleArea.Count(d => d.IsSuspended && d.TamerProxyOf == null) + z.SuspendedTamers.Count;
 
-    private static int TamerColors42(PlayerZones z) => z.Tamers.SelectMany(t => t.AllColors).Distinct().Count();
+    private static int TamerColors42(PlayerZones z) => z.Tamers.SelectMany(t => z.TamerColorsOf66(t)).Distinct().Count();
 
     /// <summary>
     /// "2 suspended Digimon and/or Tamers" (BT12-057 — 공식 "레스트 상태인 디지몬과 테이머 2마리마다" — 양쪽) · "2 of your opponent's suspended Digimon or Tamers" (BT13-060) ·
@@ -46,12 +46,12 @@ internal static partial class SentenceParser
             { int per = Per(m); return (o, _, _) => TamerColors42(o) / per; }
             // 상대의 디지몬과 테이머의 색
             if (Regex.IsMatch(s, @"^colou?r (?:among|of) your opponent's Digimon and Tamers$", I))
-                return (_, e, _) => e.BattleArea.SelectMany(d => d.Colors).Concat(e.Tamers.SelectMany(t => t.AllColors)).Distinct().Count();
+                return (_, e, _) => e.BattleArea.SelectMany(d => d.Colors).Concat(e.Tamers.SelectMany(t => e.TamerColorsOf66(t))).Distinct().Count();
             // "yellow and/or red Tamer you have in play"
             if ((m = Regex.Match(s, $@"^(?<a>{Colors})(?: and/or| or|,) (?<b>{Colors}) Tamer you have(?: in play)?$", I)).Success)
             {
                 var a = Enum.Parse<CardColor>(m.Groups["a"].Value, true); var b = Enum.Parse<CardColor>(m.Groups["b"].Value, true);
-                return (o, _, _) => o.Tamers.Count(t => t.AllColors.Contains(a) || t.AllColors.Contains(b));
+                return (o, _, _) => o.Tamers.Count(t => o.TamerColorsOf66(t).Contains(a) || o.TamerColorsOf66(t).Contains(b));
             }
             if (Regex.IsMatch(s, @"^Digimon your opponent has with no digivolution cards$", I))
                 return (_, e, _) => e.BattleArea.Count(d => d.EvolutionSources.Count == 0);
@@ -67,7 +67,7 @@ internal static partial class SentenceParser
             if ((m = Regex.Match(s, $@"^of your (?:(?<c>{Colors}) )?Tamers with different names$", I)).Success)
             {
                 CardColor? c = m.Groups["c"].Success ? Enum.Parse<CardColor>(m.Groups["c"].Value, true) : null;
-                return (o, _, _) => o.Tamers.Where(t => c == null || t.AllColors.Contains(c.Value)).Select(t => t.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+                return (o, _, _) => o.Tamers.Where(t => c == null || o.TamerColorsOf66(t).Contains(c.Value)).Select(t => t.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count();
             }
             if (Regex.IsMatch(s, @"^Option cards? in (?:you|your) and your opponent's trash(?:es)?$", I))
                 return (o, e, _) => o.Trash.Count(x => x.Type == CardType.Option) + e.Trash.Count(x => x.Type == CardType.Option);

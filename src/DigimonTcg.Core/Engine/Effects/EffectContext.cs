@@ -95,6 +95,9 @@ public sealed class EffectContext
     /// <summary>v0.64.0 비용으로 옮긴 카드 ("returning 2 cards from their trash to the bottom of the deck" — "those returned cards' colors", EX12-047)</summary>
     public List<CardData> PaidCards64 { get; set; } = new();
 
+    /// <summary>v0.66.0 AI 추천: 패의 카드를 진화원 아래에 놓는 비용을 패가 적어도 낼 만한지 — 뒤의 효과의 값 (SentenceParser.CostForRest66이 비용 추천을 물을 때만 채운다)</summary>
+    internal Func<EffectContext, bool>? HandCostValue66 { get; set; }
+
     /// <summary>v0.34.0 "Your opponent may delete ~"의 결과 ("If this effect didn't delete") — 읽으면 지운다</summary>
     internal bool? LastDidDelete34 { get; set; }
 

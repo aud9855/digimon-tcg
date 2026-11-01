@@ -793,7 +793,7 @@ internal static partial class SentenceParser
         {
             int n = int.Parse(m.Groups["n"].Value);
             CardColor? color = m.Groups["color"].Success ? Enum.Parse<CardColor>(m.Groups["color"].Value, ignoreCase: true) : null;
-            List<CardData> Able(EffectContext c) => c.Owner.Tamers.Distinct().Where(t => c.Owner.HasActiveTamer(t) && (color == null || t.AllColors.Contains(color.Value))).ToList();
+            List<CardData> Able(EffectContext c) => c.Owner.Tamers.Distinct().Where(t => c.Owner.HasActiveTamer(t) && (color == null || c.Owner.TamerColorsOf66(t).Contains(color.Value))).ToList();
             return (c => Able(c).Count > 0,
                     c =>
                     {
@@ -1023,7 +1023,7 @@ internal static partial class SentenceParser
         if (!m.Success) return null;
         if (card.Type != CardType.Option) return "미지원: 옵션이 아닌 카드의 색 조건";
         var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true);
-        def?.IgnoreColorRequirementWhen(z => z.BattleArea.Any(d => d.Colors.Contains(col)) || (z.BreedingArea is { } b && b.Colors.Contains(col)) || z.Tamers.Any(t => t.AllColors.Contains(col)));
+        def?.IgnoreColorRequirementWhen(z => z.BattleArea.Any(d => d.Colors.Contains(col)) || (z.BreedingArea is { } b && b.Colors.Contains(col)) || z.Tamers.Any(t => z.TamerColorsOf66(t).Contains(col)));
         return "";
     }
 

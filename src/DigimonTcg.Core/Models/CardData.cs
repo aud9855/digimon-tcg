@@ -18,6 +18,9 @@ public class CardData
     [System.Text.Json.Serialization.JsonIgnore]
     public IReadOnlyList<CardColor> AllColors =>
         SecondaryColor is CardColor second && second != Color ? new[] { Color, second } : new[] { Color };
+    /// <summary>v0.66.0 같은 값의 얕은 복사본 (BT15-060 · BT17-068 공개 중의 다른 모습 — 고르는 조건을 볼 때만)</summary>
+    internal CardData CloneShallow66() => (CardData)MemberwiseClone();
+
     public int Level { get; set; }                                  // Lv.2 ~ Lv.7 ( 테이머/옵션은 0 )
     public int PlayCost { get; set; }                               // 등장 코스트
     public int EvoCost { get; set; }                                // 진화 코스트

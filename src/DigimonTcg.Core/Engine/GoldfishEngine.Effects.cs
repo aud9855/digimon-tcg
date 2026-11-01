@@ -462,6 +462,7 @@ public partial class GoldfishEngine
         PruneFaceUp(State.DummyOpponent);
         ForgetTamerGrants65(State.Player);   // v0.65.0 떠난 테이머에게 준 효과 (EX10-058)
         ForgetTamerGrants65(State.DummyOpponent);
+        ExpireColors66();   // v0.66.0 BT18-078 바뀐 원래 색의 기간 (GoldfishEngine.Batch66)
         SyncTamerProxies();   // v0.36.0 디지몬으로 취급하는 테이머 (GoldfishEngine.TamerAsDigimon.cs)
         ApplyExtraTraits58();   // v0.58.0 지속 효과로 얻은 특징 (GoldfishEngine.Batch58.cs)
         ApplyContinuousEffects(State.Player, State.DummyOpponent, State.PlayerAllSecurityAttackUntil);
@@ -1802,7 +1803,9 @@ public partial class GoldfishEngine
     internal void FireThisCardTrashed(PlayerZones zones, IEnumerable<CardData> cards, EffectTrigger trigger)
     {
         var owner = CurrentEffectOwner;
-        foreach (var card in cards.Distinct().ToList())
+        var byCard = CurrentEffectCard;   // v0.66.0 EX2-039 "if it wasn't trashed by [EX2-039 Impmon]'s effect" — 파기한 효과가 적힌 카드 (효과 밖 = null)
+        // v0.66.0 덱에서 함께 파기된 같은 카드 여러 장 (같은 CardData 객체)은 1장마다 (EX2-039 등 — 종합 룰: 카드마다 유발한다)
+        foreach (var card in (trigger == EffectTrigger.ThisTrashedFromDeck ? cards : cards.Distinct()).ToList())
         {
             if (CardScripts.For(card)?.Effects.Any(e => e.Trigger == trigger) != true)
                 continue;
@@ -1810,13 +1813,15 @@ public partial class GoldfishEngine
             {
                 if (State.IsGameOver || !zones.Trash.Contains(card)) return;
                 var outer = ThisTrashedByOwner;
+                var outerCard = ThisTrashedByCard66;
                 ThisTrashedByOwner = owner;
+                ThisTrashedByCard66 = byCard;
                 try
                 {
                     var ctx = RunEffects(trigger, zones, null, card, includeInherited: false, triggerCard: card);
                     if (ctx.PlaceInBattleArea && zones.Trash.Remove(card)) PlaceOption(zones, card);   // "place this card in the battle area" (옵션)
                 }
-                finally { ThisTrashedByOwner = outer; }
+                finally { ThisTrashedByOwner = outer; ThisTrashedByCard66 = outerCard; }
             });
         }
     }

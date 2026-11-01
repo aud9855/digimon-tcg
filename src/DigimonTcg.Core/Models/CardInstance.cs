@@ -169,7 +169,20 @@ public class CardInstance
     internal PlayerZones? LiveOwner42 { get; set; }
 
     /// <summary>v0.37.0 이 디지몬의 지금 색 (맨 위 카드의 색 + 효과로 더해진 색)</summary>
-    public IReadOnlyList<CardColor> Colors => ExtraColors.Count == 0 ? TopCard.AllColors : TopCard.AllColors.Concat(ExtraColors.Where(c => !TopCard.AllColors.Contains(c))).ToList();
+    public IReadOnlyList<CardColor> Colors
+    {
+        get
+        {
+            var b = BaseColors66;
+            return ExtraColors.Count == 0 ? b : b.Concat(ExtraColors.Where(c => !b.Contains(c))).ToList();
+        }
+    }
+
+    /// <summary>v0.66.0 효과로 바뀐 원래 색 (BT18-078 "change 1 of their Digimon or Tamers into a color other than white" — 값 = (색, 끝나는 TurnSequence)). 엔진이 기간이 끝나면 지운다</summary>
+    public (CardColor Color, int Until)? BaseColor66 { get; set; }
+
+    /// <summary>v0.66.0 이 디지몬의 원래 색 (효과로 바뀌었으면 그 색, 아니면 맨 위 카드의 색)</summary>
+    public IReadOnlyList<CardColor> BaseColors66 => BaseColor66 is { } bc ? new[] { bc.Color } : TopCard.AllColors;
 
     public CardInstance(CardData baseCard, int currentTurn)
     {
@@ -371,6 +384,7 @@ public class CardInstance
             SaFlip62 = SaFlip62,
             SaNeg62 = SaNeg62,
             NoIgnoreReq62 = NoIgnoreReq62,
+            BaseColor66 = BaseColor66,
         };
         v.AttackSaParts62.AddRange(AttackSaParts62);
         v.EvolutionSources = new Stack<CardData>(EvolutionSources.Reverse());

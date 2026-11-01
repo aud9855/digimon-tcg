@@ -89,7 +89,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cost, $@"^suspending (?:1|one) of your (?<col>(?:{Colors})(?: or (?:{Colors}))*) Tamers$", I)).Success)
         {
             var cols = Regex.Matches(m.Groups["col"].Value, Colors, I).Select(x => Enum.Parse<CardColor>(x.Value, ignoreCase: true)).ToList();
-            IEnumerable<CardData> Pool(EffectContext c) => c.Owner.Tamers.Where(t => c.Owner.HasActiveTamer(t) && t.AllColors.Any(cols.Contains) && !c.Engine.TamerSuspendLocked(c.Owner, t));
+            IEnumerable<CardData> Pool(EffectContext c) => c.Owner.Tamers.Where(t => c.Owner.HasActiveTamer(t) && c.Owner.TamerColorsOf66(t).Any(cols.Contains) && !c.Engine.TamerSuspendLocked(c.Owner, t));
             return (c => Pool(c).Any(),
                     c => { var t = Pool(c).FirstOrDefault(); if (t == null) c.CostFailed = true; else c.Engine.SuspendTamer(c.Owner, t); },
                     _ => true, "조건에 맞는 자신의 테이머 1명을 레스트시켜");

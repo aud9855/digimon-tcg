@@ -424,11 +424,11 @@ internal static partial class SentenceParser
             return (o, e, _) =>
             {
                 // v0.56.0 디지몬은 효과로 얻은 색도 (EX13-077 "This Digimon gains all colors in its digivolution cards")
-                static IEnumerable<CardColor> Colors(IEnumerable<CardInstance> ds) => ds.Where(d => d.TamerProxyOf == null).SelectMany(d => d.TopCard.AllColors.Concat(d.ExtraColors));
-                IEnumerable<CardColor> colors = who.StartsWith("your opponent's") ? Colors(e.BattleArea).Concat(e.Tamers.SelectMany(t => t.AllColors))
-                    : who.StartsWith("your digimon") ? Colors(o.BattleArea).Concat(o.Tamers.SelectMany(t => t.AllColors))
-                    : who.StartsWith("your tamers") ? o.Tamers.Where(t => xs!.Any(x => TargetSpec.HasTrait(t, x))).SelectMany(t => t.AllColors)
-                    : Colors(o.BattleArea.Concat(e.BattleArea)).Concat(o.Tamers.SelectMany(t => t.AllColors)).Concat(e.Tamers.SelectMany(t => t.AllColors));
+                static IEnumerable<CardColor> Colors(IEnumerable<CardInstance> ds) => ds.Where(d => d.TamerProxyOf == null).SelectMany(d => d.BaseColors66.Concat(d.ExtraColors));
+                IEnumerable<CardColor> colors = who.StartsWith("your opponent's") ? Colors(e.BattleArea).Concat(e.Tamers.SelectMany(t => e.TamerColorsOf66(t)))
+                    : who.StartsWith("your digimon") ? Colors(o.BattleArea).Concat(o.Tamers.SelectMany(t => o.TamerColorsOf66(t)))
+                    : who.StartsWith("your tamers") ? o.Tamers.Where(t => xs!.Any(x => TargetSpec.HasTrait(t, x))).SelectMany(t => o.TamerColorsOf66(t))
+                    : Colors(o.BattleArea.Concat(e.BattleArea)).Concat(o.Tamers.SelectMany(t => o.TamerColorsOf66(t))).Concat(e.Tamers.SelectMany(t => e.TamerColorsOf66(t)));
                 return colors.Distinct().Count() / per;
             };
         }
@@ -451,7 +451,7 @@ internal static partial class SentenceParser
         }
         // "Tamer you have in play with a different color" (BT12-083 — 색이 다른 테이머 수)
         if (Regex.IsMatch(s, @"^Tamer you have in play with a different colou?r$", I))
-            return (o, _, _) => o.Tamers.SelectMany(t => t.AllColors).Distinct().Count();
+            return (o, _, _) => o.Tamers.SelectMany(t => o.TamerColorsOf66(t)).Distinct().Count();
         // "for every 2 Tamers" (BT17-075 — 공식 "테이머 2명마다", 서로의 테이머)
         if ((m = Regex.Match(s, @"^(?<n>\d+) Tamers$", I)).Success)
         {

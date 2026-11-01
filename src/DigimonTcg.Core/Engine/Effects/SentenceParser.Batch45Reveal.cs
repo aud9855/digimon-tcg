@@ -76,7 +76,7 @@ internal static partial class SentenceParser
     private static (int Count, Func<CardData, bool> Match)? RevealPick45(string x)
     {
         string p = Regex.IsMatch(x, @"^(?:\d+|an?) ", I) ? Regex.Replace(x, @"^an? ", "1 ", I) : "1 " + x;
-        return ParseCardPick(p) ?? ParseNamePick(p);
+        return (ParseCardPick(p) ?? ParseNamePick(p)) is { } r ? (r.Count, RevealAlias66.Wrap(r.Match)) : null;   // v0.66.0 BT15-060 · BT17-068 공개 중의 명칭 · Lv.
     }
 
     private static Step? RevealGroup45(string s, CardData card, List<EffectTrigger> triggers)

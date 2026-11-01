@@ -118,7 +118,7 @@ internal static partial class SentenceParser
             if ((m = Regex.Match(cond, $@"^your opponent has (?:a|an) (?<col>{Colors}) Digimon or Tamer$", I)).Success)
             {
                 var col = Enum.Parse<CardColor>(m.Groups["col"].Value, ignoreCase: true);
-                sc = (_, e) => e.BattleArea.Any(d => d.TamerProxyOf == null && d.Colors.Contains(col)) || e.Tamers.Any(x => x.AllColors.Contains(col));
+                sc = (_, e) => e.BattleArea.Any(d => d.TamerProxyOf == null && d.Colors.Contains(col)) || e.Tamers.Any(x => e.TamerColorsOf66(x).Contains(col));
             }
             else
                 sc = ParseSideCondition(cond) ?? ParseSideCondition33(cond);
