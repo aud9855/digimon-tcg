@@ -121,6 +121,8 @@ public enum EffectTrigger
     ThisDigimonDeletedAnother53,    // 이 디지몬이 다른 디지몬을 소멸시켰을 때 (배틀 · 이 디지몬의 효과 — 공식 Q&A EX1-064, Other = 소멸한 디지몬 · BT16-061)
     // v0.62.0
     ThisDigimonWouldUnsuspend62,    // 이 디지몬이 액티브가 되려 할 때 (액티브 페이즈 · 효과 모두 — EffectContext.PreventUnsuspend62로 막는다, BT7-055가 주는 효과)
+    // v0.70.0
+    StartOfOpponentsMainPhase70,    // [상대의 메인 페이즈 개시 시] (EX3-024 — 턴 플레이어의 [자신의 메인 페이즈 개시 시] 다음에 상대의 디지몬)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>

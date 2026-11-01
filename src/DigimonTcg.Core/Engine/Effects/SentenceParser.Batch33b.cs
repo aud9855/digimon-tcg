@@ -115,7 +115,7 @@ internal static partial class SentenceParser
         fx = Regex.Replace(fx, @"^your security is reduced$", "your security stack is removed from", RegexOptions.IgnoreCase);   // BT19-039
         if (fx != ev) return ParseEventPhrase(fx);
         // 사건 안의 쉼표 목록 "[Angel], [Archangel] or [Fallen Angel]" → "[Angel] or [Archangel] or [Fallen Angel]" (원래 규칙들이 쉼표에서 끊는다 — 뜻은 같다)
-        string listed = Regex.Replace(ev, @"\],\s+(?=\[)", "] or [");
+        string listed = Regex.Replace(ev, @"\],\s+(?:or\s+)?(?=\[)", "] or ");   // v0.70.0 앞보기의 "["를 또 붙여 가운데 항목이 "[[대천사형"이 되던 것 (EX6-074 · EX2-060 등 — 가운데 이름 · 특징을 보지 못했다)
         // "When any of your cards with the [Beast] ~ trait are played" = "When you play a card with ~" (BT23-029)
         listed = Regex.Replace(listed, @"^(?:one of |any of )?your cards (?<w>with .+?) (?:is|are) played$", "you play a card ${w}", RegexOptions.IgnoreCase);
         if (listed != ev && ParseEventPhrase(listed) is { } fromList) return fromList;

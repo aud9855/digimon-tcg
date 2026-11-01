@@ -1620,6 +1620,7 @@ public partial class GoldfishEngine
         RunPhaseTamers46(EffectTrigger.StartOfYourMainPhase, owner, witness46);
         RunPlacedOptions(EffectTrigger.StartOfYourMainPhase, owner, witness: witness46);
         RunTrashEffects(EffectTrigger.StartOfYourMainPhase, owner, witness: witness46);   // v0.31.0 [트래시] [~ 시] 효과
+        RunOpponentMainPhaseStart70(owner);   // v0.70.0 [상대의 메인 페이즈 개시 시] (EX3-024 — GoldfishEngine.Batch70)
         RecalculateFieldBuffs();
     }
 

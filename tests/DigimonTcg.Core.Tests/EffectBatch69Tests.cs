@@ -141,7 +141,7 @@ public class EffectBatch69Tests
     {
         var sec = Card(Uid("B69-DF-"), Bt26100);
         AllSupported(sec);
-        Assert.StartsWith("【시큐리티】 【서로의 턴】", Ko(Bt26100));
+        Assert.StartsWith("[시큐리티]【서로의 턴】", Ko(Bt26100));   // v0.70.0 공식 표기 (BT25-095)
         Assert.Contains("DP를 +3000 한다", Ko(Bt26100));
         var (state, engine) = NewMainPhase();
         var titan = Put(state.Player, Digimon("B69-TITAN", 4, dp: 4000, traits: "B69Titan"));

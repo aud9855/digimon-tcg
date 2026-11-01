@@ -566,7 +566,7 @@ public static partial class KoreanEffectRenderer
         string fx = Regex.Replace(ev, @"^another of your Digimon\b", "one of your other Digimon", RegexOptions.IgnoreCase);
         fx = Regex.Replace(fx, @"^your security is reduced$", "your security stack is removed from", RegexOptions.IgnoreCase);
         if (fx != ev) return EventKo(fx);
-        string listed = Regex.Replace(ev, @"\],\s+(?=\[)", "] or [");
+        string listed = Regex.Replace(ev, @"\],\s+(?:or\s+)?(?=\[)", "] or ");   // v0.70.0 앞보기의 "["를 또 붙여 가운데 항목이 "[[대천사형"이 되던 것 (EX6-074 · EX2-060 등 — 가운데 이름 · 특징을 보지 못했다)
         listed = Regex.Replace(listed, @"^(?:one of |any of )?your cards (?<w>with .+?) (?:is|are) played$", "you play a card ${w}", RegexOptions.IgnoreCase);
         if (listed != ev && EventKo(listed) is { } fromList) return fromList;
 

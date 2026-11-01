@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace DigimonTcg.Core.Models;
 
@@ -15,6 +16,7 @@ public static class CardNames
 
     /// <summary>이름에 x를 포함하는가 ("with [X] in its name", "your [X]" 등) — Name · EnglishName 둘 다 본다</summary>
     public static bool Contains(CardData card, string x) =>
+        x.Contains(ExceptMark70) ? ContainsExcept70(x, n => Contains(card, n), n => Is(card, n)) :
         card.Name.Contains(x, StringComparison.OrdinalIgnoreCase)
         || (!string.IsNullOrWhiteSpace(card.EnglishName) && card.EnglishName!.Contains(x, StringComparison.OrdinalIgnoreCase));
 
@@ -34,7 +36,19 @@ public static class CardNames
     public static string MatchName(CardInstance d) => d.Changed67 is { } ch ? ch.Name : MatchName(d.TopCard);
 
     /// <summary>필드의 디지몬의 명칭에 x를 포함하는가</summary>
-    public static bool Contains(CardInstance d, string x) => d.Changed67 is { } ch ? ch.Name.Contains(x, StringComparison.OrdinalIgnoreCase) : Contains(d.TopCard, x);
+    public static bool Contains(CardInstance d, string x) => x.Contains(ExceptMark70) ? ContainsExcept70(x, n => Contains(d, n), n => Is(d, n)) : d.Changed67 is { } ch ? ch.Name.Contains(x, StringComparison.OrdinalIgnoreCase) : Contains(d.TopCard, x);
+
+    /// <summary>
+    /// v0.70.0 "[Greymon] in its name (other than [DoruGreymon], [BurningGreymon] or [DexDoruGreymon])" — 문장 읽기가 이름 조건 안에 제외할 명칭을 붙인다
+    /// ("Greymon⊄DoruGreymon⊄BurningGreymon⊄DexDoruGreymon"). 전에는 괄호를 설명문으로 지워 제외가 빠졌다 (BT4-092 · BT5-015 등)
+    /// </summary>
+    public const char ExceptMark70 = (char)0x2284;
+
+    private static bool ContainsExcept70(string x, Func<string, bool> contains, Func<string, bool> isName)
+    {
+        var parts = x.Split(ExceptMark70);
+        return contains(parts[0]) && !parts.Skip(1).Any(isName);
+    }
 
     /// <summary>필드의 디지몬의 명칭이 정확히 x인가</summary>
     public static bool Is(CardInstance d, string x) => d.Changed67 is { } ch ? ch.Name.Equals(x, StringComparison.OrdinalIgnoreCase) : Is(d.TopCard, x);
