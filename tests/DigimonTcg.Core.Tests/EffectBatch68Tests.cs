@@ -75,12 +75,12 @@ public class EffectBatch68Tests
 
     private sealed class Answers : IChoiceProvider
     {
-        public bool Yes = true;
-        public int? Option;
+        public bool Yes { get; init; } = true;
+
         public List<string> Asked { get; } = new();
         public bool Confirm(GameState state, CardInstance? subject, string question, bool recommended) { Asked.Add(question); return Yes; }
         public CardInstance? ChooseDigimon(GameState state, string question, IReadOnlyList<CardInstance> options, CardInstance? recommended, bool optional) => recommended ?? options.FirstOrDefault();
-        public int ChooseOption(GameState state, string question, IReadOnlyList<string> options, int recommended) => Option ?? recommended;
+        public int ChooseOption(GameState state, string question, IReadOnlyList<string> options, int recommended) => recommended;
     }
 
     // =====================================================================
