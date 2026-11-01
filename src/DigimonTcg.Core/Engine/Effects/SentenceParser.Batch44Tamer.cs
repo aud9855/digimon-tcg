@@ -106,8 +106,7 @@ internal static partial class SentenceParser
                 var pool = new List<CardInstance>();
                 foreach (var z in new[] { c.Owner, c.Enemy })
                 {
-                    bool mineSide = ReferenceEquals(z, c.Owner);
-                    foreach (var d in z.BattleArea.Where(d => d.TamerProxyOf == null && (un ? d.IsSuspended : !d.IsSuspended) && (mineSide || !c.Engine.IsUnaffectedBy(c.Owner, d))))
+                    foreach (var d in z.BattleArea.Where(d => d.TamerProxyOf == null && (un ? d.IsSuspended : !d.IsSuspended) && !c.Engine.IsUnaffectedBy(c.Owner, d)   /* v0.51.0 자신의 디지몬도 (LM-020) */))
                         pool.Add(d);
                     foreach (var t in z.Tamers.Distinct().Where(t => un ? z.SuspendedTamers.Contains(t) && !c.Engine.TamerUnsuspendLocked(z, t) : z.HasActiveTamer(t) && !c.Engine.TamerSuspendLocked(z, t)))
                     {

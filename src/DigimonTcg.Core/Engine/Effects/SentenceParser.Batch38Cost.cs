@@ -54,8 +54,26 @@ internal static partial class SentenceParser
                     },
                     c => Pool(c).Take(n).All(d => !ReferenceEquals(d, c.Self) && d.TopCard.Level <= 4), $"자신의 디지몬 {n}마리를 소멸시켜");
         }
-        // "deleting 1 Token" (EX11-012) — 자신의 토큰
-        if (Regex.IsMatch(cost, @"^deleting (?:1|one) (?:of your )?Tokens?$", I))
+        // v0.51.0 "deleting 1 Token" (EX11-012) — 주인이 적혀 있지 않으니 서로의 토큰 (상대 쪽 「석화」 토큰도) · "of your"면 자신의 토큰만
+        if (Regex.IsMatch(cost, @"^deleting (?:1|one) Tokens?$", I))
+        {
+            List<CardInstance> AnyTokens(EffectContext c) =>
+                c.Enemy.BattleArea.Where(d => GoldfishEngine.IsToken(d.TopCard) && !c.Engine.IsUnaffectedBy(c.Owner, d))   // 상대의 토큰 먼저 (상대의 필드가 줄고 「석화」는 상대의 시큐리티를 파기)
+                    .Concat(c.Owner.BattleArea.Where(d => GoldfishEngine.IsToken(d.TopCard) && !ReferenceEquals(d, c.Self))).ToList();
+            return (c => AnyTokens(c).Count > 0,
+                    c =>
+                    {
+                        var pool = AnyTokens(c);
+                        var t = pool.Count == 1 ? pool[0] : c.Engine.ChooseTargets(c.Owner, pool, 1, $"[{c.Card.Name}] 비용으로 소멸시킬 토큰 1마리를 고르세요 (서로의 토큰).", optional: false, preselected: null).FirstOrDefault();
+                        if (t == null) { c.CostFailed = true; return; }
+                        bool mine = c.Owner.BattleArea.Contains(t);
+                        if (mine) c.DeleteOwn(t);
+                        else if (!c.DeleteEnemy(t)) c.CostFailed = true;
+                        Diag46.Hit(mine ? "deleteOwnToken51" : "deleteEnemyToken51");
+                    },
+                    _ => true, "토큰 1마리를 소멸시켜");
+        }
+        if (Regex.IsMatch(cost, @"^deleting (?:1|one) of your Tokens?$", I))
             return (c => c.Owner.BattleArea.Any(d => GoldfishEngine.IsToken(d.TopCard)),
                     c => { var t = c.Owner.BattleArea.FirstOrDefault(d => GoldfishEngine.IsToken(d.TopCard)); if (t == null) c.CostFailed = true; else c.DeleteOwn(t); },
                     _ => true, "자신의 토큰 1마리를 소멸시켜");

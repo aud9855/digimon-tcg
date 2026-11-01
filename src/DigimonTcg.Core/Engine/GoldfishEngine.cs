@@ -619,7 +619,7 @@ public partial class GoldfishEngine
         if (State.Player.BattleArea.Contains(target))
             ApplyWhenDigivolvingEffects(State.Player, target, evoCard);
         else if (ReferenceEquals(State.Player.BreedingArea, target))
-            RunBreedingEffects42(EffectTrigger.WhenDigivolving, State.Player, null, evoCard);   // v0.42.0 [육성]【진화 시】 (EX10-013)
+            { NoteDigivolved51(State.Player); RunBreedingEffects42(EffectTrigger.WhenDigivolving, State.Player, null, evoCard); }   // v0.51.0 · v0.42.0 [육성]【진화 시】 (EX10-013)
         if (State.Player.BattleArea.Contains(target))
             FireForSide(EffectTrigger.AllyDigimonDigivolved, State.Player, target);
 
@@ -1783,7 +1783,7 @@ public partial class GoldfishEngine
         if (opp.BattleArea.Contains(fieldDigimon))
             AddEffectEvent(evoCard, CaptureEffectLogs(() => { ApplyWhenDigivolvingEffects(opp, fieldDigimon, evoCard); FireForSide(EffectTrigger.AllyDigimonDigivolved, opp, fieldDigimon); }));
         else if (ReferenceEquals(opp.BreedingArea, fieldDigimon))
-            AddEffectEvent(evoCard, CaptureEffectLogs(() => RunBreedingEffects42(EffectTrigger.WhenDigivolving, opp, null, evoCard)));   // v0.42.0 [육성]【진화 시】 (EX10-013)
+            AddEffectEvent(evoCard, CaptureEffectLogs(() => { NoteDigivolved51(opp); RunBreedingEffects42(EffectTrigger.WhenDigivolving, opp, null, evoCard); }));   // v0.42.0 [육성]【진화 시】 (EX10-013)
     }
 
     /// <summary>AI 등장: 코스트 지불 → [등장 시] 효과 (플레이어와 같은 카드 스크립트)</summary>

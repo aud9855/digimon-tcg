@@ -126,7 +126,7 @@ internal static partial class SentenceParser
     {
         var sides = anySide ? new[] { c.Enemy, c.Owner } : new[] { c.Enemy };
         var hosts = sides.SelectMany(z => z.BattleArea.Where(d => d.TamerProxyOf == null && d.EvolutionSources.Count > 0 && d.GetEvolutionStackBottomUp().Any(match)
-                && (ReferenceEquals(z, c.Owner) || !c.Engine.IsUnaffectedBy(c.Owner, d)) && !c.Engine.StackProtected42(z, d)).Select(d => (Z: z, D: d)))
+                && !c.Engine.IsUnaffectedBy(c.Owner, d) &&   /* v0.51.0 자신의 디지몬도 (LM-020) */ !c.Engine.StackProtected42(z, d)).Select(d => (Z: z, D: d)))
             .OrderByDescending(h => ReferenceEquals(h.Z, c.Enemy)).ThenByDescending(h => h.D.GetCurrentDP()).ToList();
         if (hosts.Count == 0) { c.LastStepResolved = false; Emit(c, label, "파기할 진화원이 없습니다"); return 0; }
         if (oneHost)

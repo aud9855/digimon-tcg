@@ -399,7 +399,10 @@ public static class KeywordDictionary
             {
                 bool inherited = field;
                 if (Regex.IsMatch(clause, @"^Inherited Effect\b", RegexOptions.IgnoreCase)) inherited = true;
-                else if (Regex.IsMatch(clause, @"^Security Effect\b", RegexOptions.IgnoreCase)) inherited = false;
+                else if (Regex.IsMatch(clause, @"^Security Effect\b", RegexOptions.IgnoreCase))
+                    // v0.51.0 테이머 진화원 칸의 "Security Effect ~ this Digimon ~"([시큐리티]가 아닌 것 — AD1-020 · AD1-023 · BT24-086)는 진화원 효과 (테이머가 진화원이 되었을 때의 "이 디지몬")
+                    inherited = field && card.Type == CardType.Tamer && !Regex.IsMatch(clause, @"\[Security\]", RegexOptions.IgnoreCase)
+                                && Regex.IsMatch(clause, @"\bthis\b[^.]*?\bDigimon\b", RegexOptions.IgnoreCase);
                 yield return (inherited, clause, options);
             }
         }

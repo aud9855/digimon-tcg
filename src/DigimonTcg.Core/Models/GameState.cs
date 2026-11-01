@@ -71,6 +71,9 @@ public class PlayerZones
     public int CannotPlayFromTrashByEffectsUntil { get; set; }
     public int CannotUseOptionsUntil { get; set; }
 
+    /// <summary>v0.51.0 이 쪽이 마지막으로 진화한 턴 (GameState.TurnSequence, 없으면 -1) — "If you've digivolved this turn" (BT1-007)</summary>
+    public int DigivolvedTurnSeq51 { get; set; } = -1;
+
     /// <summary>v0.37.0 "can't play (or move) Digimon with N DP or less until ~" (EX3-012 · EX7-014): (DP 상한, 끝나는 TurnSequence, 육성 에어리어에서 이동도 막는지)</summary>
     public List<(int Dp, int Until, bool Move)> PlayDpLocks { get; } = new();
 

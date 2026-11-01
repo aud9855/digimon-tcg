@@ -360,7 +360,7 @@ internal static partial class SentenceParser
                 foreach (var side in new[] { c.Owner, c.Enemy })
                 {
                     bool mine = ReferenceEquals(side, c.Owner);
-                    var cands = side.BattleArea.Where(d => d.TamerProxyOf == null && (mine || !c.Engine.IsUnaffectedBy(c.Owner, d)))
+                    var cands = side.BattleArea.Where(d => d.TamerProxyOf == null && !c.Engine.IsUnaffectedBy(c.Owner, d)   /* v0.51.0 자신의 디지몬도 (LM-020) */)
                         .OrderBy(d => mine ? d.GetCurrentDP() : -d.GetCurrentDP()).ToList();   // 추천: 자신은 약한 디지몬 · 상대는 강한 디지몬
                     if (cands.Count == 0) continue;
                     var pick = c.Engine.ChooseTargets(c.Owner, cands, 1, $"[{label}] 시큐리티 맨 위에 놓을 {(mine ? "자신" : "상대")}의 디지몬을 고르세요.", optional: false, preselected: cands[0]).FirstOrDefault() ?? cands[0];
@@ -381,7 +381,7 @@ internal static partial class SentenceParser
             {
                 int n = 0;
                 foreach (var side in new[] { c.Owner, c.Enemy })
-                    foreach (var d in side.BattleArea.Where(d => d.TamerProxyOf == null && d.TopCard.Level == lv && (ReferenceEquals(side, c.Owner) || !c.Engine.IsUnaffectedBy(c.Owner, d))).ToList())
+                    foreach (var d in side.BattleArea.Where(d => d.TamerProxyOf == null && d.TopCard.Level == lv && !c.Engine.IsUnaffectedBy(c.Owner, d)   /* v0.51.0 자신의 디지몬도 (LM-020) */).ToList())
                     {
                         c.Engine.PlaceOnSecurity(side, d, top: true);
                         if (!side.BattleArea.Contains(d)) n++;

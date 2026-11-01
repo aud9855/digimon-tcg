@@ -46,7 +46,8 @@ public static partial class KoreanEffectRenderer
         if ((m = Regex.Match(alt, @"^deleting (?<n>\d+) of your (?<t>.+)$", IC)).Success
             && TargetKo($"{m.Groups["n"].Value} of your {Regex.Replace(m.Groups["t"].Value, @"\btheir (names?|texts?)\b", "its $1", IC)}") is { } tk)
             return $"{tk}{J(tk, "을", "를")} 소멸시키는 것으로,";
-        if (Regex.IsMatch(cost, @"^deleting (?:1|one) (?:of your )?Tokens?$", IC)) return "자신의 토큰 1마리를 소멸시키는 것으로,";
+        if (Regex.IsMatch(cost, @"^deleting (?:1|one) Tokens?$", IC)) return "토큰 1마리를 소멸시키는 것으로,";   // v0.51.0 EX11-012 — 주인이 없으니 서로의 토큰
+        if (Regex.IsMatch(cost, @"^deleting (?:1|one) of your Tokens?$", IC)) return "자신의 토큰 1마리를 소멸시키는 것으로,";
         if ((m = Regex.Match(cost, @"^deleting this Digimon that has a digivolution card (?<pick>with .+)$", IC)).Success && PickKo("1 card " + m.Groups["pick"].Value) is { } sk)
             return $"진화원에 {Regex.Replace(sk, @"\s*1장$", "")}{J(Regex.Replace(sk, @"\s*1장$", ""), "이", "가")} 있는 이 디지몬을 소멸시키는 것으로,";
         if ((m = Regex.Match(cost, @"^suspending (?:1|one) of your (?<col>(?:red|blue|yellow|green|black|purple|white)(?: or (?:red|blue|yellow|green|black|purple|white))*) Tamers$", IC)).Success)

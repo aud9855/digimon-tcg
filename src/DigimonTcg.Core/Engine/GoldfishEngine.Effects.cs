@@ -467,7 +467,7 @@ public partial class GoldfishEngine
                 if (effect.Value(ctx) != 0) inst.ActiveKeywords.Add(effect.Keyword!.Value);
             // 다른 카드가 주는 키워드 ("All of your level 4 or lower Digimon gain ＜Jamming＞") — 효과를 가진 카드 기준으로 조건 판단
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllyKeyword).Concat(TamerAuras(owner, enemy, StaticStat.AllyKeyword)))
-                if (aura.Keyword != null && aura.AppliesTo(auraCtx, inst) && aura.Value(auraCtx) != 0)
+                if (aura.Keyword != null && aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx) && aura.Value(auraCtx) != 0)
                     inst.ActiveKeywords.Add(aura.Keyword.Value);
 
             inst.HasGrantedBlocker = EffectRules.IsActive(inst.GrantedBlockerUntil, State) || CardScripts.HasKeyword(inst, Keyword.Blocker);
@@ -482,27 +482,27 @@ public partial class GoldfishEngine
 
             // 다른 디지몬이 주는 효과 ("All of your black Digimon get +1000 DP") — 효과를 가진 디지몬 기준으로 조건 판단
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllyDigimonDp))
-                if (aura.AppliesTo(auraCtx, inst)) dp += aura.Value(auraCtx);
+                if (aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx)) dp += aura.Value(auraCtx);
             foreach (var link in inst.LinkedCards)   // 〈링크 중〉 이 디지몬의 DP +N
             {
                 dp += LinkDp(link);
                 sec += CardScripts.For(link)?.LinkSecurityAttack43 ?? 0;   // v0.43.0 링크 효과의 ≪시큐리티 어택 +N≫
             }
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllySecurityAttack).Concat(TamerAuras(owner, enemy, StaticStat.AllySecurityAttack)))
-                if (aura.AppliesTo(auraCtx, inst)) sec += aura.Value(auraCtx);
+                if (aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx)) sec += aura.Value(auraCtx);
             // 상대 카드가 주는 효과 ("All of your opponent's Digimon with no digivolution cards gain ＜Security A. -1＞")
             foreach (var (aura, auraCtx) in DigimonAuras(enemy, owner, StaticStat.EnemySecurityAttack).Concat(TamerAuras(enemy, owner, StaticStat.EnemySecurityAttack)))
-                if (aura.AppliesTo(auraCtx, inst)) sec += aura.Value(auraCtx);
+                if (aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx)) sec += aura.Value(auraCtx);
             // v0.44.0 상대 카드가 주는 DP ("all of your opponent's suspended Digimon get -4000 DP" BT16-101)
             foreach (var (aura, auraCtx) in DigimonAuras(enemy, owner, StaticStat.EnemyDigimonDp44).Concat(TamerAuras(enemy, owner, StaticStat.EnemyDigimonDp44)))
-                if (aura.AppliesTo(auraCtx, inst)) dp += aura.Value(auraCtx);
+                if (aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx)) dp += aura.Value(auraCtx);
 
             dp += DpSetDelta45(owner, enemy, inst);   // v0.45.0 "treated as having 16000 DP" (BT22-007)
             inst.DpFloor45 = statics.Where(e => e.Stat == StaticStat.DpFloor45).Select(e => e.Value(ctx)).DefaultIfEmpty(0).Max();   // v0.45.0 DP 하한 (EX11-070)
             inst.StaticUnsuspendLock45 = UnsuspendLock45(owner, inst, null, phase: false);   // v0.45.0 "don't unsuspend" 지속 효과 (BT12-057)
             inst.EffectDpBonus = dp;
             inst.EffectSecurityAttackBonus = sec;
-            inst.TamerDpBonus = TamerStatics(owner, StaticStat.AllyDigimonDp).Where(e => e.Subject == null || e.Subject(inst)).Sum(e => e.Value(ctx));
+            inst.TamerDpBonus = CategoryShield51(inst, CardType.Tamer) ? 0 : TamerStatics(owner, StaticStat.AllyDigimonDp).Where(e => e.Subject == null || e.Subject(inst)).Sum(e => e.Value(ctx));   // v0.51.0 LM-020 테이머의 효과를 받지 않는다
             inst.TamerSecurityAttackBonus = 0;
         }
 
@@ -1301,7 +1301,7 @@ public partial class GoldfishEngine
             RecalculateFieldBuffs();
             return;
         }
-        var inst = new CardInstance(card, State.CurrentTurn) { IsOwnersTurn = IsTurnOf(owner), IsSuspended = suspended };
+        var inst = new CardInstance(card, State.CurrentTurn) { IsOwnersTurn = IsTurnOf(owner), IsSuspended = suspended, PlayedByEffectCard51 = CurrentEffectCard };   // v0.51.0 등장시킨 효과의 카드
         owner.BattleArea.Add(inst);
         PlayCollector?.Add(inst);
         RecalculateFieldBuffs();
@@ -2161,6 +2161,7 @@ public partial class GoldfishEngine
     /// <summary>[진화 시] 효과 (진화한 카드의 메인 효과)</summary>
     private void ApplyWhenDigivolvingEffects(PlayerZones owner, CardInstance target, CardData evoCard)
     {
+        NoteDigivolved51(owner);   // v0.51.0 "If you've digivolved this turn" (BT1-007)
         NoteDigivolveWitness46(target);   // v0.46.0 진화한 시점에 있던 카드만 "진화했을 때"에 반응 (【진화 시】로 등장한 디지몬은 아니다)
         if (CardScripts.HasKeyword(target, Keyword.CannotActivateWhenDigivolving))   // v0.34.0 "can't activate [When Digivolving] effects"
         {
@@ -2180,6 +2181,20 @@ public partial class GoldfishEngine
         (ReferenceEquals(CurrentAttacker, target) && !OwnerOf(target).Equals(effectOwner) && CardScripts.HasKeyword(target, Keyword.Progress))
         || UnaffectedByKeyword34(effectOwner, target)   // v0.34.0 "isn't affected by your opponent's (Digimon's) effects"
         || UnaffectedCategory50(target);   // v0.50.0 LM-020 선언한 카드 종류의 효과 (이 디지몬의 효과 이외)
+
+    /// <summary>
+    /// v0.51.0 LM-020 "this Digimon isn't affected by that category's effects, other than this Digimon's effects" — 주인이 적혀 있지 않으니 자신의 효과도 받지 않는다.
+    /// 지속 효과(다른 디지몬 · 테이머가 주는 DP · 키워드 · 시큐리티 어택)도 그동안 받지 않는다. 이미 받은 기간 효과는 그대로
+    /// </summary>
+    private bool CategoryShield51(CardInstance inst, StaticContext auraCtx)
+    {
+        if (inst.UnaffectedCategory50 == null || ReferenceEquals(auraCtx.Digimon, inst)) return false;   // 이 디지몬의 효과는 받는다
+        var srcType = auraCtx.Digimon == null || auraCtx.Digimon.TamerProxyOf != null ? CardType.Tamer : CardType.Digimon;
+        return CategoryShield51(inst, srcType);
+    }
+
+    private bool CategoryShield51(CardInstance inst, CardType srcType) =>
+        inst.UnaffectedCategory50 is { } type && type == srcType && EffectRules.IsActive(inst.UnaffectedCategory50Until, State) && Diag46.HitTrue("categoryShieldStatic51");
 
     /// <summary>v0.50.0 그 카드 종류의 효과를 받지 않는다 (이 턴 — 이 디지몬 자신의 효과는 받는다)</summary>
     private bool UnaffectedCategory50(CardInstance target)

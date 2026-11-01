@@ -174,16 +174,25 @@ internal static partial class SentenceParser
         var optionTexts = rawOptions.Select(o => Normalize(o).TrimStart('・').Trim()).ToArray();
         var values = optionTexts.Select(t => SplitSentences(t).Sum(AiEvaluator.EstimateSentenceValue)).ToArray();
         int recommended = Array.IndexOf(values, values.Max());
+        var feasible = optionTexts.Select(OptionFeasible51).ToArray();   // v0.51.0 AI가 할 수 없는 선택지(진화할 카드가 없는 진화 등)를 고르지 않게
+        int Recommend51(EffectContext c)
+        {
+            var able = Enumerable.Range(0, values.Length).Where(i => feasible[i] == null || feasible[i]!(c)).ToList();
+            if (able.Count == 0) return recommended;
+            Diag46.Hit("eventChoiceFeasible51");
+            return able.OrderByDescending(i => values[i]).First();
+        }
+        bool AnyFeasible51(EffectContext c) => Enumerable.Range(0, values.Length).Any(i => feasible[i] == null || feasible[i]!(c));
         Action<EffectContext> resolve = c =>
         {
             if (cost is { } k)
             {
-                if (!PayOrSkip(c, k.CanPay, k.Recommend, k.Describe)) return;
+                if (!PayOrSkip(c, k.CanPay, x => k.Recommend(x) && AnyFeasible51(x), k.Describe)) return;   // v0.51.0 할 수 있는 선택지가 없으면 비용을 내지 않는 쪽을 추천
                 k.Pay(c);
                 if (c.CostFailed) return;
             }
             else if (may && !c.Engine.AskYesNo(c.Owner, null, $"[{c.Card.Name}] 효과를 발휘할까요? (아래 효과 중 1개)", recommended: true)) return;
-            int pick = c.Engine.ChooseOption(c.Owner, $"[{c.Card.Name}] 발휘할 효과를 1개 고르세요.", optionTexts, recommended);
+            int pick = c.Engine.ChooseOption(c.Owner, $"[{c.Card.Name}] 발휘할 효과를 1개 고르세요.", optionTexts, Recommend51(c));
             Diag46.Hit("eventChoice50");
             foreach (var s in options[Math.Clamp(pick, 0, options.Count - 1)])
                 RunStep(s, c);
@@ -201,6 +210,33 @@ internal static partial class SentenceParser
             var tr = t;
             if (inherited) def.Inherited(tr, resolve, when, once, twice);
             else def.On(tr, resolve, when, once, twice);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// v0.51.0 고르는 효과의 선택지를 지금 할 수 있는지 (AI 추천용 — null이면 늘 할 수 있다고 본다):
+    /// "It may digivolve into ~ in the hand ~" = 사건의 디지몬이 패의 그 카드로 진화할 수 있다 · "use 1 Option card ~ from your hand" = 패에 그 옵션이 있다
+    /// </summary>
+    private static Func<EffectContext, bool>? OptionFeasible51(string text)
+    {
+        Match m;
+        if ((m = Regex.Match(text, @"\bdigivolve into (?<pick>.+?) in (?:the|your) hand\b", I)).Success)
+        {
+            string p0 = Regex.Replace(m.Groups["pick"].Value, @"^an? ", "", I);
+            Func<CardData, bool> match = (ParseCardPick("1 " + p0) ?? ParseCardPick(m.Groups["pick"].Value))?.Match ?? (x => x.Type == CardType.Digimon);   // 읽지 못한 조건이면 패의 디지몬 카드 아무거나 (추천용)
+            return c =>
+            {
+                var bases = c.LastTargets.Concat(c.Other != null ? new[] { c.Other } : Array.Empty<CardInstance>()).Where(d => c.Owner.BattleArea.Contains(d)).ToList();
+                if (bases.Count == 0) bases = c.Owner.BattleArea.ToList();
+                return bases.Any(d => c.Owner.Hand.Any(x => match(x) && ActionValidator.ValidateEvolution(d, x).CanExecute));
+            };
+        }
+        if ((m = Regex.Match(text, @"\buse (?:1|an?|one) Option card (?<pick>.*?)\s*from your hand\b", I)).Success
+            && ParseCardPick(("1 Option card " + m.Groups["pick"].Value).Trim()) is { } op)
+        {
+            var match = op.Match;
+            return c => c.Owner.Hand.Any(x => x.Type == CardType.Option && match(x));
         }
         return null;
     }
