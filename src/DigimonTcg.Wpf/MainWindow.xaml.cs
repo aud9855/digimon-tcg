@@ -1038,7 +1038,7 @@ public partial class MainWindow : Window
         TxtFieldInspectPinState.Text = isPinned ? "📌 클릭 고정됨 (재클릭 해제)" : "🖱️ 마우스 오버 중 (클릭 시 고정)";
         TxtFieldInspectPinState.Foreground = BrushFromHex(isPinned ? "#F9E2AF" : "#A6E3A1");
 
-        if (instance.TopCard.Type == CardType.Digimon)
+        if (HasDp75(instance))
         {
             int baseDp = instance.TopCard.DP;
             int inhDp = instance.GetInheritedDpBonus() + instance.EffectDpBonus;   // 진화원 · 카드 지속 효과
@@ -2940,7 +2940,7 @@ public partial class MainWindow : Window
             FontSize = 10.5
         });
 
-        if (instance.TopCard.Type == CardType.Digimon)
+        if (HasDp75(instance))
         {
             int secChecks = instance.GetSecurityAttackCount();
             statusDock.Children.Add(new Border
@@ -3052,7 +3052,7 @@ public partial class MainWindow : Window
 
         // 3) 실물 최상단 카드 아트워크 프레임 (152 x 204)
         int totalBonusDp = instance.GetTotalBonusDP();
-        string dpBadge = instance.TopCard.Type == CardType.Digimon
+        string dpBadge = HasDp75(instance)
             ? totalBonusDp > 0
                 ? $"{instance.GetCurrentDP():N0} DP (▲+{totalBonusDp:N0})"
                 : $"{instance.GetCurrentDP():N0} DP"
@@ -3110,7 +3110,7 @@ public partial class MainWindow : Window
             stack.Children.Add(changedBadge);
 
         // 4) 카드 하단 1줄 컴팩트 전투력 배지 (상세 내역은 호버/클릭 시 우측 사이드바에서 확인!)
-        if (instance.TopCard.Type == CardType.Digimon)
+        if (HasDp75(instance))
         {
             int currentDp = instance.GetCurrentDP();
             string buffSummary = totalBonusDp > 0
@@ -4573,12 +4573,19 @@ public partial class MainWindow : Window
     /// v0.74.0 필드 디지몬 우클릭: [메인] 효과 · 🔗 링크 (종합 룰 6-5-1-4 「패/배틀 에어리어의 카드의 링크」) 중에서 고른다.
     /// 링크하면 이 디지몬은 배틀 에어리어를 떠나 링크 카드가 되고, 진화원은 트래시 (4-7-8) — 확인 창을 한 번 더 띄운다
     /// </summary>
+    /// <summary>v0.75.0 DP를 표시할 카드 — 디지몬, DP를 가진 디지타마 카드 (EX2-007 「마더 디・리퍼」 — 종합 룰 4-17-2)</summary>
+    private static bool HasDp75(CardInstance instance) => instance.TopCard.Type == CardType.Digimon || instance.TopCard.Type == CardType.Digitama && instance.TopCard.DP > 0;
+
     private void ChooseDigimonFieldAction(CardInstance instance, IReadOnlyList<GoldfishEngine.MainAbility> mains, IReadOnlyList<CardInstance> linkTargets)
     {
         var labels = mains.Select(a => a.Inherited ? $"🧬 진화원 [{a.Card.DisplayName}]의 [메인] 효과" : $"⚡ [{a.Card.DisplayName}]의 [메인] 효과").ToList();
         labels.AddRange(linkTargets.Select(t => $"🔗 이 디지몬을 [{t.TopCard.DisplayName}]에 링크" + (_engine.GetFieldLinkCost(instance, t) is int c ? $" (코스트 {c})" : "")));
         labels.Add("✖ 취소");
-        int pick = _engine.PlayerChoices?.ChooseOption(_gameState, $"[{instance.TopCard.DisplayName}] 무엇을 할까요?", labels, labels.Count - 1) ?? labels.Count - 1;
+        // v0.75.0 추천(★): 링크의 값어치(링크 DP · 링크 효과 대 이 디지몬 · 진화원 · 어택 — AI와 같은 판단)가 있으면 그 링크, 없으면 [메인] 효과, 둘 다 없으면 취소
+        int recommended = _engine.RecommendFieldLink75(instance) is { } rec && linkTargets.ToList().FindIndex(t => ReferenceEquals(t, rec)) is int ri and >= 0
+            ? mains.Count + ri
+            : mains.Count > 0 ? 0 : labels.Count - 1;
+        int pick = _engine.PlayerChoices?.ChooseOption(_gameState, $"[{instance.TopCard.DisplayName}] 무엇을 할까요?", labels, recommended) ?? recommended;
         if (pick < 0 || pick >= labels.Count - 1)
             return;
         if (pick < mains.Count)

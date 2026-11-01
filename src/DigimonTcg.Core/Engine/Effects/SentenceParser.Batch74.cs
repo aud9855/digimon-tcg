@@ -34,7 +34,7 @@ internal static partial class SentenceParser
     };
 
     internal static string OfficialClause74(CardData card, string clause) =>
-        OfficialClauses74.TryGetValue((card.CardId, clause.Trim()), out var official) ? official : clause;
+        OfficialClauses74.TryGetValue((card.CardId, clause.Trim()), out var official) ? official : OfficialClause75(card, clause);   // v0.75.0 (SentenceParser.Batch75)
 
     private static string? TryParse74(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {

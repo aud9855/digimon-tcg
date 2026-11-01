@@ -28,7 +28,7 @@ public partial class GoldfishEngine
     /// <summary>육성 에어리어의 디지몬을 배틀 에어리어로 옮긴다 (육성 페이즈 · 효과 공용 — 소환 멀미 없음). 반환: 옮긴 디지몬</summary>
     internal CardInstance? MoveBreedingToBattle(PlayerZones owner)
     {
-        if (owner.BreedingArea is not { } moving || moving.TopCard.Type != CardType.Digimon)
+        if (owner.BreedingArea is not { } moving || moving.TopCard.Type != CardType.Digimon && !(moving.TopCard.Type == CardType.Digitama && moving.TopCard.DP > 0))   // v0.75.0 이동은 DP를 가진 디지몬만 (종합 룰 4-17-2 — DP를 가진 디지타마 카드 EX2-007)
             return null;
         if (EffectRules.MoveDpBlocked(State, owner, moving))   // v0.37.0 "can't play or move Digimon with N DP or less" (EX7-014)
         {

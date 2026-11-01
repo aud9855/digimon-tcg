@@ -89,6 +89,7 @@ public partial class GoldfishEngine
     {
         (CardData, CardInstance, int)? best = null;
         int bestScore = int.MinValue;
+        _aiHandLinkScore75 = int.MinValue;
         foreach (var card in owner.Hand.Distinct().ToList())
         {
             if (LinkCostOf(card) is not int baseCost) continue;
@@ -100,6 +101,7 @@ public partial class GoldfishEngine
                 bool detach = Detach40Specified(d, card);
                 int score = (detach ? 100 : 0) + LinkDp(card) / 1000 * 5 + d.TopCard.Level - cost * 3;
                 if (score > bestScore) { bestScore = score; best = (card, d, cost); }
+                _aiHandLinkScore75 = bestScore;
             }
         }
         return best;
@@ -109,7 +111,9 @@ public partial class GoldfishEngine
     private bool AiTryLink41(AiTurnContext ctx)
     {
         var owner = State.DummyOpponent;
-        if (ChooseAiLink41(owner, ctx.Memory) is not { } pick) return false;
+        var hand41 = ChooseAiLink41(owner, ctx.Memory);
+        if (AiTryFieldLink75(ctx, hand41 != null ? _aiHandLinkScore75 : null)) return true;   // v0.75.0 배틀 에어리어의 디지몬 링크 (값어치가 패의 링크보다 클 때만 — GoldfishEngine.Batch75)
+        if (hand41 is not { } pick) return false;
         var (card, target, _) = pick;
         if (!owner.Hand.Remove(card)) return false;
         int cost = ReduceLinkCost41(owner, target, card, LinkCostOf(card) ?? 0, apply: true);

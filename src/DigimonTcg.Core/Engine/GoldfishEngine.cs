@@ -1274,7 +1274,7 @@ public partial class GoldfishEngine
                 AddEffectEvent(egg, CaptureEffectLogs(() => Hatch(State.DummyOpponent)));
             }
         }
-        else if (aiBreeding.TopCard.Type == CardType.Digimon && aiBreeding.TopCard.Level >= 3 && !EffectRules.MoveDpBlocked(State, State.DummyOpponent, aiBreeding))   // v0.37.0 EX7-014
+        else if (CanMoveFromBreeding75(aiBreeding.TopCard) && !EffectRules.MoveDpBlocked(State, State.DummyOpponent, aiBreeding))   // v0.37.0 EX7-014
         {
             // 육성 에어리어에서 이동한 디지몬은 등장한 것이 아니므로 이번 턴에 바로 공격 가능 (플레이어와 동일 — MoveBreedingToBattle)
             Log($"🤖 [AI 육성] 육성 에어리어 이동: [{aiBreeding.TopCard.Name}(Lv.{aiBreeding.TopCard.Level})] -> 배틀 에어리어");

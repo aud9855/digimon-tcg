@@ -316,7 +316,7 @@ public static class ActionValidator
         if (state.Player.BreedingArea == null)
             return ActionResult.Fail("육성 에어리어에 이동할 디지몬이 없습니다.");
 
-        if (state.Player.BreedingArea.TopCard.Level < 3)
+        if (!GoldfishEngine.CanMoveFromBreeding75(state.Player.BreedingArea.TopCard))   // v0.75.0 DP를 가진 디지타마 카드(EX2-007)도 이동할 수 있다 (종합 룰 4-17-2)
             return ActionResult.Fail("Lv.3(성장기) 이상으로 진화한 디지몬만 배틀 에어리어로 이동할 수 있습니다.");
 
         if (EffectRules.MoveDpBlocked(state, state.Player, state.Player.BreedingArea))   // v0.37.0 "can't play or move Digimon with 6000 DP or less" (EX7-014)
