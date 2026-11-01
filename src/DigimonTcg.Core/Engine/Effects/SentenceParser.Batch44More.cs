@@ -125,7 +125,7 @@ internal static partial class SentenceParser
     private static int TrashSources44(EffectContext c, int n, bool upTo, bool oneHost, bool anySide, Func<CardData, bool> match, string label)
     {
         var sides = anySide ? new[] { c.Enemy, c.Owner } : new[] { c.Enemy };
-        var hosts = sides.SelectMany(z => z.BattleArea.Where(d => d.TamerProxyOf == null && d.EvolutionSources.Count > 0 && d.GetEvolutionStackBottomUp().Any(match)
+        var hosts = sides.SelectMany(z => z.BattleArea.Where(d => d.TamerProxyOf == null && d.EvolutionSources.Count > 0 && c.Engine.TrashableSources61(d, d.GetEvolutionStackBottomUp()).Any(match)   /* v0.61.0 BT9-109 */
                 && !c.Engine.IsUnaffectedBy(c.Owner, d) &&   /* v0.51.0 자신의 디지몬도 (LM-020) */ !c.Engine.StackProtected42(z, d)).Select(d => (Z: z, D: d)))
             .OrderByDescending(h => ReferenceEquals(h.Z, c.Enemy)).ThenByDescending(h => h.D.GetCurrentDP()).ToList();
         if (hosts.Count == 0) { c.LastStepResolved = false; Emit(c, label, "파기할 진화원이 없습니다"); return 0; }
@@ -134,7 +134,7 @@ internal static partial class SentenceParser
             var pick = c.Engine.ChooseTargets(c.Owner, hosts.Select(h => h.D).ToList(), 1, $"[{c.Card.Name}] 진화원을 파기할 디지몬을 고르세요.", optional: false, preselected: hosts[0].D).FirstOrDefault() ?? hosts[0].D;
             hosts = hosts.Where(h => ReferenceEquals(h.D, pick)).ToList();
         }
-        var pool = hosts.SelectMany(h => h.D.GetEvolutionStackBottomUp().Reverse().Where(match).Select(x => (h.Z, h.D, X: x))).ToList();
+        var pool = hosts.SelectMany(h => c.Engine.TrashableSources61(h.D, h.D.GetEvolutionStackBottomUp().Reverse()).Where(match).Select(x => (h.Z, h.D, X: x))).ToList();   // v0.61.0 파기할 수 없는 진화원은 고르지 않는다
         int want = Math.Min(n, pool.Count);
         var picks = c.Engine.ChooseCardIndexes(c.Owner, CardChoiceZone.DigivolutionCards, pool.Select(p => p.X).ToList(), want, upTo,
             $"[{c.Card.Name}] 파기할 진화원을 고르세요 ({want}장{(upTo ? "까지" : "")}).").Distinct().Where(i => i >= 0 && i < pool.Count).Select(i => pool[i]).ToList();
@@ -142,9 +142,8 @@ internal static partial class SentenceParser
         foreach (var grp in picks.GroupBy(p => p.D))
         {
             var z = grp.First().Z;
-            var trashed = new List<CardData>();
-            foreach (var p in grp)
-                if (grp.Key.TakeSource(y => ReferenceEquals(y, p.X)) != null) { z.Trash.Add(p.X); trashed.Add(p.X); done++; }
+            var trashed = c.Engine.TrashChosenSources61(z, grp.Key, grp.Select(p => p.X).ToList());   // v0.61.0 진화원 파기는 한 곳으로 (보호 · 치환)
+            done += trashed.Count;
             if (trashed.Count > 0) c.Engine.ApplyOverflowPublic34(z, trashed);
         }
         c.RecalculateFieldBuffs();

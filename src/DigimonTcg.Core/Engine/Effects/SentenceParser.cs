@@ -80,7 +80,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse60(rawClause, inherited, card, def);   // v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse61(rawClause, inherited, card, def);   // v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -1381,10 +1381,9 @@ internal static partial class SentenceParser
                 if (!int.TryParse(arg, out int n)) return $"미지원 ≪프래그먼트≫ 수: {arg}";
                 regs.Add((EffectTrigger.ThisDigimonWouldBeDeleted, c =>
                 {
-                    if (c.Self == null || c.Self.EvolutionSources.Count < n
+                    if (c.Self == null || c.Engine.TrashableSourceCount61(c.Self) < n   // v0.61.0 파기할 수 없는 진화원은 세지 않는다
                         || !c.Engine.AskYesNo(c.Owner, c.Self, $"≪프래그먼트 ({n})≫ 진화원 {n}장을 파기하고 소멸을 막을까요?", recommended: true)) return;
-                    foreach (var x in c.Engine.ChooseCards(c.Owner, CardChoiceZone.DigivolutionCards, c.Self.EvolutionSources.Reverse().ToList(), n, upTo: false, $"≪프래그먼트 ({n})≫ 파기할 진화원 {n}장을 고르세요."))
-                        if (c.Self.TakeSource(y => ReferenceEquals(y, x)) != null) c.Owner.Trash.Add(x);
+                    c.Engine.TrashChosenSources61(c.Owner, c.Self, c.Engine.ChooseCards(c.Owner, CardChoiceZone.DigivolutionCards, c.Engine.TrashableSources61(c.Self, c.Self.EvolutionSources.Reverse()).ToList(), n, upTo: false, $"≪프래그먼트 ({n})≫ 파기할 진화원 {n}장을 고르세요."), cost: true);   // v0.61.0 진화원 파기는 한 곳으로
                     c.PreventLeave = true;
                     c.Log($"[≪프래그먼트 ({n})≫] [{c.Self.TopCard.Name}]: 진화원 {n}장을 파기하고 소멸하지 않습니다.");
                 }, c => c.Engine.CurrentLeave is { } l && ReferenceEquals(l.Digimon, c.Self) && l.CanPrevent));
@@ -2635,7 +2634,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cost, @"^trashing (?<n>\d+) of this Digimon's digivolution cards$", RegexOptions.IgnoreCase)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);
-            return (c => c.Self != null && c.Self.EvolutionSources.Count >= n,
+            return (c => c.Self != null && c.Engine.TrashableSourceCount61(c.Self) >= n,   // v0.61.0 파기할 수 없는 진화원은 세지 않는다 (BT9-109)
                     c => c.Engine.PayDigiBurst(c.Owner, c.Self!, n),
                     c => c.Self != null && c.Self.EvolutionSources.Count > n,
                     $"진화원 {n}장을 파기하여 (≪디지버스트 {n}≫)");
@@ -3062,7 +3061,7 @@ internal static partial class SentenceParser
         {
             var (n, match) = srcCost;
             bool toSecurity = m.Groups["pos"].Success, top = m.Groups["pos"].Value.Equals("top", StringComparison.OrdinalIgnoreCase);
-            List<CardData> Able(EffectContext c) => c.Self == null || !c.Owner.BattleArea.Contains(c.Self) ? new List<CardData>() : c.Self.SourcesWhere(match).ToList();
+            List<CardData> Able(EffectContext c) => c.Self == null || !c.Owner.BattleArea.Contains(c.Self) ? new List<CardData>() : toSecurity ? c.Self.SourcesWhere(match).ToList() : c.Engine.TrashableSources61(c.Self, c.Self.SourcesWhere(match)).ToList();   // v0.61.0 파기할 수 없는 진화원 (BT9-109)
             return (c => Able(c).Count >= n,
                     c =>
                     {
@@ -3071,8 +3070,8 @@ internal static partial class SentenceParser
                             $"[{c.Card.Name}] 비용으로 {(toSecurity ? "시큐리티에 놓을" : "파기할")} 진화원 {n}장을 고르세요.");
                         foreach (var x in picked)
                         {
+                            if (!toSecurity) { if (c.Engine.TrashChosenSources61(c.Owner, c.Self!, new[] { x }, cost: true).Count == 0) continue; c.Log($"[{c.Card.Name}] 진화원 [{x.Name}]을(를) 파기했습니다 (비용)"); continue; }   // v0.61.0 진화원 파기는 한 곳으로
                             if (c.Self!.TakeSource(y => ReferenceEquals(y, x)) == null) continue;
-                            if (!toSecurity) { c.Owner.Trash.Add(x); c.Log($"[{c.Card.Name}] 진화원 [{x.Name}]을(를) 파기했습니다 (비용)"); continue; }
                             if (top) c.Owner.SecurityStack.Insert(0, x); else c.Owner.SecurityStack.Add(x);
                             c.Log($"[{c.Card.Name}] 진화원 [{x.Name}]을(를) 시큐리티 {(top ? "맨 위" : "맨 아래")}에 놓았습니다 (비용)");
                             c.Engine.NotifySecurityAdded(c.Owner, x);
@@ -4136,8 +4135,7 @@ internal static partial class SentenceParser
                     var zone = c.Engine.OwnerOf(d);
                     if (c.Engine.StackProtected42(zone, d)) continue;   // v0.42.0 겹쳐진 카드 보호 (BT21-060)
                     bool topHere = either ? TopOrBottomSource37(c, d) : top;
-                    var removed = topHere ? c.Engine.TrashTopSources(zone, d, n) : d.RemoveBottomSources(n);
-                    if (!topHere) zone.Trash.AddRange(removed);
+                    var removed = topHere ? c.Engine.TrashTopSources(zone, d, n) : c.Engine.TrashSourcesAt61(zone, d, n, top: false);   // v0.61.0 진화원 파기는 한 곳으로 (보호 · 치환 — GoldfishEngine.Batch61)
                     parts.Add($"[{d.TopCard.Name}] {removed.Count}장");
                 }
                 Emit(c, label, parts.Count > 0 ? $"진화원 파기: {string.Join(", ", parts)}" : "진화원을 파기할 대상이 없습니다");
@@ -4159,7 +4157,7 @@ internal static partial class SentenceParser
                     hosts = host == null ? new List<CardInstance>() : new List<CardInstance> { host };
                 }
                 // 후보: (디지몬, 진화원) — 진화원 효과가 있는 카드 · DP가 높은 디지몬의 카드부터 추천
-                var pool = hosts.SelectMany(d => d.EvolutionSources.Select(x => (Host: d, Card: x)))
+                var pool = hosts.SelectMany(d => c.Engine.TrashableSources61(d, d.EvolutionSources).Select(x => (Host: d, Card: x)))   // v0.61.0 파기할 수 없는 진화원은 고르지 않는다 (BT9-109)
                     .OrderByDescending(p => !p.Host.IsFaceDown(p.Card) && (p.Card.InheritedEffectText.Trim().Length > 0 || p.Card.InheritedDpBonus > 0))
                     .ThenByDescending(p => p.Host.GetCurrentDP()).ToList();
                 if (pool.Count == 0) { Emit(c, label, "진화원을 파기할 대상이 없습니다"); return; }
@@ -4169,9 +4167,7 @@ internal static partial class SentenceParser
                 foreach (var group in picks.Select(i => pool[i]).GroupBy(p => p.Host))
                 {
                     var zone = c.Engine.OwnerOf(group.Key);
-                    int k = 0;
-                    foreach (var p in group)
-                        if (group.Key.TakeSource(y => ReferenceEquals(y, p.Card)) != null) { zone.Trash.Add(p.Card); k++; }
+                    int k = c.Engine.TrashChosenSources61(zone, group.Key, group.Select(p => p.Card).ToList()).Count;   // v0.61.0 진화원 파기는 한 곳으로
                     parts.Add($"[{group.Key.TopCard.Name}] {k}장");
                 }
                 c.RecalculateFieldBuffs();

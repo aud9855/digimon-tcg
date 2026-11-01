@@ -220,8 +220,7 @@ internal static class BuiltInCardScripts
         {
             var enemy = c.Enemy.BattleArea.Where(d => d.EvolutionSources.Count > 0).OrderByDescending(d => d.TopCard.Level).FirstOrDefault();
             if (enemy == null) return;
-            var removed = enemy.RemoveBottomSources(2);
-            c.Enemy.Trash.AddRange(removed);
+            var removed = c.Engine.TrashSourcesAt61(c.Enemy, enemy, 2, top: false);   // v0.61.0 진화원 파기는 한 곳으로
             c.Log($"[진화 시] 쥬드몬: 상대 [{enemy.TopCard.Name}]의 진화원 {removed.Count}장 파기");
         });
 

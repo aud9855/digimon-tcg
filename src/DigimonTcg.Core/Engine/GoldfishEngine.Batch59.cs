@@ -29,6 +29,7 @@ public partial class GoldfishEngine
     {
         var bottomUp = self.EvolutionSources.Reverse().ToList();
         if (n <= 0 || bottomUp.Count == 0) return new List<CardData>();
+        if (TrashableSourceCount61(self) != bottomUp.Count) return ChooseDigiBurstProtected61(owner, self, n);   // v0.61.0 파기할 수 없는 진화원이 있다 (BT9-109 — GoldfishEngine.Batch61)
         if (bottomUp.Count <= n) return self.RemoveBottomSources(n);
         var order = Enumerable.Range(0, bottomUp.Count)
             .OrderBy(i => BurstTrashedEffect59(bottomUp[i]) ? 0 : BurstUse60?.Invoke(bottomUp[i]) == true ? 1 : 2).ThenBy(i => i).ToList();   // v0.60.0 뒤의 효과가 트래시에서 쓰는 카드 (GoldfishEngine.Batch60)

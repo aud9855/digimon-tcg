@@ -69,14 +69,13 @@ internal static partial class SentenceParser
             int n = int.Parse(m.Groups["n"].Value);
             var match = orPick.Match;
             List<CardData> Able(EffectContext c) => c.Self == null || !c.Owner.BattleArea.Contains(c.Self) ? new List<CardData>()
-                : c.Self.GetEvolutionStackBottomUp().Where(x => c.Self.IsFaceDown(x) || match(x)).ToList();
+                : c.Engine.TrashableSources61(c.Self, c.Self.GetEvolutionStackBottomUp().Where(x => c.Self.IsFaceDown(x) || match(x))).ToList();   // v0.61.0 파기할 수 없는 진화원 (BT9-109)
             return (c => Able(c).Count >= n,
                     c =>
                     {
                         var picks = Able(c).Take(n).ToList();
                         if (picks.Count < n) { c.CostFailed = true; return; }
-                        foreach (var x in picks)
-                            if (c.Self!.TakeSource(y => ReferenceEquals(y, x)) != null) c.Owner.Trash.Add(x);
+                        c.Engine.TrashChosenSources61(c.Owner, c.Self!, picks, cost: true);   // v0.61.0 진화원 파기는 한 곳으로
                         c.Log($"[{c.Card.Name}] 진화원 {n}장을 아래에서부터 파기했습니다 (비용)");
                         c.RecalculateFieldBuffs();
                     },
@@ -217,13 +216,12 @@ internal static partial class SentenceParser
                 if (d == null || k <= 0 || d.EvolutionSources.Count == 0) { Emit(c, label, "진화원을 파기할 대상이 없습니다"); c.LastStepResolved = false; return; }
                 var zone = c.Engine.OwnerOf(d);
                 if (c.Engine.StackProtected42(zone, d)) { c.LastStepResolved = false; return; }   // v0.42.0
-                var pool = d.EvolutionSources.OrderByDescending(x => !d.IsFaceDown(x) && (x.InheritedEffectText.Trim().Length > 0 || x.InheritedDpBonus > 0)).ToList();
+                var pool = c.Engine.TrashableSources61(d, d.EvolutionSources).OrderByDescending(x => !d.IsFaceDown(x) && (x.InheritedEffectText.Trim().Length > 0 || x.InheritedDpBonus > 0)).ToList();   // v0.61.0 BT9-109
                 int take = Math.Min(k, pool.Count);
                 var picks = c.Engine.ChooseCards(c.Owner, CardChoiceZone.DigivolutionCards, pool, take, upTo: false, $"[{c.Card.Name}] [{d.TopCard.Name}]의 진화원에서 파기할 카드 {take}장을 고르세요.");
-                foreach (var x in picks)
-                    if (d.TakeSource(y => ReferenceEquals(y, x)) != null) zone.Trash.Add(x);
+                var gone = c.Engine.TrashChosenSources61(zone, d, picks);   // v0.61.0 진화원 파기는 한 곳으로 (보호 · 치환)
                 c.RecalculateFieldBuffs();
-                Emit(c, label, $"[{d.TopCard.Name}]의 진화원 {picks.Count}장 파기");
+                Emit(c, label, $"[{d.TopCard.Name}]의 진화원 {gone.Count}장 파기");
             }, null);
         }
         // "To 1 of your opponent's Digimon, ＜De-Digivolve 1＞ for each of this Digimon's face-down digivolution cards" (EX9-043)

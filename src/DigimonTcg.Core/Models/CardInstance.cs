@@ -89,8 +89,57 @@ public class CardInstance
     /// <summary>v0.60.0 기간 잠금(어택 · 블록 등)이 지금 유효한지 — 상대의 효과를 받지 않는 동안에는 상대의 효과로 받은 기간을 빼고 본다</summary>
     internal int LockUntil60(int kind, int value)
     {
+        if (CatShield61 != null && CatGiven61.Count > 0) return LockUntil61(kind, value);   // v0.61.0 LM-020 카드 종류
         if (!OppShield59 || OppLockUntil60[kind] == 0 || value > OppLockUntil60[kind]) return value;   // 상대 효과의 몫이 없거나 다른 효과가 더 길게 걸었다
         return OwnLockUntil60[kind];
+    }
+
+    /// <summary>v0.61.0 받은 효과가 적힌 카드의 종류 기록 (LM-020 "선언한 카드 종류의 효과를 받지 않는다" — 이 디지몬의 효과 이외). Kind: 0 이 턴 DP · 1 기간 DP ·
+    /// 2 기간 ≪시큐리티 어택≫ · 3 이 어택 동안 ≪시큐리티 어택≫ · 4 기간 키워드(Value = 키워드) · 10+LockKind60 "~ 할 수 없다" 기간 효과 (잠금은 종류를 모르는 것도 Type = null로 기록).
+    /// 받지 않는 동안에는 그 종류의 몫을 빼고 계산한다 (종합 룰 15-15-5-1 · 15-15-5-2 · 15-15-5-4 — 상대의 효과(v0.59.0 · v0.60.0)와 같은 방식)</summary>
+    public List<(CardType? Type, bool Opp, int Kind, int Value, int Until)> CatGiven61 { get; } = new();
+
+    /// <summary>v0.61.0 효과로 받은 효과(GrantedEffects)를 준 카드의 종류 (LM-020 — 받지 않는 동안 그 효과를 가진 것으로 취급하지 않는다 15-15-5-4)</summary>
+    public List<(CardData Effect, CardType Type)> GrantedCat61 { get; } = new();
+
+    /// <summary>v0.61.0 다른 카드의 지속 효과로 지금 얻고 있는 효과 ("All level 3 Digimon gain \"[When Attacking] Lose 1 memory.\"" BT5-091) — 엔진이 지속 효과를 계산할 때마다 다시 채운다.
+    /// 떠난 디지몬은 떠나기 전의 것이 남는다 (【소멸 시】를 얻었으면 소멸했을 때 발휘)</summary>
+    public List<CardData> AuraGranted61 { get; } = new();
+
+    /// <summary>v0.61.0 지금 받지 않는 카드 종류 (엔진이 지속 효과를 계산할 때마다 채운다 — LM-020)</summary>
+    public CardType? CatShield61 { get; set; }
+
+    /// <summary>v0.61.0 받지 않는 카드 종류의 몫 합계 (kind 0 · 1 · 2 · 3). 상대의 효과를 받지 않는 동안 이미 빼는 상대 효과의 몫은 빼지 않는다 (두 번 빼지 않게)</summary>
+    internal int CatShieldSum61(int kind)
+    {
+        if (CatShield61 is not { } t || CatGiven61.Count == 0) return 0;
+        int sum = 0;
+        foreach (var g in CatGiven61)
+            if (g.Kind == kind && g.Type == t && !(OppShield59 && g.Opp)) sum += g.Value;
+        return sum;
+    }
+
+    /// <summary>v0.61.0 "이 턴 동안"이 끝났을 때 이 턴 DP 기록을 지운다</summary>
+    internal void ClearCatTemp61() { if (CatGiven61.Count > 0) CatGiven61.RemoveAll(g => g.Kind == 0); }
+
+    /// <summary>v0.61.0 어택이 끝났을 때 이 어택 동안의 ≪시큐리티 어택≫ 기록을 지운다</summary>
+    internal void ClearCatAttack61() { if (CatGiven61.Count > 0) CatGiven61.RemoveAll(g => g.Kind == 3); }
+
+    /// <summary>v0.61.0 받지 않는 카드 종류가 있을 때의 기간 잠금 — 기록된 잠금 중 받지 않는 것(그 종류 · 상대의 효과를 받지 않는 동안의 상대 효과)을 빼고 가장 긴 기간</summary>
+    private int LockUntil61(int kind, int value)
+    {
+        int all = 0, kept = 0;
+        bool any = false;
+        foreach (var g in CatGiven61)
+        {
+            if (g.Kind != 10 + kind) continue;
+            any = true;
+            all = Math.Max(all, g.Until);
+            if (g.Type == CatShield61 || OppShield59 && g.Opp) continue;
+            kept = Math.Max(kept, g.Until);
+        }
+        if (!any || value > all) return !OppShield59 || OppLockUntil60[kind] == 0 || value > OppLockUntil60[kind] ? value : OwnLockUntil60[kind];   // 기록 없이 걸린 잠금이 더 길다 — 원래대로
+        return kept;
     }
 
     /// <summary>v0.42.0 지금 필드에서의 지속 효과 조건 판단용 (엔진이 지속 효과를 계산할 때 채운다 — 조건이 붙은 진화 조건 무시 진화)</summary>
@@ -296,6 +345,7 @@ public class CardInstance
             OppTempDp59 = OppTempDp59,
             OppShield59 = OppShield59,
             OppAttackSa60 = OppAttackSa60,
+            CatShield61 = CatShield61,
         };
         v.EvolutionSources = new Stack<CardData>(EvolutionSources.Reverse());
         foreach (var f in FaceDownSources) v.FaceDownSources.Add(f);
@@ -307,6 +357,7 @@ public class CardInstance
         v.OppTimedDp59.AddRange(OppTimedDp59);
         v.OppTimedKeywords60.AddRange(OppTimedKeywords60);
         v.OppTimedSa60.AddRange(OppTimedSa60);
+        v.CatGiven61.AddRange(CatGiven61);
         v.TimedKeywords.AddRange(TimedKeywords);
         v.GrantedEffects.AddRange(GrantedEffects);
         return v;
@@ -316,7 +367,7 @@ public class CardInstance
         IsOwnersTurn ? FaceUpSources.Sum(s => s.InheritedDpBonus) : 0;
 
     public int GetTotalBonusDP() =>
-        GetInheritedDpBonus() + TamerDpBonus + TemporaryDpBonus - (OppShield59 ? OppTempDp59 : 0) + EffectDpBonus + AttackDpBonus;   // v0.59.0 상대의 효과를 받지 않는 동안
+        GetInheritedDpBonus() + TamerDpBonus + TemporaryDpBonus - (OppShield59 ? OppTempDp59 : 0) - CatShieldSum61(0) + EffectDpBonus + AttackDpBonus;   // v0.59.0 상대의 효과를 받지 않는 동안 · v0.61.0 LM-020 카드 종류
 
     public int GetCurrentDP() =>
         Math.Max(DpFloor45, TopCard.DP + GetTotalBonusDP());   // v0.45.0 DP 하한 (0이면 원래대로)
@@ -325,7 +376,7 @@ public class CardInstance
         FaceUpSources.Sum(s => s.InheritedSecurityAttackBonus);
 
     public int GetTotalBonusSecurityAttack() =>
-        TopCard.SecurityAttackBonus + GetInheritedSecurityAttackBonus() + TamerSecurityAttackBonus + TemporarySecurityAttackBonus + EffectSecurityAttackBonus + AttackSecurityAttackBonus - (OppShield59 ? OppAttackSa60 : 0);   // v0.60.0 상대의 효과를 받지 않는 동안
+        TopCard.SecurityAttackBonus + GetInheritedSecurityAttackBonus() + TamerSecurityAttackBonus + TemporarySecurityAttackBonus + EffectSecurityAttackBonus + AttackSecurityAttackBonus - (OppShield59 ? OppAttackSa60 : 0) - CatShieldSum61(3);   // v0.60.0 상대의 효과를 받지 않는 동안 · v0.61.0 LM-020
 
     public int GetSecurityAttackCount() =>
         Math.Max(0, 1 + GetTotalBonusSecurityAttack());

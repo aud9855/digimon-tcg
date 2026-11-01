@@ -96,6 +96,7 @@ public static partial class EffectRules
     /// </summary>
     public static bool CanBeAttackTargetFor(CardInstance attacker, CardInstance target) =>
         !CardScripts.HasKeyword(attacker, Keyword.CannotAttackDigimon) && !CardScripts.HasKeyword(target, Keyword.CannotBeAttacked)
+        && !GoldfishEngine.SaHolderLocked61(attacker, target)   // v0.61.0 BT10-042
         && (target.IsSuspended || CardScripts.HasKeyword(attacker, Keyword.CanAttackUnsuspended)
             || (CardScripts.HasKeyword(attacker, Keyword.CanAttackUnsuspendedSourceless) && target.EvolutionSources.Count == 0)
             || (target.TopCard.Level is > 0 and <= 4 && CardScripts.HasKeyword(attacker, Keyword.CanAttackUnsuspendedLevel4OrLower55)));   // v0.55.0 EX1-061
@@ -160,7 +161,7 @@ public partial class GoldfishEngine
             }
 
             // v0.32.0 효과로 받은 효과 (기간 안 · 효과를 받을 수 있을 때 — 공식 Q&A EX10-034)
-            if (self != null && mainCard != null && !optionSide && ReferenceEquals(mainCard, self.TopCard) && self.GrantedEffects.Count > 0)
+            if (self != null && mainCard != null && !optionSide && ReferenceEquals(mainCard, self.TopCard) && (self.GrantedEffects.Count > 0 || self.AuraGranted61.Count > 0))   // v0.61.0 지속 효과로 얻은 효과도
             {
                 foreach (var granted in ActiveGrantedEffects(self))
                 {
@@ -486,7 +487,8 @@ public partial class GoldfishEngine
             if (inst.TimedPlayCostMods45.Count > 0) inst.TimedPlayCostMods45.RemoveAll(t => t.Until < State.TurnSequence);   // v0.45.0 등장 코스트 변경 (BT16-060)
             inst.PlayCostDelta45 = inst.TimedPlayCostMods45.Sum(t => t.Delta);
             inst.ActiveKeywords.Clear();
-            var oppKw60 = AddTimedKeywordsSplit60(inst);   // v0.60.0 상대의 효과로 받은 기간 키워드는 받지 않는 상태를 정한 뒤에 (GoldfishEngine.Batch60)
+            SetCatShield61(inst);   // v0.61.0 LM-020 받지 않는 카드 종류 (기간 키워드보다 먼저 — GoldfishEngine.Batch61)
+            var oppKw60 = inst.CatShield61 != null ? AddTimedKeywordsSplit61(inst) : AddTimedKeywordsSplit60(inst);   // v0.60.0 상대의 효과로 받은 기간 키워드는 받지 않는 상태를 정한 뒤에 (GoldfishEngine.Batch60)
             var statics = StaticEffectsOf(inst).ToList();
             ApplyExtraColors37(inst, statics, ctx);   // v0.37.0 "This Digimon is also treated as yellow" (색 조건보다 먼저)
             var enemyKwBefore59 = EnemyKeywordProbe59(inst);
@@ -501,9 +503,10 @@ public partial class GoldfishEngine
 
             ApplyOppShield59(inst, enemyKw59);   // v0.59.0 상대의 효과를 받지 않는 동안: 상대 카드의 지속 효과 · 이미 받은 상대의 DP 효과를 빼고 계산 (GoldfishEngine.Batch59)
             ApplyDeferredOppKeywords60(inst, oppKw60);   // v0.60.0 이미 받은 상대의 기간 키워드도 (15-15-5-4)
+            ApplyAuraGrants61(inst, owner, enemy);   // v0.61.0 다른 카드의 지속 효과로 얻는 효과 문장 (GoldfishEngine.Batch61)
             inst.HasGrantedBlocker = EffectRules.IsActive(inst.GrantedBlockerUntil, State) || CardScripts.HasKeyword(inst, Keyword.Blocker);
 
-            int dp = inst.TimedDpBuffs.Sum(t => t.Dp), sec = inst.TimedSecurityAttackBuffs.Sum(t => t.Count) - OppTimedSaShield60(inst);   // v0.60.0
+            int dp = inst.TimedDpBuffs.Sum(t => t.Dp) - inst.CatShieldSum61(1), sec = inst.TimedSecurityAttackBuffs.Sum(t => t.Count) - OppTimedSaShield60(inst) - inst.CatShieldSum61(2);   // v0.60.0 · v0.61.0 LM-020 이미 받은 그 종류의 기간 DP · ≪시큐리티 어택≫
             foreach (var effect in statics)
             {
                 if (effect.Stat == StaticStat.Dp) dp += effect.Value(ctx);
@@ -612,6 +615,7 @@ public partial class GoldfishEngine
     {
         d.TemporaryDpBonus = 0;
         d.OppTempDp59 = 0;   // v0.59.0
+        d.ClearCatTemp61();   // v0.61.0
         d.TemporarySecurityAttackBonus = 0;
         d.HasUsedOncePerTurnEffect = false;
         d.UsedOncePerTurn.Clear();
@@ -1016,6 +1020,7 @@ public partial class GoldfishEngine
         attacker.AttackDpBonus = 0;
         attacker.AttackSecurityAttackBonus = 0;
         attacker.OppAttackSa60 = 0;   // v0.60.0
+        attacker.ClearCatAttack61();   // v0.61.0
         RecalculateFieldBuffs();
         var owner = OwnerOf(attacker);
         if (owner.BattleArea.Contains(attacker) && !State.IsGameOver)
@@ -1232,7 +1237,8 @@ public partial class GoldfishEngine
         if (DpReductionBlocked34(target))   // v0.34.0 "can't have its DP reduced"
             return false;
         target.TemporaryDpBonus -= amount;
-        if (IsOpponentEffectFor(zones)) target.OppTempDp59 -= amount;   // v0.59.0 상대의 효과의 몫 (받지 않는 동안에는 빼고 계산)
+        if (IsOpponentEffectFor(zones)) target.OppTempDp59 -= amount;
+        NoteCat61(target, 0, -amount, State.TurnSequence);   // v0.61.0 LM-020   // v0.59.0 상대의 효과의 몫 (받지 않는 동안에는 빼고 계산)
         target.ActiveSkillBuffLabels.Add($"🔻{source} (DP -{amount:N0})");
         Log($"[효과] {source}: {SideName(zones)} [{target.TopCard.Name}] DP -{amount:N0}");
 
@@ -1262,6 +1268,7 @@ public partial class GoldfishEngine
                 return ApplyDpMinus(target, -dp, source);
             target.TemporaryDpBonus += dp;
             if (IsOpponentEffectFor(OwnerOf(target))) target.OppTempDp59 += dp;   // v0.59.0
+            NoteCat61(target, 0, dp, State.TurnSequence);   // v0.61.0 LM-020
             target.ActiveSkillBuffLabels.Add($"✨{source} (DP +{dp:N0})");
             return false;
         }
@@ -1271,6 +1278,7 @@ public partial class GoldfishEngine
             return false;
         target.TimedDpBuffs.Add((dp, until));
         if (IsOpponentEffectFor(zones)) target.OppTimedDp59.Add((dp, until));   // v0.59.0
+        NoteCat61(target, 1, dp, until);   // v0.61.0 LM-020
         RecalculateFieldBuffs();
         if (dp >= 0 || target.GetCurrentDP() > 0)   // v0.45.0 DP 하한
             return false;
@@ -1327,9 +1335,7 @@ public partial class GoldfishEngine
     {
         var removed = new List<CardData>();
         if (StackProtected42(zones, inst)) return removed;   // v0.42.0 (BT21-060)
-        while (removed.Count < count && inst.EvolutionSources.Count > 0)
-            removed.Add(inst.EvolutionSources.Pop());
-        zones.Trash.AddRange(removed);
+        removed = TrashSourcesAt61(zones, inst, count, top: true);   // v0.61.0 진화원 파기는 한 곳으로 (보호 · 치환 — GoldfishEngine.Batch61)
         ApplyOverflow(zones, removed);
         return removed;
     }
@@ -2040,7 +2046,7 @@ public partial class GoldfishEngine
     internal void PayDigiBurst(PlayerZones owner, CardInstance self, int n)
     {
         var removed = ChooseDigiBurstSources59(owner, self, n);
-        owner.Trash.AddRange(removed);
+        owner.Trash.AddRange(removed);   // v0.61.0 파기할 수 없는 진화원은 고르지 않는다 (ChooseDigiBurstSources59)
         FireDigiBurst55(owner, self, removed);   // v0.55.0 효과 처리 중이면 그 효과가 끝난 뒤
     }
 
@@ -2138,8 +2144,8 @@ public partial class GoldfishEngine
         var target = enemyZones.BattleArea.Where(d => d.EvolutionSources.Count > 0 && match(d) && !CardScripts.HasKeyword(d, Keyword.StackProtectedFromOpponent))   // v0.42.0
             .OrderByDescending(d => d.TopCard.Level).FirstOrDefault();
         if (target == null) return;
-        var removed = target.RemoveBottomSources(1);
-        enemyZones.Trash.AddRange(removed);
+        var removed = TrashSourcesAt61(enemyZones, target, 1, top: false);   // v0.61.0 진화원 파기는 한 곳으로
+        if (removed.Count == 0) return;
         Log($"[진화원 효과] {source}: 상대 [{target.TopCard.Name}]의 진화원 [{removed[0].Name}] 파기");
     }
 

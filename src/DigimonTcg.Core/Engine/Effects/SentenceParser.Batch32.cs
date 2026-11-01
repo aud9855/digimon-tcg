@@ -254,7 +254,7 @@ internal static partial class SentenceParser
         {
             // 후보: Lv.마다 2장 이상인 묶음 (추천 = 이 효과의 카드를 남기는 묶음 · 낮은 Lv.부터). 묶음 안에서는 이 효과의 카드를 뒤로
             static List<List<CardData>> Pairs(EffectContext c) => c.Self == null ? new List<List<CardData>>()
-                : c.Self.SourcesWhere(x => x.Level > 0).GroupBy(x => x.Level).Where(g => g.Count() >= 2)
+                : c.Engine.TrashableSources61(c.Self, c.Self.SourcesWhere(x => x.Level > 0)).GroupBy(x => x.Level) /* v0.61.0 파기할 수 없는 진화원 (BT9-109) */.Where(g => g.Count() >= 2)
                     .Select(g => g.OrderBy(x => ReferenceEquals(x, c.Card) ? 1 : 0).Take(2).ToList())
                     .OrderBy(p => p.Any(x => ReferenceEquals(x, c.Card)) ? 1 : 0).ThenBy(p => p[0].Level).ToList();
             return (c => c.Self != null && c.Owner.BattleArea.Contains(c.Self) && Pairs(c).Count > 0,
@@ -268,8 +268,7 @@ internal static partial class SentenceParser
                                 $"[{c.Card.Name}] 비용으로 파기할 같은 Lv.의 진화원 2장 — Lv.을 고르세요.").FirstOrDefault();
                             pair = pairs.FirstOrDefault(p => ReferenceEquals(p[0], pick)) ?? pairs[0];
                         }
-                        foreach (var x in pair)
-                            if (c.Self!.TakeSource(y => ReferenceEquals(y, x)) != null) c.Owner.Trash.Add(x);
+                        c.Engine.TrashChosenSources61(c.Owner, c.Self!, pair, cost: true);   // v0.61.0 진화원 파기는 한 곳으로
                         c.Log($"[{c.Card.Name}] 진화원 [{string.Join(", ", pair.Select(x => x.Name))}] (Lv.{pair[0].Level})을(를) 파기했습니다 (비용)");
                         c.RecalculateFieldBuffs();
                     },
@@ -283,16 +282,17 @@ internal static partial class SentenceParser
         {
             var (n, match) = srcPick;
             bool toDeck = m.Groups["deck"].Success;
-            List<CardData> Able(EffectContext c) => c.Self == null || !c.Owner.BattleArea.Contains(c.Self) ? new List<CardData>() : c.Self.SourcesWhere(match).ToList();
+            List<CardData> Able(EffectContext c) => c.Self == null || !c.Owner.BattleArea.Contains(c.Self) ? new List<CardData>() : toDeck ? c.Self.SourcesWhere(match).ToList() : c.Engine.TrashableSources61(c.Self, c.Self.SourcesWhere(match)).ToList();   // v0.61.0 파기할 수 없는 진화원 (BT9-109)
             return (c => Able(c).Count >= n,
                     c =>
                     {
                         var picked = c.Engine.ChooseCards(c.Owner, CardChoiceZone.DigivolutionCards, Able(c).OrderBy(x => x.Level).ToList(), n, upTo: false,
                             $"[{c.Card.Name}] 비용으로 {(toDeck ? "덱 아래로 되돌릴" : "파기할")} 진화원 {n}장을 고르세요.");
-                        foreach (var x in picked)
+                        if (!toDeck) c.Engine.TrashChosenSources61(c.Owner, c.Self!, picked, cost: true);   // v0.61.0 진화원 파기는 한 곳으로
+                        else foreach (var x in picked)
                         {
                             if (c.Self!.TakeSource(y => ReferenceEquals(y, x)) == null) continue;
-                            if (toDeck) c.Owner.MainDeck.Add(x); else c.Owner.Trash.Add(x);
+                            c.Owner.MainDeck.Add(x);
                         }
                         c.Log($"[{c.Card.Name}] 진화원 [{string.Join(", ", picked.Select(x => x.Name))}]을(를) {(toDeck ? "덱 아래로 되돌렸습니다" : "파기했습니다")} (비용)");
                         c.RecalculateFieldBuffs();
@@ -359,6 +359,7 @@ internal static partial class SentenceParser
                     foreach (var d in list)
                     {
                         d.GrantedEffects.Add((granted, until, c.Owner));
+                        c.Engine.NoteGrantedCat61(d, granted);   // v0.61.0 LM-020
                         if (kws != null)
                             foreach (var (k, sa) in kws)
                             {

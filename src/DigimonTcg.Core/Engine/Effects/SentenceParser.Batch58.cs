@@ -394,7 +394,7 @@ internal static partial class SentenceParser
         Action<EffectContext> resolve = c =>
         {
             if (c.Self == null || !c.Owner.BattleArea.Contains(c.Self)) return;
-            int cap = Math.Min(n, c.Self.EvolutionSources.Count);
+            int cap = Math.Min(n, c.Engine.TrashableSourceCount61(c.Self));   // v0.61.0 파기할 수 없는 진화원은 세지 않는다 (BT9-109)
             if (cap <= 0) { c.Log($"[{c.Card.Name}] 진화원이 없어 ≪디지버스트≫를 발휘하지 않습니다"); return; }
             int k = c.Engine.ChooseOption(c.Owner, $"[{c.Card.Name}] ≪디지버스트 {n}까지≫ — 파기할 진화원의 매수를 고르세요 (0 = 발휘하지 않는다).",
                 Enumerable.Range(0, cap + 1).Select(i => i == 0 ? "발휘하지 않는다" : $"{i}장").ToList(), Recommend(c, cap));

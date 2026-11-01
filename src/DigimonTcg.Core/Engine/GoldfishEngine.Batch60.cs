@@ -29,6 +29,7 @@ public partial class GoldfishEngine
     {
         d.TimedKeywords.Add((kw, until));
         if (IsOpponentEffectFor(OwnerOf(d))) d.OppTimedKeywords60.Add((kw, until));
+        NoteCat61(d, 4, (int)kw, until);   // v0.61.0 LM-020
     }
 
     /// <summary>기간 ≪시큐리티 어택 ±N≫을 준다 (상대의 효과이면 그 몫을 기록)</summary>
@@ -36,6 +37,7 @@ public partial class GoldfishEngine
     {
         d.TimedSecurityAttackBuffs.Add((sa, until));
         if (IsOpponentEffectFor(OwnerOf(d))) d.OppTimedSa60.Add((sa, until));
+        NoteCat61(d, 2, sa, until);   // v0.61.0 LM-020
     }
 
     /// <summary>기간 ≪시큐리티 어택 ±N≫ 하나를 지운다 (EX3-036 "대신")</summary>
@@ -45,6 +47,8 @@ public partial class GoldfishEngine
         d.TimedSecurityAttackBuffs.RemoveAt(index);
         int j = d.OppTimedSa60.IndexOf(e);
         if (j >= 0) d.OppTimedSa60.RemoveAt(j);
+        int k = d.CatGiven61.FindIndex(g => g.Kind == 2 && g.Value == e.Count && g.Until == e.Until);   // v0.61.0
+        if (k >= 0) d.CatGiven61.RemoveAt(k);
     }
 
     /// <summary>이 어택 동안 ≪시큐리티 어택 ±N≫ (상대의 효과이면 그 몫을 기록)</summary>
@@ -52,6 +56,7 @@ public partial class GoldfishEngine
     {
         d.AttackSecurityAttackBonus += sa;
         if (IsOpponentEffectFor(OwnerOf(d))) d.OppAttackSa60 += sa;
+        NoteCat61(d, 3, sa, 0);   // v0.61.0 LM-020
     }
 
     /// <summary>"~ 할 수 없다" 기간 효과를 건다 (상대의 효과이면 그 몫, 아니면 다른 효과의 몫으로 기록)</summary>
@@ -68,6 +73,7 @@ public partial class GoldfishEngine
         }
         var arr = IsOpponentEffectFor(OwnerOf(d)) ? d.OppLockUntil60 : d.OwnLockUntil60;
         arr[(int)kind] = Math.Max(arr[(int)kind], until);
+        NoteCat61(d, 10 + (int)kind, 0, until, always: true);   // v0.61.0 LM-020 (잠금은 종류를 모르는 것도 기록)
     }
 
     // =====================================================================
@@ -98,6 +104,7 @@ public partial class GoldfishEngine
     {
         if (inst.OppTimedKeywords60.Count > 0) inst.OppTimedKeywords60.RemoveAll(t => t.Until < State.TurnSequence);
         if (inst.OppTimedSa60.Count > 0) inst.OppTimedSa60.RemoveAll(t => t.Until < State.TurnSequence);
+        if (inst.CatGiven61.Count > 0) inst.CatGiven61.RemoveAll(g => g.Kind is not 0 and not 3 && g.Until < State.TurnSequence);   // v0.61.0
     }
 
     /// <summary>받지 않는 상태가 아니면 상대의 효과로 받은 기간 키워드를 더한다</summary>

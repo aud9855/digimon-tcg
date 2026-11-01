@@ -200,6 +200,10 @@ public enum Keyword
     NegateEnemyOptionSecurity60,       // 상대의 옵션 카드의 【시큐리티】 효과는 발휘하지 않는다 (이 디지몬의 주인이 하는 체크 전부 — BT12-112)
     CannotLeaveExceptOwnOrDeletion60,  // 자신의 효과 · 소멸 이외로 배틀 에어리어를 떠나지 않는다 (EX6-044 진화원 효과)
     CannotLeaveExceptDeletion60,       // 소멸 이외로 배틀 에어리어를 떠나지 않는다 (자신의 효과도 — BT16-051 기간)
+    // v0.61.0
+    XAntibodySourcesProtected61,       // 효과로 이 디지몬의 진화원의 「X항체」를 파기할 수 없다 (BT9-109 진화원 효과)
+    ReplaceOtherSourceTrash61,         // 효과가 자신의 다른 디지몬의 진화원을 파기하려 할 때, 대신 이 디지몬의 진화원을 그 효과로 파기할 수 있다 (BT10-084)
+    CannotBeAttackedBySa61,            // ≪시큐리티 어택≫을 가진 상대의 디지몬은 이 디지몬에게 어택할 수 없다 (BT10-042)
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>
@@ -233,6 +237,9 @@ public enum StaticStat
    // 상대의 디지몬 전부(Subject 조건)의 DP ("all of your opponent's suspended Digimon get -4000 DP" BT16-101)
     // v0.58.0
     ExtraTrait58,       // 이 디지몬이 특징을 얻는다 (StaticEffect.Trait58, 값이 0이 아니면 얻은 상태 — "[Your Turn] This Digimon gains the [Three Musketeers] trait" EX7-010)
+    // v0.61.0
+    AllyGrant61,        // 자신의 디지몬 전부(Subject 조건)가 효과 문장을 얻는다 (StaticEffect.Grant61 — "All level 3 Digimon gain \"[When Attacking] Lose 1 memory.\"" BT5-091)
+    EnemyGrant61,       // 상대의 디지몬 전부(Subject 조건)가 효과 문장을 얻는다 (BT8-031 · BT7-055)
 }
 
 /// <summary>옵션 [메인] 효과를 쓸 때 UI가 고르게 할 대상</summary>
@@ -278,6 +285,9 @@ public sealed record StaticEffect(StaticStat Stat, EffectSource Source, Func<Sta
 
     /// <summary>v0.58.0 Stat == ExtraTrait58일 때 얻는 특징</summary>
     public string? Trait58 { get; init; }
+
+    /// <summary>v0.61.0 Stat == AllyGrant61 · EnemyGrant61일 때 얻는 효과 (효과 문장만 든 카드 — 효과로 준 효과(GrantedEffects)와 같이 맨 위 카드 효과처럼 발휘)</summary>
+    public CardData? Grant61 { get; init; }
 
     /// <summary>v0.40.0 효과를 가진 디지몬(StaticContext.Digimon)을 보는 받는 디지몬 조건 — "All of your other Digimon with the same name as this Digimon" (P-045 · BT5-063 · EX1-051)</summary>
     public Func<StaticContext, CardInstance, bool>? SubjectOf { get; init; }

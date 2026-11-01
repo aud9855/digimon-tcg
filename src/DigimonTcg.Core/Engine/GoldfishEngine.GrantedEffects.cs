@@ -17,8 +17,8 @@ public partial class GoldfishEngine
 {
     /// <summary>준 효과 중 지금 유효한 것 (기간 안 · 받는 디지몬이 준 쪽의 효과를 받을 수 있을 때)</summary>
     internal IEnumerable<CardData> ActiveGrantedEffects(CardInstance self) =>
-        self.GrantedEffects.Where(g => EffectRules.IsActive(g.Until, State) && (g.Granter == null || !IsUnaffectedBy(g.Granter, self)))
-            .Select(g => g.Effect).ToList();
+        self.GrantedEffects.Where(g => EffectRules.IsActive(g.Until, State) && (g.Granter == null || !IsUnaffectedBy(g.Granter, self)) && !GrantedCatShielded61(self, g.Effect))   // v0.61.0 LM-020
+            .Select(g => g.Effect).Concat(self.AuraGranted61).ToList();   // v0.61.0 지속 효과로 얻은 효과
 
     /// <summary>"This Digimon attacks." — 어택할 수 있으면 반드시 어택한다 (플레이어는 대상을 고르고, AI는 정책이 고른다)</summary>
     internal bool ForcedAttack(PlayerZones owner, CardInstance attacker, string label)

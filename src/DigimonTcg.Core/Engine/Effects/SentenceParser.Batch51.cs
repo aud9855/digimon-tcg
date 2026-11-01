@@ -426,15 +426,14 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cost, @"^trashing (?<n>\d+) digivolution cards from the bottom of 1 of your (?<x>\[[^\]]+\])$", I)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value); string x = TargetSpec.Names(m.Groups["x"].Value)[0];
-            List<CardInstance> Able(EffectContext c) => c.Owner.BattleArea.Where(d => CardNames.Is(d.TopCard, x) && d.EvolutionSources.Count >= n).ToList();
+            List<CardInstance> Able(EffectContext c) => c.Owner.BattleArea.Where(d => CardNames.Is(d.TopCard, x) && c.Engine.TrashableSourceCount61(d) >= n).ToList();   // v0.61.0 파기할 수 없는 카드를 빼고 셈 (공식 Q&A EX2-055 Q1)
             return (c => Able(c).Count > 0,
                     c =>
                     {
                         var pool = Able(c);
                         var host = pool.Count == 1 ? pool[0] : c.Engine.ChooseTargets(c.Owner, pool, 1, $"[{c.Card.Name}] 진화원 아래에서 {n}장을 파기할 [{x}]을(를) 고르세요.", optional: false, preselected: pool[0]).FirstOrDefault() ?? pool[0];
-                        var bottom = host.GetEvolutionStackBottomUp().Take(n).ToList();
-                        int done = 0;
-                        foreach (var y in bottom) if (host.TakeSource(z => ReferenceEquals(z, y)) != null) { c.Owner.Trash.Add(y); done++; }
+                        var bottom = c.Engine.TrashableSources61(host, host.GetEvolutionStackBottomUp()).Take(n).ToList();   // v0.61.0 파기할 수 없는 카드를 제외하고 아래에서부터 (공식 Q&A EX2-055 Q1)
+                        int done = c.Engine.TrashChosenSources61(c.Owner, host, bottom, cost: true).Count;
                         if (done < n) c.CostFailed = true;
                         c.RecalculateFieldBuffs();
                         Diag46.Hit("trashBottomSourcesCost51");

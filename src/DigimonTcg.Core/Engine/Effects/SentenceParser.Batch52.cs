@@ -174,7 +174,7 @@ internal static partial class SentenceParser
             int n = int.Parse(m.Groups["n"].Value);
             List<(CardInstance D, int Lv)> Able(EffectContext c) =>
                 c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && host(d))
-                    .SelectMany(d => d.SourcesWhere(x => !d.IsFaceDown(x) && x.Level > 0).GroupBy(x => x.Level).Where(g => g.Count() >= n).Select(g => (d, g.Key))).ToList();
+                    .SelectMany(d => c.Engine.TrashableSources61(d, d.SourcesWhere(x => !d.IsFaceDown(x) && x.Level > 0)).GroupBy(x => x.Level) /* v0.61.0 BT9-109 */.Where(g => g.Count() >= n).Select(g => (d, g.Key))).ToList();
             return (c => Able(c).Count > 0,
                     c =>
                     {
@@ -184,12 +184,10 @@ internal static partial class SentenceParser
                         var d = hosts.Count == 1 ? hosts[0] : c.Engine.ChooseTargets(c.Owner, hosts, 1, $"[{c.Card.Name}] 같은 Lv.의 진화원 {n}장을 파기할 디지몬을 고르세요.", optional: false, preselected: hosts[0]).FirstOrDefault() ?? hosts[0];
                         var lvs = pool.Where(p => ReferenceEquals(p.D, d)).Select(p => p.Lv).Distinct().ToList();
                         int lv = lvs.Count == 1 ? lvs[0] : lvs[Math.Clamp(c.Engine.ChooseOption(c.Owner, $"[{c.Card.Name}] 파기할 진화원의 Lv.을 고르세요.", lvs.Select(x => $"Lv.{x}").ToList(), 0), 0, lvs.Count - 1)];
-                        var cands = d.SourcesWhere(x => !d.IsFaceDown(x) && x.Level == lv).ToList();
+                        var cands = c.Engine.TrashableSources61(d, d.SourcesWhere(x => !d.IsFaceDown(x) && x.Level == lv)).ToList();   // v0.61.0
                         var picks = cands.Count == n ? cands : c.Engine.ChooseCardIndexes(c.Owner, CardChoiceZone.DigivolutionCards, cands, n, upTo: false, $"[{c.Card.Name}] 파기할 Lv.{lv} 진화원 {n}장을 고르세요.").Select(i => cands[i]).ToList();
                         if (picks.Count < n) picks = cands.Take(n).ToList();
-                        var trashed = new List<CardData>();
-                        foreach (var x in picks)
-                            if (d.TakeSource(y => ReferenceEquals(y, x)) is { } took) { c.Owner.Trash.Add(took); trashed.Add(took); }
+                        var trashed = c.Engine.TrashChosenSources61(c.Owner, d, picks, cost: true);   // v0.61.0 진화원 파기는 한 곳으로
                         if (trashed.Count < n) { c.CostFailed = true; return; }
                         c.Log($"[{c.Card.Name}] [{d.TopCard.Name}]의 Lv.{lv} 진화원 {trashed.Count}장 파기 ({string.Join(", ", trashed.Select(x => x.Name))})");
                         c.RecalculateFieldBuffs();

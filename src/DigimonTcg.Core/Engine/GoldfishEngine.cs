@@ -1122,6 +1122,7 @@ public partial class GoldfishEngine
             d.IsSuspended = false;
             d.TemporaryDpBonus = 0;
             d.OppTempDp59 = 0;   // v0.59.0
+            d.ClearCatTemp61();   // v0.61.0
             d.TemporarySecurityAttackBonus = 0;
         }
 
@@ -1192,6 +1193,7 @@ public partial class GoldfishEngine
         {
             d.TemporaryDpBonus = 0;
             d.OppTempDp59 = 0;   // v0.59.0
+            d.ClearCatTemp61();   // v0.61.0
             d.TemporarySecurityAttackBonus = 0;
             d.ActiveSkillBuffLabels.Clear();
         }
