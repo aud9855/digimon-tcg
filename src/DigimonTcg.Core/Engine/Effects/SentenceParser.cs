@@ -80,7 +80,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse64(rawClause, inherited, card, def);   // v0.64.0 원래 규칙(37차까지)이 읽지 못한 절만 38차 규칙으로 (SentenceParser.Batch64.cs) · v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse65(rawClause, inherited, card, def);   // v0.65.0 원래 규칙(38차까지)이 읽지 못한 절만 39차 규칙으로 (SentenceParser.Batch65.cs) · v0.64.0 원래 규칙(37차까지)이 읽지 못한 절만 38차 규칙으로 (SentenceParser.Batch64.cs) · v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -2541,6 +2541,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction60(s.TrimEnd('.'), card, triggers) is { } act60) act = act60;   // v0.60.0 (SentenceParser.Batch60.cs)
         if (act.Error != null && ParseAction63(s.TrimEnd('.'), card, triggers) is { } act63) act = act63;   // v0.63.0 (SentenceParser.Batch63.cs)
         if (act.Error != null && ParseAction64(s.TrimEnd('.'), card, triggers) is { } act64) act = act64;   // v0.64.0 (SentenceParser.Batch64.cs)
+        if (act.Error != null && ParseAction65(s.TrimEnd('.'), card, triggers) is { } act65) act = act65;   // v0.65.0 (SentenceParser.Batch65.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2750,7 +2751,7 @@ internal static partial class SentenceParser
                         }
                         c.RecalculateFieldBuffs();
                     },
-                    c => trash ? Pool(c).Any(x => !ReferenceEquals(x.Zone, c.Owner.Hand)) || c.Owner.Hand.Count >= n + 2 : c.Owner.Hand.Count >= n + 2,
+                    c => trash ? Pool(c).Any(x => !ReferenceEquals(x.Zone, c.Owner.Hand)) || c.Owner.Hand.Count >= n + 2 || HandSourceWorth65(c) : c.Owner.Hand.Count >= n + 2 || HandSourceWorth65(c),   // v0.65.0 패가 2장 이하여도 지킬 만한 디지몬이면
                     $"{(hand && trash ? "패 또는 트래시" : hand ? "패" : "트래시")}의 카드 {n}장을 진화원 아래에 {(fd ? "뒷면으로 " : "")}놓아");
         }
         if ((m = Regex.Match(cost, @"^placing (?:your deck's top card|the top card of your deck) (?<fd>face down )?as (?:this Digimon's|its) bottom digivolution card$", RegexOptions.IgnoreCase)).Success)
@@ -2821,7 +2822,7 @@ internal static partial class SentenceParser
             string from = m.Groups["from"].Value.ToLowerInvariant();
             bool fromHand = from.Contains("hand"), fromTrash = from.Contains("trash");
             IEnumerable<PoolCard> Pool(EffectContext c) => (fromHand ? PoolFrom(c.Owner.Hand, match) : Enumerable.Empty<PoolCard>()).Concat(fromTrash ? PoolFrom(c.Owner.Trash, match) : Enumerable.Empty<PoolCard>());
-            return (c => Pool(c).Count() >= n,
+            return (c => Pool(c).Count() >= n && !c.Engine.SecurityAddBlocked65(c.Owner),   // v0.65.0 BT9-103
                     c =>
                     {
                         foreach (var p in ChooseFromPool(c, fromHand && fromTrash ? CardChoiceZone.HandOrTrash : fromHand ? CardChoiceZone.Hand : CardChoiceZone.Trash, Pool(c).OrderBy(x => x.Card.PlayCost).ToList(), n,
@@ -3065,7 +3066,7 @@ internal static partial class SentenceParser
             bool toSecurity = m.Groups["pos"].Success, top = m.Groups["pos"].Value.Equals("top", StringComparison.OrdinalIgnoreCase);
             bool upTo64 = !toSecurity && IsUpTo(m.Groups["pick"].Value);   // v0.64.0 "trashing up to 3 level 6 or higher cards in this Digimon's digivolution cards" (EX4-073) — 1장 이상, 버린 장 수는 PaidCount
             List<CardData> Able(EffectContext c) => c.Self == null || !c.Owner.BattleArea.Contains(c.Self) ? new List<CardData>() : toSecurity ? c.Self.SourcesWhere(match).ToList() : c.Engine.TrashableSources61(c.Self, c.Self.SourcesWhere(match)).ToList();   // v0.61.0 파기할 수 없는 진화원 (BT9-109)
-            return (c => Able(c).Count >= (upTo64 ? 1 : n),
+            return (c => Able(c).Count >= (upTo64 ? 1 : n) && !(toSecurity && c.Engine.SecurityAddBlocked65(c.Owner)),   // v0.65.0 BT9-103
                     c =>
                     {
                         // v0.55.0 같은 카드의 다른 장은 뒤로 — 그 장의 진화원 효과도 발휘할 수 있게 (공식 Q&A P-146 Q1: 2장이면 양쪽 발휘)
@@ -3441,7 +3442,7 @@ internal static partial class SentenceParser
             {
                 if (optionMain) { c.ThisCardToSecurityTop = top; Emit(c, label, $"이 카드를 시큐리티 맨 {(top ? "위" : "아래")}에 앞면으로"); return; }
                 // [소멸 시] 등: 트래시(또는 패)에 있는 이 카드
-                if (!(c.Owner.Trash.Remove(c.Card) || c.Owner.Hand.Remove(c.Card))) { c.LastStepResolved = false; Emit(c, label, "이 카드를 놓을 수 없습니다"); return; }
+                if (c.Engine.SecurityAddBlocked65(c.Owner) || !(c.Owner.Trash.Remove(c.Card) || c.Owner.Hand.Remove(c.Card))) { c.LastStepResolved = false; Emit(c, label, "이 카드를 놓을 수 없습니다"); return; }   // v0.65.0 BT9-103
                 c.Engine.PlaceSecurityFaceUp(c.Owner, c.Card, top);
                 Emit(c, label, $"이 카드를 시큐리티 맨 {(top ? "위" : "아래")}에 앞면으로");
             }, null);
@@ -3459,6 +3460,7 @@ internal static partial class SentenceParser
                 var pool = new List<PoolCard>();
                 if (fromHand) pool.AddRange(PoolFrom(c.Owner.Hand, match));
                 if (fromTrash) pool.AddRange(PoolFrom(c.Owner.Trash, match));
+                if (c.Engine.SecurityAddBlocked65(c.Owner)) pool.Clear();   // v0.65.0 BT9-103
                 var zoneKind = fromHand && fromTrash ? CardChoiceZone.HandOrTrash : fromHand ? CardChoiceZone.Hand : CardChoiceZone.Trash;
                 var placed = new List<string>();
                 foreach (var p in ChooseFromPool(c, zoneKind, pool.OrderBy(x => x.Card.PlayCost).ToList(), count, $"[{c.Card.Name}] 시큐리티에 앞면으로 놓을 카드 {count}장을 고르세요."))
@@ -3582,7 +3584,7 @@ internal static partial class SentenceParser
         if (Regex.IsMatch(s, @"^Place (?:the top card of this Digimon|this Digimon's top stacked card) face[- ]up (?:at the bottom of (?:the|your) security stack|as (?:the|your) bottom security card)$", RegexOptions.IgnoreCase))
             return (c =>
             {
-                var top = c.Self != null && c.Owner.BattleArea.Contains(c.Self) ? c.Self.TrashTopCard() : null;   // 진화원이 없으면 놓을 수 없다
+                var top = c.Self != null && c.Owner.BattleArea.Contains(c.Self) && !c.Engine.SecurityAddBlocked65(c.Owner) ? c.Self.TrashTopCard() : null;   // 진화원이 없으면 놓을 수 없다 · v0.65.0 BT9-103
                 if (top == null) { c.LastStepResolved = false; Emit(c, label, "놓을 카드가 없습니다"); return; }
                 c.RecalculateFieldBuffs();
                 c.Engine.TrashExposedFaceDownTops();   // v0.35.0
@@ -4412,7 +4414,7 @@ internal static partial class SentenceParser
         if (Regex.IsMatch(s, @"^Place this card (?:on|at the) top of your security stack(?: face down)?$", RegexOptions.IgnoreCase) && triggers.Contains(EffectTrigger.OnDeletion))
             return (c =>
             {
-                if (!c.Owner.Trash.Remove(c.Card)) return;
+                if (c.Engine.SecurityAddBlocked65(c.Owner) || !c.Owner.Trash.Remove(c.Card)) return;   // v0.65.0 BT9-103
                 c.Owner.SecurityStack.Insert(0, c.Card);
                 c.Engine.NotifySecurityAdded(c.Owner, c.Card);
                 Emit(c, label, "이 카드를 시큐리티 맨 위에 놓는다");
@@ -4425,6 +4427,7 @@ internal static partial class SentenceParser
             bool upTo = IsUpTo(m.Groups["pick"].Value);
             return (c =>
             {
+                if (c.Engine.SecurityAddBlocked65(c.Owner)) { c.LastStepResolved = false; Emit(c, label, "시큐리티에 카드를 추가할 수 없습니다"); return; }   // v0.65.0 BT9-103
                 var cards = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Trash, c.Owner.Trash.Where(match).OrderByDescending(x => x.DP).ToList(), count, upTo, $"[{c.Card.Name}] 시큐리티 위에 놓을 카드를 {(upTo ? $"{count}장까지" : $"{count}장")} 고르세요.");
                 foreach (var x in cards) { c.Owner.Trash.Remove(x); c.Owner.SecurityStack.Insert(0, x); c.Engine.NotifySecurityAdded(c.Owner, x); }
                 Emit(c, label, cards.Count > 0 ? $"트래시의 [{string.Join(", ", cards.Select(x => x.Name))}] 시큐리티 맨 위에" : "놓을 카드가 없습니다");

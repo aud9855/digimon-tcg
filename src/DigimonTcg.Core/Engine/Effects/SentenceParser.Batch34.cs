@@ -680,10 +680,12 @@ internal static partial class SentenceParser
             var (n, match) = opick;
             bool top = m.Groups["pos"].Value.Equals("top", StringComparison.OrdinalIgnoreCase);
             Func<CardData, bool> ok = x => match(x) && x.Type != CardType.Digitama;
+            bool colors65 = Regex.IsMatch(card.EffectText ?? "", @"\breturned cards' colou?rs\b", I);   // v0.65.0 EX12-047 "those returned cards' colors"
+            bool sameName65 = Regex.IsMatch(card.EffectText ?? "", @"same name as that card", I);   // v0.65.0 BT13-092 — 상대의 디지몬과 같은 명칭의 카드부터
             return (c => c.Enemy.Trash.Count(ok) >= n,
                     c =>
                     {
-                        var picked = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Trash, c.Enemy.Trash.Where(ok).OrderByDescending(x => x.Level).ToList(), n, upTo: false,
+                        var picked = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Trash, colors65 ? ColorGreedyOrder65(c.Enemy.Trash.Where(ok)) : sameName65 ? SameNameOrder65(c, c.Enemy.Trash.Where(ok)) : c.Enemy.Trash.Where(ok).OrderByDescending(x => x.Level).ToList(), n, upTo: false,   // v0.65.0 EX12-047 색이 많아지는 카드부터
                             $"[{c.Card.Name}] 비용으로 상대의 트래시에서 덱 {(top ? "위" : "아래")}로 되돌릴 카드 {n}장을 고르세요.").ToList();
                         foreach (var x in picked) c.Enemy.Trash.Remove(x);
                         if (top) c.Enemy.MainDeck.InsertRange(0, picked); else c.Enemy.MainDeck.AddRange(picked);

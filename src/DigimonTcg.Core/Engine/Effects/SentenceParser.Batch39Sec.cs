@@ -109,7 +109,7 @@ internal static partial class SentenceParser
             return (c =>
             {
                 int k = 0;
-                for (int i = 0; i < n && c.Enemy.Hand.Count > 0; i++)
+                for (int i = 0; i < n && c.Enemy.Hand.Count > 0 && !c.Engine.SecurityAddBlocked65(c.Owner); i++)   // v0.65.0 BT9-103
                 {
                     // 상대가 고른다 — 가치가 낮은 카드부터 (AI 추천: 코스트가 낮은 카드)
                     var ranked = c.Enemy.Hand.OrderBy(x => x.Type == CardType.Option ? 0 : 1).ThenBy(x => x.PlayCost).ToList();

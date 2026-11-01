@@ -58,7 +58,7 @@ public partial class GoldfishEngine
     {
         if (digimon != null)
             return PlaceDigimonInSecurity(zones, digimon, top, faceUp: false, canPrevent: false);
-        if (tamer == null || !zones.Tamers.Contains(tamer)) return false;
+        if (tamer == null || !zones.Tamers.Contains(tamer) || SecurityAddBlocked65(CurrentEffectOwner ?? zones)) return false;   // v0.65.0 BT9-103
         TryPreventTamerLeave(zones, tamer, false, LeaveDestination.Security);
         if (!zones.Tamers.Remove(tamer)) return false;
         zones.SuspendedTamers.Remove(tamer);

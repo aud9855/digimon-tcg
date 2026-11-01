@@ -425,7 +425,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cost, @"^placing this Digimon as the (?<fu>face-up )?(?<pos>top|bottom) security card$", RegexOptions.IgnoreCase)).Success && card.Type == CardType.Digimon)
         {
             bool top = m.Groups["pos"].Value.Equals("top", StringComparison.OrdinalIgnoreCase), fu = m.Groups["fu"].Success;
-            return (c => c.Self != null && c.Owner.BattleArea.Contains(c.Self),
+            return (c => c.Self != null && c.Owner.BattleArea.Contains(c.Self) && !c.Engine.SecurityAddBlocked65(c.Owner),   // v0.65.0 BT9-103
                     c => { if (!c.Engine.PlaceDigimonInSecurity(c.Owner, c.Self!, top, fu, canPrevent: prevent)) c.CostFailed = true; },
                     _ => true, $"이 디지몬을 시큐리티 {(top ? "위" : "아래")}에 {(fu ? "앞면으로 " : "")}놓아");
         }
@@ -447,7 +447,7 @@ internal static partial class SentenceParser
                 // 추천: 상대의 디지몬 (DP 높은 순) → 자신의 낮은 Lv.
                 return all.OrderBy(d => c.Owner.BattleArea.Contains(d) ? 1 : 0).ThenByDescending(d => c.Enemy.BattleArea.Contains(d) ? d.GetCurrentDP() : -d.TopCard.Level).ToList();
             }
-            return (c => Pool(c).Count > 0,
+            return (c => Pool(c).Count > 0 && !c.Engine.SecurityAddBlocked65(c.Owner),   // v0.65.0 BT9-103
                     c =>
                     {
                         var d = c.Engine.ChooseTargets(c.Owner, Pool(c), 1, $"[{c.Card.Name}] 비용으로 시큐리티 {(top ? "위" : "아래")}에 놓을 디지몬을 고르세요.", optional: false, preselected: null).FirstOrDefault();
@@ -468,7 +468,7 @@ internal static partial class SentenceParser
             if (m.Groups["t"].Success && who == null) return null;
             List<CardInstance> Able(EffectContext c) => (who == null ? (c.Self != null && c.Owner.BattleArea.Contains(c.Self) ? new List<CardInstance> { c.Self } : new List<CardInstance>())
                 : c.Owner.BattleArea.Where(who).ToList()).Where(d => d.EvolutionSources.Count > 0).ToList();
-            return (c => Able(c).Count > 0,
+            return (c => Able(c).Count > 0 && !c.Engine.SecurityAddBlocked65(c.Owner),   // v0.65.0 BT9-103
                     c =>
                     {
                         var d = Able(c).Count == 1 ? Able(c)[0] : c.Engine.ChooseTargets(c.Owner, Able(c), 1, $"[{c.Card.Name}] 맨 위 카드를 시큐리티에 놓을 디지몬을 고르세요.", optional: false, preselected: null).FirstOrDefault();
@@ -485,7 +485,7 @@ internal static partial class SentenceParser
         {
             var (n, match) = secPick;
             string pos = m.Groups["pos"].Value.ToLowerInvariant();
-            return (c => c.Owner.Hand.Count(match) >= n,
+            return (c => c.Owner.Hand.Count(match) >= n && !c.Engine.SecurityAddBlocked65(c.Owner),   // v0.65.0 BT9-103
                     c =>
                     {
                         foreach (var x in c.Engine.ChooseCards(c.Owner, CardChoiceZone.Hand, c.Owner.Hand.Where(match).OrderBy(x => x.Level).ToList(), n, upTo: false, $"[{c.Card.Name}] 시큐리티에 놓을 패 {n}장을 고르세요."))

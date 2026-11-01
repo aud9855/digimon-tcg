@@ -228,7 +228,7 @@ internal static partial class SentenceParser
         if (!opp && Regex.IsMatch(mid, @"^Place 1 of them (?:on top of|at the top of) your security stack(?: face down)?$", I))
             return c =>
             {
-                if (c.Rv45 is not { Cards.Count: > 0 } rv) return;
+                if (c.Rv45 is not { Cards.Count: > 0 } rv || c.Engine.SecurityAddBlocked65(c.Owner)) return;   // v0.65.0 BT9-103 — 공개한 카드는 나머지와 함께
                 var ranked = rv.Cards.OrderBy(x => x.Level).ThenBy(x => x.PlayCost).ToList();
                 var k = c.Engine.ChooseCardIndexes(c.Owner, CardChoiceZone.Other, ranked, 1, false, $"[{c.Card.Name}] 시큐리티 위에 놓을 카드를 고르세요.");
                 var x = ranked[k.Count > 0 ? k[0] : 0];

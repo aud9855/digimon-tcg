@@ -188,7 +188,7 @@ internal static partial class SentenceParser
                 }
                 return list;
             }
-            return (c => Pool(c).Count > 0,
+            return (c => Pool(c).Count > 0 && !c.Engine.SecurityAddBlocked65(c.Owner),   // v0.65.0 BT9-103
                     c =>
                     {
                         // 추천: 상대의 디지몬(DP 높은 것)을 상대 시큐리티 아래 → 상대 테이머 → 자신의 테이머 → 자신의 디지몬(낮은 것)

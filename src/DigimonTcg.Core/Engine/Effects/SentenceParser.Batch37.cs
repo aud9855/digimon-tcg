@@ -312,7 +312,7 @@ internal static partial class SentenceParser
         {
             bool resolving = c.Card.Type == CardType.Option && c.Trigger == EffectTrigger.Main;   // 사용 중인 옵션 (같은 카드가 트래시에 더 있어도 빼지 않는다)
             bool inTrash = !resolving && c.Owner.Trash.Contains(c.Card);
-            if (!inTrash && !resolving) { c.LastStepResolved = false; return; }
+            if (!inTrash && !resolving || c.Engine.SecurityAddBlocked65(c.Owner)) { c.LastStepResolved = false; return; }   // v0.65.0 BT9-103 — 사용 중인 옵션은 트래시 (공식 Q&A BT10-041 Q1)
             if (inTrash) c.Owner.Trash.Remove(c.Card);
             if (top) c.Owner.SecurityStack.Insert(0, c.Card); else c.Owner.SecurityStack.Add(c.Card);
             c.ThisCardMoved = true;

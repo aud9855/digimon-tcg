@@ -84,6 +84,7 @@ public partial class GoldfishEngine
     /// </summary>
     internal bool PlaceDigimonInSecurity(PlayerZones zones, CardInstance inst, bool top, bool faceUp, bool canPrevent, bool skipLeave = false)
     {
+        if (SecurityAddBlocked65(CurrentEffectOwner ?? zones)) return false;   // v0.65.0 BT9-103 — 시큐리티에 놓을 수 없다 (디지몬은 그대로)
         if (!skipLeave && TryPreventLeave(zones, inst, deletion: false, inBattle: false, canPrevent, LeaveDestination.Security) && canPrevent)   // v0.46.0 skipLeave = 떠나려 할 때 효과가 대신 옮기는 것
             return false;
         if (!zones.BattleArea.Remove(inst))
@@ -112,7 +113,7 @@ public partial class GoldfishEngine
     /// </summary>
     internal bool PlaceTopCardInSecurity(PlayerZones owner, CardInstance inst, bool top)
     {
-        if (inst.EvolutionSources.Count == 0 || inst.TrashTopCard() is not { } card)
+        if (inst.EvolutionSources.Count == 0 || SecurityAddBlocked65(CurrentEffectOwner ?? owner) || inst.TrashTopCard() is not { } card)   // v0.65.0 BT9-103
             return false;
         if (top) owner.SecurityStack.Insert(0, card); else owner.SecurityStack.Add(card);
         NotifySecurityAdded(owner, card);

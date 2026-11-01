@@ -223,7 +223,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(c0, @"^placing up to (?<n>\d+) Tamer cards from this Digimon's digivolution cards as your bottom security cards$", I)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);
-            List<CardData> Able(EffectContext c) => c.Self == null ? new List<CardData>() : c.Self.SourcesWhere(x => !c.Self.IsFaceDown(x) && x.Type == CardType.Tamer).ToList();
+            List<CardData> Able(EffectContext c) => c.Self == null || c.Engine.SecurityAddBlocked65(c.Owner) ? new List<CardData>() : c.Self.SourcesWhere(x => !c.Self.IsFaceDown(x) && x.Type == CardType.Tamer).ToList();   // v0.65.0 BT9-103
             return (c => Able(c).Count > 0,
                     c =>
                     {

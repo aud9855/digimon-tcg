@@ -302,6 +302,7 @@ internal static partial class SentenceParser
             return (c =>
             {
                 var pool = c.Owner.Trash.Where(match).Distinct().OrderByDescending(x => x.Level).ToList();
+                if (c.Engine.SecurityAddBlocked65(c.Owner)) pool.Clear();   // v0.65.0 BT9-103
                 if (pool.Count == 0) { c.LastStepResolved = false; Emit(c, label, "트래시에 놓을 카드가 없습니다"); return; }
                 var picks = c.Engine.ChooseCardIndexes(c.Owner, CardChoiceZone.Trash, pool, Math.Min(count, pool.Count), upTo: false, $"[{c.Card.Name}] 시큐리티 {(top ? "위" : "아래")}에 놓을 카드를 고르세요.").Select(i => pool[i]).ToList();
                 foreach (var x in picks)

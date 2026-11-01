@@ -89,6 +89,12 @@ public class PlayerZones
     /// <summary>v0.64.0 이 쪽의 턴 종료 조건: 메모리가 상대 쪽의 N 이상 (기본 1 — 종합 룰 6-1-4-1, BT14-081 · BT17-069는 3) — 엔진이 지속 효과를 계산할 때 채운다</summary>
     public int TurnEndMemory64 { get; set; } = 1;
 
+    /// <summary>v0.65.0 이 쪽의 효과로는 시큐리티에 카드를 추가할 수 없다 (기간 — BT9-103 "cards can't be added to security stacks by your opponent's effects", 값 = 끝나는 TurnSequence)</summary>
+    public int NoSecurityAdd65 { get; set; }
+
+    /// <summary>v0.65.0 효과로 이 쪽의 테이머에게 준 효과 문장 (EX10-058 "give 1 of their Digimon or Tamers "~"") — 그 테이머(카드 객체)가 필드에 있는 동안 기간 안에 그 테이머의 효과처럼 발휘</summary>
+    public List<(CardData Tamer, CardData Effect, int Until, PlayerZones? Granter)> TamerGrants65 { get; } = new();
+
     /// <summary>테이머 아래 카드가 뒷면인지</summary>
     public bool IsFaceDownUnderTamer(CardData card) => FaceDownUnderTamers.Count > 0 && FaceDownUnderTamers.Contains(card);
 

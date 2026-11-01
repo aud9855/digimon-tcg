@@ -314,7 +314,7 @@ public class EffectBatch32Tests
     {
         var card = Option("B32-BT12105", "[Main] Until the end of your opponent's turn, 1 of your opponent's Digimon gains \"[On Deletion] Trash the top card of your security stack.\" Then, if you have a blue Digimon in play, you may play 1 green level 4 or lower Digimon card from your hand without paying the cost.");
         AssertFull(card);
-        Assert.Equal(EffectSupportLevel.None, EffectSupport.For(Option("B32-TAMERGRANT", "[Main] Give 1 of their Digimon or Tamers \"[End of Your Turn] Delete 1 of your Digimon.\" until their turn ends.")).Level);   // 테이머에게 주는 효과는 아직 읽지 않는다
+        Assert.Equal(EffectSupportLevel.Full, EffectSupport.For(Option("B32-TAMERGRANT", "[Main] Give 1 of their Digimon or Tamers \"[End of Your Turn] Delete 1 of your Digimon.\" until their turn ends.")).Level);   // v0.65.0 테이머에게 주는 효과도 읽는다 (EX10-058 — EffectBatch65Tests)
     }
 
     // =====================================================================

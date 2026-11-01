@@ -28,6 +28,8 @@ public partial class GoldfishEngine
         public int Memory;
         public int EndOfTurnMemoryLoss;
         public bool IsOpeningTurn;
+        public bool Passed65;                 // v0.65.0 이번 턴 종료는 패스로 (메모리를 상대 쪽의 3으로 — 종합 룰 6-5-1-7-1)
+        public int Resumes65;                 // v0.65.0 종합 룰 6-6-4로 턴이 이어진 횟수 (무한 반복 방지)
         public readonly Queue<CardInstance> Attackers = new();
         public CardInstance? AttackTarget;    // 지금 어택의 대상 (≪돌진≫으로 바꾼 내 디지몬, 없으면 시큐리티)
         public CardInstance? BlitzAttacker;   // ≪진격≫으로 메모리가 상대 쪽이어도 어택할 수 있는 AI 디지몬
@@ -1042,6 +1044,8 @@ public partial class GoldfishEngine
             State.MemoryGauge = -3;
         Log("플레이어가 턴 종료(Pass)를 선언했습니다.");
         CheckTurnEndAndAutoReset();
+        if (TurnResumed65)   // v0.65.0 종합 룰 6-6-4
+            return ActionResult.Success($"턴 종료 시에 메모리가 내 쪽(+{State.MemoryGauge})으로 돌아와 턴이 끝나지 않고 이어집니다. (종합 룰 6-6-4)");
         return State.PendingBlock != null
             ? ActionResult.Success("턴을 종료했습니다. 상대가 어택해 왔습니다 — 블록할지 선택하세요!")
             : ActionResult.Success($"턴을 종료했습니다. 상대 턴 진행 후 {State.CurrentTurn}턴(메모리 +{State.MemoryGauge})이 시작됩니다.");
@@ -1074,6 +1078,7 @@ public partial class GoldfishEngine
             State.BlitzAttacker = null;
         }
 
+        TurnResumed65 = false;
         State.CurrentPhase = Phase.TurnEnd;
         Log(TurnEndMemory64(State.Player) is > 1 and var te64 ? $"메모리가 상대 쪽의 {-State.MemoryGauge}(턴 종료 조건: 상대 쪽의 {te64} 이상)이 되어 플레이어 턴이 종료됩니다." : $"메모리가 {State.MemoryGauge}(0 미만)이 되어 플레이어 턴이 종료됩니다.");
         TriggerEndOfTurn(State.Player);
@@ -1090,6 +1095,8 @@ public partial class GoldfishEngine
             Log($"[이 턴 종료 시] 메모리 -{State.PendingEndOfTurnMemoryLoss} → {State.MemoryGauge}");
             State.PendingEndOfTurnMemoryLoss = 0;
         }
+        if (ResumePlayerTurn65())   // v0.65.0 종합 룰 6-6-4: 턴 종료 시에 메모리가 자신 쪽으로 돌아왔다 — 턴 종료가 되지 않고 메인 페이즈 그대로
+            return false;
         int memoryPassedToOpponent = Math.Min(10, Math.Abs(State.MemoryGauge));
         Log($"상대에게 넘어간 메모리: +{memoryPassedToOpponent}");
 
@@ -1755,6 +1762,7 @@ public partial class GoldfishEngine
         var endLabel = State.DummyOpponent.Tamers.FirstOrDefault() ?? State.DummyOpponent.BattleArea.FirstOrDefault()?.TopCard ?? new CardData { Name = "상대" };
         if (!ctx.EndPhase)
         {
+            AiPassIfTurnContinues65(ctx);   // v0.65.0 패스는 턴 종료 시 효과보다 먼저 (종합 룰 6-5-1-7-1 — 즉시 상대 쪽의 3)
             ctx.EndPhase = true;
             _endOfTurnAttacked.Clear();
             _overclocked.Clear();
@@ -1779,25 +1787,28 @@ public partial class GoldfishEngine
             return;
         }
         AddEffectEvent(endLabel, CaptureEffectLogs(() => TriggerEndOfOpponentTurn(State.Player)));
-        int aiMemory = ctx.Memory;
-        int aiEndOfTurnMemoryLoss = ctx.EndOfTurnMemoryLoss;
-        if (aiMemory > -TurnEndMemory64(State.DummyOpponent))   // v0.64.0 턴 종료 조건 (BT14-081 — 상대 쪽의 1 · 2에서 끝내면 패스)
-        {
-            // AI가 더 이상 낼 카드가 없어 패스(Pass)를 선언한 경우 -> 공식 룰에 따라 상대(플레이어)에게 3메모리 제공
-            aiMemory = -3;
-            Log("🤖 [AI 턴 종료] AI가 더 이상 행동하지 않고 패스(Pass)를 선언하여 메모리가 -3(내 메모리 +3)으로 넘어옵니다.");
-        }
-        else
-        {
-            Log($"🤖 [AI 턴 종료] AI 메모리가 {aiMemory}(0 미만)이 되어 내 턴(시작 메모리 +{Math.Abs(aiMemory)})으로 넘어옵니다!");
-        }
 
         // [이 턴 종료 시] 메모리 -3 (AI의 메탈그레이몬 BT1-021 등)
-        if (aiEndOfTurnMemoryLoss > 0)
+        if (ctx.EndOfTurnMemoryLoss > 0)
         {
-            aiMemory -= aiEndOfTurnMemoryLoss;
-            Log($"🤖 [이 턴 종료 시] AI 메모리 -{aiEndOfTurnMemoryLoss} → 내 시작 메모리 +{Math.Abs(aiMemory)}");
+            ctx.Memory -= ctx.EndOfTurnMemoryLoss;
+            Log($"🤖 [이 턴 종료 시] AI 메모리 -{ctx.EndOfTurnMemoryLoss} → {ctx.Memory}");
+            ctx.EndOfTurnMemoryLoss = 0;
         }
+        if (State.IsGameOver)
+        {
+            _aiTurn = null;
+            return;
+        }
+        if (ResumeAiTurn65(ctx))   // v0.65.0 종합 룰 6-6-4: 턴 종료 시에 메모리가 AI 쪽으로 돌아왔다 — 턴 종료가 되지 않고 메인 페이즈 그대로
+        {
+            RunAiTurn();
+            return;
+        }
+        int aiMemory = ctx.Memory;
+        Log(ctx.Passed65
+            ? $"🤖 [AI 턴 종료] AI가 패스(Pass)를 선언하여 메모리가 {aiMemory}(내 메모리 +{Math.Abs(aiMemory)})으로 넘어옵니다."
+            : $"🤖 [AI 턴 종료] AI 메모리가 {aiMemory}(0 미만)이 되어 내 턴(시작 메모리 +{Math.Abs(aiMemory)})으로 넘어옵니다!");
         aiMemory = Math.Max(aiMemory, -10);
 
         // [상대의 턴 종료 시] 토이아구몬 · 그레이몬(흑) 진화원: 이 턴에 상대가 한 번도 어택하지 않았다면 ≪1 드로우≫

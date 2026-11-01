@@ -171,6 +171,15 @@ public partial class GoldfishEngine
                 }
             }
 
+            // v0.65.0 효과로 테이머에게 준 효과 (EX10-058 — 그 테이머의 주인이 발휘)
+            if (self == null && mainCard is { Type: CardType.Tamer } && !optionSide && owner.TamerGrants65.Count > 0)
+                foreach (var granted in ActiveTamerGrants65(owner, mainCard))
+                {
+                    if (CardScripts.For(granted) is not { } grantedScript) continue;
+                    foreach (var effect in grantedScript.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Main).ToList())
+                        Resolve(ctx, granted, effect);
+                }
+
             // v0.31.0 "This Digimon gains all effects of ~ in this Digimon's digivolution cards" — 얻은 진화원 카드의 메인 효과 (맨 위 카드의 시점으로)
             if (self != null && mainCard != null && !optionSide && ReferenceEquals(mainCard, self.TopCard) && trigger != EffectTrigger.ActivateMain)
             {
@@ -451,6 +460,8 @@ public partial class GoldfishEngine
     {
         PruneFaceUp(State.Player);
         PruneFaceUp(State.DummyOpponent);
+        ForgetTamerGrants65(State.Player);   // v0.65.0 떠난 테이머에게 준 효과 (EX10-058)
+        ForgetTamerGrants65(State.DummyOpponent);
         SyncTamerProxies();   // v0.36.0 디지몬으로 취급하는 테이머 (GoldfishEngine.TamerAsDigimon.cs)
         ApplyExtraTraits58();   // v0.58.0 지속 효과로 얻은 특징 (GoldfishEngine.Batch58.cs)
         ApplyContinuousEffects(State.Player, State.DummyOpponent, State.PlayerAllSecurityAttackUntil);
@@ -894,6 +905,7 @@ public partial class GoldfishEngine
             // ≪천승≫ (종합 룰 16-43, 임의): 이 디지몬이 소멸했을 때, 이 카드를 시큐리티 위에 놓을 수 있다 (트래시에 있을 때만 — 다른 효과로 옮겨졌으면 못 한다)
             var top = instance.TopCard;
             if (!IsToken(top) && (CardScripts.For(top)?.Keywords.Contains(Keyword.Ascension) == true || instance.ActiveKeywords.Contains(Keyword.Ascension)) && zones.Trash.Contains(top) && !State.IsGameOver
+                && !SecurityAddBlocked65(zones)   // v0.65.0 BT9-103 — ≪천승≫은 그 디지몬 주인의 효과
                 && AskYesNo(zones, null, $"≪천승≫ [{top.Name}]을(를) 시큐리티 맨 위에 놓을까요?", recommended: true))
             {
                 zones.Trash.Remove(top);
@@ -1171,6 +1183,7 @@ public partial class GoldfishEngine
     internal int Recovery(PlayerZones zones, int count)
     {
         int n = 0;
+        if (SecurityAddBlocked65(CurrentEffectOwner ?? zones)) return 0;   // v0.65.0 BT9-103 — 덱의 카드는 그대로
         while (n < count && zones.MainDeck.Count > 0)
         {
             var recovered = zones.MainDeck[0];
@@ -1330,6 +1343,7 @@ public partial class GoldfishEngine
     /// <summary>디지몬을 주인의 시큐리티 맨 위에 뒷면으로 (맨 위 카드만 — 진화원은 트래시)</summary>
     internal void PlaceOnSecurity(PlayerZones zones, CardInstance inst, bool top = true)   // v0.37.0 top = false: 맨 아래
     {
+        if (SecurityAddBlocked65(CurrentEffectOwner ?? zones)) return;   // v0.65.0 BT9-103 — 시큐리티에 놓을 수 없다 (디지몬은 그대로)
         if (TryPreventLeave(zones, inst, deletion: false, inBattle: false, destination: LeaveDestination.Security))
             return;
         if (!zones.BattleArea.Remove(inst))
@@ -2373,7 +2387,7 @@ public partial class GoldfishEngine
         if (LastOptionArtsDigivolved) { }
         else if (optionCtx.LinkedThisCard) { }   // "link this card to ~" — 링크 카드가 되었다
         else if (optionCtx.ThisCardMoved) { }   // v0.37.0 "place this card as the bottom digivolution card of ~" — 진화원이 되었다
-        else if (optionCtx.ThisCardToSecurityTop is bool secTop) PlaceSecurityFaceUp(owner, optionCard, secTop);   // "place this card face up as the bottom security card"
+        else if (optionCtx.ThisCardToSecurityTop is bool secTop && !SecurityAddBlocked65(owner)) PlaceSecurityFaceUp(owner, optionCard, secTop);   // "place this card face up as the bottom security card" · v0.65.0 BT9-103이면 트래시 (공식 Q&A BT10-041 Q1)
         else if (optionCtx.PlaceInBattleArea) PlaceOption(owner, optionCard);
         else owner.Trash.Add(optionCard);
         // "When you use an Option card" / "When a player uses an Option card"

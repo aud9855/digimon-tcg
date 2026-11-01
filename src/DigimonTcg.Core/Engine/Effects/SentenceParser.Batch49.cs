@@ -343,6 +343,7 @@ internal static partial class SentenceParser
             {
                 var from = c.Owner.Hand.Contains(c.Card) ? c.Owner.Hand : c.Owner.Trash.Contains(c.Card) ? c.Owner.Trash : null;
                 if (from == null) { c.LastStepResolved = false; Emit(c, label, "이 카드가 패 · 트래시에 없습니다"); return; }
+                if (c.Engine.SecurityAddBlocked65(c.Owner)) { c.LastStepResolved = false; Emit(c, label, "시큐리티에 카드를 추가할 수 없습니다"); return; }   // v0.65.0 BT9-103
                 from.Remove(c.Card);
                 if (top) c.Owner.SecurityStack.Insert(0, c.Card); else c.Owner.SecurityStack.Add(c.Card);
                 c.ThisCardMoved = true;
@@ -420,7 +421,7 @@ internal static partial class SentenceParser
             return (c =>
             {
                 int lv = c.Other?.TopCard.Level ?? c.TriggerCard?.Level ?? 0;
-                var pool = c.Owner.Hand.Where(x => lv > 0 && x.Level == lv).Distinct().OrderBy(x => x.PlayCost).ToList();
+                var pool = c.Owner.Hand.Where(x => lv > 0 && x.Level == lv && !c.Engine.SecurityAddBlocked65(c.Owner)).Distinct().OrderBy(x => x.PlayCost).ToList();   // v0.65.0 BT9-103
                 if (pool.Count == 0) { c.LastStepResolved = false; Emit(c, label, $"패에 Lv.{lv} 카드가 없습니다"); return; }
                 var idx = c.Engine.ChooseCardIndexes(c.Owner, CardChoiceZone.Hand, pool, 1, false, $"[{label}] 공개하고 시큐리티 맨 위에 놓을 Lv.{lv} 카드를 고르세요.");
                 var x = pool[idx.Count > 0 ? idx[0] : 0];
