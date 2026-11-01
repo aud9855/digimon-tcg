@@ -127,24 +127,25 @@ public partial class GoldfishEngine
             bool execute = CardScripts.HasKeyword(attacker, Keyword.Execute) && !CardScripts.HasKeyword(attacker, Keyword.Vortex)
                            || (CardScripts.HasKeyword(attacker, Keyword.Execute) && EndOfTurnTargets(owner, execute: false).Count == 0);
             var targets = EndOfTurnTargets(owner, execute);
-            if (!execute && targets.Count == 0) continue;   // ≪볼텍스≫는 상대 디지몬에게만
+            bool vortexPlayers = !execute && VortexCanAttackPlayers53(owner);   // v0.53.0 EX11-062 "your ＜Vortex＞ can also attack players"
+            if (!execute && targets.Count == 0 && !vortexPlayers) continue;   // ≪볼텍스≫는 상대 디지몬에게만
             var best = BestWinningTarget(attacker, targets);
             string kw = execute ? "≪에그제큐트≫" : "≪볼텍스≫";
-            if (!AskYesNo(owner, attacker, $"{kw} [{attacker.TopCard.Name}]으로 턴 종료 시 어택할까요?{(execute ? " (어택이 끝나면 이 디지몬은 소멸합니다)" : "")}", recommended: best != null))
+            if (!AskYesNo(owner, attacker, $"{kw} [{attacker.TopCard.Name}]으로 턴 종료 시 어택할까요?{(execute ? " (어택이 끝나면 이 디지몬은 소멸합니다)" : "")}", recommended: best != null || vortexPlayers))
                 continue;
             CardInstance? defender = null;
             if (targets.Count > 0)
             {
                 var ranked = AiEvaluator.Rank(targets, best);
-                defender = ChooseTargets(owner, ranked, 1, $"{kw} [{attacker.TopCard.Name}]의 어택 대상을 고르세요.{(execute ? " (고르지 않으면 시큐리티)" : "")}",
-                    optional: execute, preselected: best).FirstOrDefault();
+                defender = ChooseTargets(owner, ranked, 1, $"{kw} [{attacker.TopCard.Name}]의 어택 대상을 고르세요.{(execute || vortexPlayers ? " (고르지 않으면 시큐리티)" : "")}",
+                    optional: execute || vortexPlayers, preselected: best).FirstOrDefault();
             }
-            if (!execute && defender == null) continue;
+            if (!execute && defender == null && !vortexPlayers) continue;
             _endOfTurnAttacked.Add(attacker);
             if (execute) _executingAttacker = attacker;
             Log($"[{kw}] [{attacker.TopCard.Name}] 턴 종료 시 어택!");
             if (defender != null) PlayerAttackOnDigimonCore(attacker, defender);
-            else PlayerSecurityAttackCore(attacker);
+            else { if (vortexPlayers) Diag46.Hit("vortexPlayers53"); PlayerSecurityAttackCore(attacker); }
         }
         RunPlayerOverclocks();
     }
@@ -185,9 +186,11 @@ public partial class GoldfishEngine
             // 정책(IAiPolicy.ChooseEndOfTurnAttack)에 묻는다 — ≪볼텍스≫로 먼저, 고르지 않으면 ≪에그제큐트≫로
             EndOfTurnAttack? choice = null;
             bool execute = false;
-            if (CardScripts.HasKeyword(attacker, Keyword.Vortex) && EndOfTurnTargets(owner, execute: false) is { Count: > 0 } vortexTargets)
-                choice = AiPolicy.ChooseEndOfTurnAttack(this, attacker, vortexTargets, canAttackSecurity: false);
-            if (choice is { Target: null }) choice = null;   // ≪볼텍스≫는 상대 디지몬에게만
+            bool vortexPlayers = VortexCanAttackPlayers53(owner);   // v0.53.0 EX11-062
+            if (CardScripts.HasKeyword(attacker, Keyword.Vortex) && EndOfTurnTargets(owner, execute: false) is { } vortexTargets && (vortexTargets.Count > 0 || vortexPlayers))
+                choice = AiPolicy.ChooseEndOfTurnAttack(this, attacker, vortexTargets, canAttackSecurity: vortexPlayers);
+            if (choice is { Target: null } && !vortexPlayers) choice = null;
+            if (choice is { Target: null } && vortexPlayers) Diag46.Hit("vortexPlayers53");   // ≪볼텍스≫는 상대 디지몬에게만 (EX11-062가 있으면 플레이어에게도)
             if (choice == null && CardScripts.HasKeyword(attacker, Keyword.Execute))
             {
                 choice = AiPolicy.ChooseEndOfTurnAttack(this, attacker, EndOfTurnTargets(owner, execute: true), canAttackSecurity: true);

@@ -117,6 +117,8 @@ public enum EffectTrigger
     StartOfOpponentsTurn50,         // [상대의 턴 개시 시] (LM-020 · 상대의 턴 개시 시에 자신의 카드)
     // v0.52.0
     AllyDigimonWouldDigivolve52,    // 자신의 디지몬이 진화하려 할 때 (코스트를 내기 전 — Other = 진화할 디지몬, TriggerCard = 진화할 카드 · EX2-056)
+    // v0.53.0
+    ThisDigimonDeletedAnother53,    // 이 디지몬이 다른 디지몬을 소멸시켰을 때 (배틀 · 이 디지몬의 효과 — 공식 Q&A EX1-064, Other = 소멸한 디지몬 · BT16-061)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
@@ -239,6 +241,9 @@ public sealed record CardEffect(EffectTrigger Trigger, EffectSource Source, Acti
 
     /// <summary>[턴에 2회]</summary>
     public bool TwicePerTurn { get; init; }
+
+    /// <summary>v0.53.0 [턴에 1회] 기록 이름 (null = 카드 번호) — 27차 규칙으로 읽은 절은 절마다 따로 (같은 카드의 다른 [턴에 1회] 효과와 나누지 않는다, BT25-060)</summary>
+    public string? OnceKey53 { get; init; }
 }
 
 /// <summary>지속 효과 한 절 — 필드 상태가 바뀔 때마다 엔진이 다시 계산한다</summary>
@@ -363,6 +368,12 @@ public sealed class CardScript
 
     /// <summary>v0.52.0 BT3-056 "[Your Turn] [Once Per Turn] When your ＜Digisorption＞ effect would suspend one of your Digimon, you may suspend your opponent's Digimon with that effect instead"</summary>
     public bool DigisorptionOpponent52 { get; set; }
+
+    /// <summary>v0.53.0 EX5-053 "[Opponent's Turn] [Once Per Turn] When your security is checked, if that card is ~, play it without battling and without paying the cost" — 체크된 카드 조건</summary>
+    public Func<CardData, bool>? SecurityCheckedPlay53 { get; set; }
+
+    /// <summary>v0.53.0 EX11-062 "[Your Turn] While your opponent has no unsuspended Digimon, your ＜Vortex＞ can also attack players"</summary>
+    public bool VortexPlayers53 { get; set; }
 
     /// <summary>"이 카드를 등장시킬 때 / 사용할 때 코스트 -N" — (자신의 필드, 상대의 필드)를 받아 줄일 코스트를 돌려준다</summary>
     public Func<PlayerZones, PlayerZones, int>? PlayCostReduction { get; set; }

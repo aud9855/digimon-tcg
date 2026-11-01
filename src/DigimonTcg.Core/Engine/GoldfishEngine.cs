@@ -921,7 +921,7 @@ public partial class GoldfishEngine
                 RecalculateFieldBuffs();
                 attackerDp = attacker.GetCurrentDP();
             }
-            if (SecurityPlayWithoutBattle && PlaySecurityDigimonWithoutBattle(opp, securityCard))   // v0.37.0 "[Security] Play this card without battling ~"
+            if ((SecurityPlayWithoutBattle && PlaySecurityDigimonWithoutBattle(opp, securityCard)) || TrySecurityCheckedPlay53(opp, securityCard))   // v0.53.0 EX5-053   // v0.37.0 "[Security] Play this card without battling ~"
             {
                 string msg = $"✨ [시큐리티 디지몬 {securityCard.Name}] 배틀하지 않고 코스트 없이 상대 필드에 등장! 내 [{attacker.TopCard.Name}]은(는) 생존합니다. (남은 시큐리티: {opp.SecurityStack.Count}장)";
                 State.LastSecurityBattleResult = $"시큐리티 디지몬 [{securityCard.Name}] 배틀 없이 등장 (내 디지몬 생존)";
@@ -1572,7 +1572,7 @@ public partial class GoldfishEngine
                 break;
             RecalculateFieldBuffs();
             aiDp = aiAttacker.GetCurrentDP();
-            if (SecurityPlayWithoutBattle && PlaySecurityDigimonWithoutBattle(State.Player, mySec))   // v0.37.0 "[Security] Play this card without battling ~"
+            if ((SecurityPlayWithoutBattle && PlaySecurityDigimonWithoutBattle(State.Player, mySec)) || TrySecurityCheckedPlay53(State.Player, mySec))   // v0.53.0 EX5-053   // v0.37.0 "[Security] Play this card without battling ~"
             {
                 State.PlayerSecurityCheckHistory.Add(new SecurityCheckHistoryItem(
                     mySec, aiAttacker.TopCard.Name, aiDp, IsBattleWon: false, OutcomeSummary: "✨ [시큐리티] 배틀 없이 등장"));

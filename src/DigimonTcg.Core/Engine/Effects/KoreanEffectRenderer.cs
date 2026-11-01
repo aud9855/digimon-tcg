@@ -49,7 +49,7 @@ public static partial class KoreanEffectRenderer
         // v0.38.0 시큐리티 에어리어의 효과 표시 — 공식 BT20-052 "[시큐리티]【상대의 턴 종료 시】" (【시큐리티】 효과가 아니다)
         if (Regex.IsMatch(rawClause.TrimStart(), @"^\[Security\]\s*\[End of Opponent's Turn\]", RegexOptions.IgnoreCase) && RenderClauseCore(rawClause) is { } zoneKo)
             return TamerCount41(Regex.Replace(zoneKo, @"^【시큐리티】\s*", "[시큐리티]"));
-        return TamerCount41(RenderClause47Fixed(rawClause) ?? RenderBrokenText43(rawClause) ?? FixItAfterPlay40(rawClause, RenderClauseCore(rawClause)) ?? RenderClause40(rawClause) ?? RenderClause41(rawClause) ?? RenderClause42(rawClause) ?? RenderClause43(rawClause) ?? RenderClause44(rawClause) ?? RenderClause45(rawClause) ?? RenderClause46(rawClause) ?? RenderClause47(rawClause) ?? RenderClause48(rawClause) ?? RenderClause49(rawClause) ?? RenderClause50(rawClause) ?? RenderClause51(rawClause) ?? RenderClause52(rawClause));   // v0.52.0   // v0.51.0 · v0.50.0 · v0.49.0 · v0.48.0   // v0.47.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42)   // v0.41.0 테이머는 "명" · 원래 규칙이 읽지 못한 절만 (Batch41) · v0.40.0 (KoreanEffectRenderer.Batch40.cs)
+        return TamerCount41(RenderClause47Fixed(rawClause) ?? RenderBrokenText43(rawClause) ?? FixItAfterPlay40(rawClause, RenderClauseCore(rawClause)) ?? RenderClause40(rawClause) ?? RenderClause41(rawClause) ?? RenderClause42(rawClause) ?? RenderClause43(rawClause) ?? RenderClause44(rawClause) ?? RenderClause45(rawClause) ?? RenderClause46(rawClause) ?? RenderClause47(rawClause) ?? RenderClause48(rawClause) ?? RenderClause49(rawClause) ?? RenderClause50(rawClause) ?? RenderClause51(rawClause) ?? RenderClause52(rawClause) ?? RenderClause53(rawClause));   // v0.53.0   // v0.52.0   // v0.51.0 · v0.50.0 · v0.49.0 · v0.48.0   // v0.47.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44) · v0.43.0 (Batch43)   // v0.42.0 (Batch42)   // v0.41.0 테이머는 "명" · 원래 규칙이 읽지 못한 절만 (Batch41) · v0.40.0 (KoreanEffectRenderer.Batch40.cs)
     }
 
     private static string? RenderClauseCore(string rawClause) => Memo52(8, rawClause, 0, static (x, _) => RenderClauseCoreUncached52(x));
@@ -183,7 +183,7 @@ public static partial class KoreanEffectRenderer
     /// <summary>문장 하나 → 한글 (마침표 없이)</summary>
     private static string? Sentence(string s, bool nested = false) => Memo52(1, s, nested ? 1 : 0, static (x, n) => SentenceUncached52(x, n != 0));
 
-    private static string? SentenceUncached52(string s, bool nested) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested) ?? SentenceFallback39(s, nested) ?? SentenceFallback40(s, nested) ?? SentenceFallback41(s, nested) ?? SentenceFallback42(s, nested) ?? SentenceFallback43(s, nested) ?? SentenceFallback44(s, nested) ?? SentenceFallback45(s, nested) ?? SentenceFallback46(s, nested) ?? SentenceFallback48(s, nested) ?? SentenceFallback49(s, nested) ?? SentenceFallback50(s, nested) ?? SentenceFallback51(s, nested);   // v0.51.0 · v0.50.0 · v0.49.0 · v0.48.0   // v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.42.0   // v0.41.0 · v0.40.0   // v0.39.0 · v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
+    private static string? SentenceUncached52(string s, bool nested) => SentenceCore(s, nested) ?? SentenceFallback38(s, nested) ?? SentenceFallback39(s, nested) ?? SentenceFallback40(s, nested) ?? SentenceFallback41(s, nested) ?? SentenceFallback42(s, nested) ?? SentenceFallback43(s, nested) ?? SentenceFallback44(s, nested) ?? SentenceFallback45(s, nested) ?? SentenceFallback46(s, nested) ?? SentenceFallback48(s, nested) ?? SentenceFallback49(s, nested) ?? SentenceFallback50(s, nested) ?? SentenceFallback51(s, nested) ?? SentenceFallback53(s, nested);   // v0.53.0   // v0.51.0 · v0.50.0 · v0.49.0 · v0.48.0   // v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.42.0   // v0.41.0 · v0.40.0   // v0.39.0 · v0.38.0 읽지 못한 문장만 다른 표기로 (KoreanEffectRenderer.Batch38.cs)
 
     private static string? SentenceCore(string s, bool nested = false)
     {
@@ -870,7 +870,7 @@ public static partial class KoreanEffectRenderer
     /// <summary>비용 "~ing ..." → "~하는 것으로,"</summary>
     private static string? CostKo(string cost) => Memo52(3, cost, 0, static (x, _) => CostKoUncached52(x));
 
-    private static string? CostKoUncached52(string cost) => CostKoCore(cost) ?? CostKo38(cost) ?? CostKo39(cost) ?? CostKo43(cost) ?? CostKo44(cost) ?? CostKo45(cost) ?? CostKo46(cost) ?? CostKo50(cost) ?? CostKo51(cost) ?? CostKo52(cost);   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.38.0 읽지 못한 비용만 (KoreanEffectRenderer.Batch38.cs)
+    private static string? CostKoUncached52(string cost) => CostKoCore(cost) ?? CostKo38(cost) ?? CostKo39(cost) ?? CostKo43(cost) ?? CostKo44(cost) ?? CostKo45(cost) ?? CostKo46(cost) ?? CostKo50(cost) ?? CostKo51(cost) ?? CostKo52(cost) ?? CostKo53(cost);   // v0.53.0   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.38.0 읽지 못한 비용만 (KoreanEffectRenderer.Batch38.cs)
 
     private static string? CostKoCore(string cost)
     {
@@ -1175,7 +1175,7 @@ public static partial class KoreanEffectRenderer
     /// <summary>"When ~," 사건 → "~했을 때,"</summary>
     private static string? EventKo(string ev) => Memo52(5, ev, 0, static (x, _) => EventKoUncached52(x));
 
-    private static string? EventKoUncached52(string ev) => FixEventKo39(ev, EventKoCore(ev)) ?? EventKo39(ev) ?? EventKo40(ev) ?? EventKo43(ev) ?? EventKo44(ev) ?? EventKo45(ev) ?? EventKo46(ev) ?? EventKo52(ev);   // v0.52.0   // v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.40.0   // v0.39.0 읽지 못한 사건만 (KoreanEffectRenderer.Batch39.cs)
+    private static string? EventKoUncached52(string ev) => FixEventKo39(ev, EventKoCore(ev)) ?? EventKo39(ev) ?? EventKo40(ev) ?? EventKo43(ev) ?? EventKo44(ev) ?? EventKo45(ev) ?? EventKo46(ev) ?? EventKo52(ev) ?? EventKo53(ev);   // v0.53.0   // v0.52.0   // v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0   // v0.40.0   // v0.39.0 읽지 못한 사건만 (KoreanEffectRenderer.Batch39.cs)
 
     private static string? EventKoCore(string ev)
     {

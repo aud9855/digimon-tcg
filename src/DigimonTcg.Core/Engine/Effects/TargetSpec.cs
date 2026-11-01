@@ -20,6 +20,9 @@ public sealed partial class TargetSpec
     public bool AnySide { get; private init; }
     /// <summary>양쪽에서 고를 때 자신의 디지몬을 먼저 볼지 (액티브 · DP + 같은 이로운 효과). 동작을 읽는 쪽이 정한다</summary>
     public bool PreferOwnSide { get; set; }
+
+    /// <summary>v0.53.0 추천 순서 (작을수록 먼저 — UI가 고른 대상 다음, 쪽 순서 앞): 레스트 · 액티브로 하는 효과가 상태를 바꿀 수 있는 디지몬 먼저 (AI 선택)</summary>
+    internal Func<EffectContext, CardInstance, int>? Rank53 { get; set; }
     /// <summary>고르는 수 (0 = 전부)</summary>
     public int Count { get; private init; } = 1;
     public List<Func<CardInstance, bool>> Filters { get; } = new();
@@ -359,7 +362,8 @@ public sealed partial class TargetSpec
         || card.InheritedEffectText.Contains($"[{x}]", StringComparison.OrdinalIgnoreCase);
 
     public static bool HasTrait(CardData card, string x) =>
-        card.Traits.Any(t => t.Equals(x, StringComparison.OrdinalIgnoreCase) || t.Contains(x, StringComparison.OrdinalIgnoreCase));
+        card.Traits.Any(t => t.Equals(x, StringComparison.OrdinalIgnoreCase) || t.Contains(x, StringComparison.OrdinalIgnoreCase))
+        || GoldfishEngine.IsAppmonByAppName41(card, x);   // v0.53.0 영어 데이터의 어플몬 디지몬은 특징이 "Search (App Name)"뿐 — [Appmon] 특징 카드를 고르는 효과도 (링크 조건처럼) 어플몬으로 본다
 
     /// <summary>"[Animal] in any of its traits other than [Sea Animal]" — 제외한 특징은 빼고 본다</summary>
     public static bool HasTrait(CardData card, string x, IReadOnlyCollection<string> except) =>
@@ -397,6 +401,7 @@ public sealed partial class TargetSpec
 
         var ordered = list
             .OrderByDescending(d => ReferenceEquals(d, preferred))
+            .ThenBy(d => Rank53?.Invoke(c, d) ?? 0)   // v0.53.0
             .ThenByDescending(d => AnySide && c.Owner.BattleArea.Contains(d) == PreferOwnSide)   // 양쪽: 해로운 효과는 상대 먼저, 이로운 효과는 자신 먼저
             .ThenByDescending(d => (!Opponent || (AnySide && PreferOwnSide)) && ReferenceEquals(d, c.Self))
             .ThenByDescending(d => d.GetCurrentDP())

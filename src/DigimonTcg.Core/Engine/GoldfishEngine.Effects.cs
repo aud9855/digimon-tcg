@@ -354,7 +354,7 @@ public partial class GoldfishEngine
         if (!ctx.Engine.FirstPlayedTrigger47(ctx, card, effect))   // v0.47.0 동시 등장의 "등장했을 때"는 같은 효과 1번만 (공식 Q&A ST12-04 Q1)
             return;
         // [턴에 1회] 기록: 같은 카드의 메인 효과와 진화원 효과는 다른 효과다 (v0.29.0 — 진화원 [메인]과 맨 위가 된 그 카드의 메인 효과, BT22-043)
-        string onceKey = effect.Source == EffectSource.Inherited ? card.CardId + "#I" : effect.Source == EffectSource.Link43 ? card.CardId + "#L" : card.CardId;   // v0.43.0 링크 효과
+        string onceKey = (effect.Source == EffectSource.Inherited ? card.CardId + "#I" : effect.Source == EffectSource.Link43 ? card.CardId + "#L" : card.CardId) + effect.OnceKey53;   // v0.43.0 링크 효과 · v0.53.0 절마다
         if (effect.OncePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey))
             return;
         if (effect.TwicePerTurn && ctx.Self != null && !ctx.Self.UsedOncePerTurn.Add(onceKey) && !ctx.Self.UsedOncePerTurn.Add(onceKey + "#2"))
@@ -378,7 +378,9 @@ public partial class GoldfishEngine
         {
             try
             {
-                effect.Resolve(ctx);
+                ctx.Engine.PushEffectSelf53(ctx.Self);   // v0.53.0 "When this Digimon deletes another Digimon" — 이 효과의 디지몬
+                try { effect.Resolve(ctx); }
+                finally { ctx.Engine.PopEffectSelf53(); }
                 if (handBefore != null) ctx.Engine.NoteDigimonHandAdd(ctx.Owner, handBefore, drawsBefore);
             }
             finally { ctx.Engine.PlayCollector = outerCollector; if (watching) ctx.Engine.EndSourceWatch(ctx.Owner); ctx.Engine.EndDeckAddWatch46(deckWatch46, ctx.Owner); }
@@ -826,6 +828,7 @@ public partial class GoldfishEngine
         while (instance.EvolutionSources.Count > 0)
             zones.Trash.Add(instance.EvolutionSources.Pop());
         PurgeTokens(zones);
+        var deleter53 = cause == DeletionCause.Effect ? EffectDeleter53(instance) : null;   // v0.53.0 이 효과의 디지몬이 소멸시켰다 (BT16-061)
         var witness46 = CaptureWitness46();   // v0.46.0 소멸한 시점에 있던 카드만 "소멸했을 때"에 반응 (【소멸 시】로 등장한 디지몬은 아니다 — 종합 룰 15-5-1)
         NotifyLeftBattleArea(zones, instance);   // v0.33.0 "When any of your opponent's Digimon leave the battle area"
 
@@ -838,6 +841,7 @@ public partial class GoldfishEngine
             FireForSide(EffectTrigger.AllyDigimonDeleted, zones, instance, witness: witness46);
             FireForSide(EffectTrigger.OpponentDigimonDeleted, EnemyOf(zones), instance, witness: witness46);
             CurrentDeletionCause = outerCause;
+            FireDeletedAnother53(deleter53, instance);
 
             // ≪천승≫ (종합 룰 16-43, 임의): 이 디지몬이 소멸했을 때, 이 카드를 시큐리티 위에 놓을 수 있다 (트래시에 있을 때만 — 다른 효과로 옮겨졌으면 못 한다)
             var top = instance.TopCard;
@@ -2138,6 +2142,8 @@ public partial class GoldfishEngine
             FireForSide(EffectTrigger.AllyDeletedOpponentInBattle, atkZones, attacker, triggerCard: defender.TopCard);
         if (attackerDeleted)
             FireForSide(EffectTrigger.AllyDeletedOpponentInBattle, defZones, defender, triggerCard: attacker.TopCard);
+        if (defenderDeleted) FireDeletedAnother53(attacker, defender);   // v0.53.0 "When this Digimon deletes another Digimon" — 배틀 (함께 소멸했으면 배틀 에어리어에 없어 발휘하지 않는다)
+        if (attackerDeleted) FireDeletedAnother53(defender, attacker);
         if (defenderDeleted && !attackerDeleted)
             RunEffects(EffectTrigger.WonBattle, atkZones, attacker, attacker.TopCard, other: defender);
         else if (attackerDeleted && !defenderDeleted)

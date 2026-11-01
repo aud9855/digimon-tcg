@@ -294,6 +294,7 @@ internal static partial class SentenceParser
                     if (!c.Enemy.BattleArea.Contains(d)) continue;
                     if (toBottom) c.Engine.BottomDeck(c.Enemy, d); else c.DeleteEnemy(d);
                 }
+                if (Gate53) c.LastTargets = picked;   // v0.53.0 27차 규칙으로 읽은 것만: "Then, for each Digimon deleted by this effect" (BT19-011)
                 if (picked.Count == 0) c.LastStepResolved = false;
                 Emit(c, label, picked.Count > 0 ? $"상대 디지몬 [{string.Join(", ", picked.Select(d => d.TopCard.Name))}] {(toBottom ? "덱 아래로" : "소멸")} ({unit} 합계)" : "고를 디지몬이 없습니다");
             }, null);
