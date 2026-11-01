@@ -67,11 +67,13 @@ public partial class GoldfishEngine
         if (State.IsGameOver) return;
         var attacker = decl.Attacker;
         CurrentAttacker = attacker;
+        BeginPlayerAttack63(decl.Target);   // v0.63.0 (GoldfishEngine.Batch63)
         TriggerWhenAttackingEffects(attacker, decl.Target);
         FireForSide(EffectTrigger.OpponentDigimonAttacks, State.DummyOpponent, attacker, triggerCard: decl.Target?.TopCard);
         FireForSide(EffectTrigger.AllyDigimonAttacks, State.Player, attacker, triggerCard: decl.Target?.TopCard);
         var redirected = _playerAttackRedirect is { } r && State.DummyOpponent.BattleArea.Contains(r) ? r : null;   // 상대 효과로 어택 대상 변경
         _playerAttackRedirect = null;
+        if (ConsumeToPlayer63() && decl.ToDigimon) { decl.ToDigimon = false; redirected = null; }   // v0.63.0 효과로 플레이어로
         if (decl.ToDigimon)
         {
             var t = redirected ?? decl.Target!;

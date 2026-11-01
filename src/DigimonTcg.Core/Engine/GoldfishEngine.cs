@@ -119,6 +119,7 @@ public partial class GoldfishEngine
         _aiTurn = null;
         _declared57 = null;   // v0.57.0
         _scheduledDeletions.Clear();
+        ResetWhole63();   // v0.63.0 (v0.62.0 이 턴 동안 얻는 것도 — 앞 게임의 기록)
         _scheduledReturns39.Clear();
         _scheduledActs39.Clear();
         _afterSecurityBattle39.Clear();
@@ -662,9 +663,21 @@ public partial class GoldfishEngine
         SuspendForAttack(attacker);   // "may attack without suspending"이면 레스트하지 않는다
         State.BlitzAttacker = null;
         _playerAttackRedirect = null;
+        BeginPlayerAttack63(defender);   // v0.63.0 어택 대상 (효과로 플레이어로 바꿀 수 있다 — GoldfishEngine.Batch63)
         TriggerWhenAttackingEffects(attacker, defender);
         FireForSide(EffectTrigger.OpponentDigimonAttacks, State.DummyOpponent, attacker, triggerCard: defender.TopCard);   // TriggerCard = 어택 대상 (플레이어면 null)
         FireForSide(EffectTrigger.AllyDigimonAttacks, State.Player, attacker, triggerCard: defender.TopCard);
+        if (ConsumeToPlayer63())   // v0.63.0 효과로 어택 대상을 플레이어로 바꿨다 (EX5-054 · ST18-14) — 시큐리티 어택으로
+        {
+            _playerAttackRedirect = null;
+            var raid63 = ApplyAttackKeywords(attacker, null);
+            string msg63;
+            if (ConsumeAttackEnd(attacker)) Log(msg63 = $"[{attacker.TopCard.Name}]의 어택이 효과로 종료되었습니다.");
+            else if (raid63 != null) Log(msg63 = ResolvePlayerAttackOnDigimon(attacker, raid63));
+            else msg63 = ResolveSecurityAttack(attacker).GuideMessage;   // 시큐리티 어택은 처리하며 로그를 남긴다
+            EndAttack(attacker);
+            return msg63;
+        }
         if (_playerAttackRedirect is { } redirected && State.DummyOpponent.BattleArea.Contains(redirected)) defender = redirected;   // 상대 효과로 어택 대상 변경
         _playerAttackRedirect = null;
         defender = ApplyAttackKeywords(attacker, defender) ?? defender;
@@ -738,11 +751,13 @@ public partial class GoldfishEngine
         SuspendForAttack(attacker);   // "may attack without suspending"이면 레스트하지 않는다
         State.BlitzAttacker = null;
         _playerAttackRedirect = null;
+        BeginPlayerAttack63(null);   // v0.63.0
         TriggerWhenAttackingEffects(attacker, null);
         FireForSide(EffectTrigger.OpponentDigimonAttacks, State.DummyOpponent, attacker);
         FireForSide(EffectTrigger.AllyDigimonAttacks, State.Player, attacker);
         var redirected = _playerAttackRedirect is { } r && State.DummyOpponent.BattleArea.Contains(r) ? r : null;   // 상대 효과로 어택 대상 변경
         _playerAttackRedirect = null;
+        ConsumeToPlayer63();   // v0.63.0 (시큐리티 어택은 이미 플레이어)
 
         ActionResult result;
         var raid = ApplyAttackKeywords(attacker, redirected) ?? redirected;

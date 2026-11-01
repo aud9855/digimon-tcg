@@ -25,11 +25,14 @@ public partial class GoldfishEngine
     internal bool WouldUnsuspendPossible62()
     {
         var reg = SentenceParser.WouldUnsuspendCards62;
-        if (reg.IsEmpty) return false;
         return Side(State.Player) || Side(State.DummyOpponent);
 
-        bool Card(CardData c) =>
-            reg.ContainsKey(c.CardId) || (CardScripts.For(c)?.Statics.Any(s => s.Grant61 != null && reg.ContainsKey(s.Grant61.CardId)) ?? false);
+        // v0.63.0 효과를 처리하지 않고 놓인 카드도 스크립트를 먼저 만들어 본다 (GoldfishEngine.Batch63)
+        bool Card(CardData c)
+        {
+            EnsureScript63(c);
+            return reg.ContainsKey(c.CardId) || (CardScripts.For(c)?.Statics.Any(s => s.Grant61 != null && reg.ContainsKey(s.Grant61.CardId)) ?? false);
+        }
         bool Side(PlayerZones z)
         {
             foreach (var d in z.BattleArea)
@@ -162,7 +165,7 @@ public partial class GoldfishEngine
     /// <summary>등장하는 디지몬이 【등장 시】 전에 이 턴 동안 얻는 것을 갖도록 (BT9-102 "[On Play] ~" — 얻은 효과로 발휘)</summary>
     private void RefreshSideAurasBeforeOnPlay62()
     {
-        if (_sideAuras62.Count > 0) RecalculateFieldBuffs();
+        if (_sideAuras62.Count > 0 || _whole63.Count > 0) RecalculateFieldBuffs();   // v0.63.0 전체 처리도
     }
 
     // =====================================================================

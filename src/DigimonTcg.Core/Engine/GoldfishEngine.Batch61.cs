@@ -235,14 +235,15 @@ public partial class GoldfishEngine
     private static bool AnyGrantAura61(PlayerZones side)
     {
         var reg = SentenceParser.GrantAuraCards61;
-        if (reg.IsEmpty) return false;
+        // v0.63.0 효과를 처리하지 않고 놓인 카드도 — 스크립트를 먼저 만들어 표에 올린다 (GoldfishEngine.Batch63)
+        bool Has(CardData c) { EnsureScript63(c); return reg.ContainsKey(c.CardId); }
         foreach (var d in side.BattleArea)
         {
-            if (reg.ContainsKey(d.TopCard.CardId)) return true;
-            foreach (var s in d.EvolutionSources) if (reg.ContainsKey(s.CardId)) return true;
+            if (Has(d.TopCard)) return true;
+            foreach (var s in d.EvolutionSources) if (Has(s)) return true;
         }
         foreach (var t in side.Tamers)
-            if (reg.ContainsKey(t.CardId)) return true;
+            if (Has(t)) return true;
         return false;
     }
 }

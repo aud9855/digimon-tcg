@@ -450,11 +450,18 @@ internal static partial class SentenceParser
         bool good = preds.All(p => p.Good);
         target.PreferOwnSide = good;
         var list = preds;
+        if (!self) NoteWhole63(target, card);
         return (c =>
         {
             int until = Until(c, dur);
+            var whole = self ? null : WholeBegin63(c, target, dur);   // v0.63.0 기간 동안의 전체 처리 (SentenceParser.Batch63)
             var targets = Pick(target, c, security);
-            foreach (var d in targets)
+            void Late(CardInstance d)
+            {
+                Preds(d);
+                foreach (var p in list.Where(p => p.Dp != 0)) c.Engine.ApplyDpChange(d, p.Dp, until, $"{c.Card.Name} [{label}]");
+            }
+            void Preds(CardInstance d)
             {
                 foreach (var p in list)
                 {
@@ -476,11 +483,13 @@ internal static partial class SentenceParser
                     }
                 }
             }
+            foreach (var d in targets) Preds(d);
             c.RecalculateFieldBuffs();
             foreach (var d in targets)
                 foreach (var p in list.Where(p => p.Dp != 0))
                     if (c.Owner.BattleArea.Contains(d) || c.Enemy.BattleArea.Contains(d))
                         c.Engine.ApplyDpChange(d, p.Dp, until, $"{c.Card.Name} [{label}]");
+            WholeEnd63(c, target, whole, targets, until, Late);
             if (targets.Count == 0) c.LastStepResolved = false;
             Emit(c, label, targets.Count > 0 ? $"[{string.Join(", ", targets.Select(d => d.TopCard.Name))}] {string.Join(" · ", list.Select(p => p.Text))}" : "대상이 없습니다");
         }, null);

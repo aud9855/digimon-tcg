@@ -466,6 +466,12 @@ public partial class GoldfishEngine
             }
         }
         ApplyNoIgnoreReq62();   // v0.62.0 BT8-059 서로는 진화 조건을 무시할 수 없다 (GoldfishEngine.Batch62)
+        if (_whole63.Count > 0 && !_sweeping63 && Sweep63())   // v0.63.0 기간 동안의 전체 처리 — 나중에 늘어난 대상 · 조건을 잃은 대상 (GoldfishEngine.Batch63)
+        {
+            ApplyContinuousEffects(State.Player, State.DummyOpponent, State.PlayerAllSecurityAttackUntil);
+            ApplyContinuousEffects(State.DummyOpponent, State.Player, State.OpponentAllSecurityAttackUntil);
+            ApplyNoIgnoreReq62();
+        }
     }
 
     private void ApplyContinuousEffects(PlayerZones owner, PlayerZones enemy, int allSecurityAttackUntil)
@@ -1113,6 +1119,7 @@ public partial class GoldfishEngine
             _aiTurn.BlitzAttacker = digimon;
         else
             return false;
+        RecalculateFieldBuffs();   // v0.63.0 ≪진격≫으로 어택할 때의 지속 효과 (BT5-017)
         return true;
     }
 
@@ -1249,6 +1256,8 @@ public partial class GoldfishEngine
 
         if (target.GetCurrentDP() > 0)   // v0.45.0 DP 하한(EX11-070)도 본다 — 하한이 없으면 원래와 같다
             return false;
+        if (DeferZero63(target))   // v0.63.0 전체 처리를 나중에 받은 것 — 효과 처리가 끝난 때 소멸
+            return false;
 
         if (!DeleteFrom(zones, target, DeletionCause.ZeroDp))
             return false;
@@ -1286,6 +1295,8 @@ public partial class GoldfishEngine
         NoteCat61(target, 1, dp, until);   // v0.61.0 LM-020
         RecalculateFieldBuffs();
         if (dp >= 0 || target.GetCurrentDP() > 0)   // v0.45.0 DP 하한
+            return false;
+        if (DeferZero63(target))   // v0.63.0
             return false;
         if (!DeleteFrom(zones, target, DeletionCause.ZeroDp))
             return false;
@@ -1407,6 +1418,7 @@ public partial class GoldfishEngine
         if (ReferenceEquals(defender, State.DummyOpponent) && _aiTurn == null)
         {
             _playerAttackRedirect = newTarget;
+            _playerAttackToPlayer63 = false;   // v0.63.0 플레이어로 바꾼 뒤 다시 디지몬으로
             NotifyAttackTargetSwitched(CurrentAttacker);
             return true;
         }
@@ -2265,6 +2277,7 @@ public partial class GoldfishEngine
         if (summary.Length > 0)
             EffectLog(owner, $"[효과] {card.Name} {summary}");
         RecalculateFieldBuffs();
+        FlushZero63();   // v0.63.0
         return summary;
     }
 
@@ -2281,6 +2294,7 @@ public partial class GoldfishEngine
         }
         RunEffects(EffectTrigger.WhenDigivolving, owner, target, evoCard, includeInherited: false);
         RecalculateFieldBuffs();
+        FlushZero63();   // v0.63.0
     }
 
     /// <summary>[어택 시] 효과 (자신 + 진화원). defender = 어택 대상 디지몬 (시큐리티 어택이면 null)</summary>

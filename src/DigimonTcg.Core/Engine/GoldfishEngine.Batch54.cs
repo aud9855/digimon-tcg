@@ -39,6 +39,7 @@ public partial class GoldfishEngine
     {
         var mine = _midEffectTriggers54;
         _midEffectTriggers54 = outer;
+        FlushZero63();   // v0.63.0 기간 동안의 전체 처리를 나중에 받아 DP 0 — 효과가 끝난 때 룰 처리
         if (!run || mine == null) return;
         foreach (var fire in mine)
         {

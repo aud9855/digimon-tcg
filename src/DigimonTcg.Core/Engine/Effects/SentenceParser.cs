@@ -80,7 +80,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse62(rawClause, inherited, card, def);   // v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse63(rawClause, inherited, card, def);   // v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -502,7 +502,7 @@ internal static partial class SentenceParser
     /// 처리할 때 플레이어에게 앞에서부터 물어 고르게 한다 (AI · 테스트는 첫 번째).
     /// </summary>
     public static string? TryParseChoice(string rawHeader, IReadOnlyList<string> rawOptions, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParseChoice58(rawHeader, rawOptions, inherited, card, def);   // v0.58.0 (Batch58) · v0.57.0 (Batch57) · v0.50.0 (Batch50) · v0.48.0 (Batch48) · v0.46.0 (Batch46) · v0.45.0 (Batch45) · v0.44.0 원래 규칙이 읽지 못한 고르는 효과만 18차 규칙으로 (SentenceParser.Batch44.cs)
+        TryParseChoice63(rawHeader, rawOptions, inherited, card, def);   // v0.63.0 "~. Then, activate 1 of the effects below:" (Batch63) · v0.58.0 (Batch58) · v0.57.0 (Batch57) · v0.50.0 (Batch50) · v0.48.0 (Batch48) · v0.46.0 (Batch46) · v0.45.0 (Batch45) · v0.44.0 원래 규칙이 읽지 못한 고르는 효과만 18차 규칙으로 (SentenceParser.Batch44.cs)
 
     private static string? TryParseChoiceCore(string rawHeader, IReadOnlyList<string> rawOptions, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -2539,6 +2539,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction58(s.TrimEnd('.'), card, triggers) is { } act58) act = act58;   // v0.58.0 (SentenceParser.Batch58.cs)
         if (act.Error != null && ParseAction59(s.TrimEnd('.'), card, triggers) is { } act59) act = act59;   // v0.59.0 (SentenceParser.Batch59.cs)
         if (act.Error != null && ParseAction60(s.TrimEnd('.'), card, triggers) is { } act60) act = act60;   // v0.60.0 (SentenceParser.Batch60.cs)
+        if (act.Error != null && ParseAction63(s.TrimEnd('.'), card, triggers) is { } act63) act = act63;   // v0.63.0 (SentenceParser.Batch63.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -4505,11 +4506,13 @@ internal static partial class SentenceParser
             int dp = int.Parse(combo.Groups["n"].Value) * (combo.Groups["sign"].Value == "-" ? -1 : 1);
             target.PreferOwnSide = dp > 0;
             var d2 = dur == Duration.None ? Duration.ThisTurn : dur;
+            NoteWhole63(target, card);
             return (c =>
             {
                 int until = Until(c, d2);
+                var whole = WholeBegin63(c, target, d2);   // v0.63.0 기간 동안의 전체 처리 (SentenceParser.Batch63)
                 var list = Pick(target, c, security);
-                foreach (var d in list)
+                void One(CardInstance d)
                 {
                     foreach (var (k, sa) in grants)
                     {
@@ -4518,6 +4521,8 @@ internal static partial class SentenceParser
                     }
                     c.Engine.ApplyDpChange(d, dp, until, $"{c.Card.Name} [{label}]");
                 }
+                foreach (var d in list) One(d);
+                WholeEnd63(c, target, whole, list, until, One);
                 c.RecalculateFieldBuffs();
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] DP {(dp > 0 ? "+" : "")}{dp:N0} · 키워드 획득" : "대상이 없습니다");
             }, null);
@@ -4529,8 +4534,10 @@ internal static partial class SentenceParser
             if (target == null) return (null, $"미지원 대상 (DP): {m.Groups["t"].Value}");
             int dp = int.Parse(m.Groups["n"].Value) * (m.Groups["sign"].Value == "-" ? -1 : 1);
             target.PreferOwnSide = dp > 0;
+            if (dur != Duration.ThisAttack) NoteWhole63(target, card);
             return (c =>
             {
+                var whole = WholeBegin63(c, target, dur);   // v0.63.0
                 var list = Pick(target, c, security);
                 bool removed = false;
                 foreach (var d in list)
@@ -4538,6 +4545,8 @@ internal static partial class SentenceParser
                     if (dur == Duration.ThisAttack) { d.AttackDpBonus += dp; continue; }
                     if (c.Engine.ApplyDpChange(d, dp, Until(c, dur), $"{c.Card.Name} [{label}]") && ReferenceEquals(d, c.Other)) removed = true;
                 }
+                int until63 = Until(c, dur);
+                WholeEnd63(c, target, whole, list, until63, d => c.Engine.ApplyDpChange(d, dp, until63, $"{c.Card.Name} [{label}]"));
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] DP {(dp > 0 ? "+" : "")}{dp:N0}" : "대상이 없습니다", attackerRemoved: removed);
             }, null);
         }
@@ -4549,17 +4558,23 @@ internal static partial class SentenceParser
             if (target == null || grants == null) return (null, "미지원 키워드 부여");
             // 양쪽 대상("1 Digimon may gain ＜Security A. -1＞")에 해로운 것(시큐리티 어택 -N)만 주면 상대 디지몬을 먼저
             target.PreferOwnSide = grants.Any(g => g.Keyword != null || g.SecurityAttack > 0);
+            if (dur != Duration.ThisAttack) NoteWhole63(target, card);
             return (c =>
             {
                 int until = Until(c, dur);
+                var whole = WholeBegin63(c, target, dur);   // v0.63.0
                 var list = Pick(target, c, security);
-                foreach (var d in list)
+                void One(CardInstance d)
+                {
                     foreach (var (k, sa) in grants)
                     {
                         if (k is { } kw) c.Engine.AddTimedKeyword60(d, kw, until);
                         else if (dur == Duration.ThisAttack) c.Engine.AddAttackSa60(d, sa);
                         else c.Engine.AddTimedSa60(d, sa, until);
                     }
+                }
+                foreach (var d in list) One(d);
+                WholeEnd63(c, target, whole, list, until, One, grants.Count == 1 && grants[0].Keyword == null ? $"sa:{grants[0].SecurityAttack}" : "");
                 c.RecalculateFieldBuffs();
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] 키워드 획득" : "대상이 없습니다");
             }, null);
@@ -4570,15 +4585,19 @@ internal static partial class SentenceParser
             var target = TargetSpec.Parse(m.Groups["t"].Value);
             if (target == null) return (null, $"미지원 대상 (어택 · 블록 불가): {m.Groups["t"].Value}");
             string what = m.Groups["what"].Value.ToLowerInvariant();
+            if (dur != Duration.ThisAttack) NoteWhole63(target, card);
             return (c =>
             {
                 int until = Until(c, dur);
+                var whole = WholeBegin63(c, target, dur);   // v0.63.0
                 var list = Pick(target, c, security);
-                foreach (var d in list)
+                void One(CardInstance d)
                 {
                     if (what.Contains("attack")) c.Engine.Lock60(d, LockKind60.Attack, until);
                     if (what.Contains("block")) c.Engine.Lock60(d, LockKind60.Block, until);
                 }
+                foreach (var d in list) One(d);
+                WholeEnd63(c, target, whole, list, until, One);
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] {(what.Contains("block") && what.Contains("attack") ? "어택 · 블록" : what.Contains("block") ? "블록" : "어택")} 불가" : "대상이 없습니다");
             }, null);
         }
@@ -4589,12 +4608,15 @@ internal static partial class SentenceParser
         {
             var target = TargetSpec.Parse(Regex.Replace(m.Groups["t"].Value, @"\bDigimon or Tamers\b", "Digimon", RegexOptions.IgnoreCase));
             if (target == null) return (null, $"미지원 대상 (진화 불가): {m.Groups["t"].Value}");
+            NoteWhole63(target, card);
             return (c =>
             {
                 int until = Until(c, dur);
+                var whole = WholeBegin63(c, target, dur);   // v0.63.0
                 var list = Pick(target, c, security);
                 foreach (var d in list)
                     c.Engine.Lock60(d, LockKind60.Digivolve, until);
+                WholeEnd63(c, target, whole, list, until, d => c.Engine.Lock60(d, LockKind60.Digivolve, until));
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] 진화 불가" : "대상이 없습니다");
             }, null);
         }
@@ -4609,6 +4631,7 @@ internal static partial class SentenceParser
             // v0.35.0 "1 of your opponent's Digimon or Tamers can't suspend / unsuspend ~" — 테이머도 고른다 (전에는 디지몬만)
             if (Regex.IsMatch(m.Groups["t"].Value, @"\bDigimon or Tamers\b", RegexOptions.IgnoreCase) && target.Opponent && !target.AnySide)
                 return (c => TamerLock35(c, target, un, Until(c, dur), label, security), null);
+            NoteWhole63(target, card);
             return (c =>
             {
                 int until = Until(c, dur);
@@ -4622,12 +4645,14 @@ internal static partial class SentenceParser
                     }
                     if (c.LastTargets.Count == 0) { Emit(c, label, $"테이머 [{string.Join(", ", c.LastTamers35.Select(t => t.Name))}] {(un ? "액티브" : "레스트")}가 될 수 없음"); return; }
                 }
+                var whole = WholeBegin63(c, target, dur);   // v0.63.0
                 var list = Pick(target, c, security);
                 foreach (var d in list)
                 {
                     if (un) c.Engine.Lock60(d, LockKind60.Unsuspend, until);
                     else c.Engine.Lock60(d, LockKind60.Suspend, until);
                 }
+                WholeEnd63(c, target, whole, list, until, d => c.Engine.Lock60(d, un ? LockKind60.Unsuspend : LockKind60.Suspend, until));
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] {(un ? "액티브" : "레스트")}가 될 수 없음" : "대상이 없습니다");
             }, null);
         }
@@ -4638,8 +4663,10 @@ internal static partial class SentenceParser
             string tp = Regex.Replace(m.Groups["t"].Value, @"^none of ", "all of ", RegexOptions.IgnoreCase);
             var target = TargetSpec.Parse(tp);
             if (target == null) return (null, $"미지원 대상 (액티브 불가): {m.Groups["t"].Value}");
+            if (!target.AnySide) NoteWhole63(target, card);
             return (c =>
             {
+                var whole = target.AnySide ? null : WholeBegin63(c, target, Duration.ThisTurn);   // v0.63.0 (공식 Q&A BT12-106 Q1)
                 var list = Pick(target, c, security);
                 foreach (var d in list)
                 {
@@ -4647,6 +4674,8 @@ internal static partial class SentenceParser
                     bool ownersTurn = c.Engine.IsTurnOf(c.Owner.BattleArea.Contains(d) ? c.Owner : c.Enemy);
                     c.Engine.Lock60(d, LockKind60.SkipUnsuspend, c.TurnSequence + (ownersTurn ? 2 : 1));
                 }
+                int skip63 = c.TurnSequence + (c.Engine.IsTurnOf(target.Opponent ? c.Enemy : c.Owner) ? 2 : 1);
+                WholeEnd63(c, target, whole, list, skip63 - 1, d => c.Engine.Lock60(d, LockKind60.SkipUnsuspend, skip63));
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] 다음 액티브 페이즈에 액티브가 되지 않음" : "대상이 없습니다");
             }, null);
         }

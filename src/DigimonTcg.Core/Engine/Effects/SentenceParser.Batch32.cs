@@ -352,11 +352,13 @@ internal static partial class SentenceParser
                 int dp = g.Groups["n"].Success ? int.Parse(g.Groups["n"].Value) * (g.Groups["sign"].Value == "-" ? -1 : 1) : 0;
                 bool security = triggers.Contains(EffectTrigger.Security);
                 var d2 = dur == Duration.None ? Duration.ThisTurn : dur;
+                if (d2 != Duration.ThisAttack) NoteWhole63(target, card);
                 return (c =>
                 {
                     int until = Until(c, d2);
+                    var whole = WholeBegin63(c, target, d2);   // v0.63.0 기간 동안의 전체 처리 (SentenceParser.Batch63)
                     var list = Pick(target, c, security);
-                    foreach (var d in list)
+                    void One(CardInstance d)
                     {
                         d.GrantedEffects.Add((granted, until, c.Owner));
                         c.Engine.NoteGrantedCat61(d, granted);   // v0.61.0 LM-020
@@ -368,6 +370,8 @@ internal static partial class SentenceParser
                             }
                         if (dp != 0) c.Engine.ApplyDpChange(d, dp, until, $"{c.Card.Name} [{label}]");
                     }
+                    foreach (var d in list) One(d);
+                    WholeEnd63(c, target, whole, list, until, One);
                     c.LastTargets = list;
                     c.RecalculateFieldBuffs();
                     if (list.Count == 0) c.LastStepResolved = false;

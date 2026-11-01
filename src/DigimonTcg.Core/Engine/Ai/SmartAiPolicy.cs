@@ -166,7 +166,8 @@ public sealed class SmartAiPolicy : IAiPolicy
         {
             // 혼자 남은 ≪블로커≫는 시큐리티를 지키도록 남겨 둔다 (다이렉트 어택 기회는 예외)
             bool loneBlocker = attacker.HasBlocker && ai.BattleArea.Count == 1;
-            double granted62 = GrantedAttackPenalty62(engine, attacker, memory);   // v0.62.0 효과로 받은 【어택 시】 손해 (BT5-091 메모리 -1 · BT8-031 진화원 파기)
+            double granted62 = GrantedAttackPenalty62(engine, attacker, memory)   // v0.62.0 효과로 받은 【어택 시】 손해 (BT5-091 메모리 -1 · BT8-031 진화원 파기)
+                               + UnsuspendPenalty63(engine, attacker);   // v0.63.0 다음 턴에 액티브가 되려면 패 1장 (BT7-055)
             // v0.34.0 어택 대상은 어택하는 디지몬마다 ("can't attack players" · "can also attack your opponent's unsuspended Digimon")
             var targets = new List<CardInstance?>();
             if (EffectRules.CanAttackPlayer(attacker)) targets.Add(null);
@@ -207,6 +208,19 @@ public sealed class SmartAiPolicy : IAiPolicy
         }
         if (lose > 0) p += lose * 0.6 + (memory - lose < 0 ? 3.0 : 0);
         return p;
+    }
+
+    /// <summary>
+    /// v0.63.0 어택해서 레스트 상태가 되면 다음 자신의 턴에 액티브가 되려 할 때 패 1장을 파기하거나 액티브가 되지 않는다 (BT7-055가 주는 효과 — 공식 Q&amp;A BT7-055 Q1).
+    /// 다음 턴에 드로우한 패로 셈해 그때 파기할 것(RecommendUnsuspendDiscard62)이면 패 1장 = 0.6, 액티브가 되지 않는 것이면 1.0 (다음 턴에 어택 · 블록할 수 없다)
+    /// </summary>
+    internal static double UnsuspendPenalty63(GoldfishEngine engine, CardInstance attacker)
+    {
+        if (attacker.IsSuspended || attacker.GrantedEffects.Count == 0 && attacker.AuraGranted61.Count == 0 && !engine.WouldUnsuspendPossible62()) return 0;
+        if (!engine.HasWouldUnsuspend63(attacker)) return 0;
+        int hand = engine.State.DummyOpponent.Hand.Count + 1;   // 다음 턴의 드로우
+        bool pay = hand >= 2 || attacker.TopCard.Level >= 5 || attacker.EvolutionSources.Count >= 2;
+        return pay ? 0.6 : 1.0;
     }
 
     public bool ShouldUseMainAbility(GoldfishEngine engine, GoldfishEngine.MainAbility ability, int memory)

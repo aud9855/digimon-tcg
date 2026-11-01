@@ -218,17 +218,25 @@ internal static partial class SentenceParser
             }, null);
         // 상대의 카드 전부는 다음 액티브 페이즈에 액티브가 되지 않는다 (BT12-106 — 공식 "상대의 카드 전부는 다음 상대의 액티브 페이즈에서는, 액티브가 되지 않는다")
         if (Regex.IsMatch(s, @"^(?:Your opponent's cards|All of your opponent's Digimon and Tamers) (?:don't|can't) unsuspend during their next unsuspend phase$", I))
+        {
+            WholeCards63[card.CardId] = true;   // v0.63.0 전체 처리 (보고용)
             return (c =>
             {
                 bool enemyTurn = c.Engine.IsTurnOf(c.Enemy);
                 int until = c.TurnSequence + (enemyTurn ? 2 : 1);
-                foreach (var d in c.Enemy.BattleArea.Where(d => !c.Engine.IsUnaffectedBy(c.Owner, d)))
+                var all63 = TargetSpec.Parse("all of your opponent's Digimon")!;
+                var whole = WholeBegin63(c, all63, Duration.ThisTurn);   // v0.63.0 나중에 등장 · 이동한 카드도 (공식 Q&A BT12-106 Q1)
+                var first = c.Enemy.BattleArea.Where(d => !c.Engine.IsUnaffectedBy(c.Owner, d)).ToList();
+                foreach (var d in first)
                     c.Engine.Lock60(d, LockKind60.SkipUnsuspend, until);
                 foreach (var t in c.Enemy.Tamers.Distinct())
                     c.Enemy.TamerCannotUnsuspendUntil[t] = Math.Max(c.Enemy.TamerCannotUnsuspendUntil.GetValueOrDefault(t), until);
+                WholeEnd63(c, all63, whole, first, until - 1, d => c.Engine.Lock60(d, LockKind60.SkipUnsuspend, until), "cards");
+                c.Engine.WholeTamers63(c, c.Enemy, until, "cards");
                 Diag44.Hit("enemyCardsSkipUnsuspend");
                 Emit(c, label, "상대의 카드 전부는 다음 액티브 페이즈에 액티브가 되지 않는다");
             }, null);
+        }
         // "Suspend 1 of your opponent's Digimon, or 2 of your opponent's Digimon with 5000 DP or less" — 두 대상 중 하나를 고른다
         if ((m = Regex.Match(s, @"^(?<v>Suspend|Delete) (?<a>(?:up to )?\d+ of your opponent's [^,]+?), or (?<b>(?:up to )?\d+ of your opponent's .+)$", I)).Success)
         {

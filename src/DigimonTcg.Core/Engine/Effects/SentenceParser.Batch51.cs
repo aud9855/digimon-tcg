@@ -641,12 +641,17 @@ internal static partial class SentenceParser
             return (c =>
             {
                 int until = Until(c, Duration.OpponentsTurnEnd);
-                foreach (var d in c.Enemy.BattleArea.Where(d => !c.Engine.IsUnaffectedBy(c.Owner, d)))
+                c.Engine.WholeDrop63(c, $"sa:{-o}");   // v0.63.0 앞 문장의 전체 처리 기록 대신 (SentenceParser.Batch63)
+                var all63 = TargetSpec.Parse("all of your opponent's Digimon")!;
+                var whole = WholeBegin63(c, all63, Duration.OpponentsTurnEnd);
+                var first = c.Enemy.BattleArea.Where(d => !c.Engine.IsUnaffectedBy(c.Owner, d)).ToList();
+                foreach (var d in first)
                 {
                     int i = d.TimedSecurityAttackBuffs.FindLastIndex(b => b.Count == -o);
                     if (i >= 0) c.Engine.RemoveTimedSaAt60(d, i);
                     c.Engine.AddTimedSa60(d, -n, until);
                 }
+                WholeEnd63(c, all63, whole, first, until, d => c.Engine.AddTimedSa60(d, -n, until));
                 c.RecalculateFieldBuffs();
                 Diag46.Hit("securityMinusInstead51");
                 Emit(c, label, $"대신 상대의 디지몬 전부 ≪시큐리티 어택 -{n}≫");

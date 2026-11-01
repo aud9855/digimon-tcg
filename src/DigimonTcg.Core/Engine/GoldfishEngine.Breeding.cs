@@ -39,6 +39,7 @@ public partial class GoldfishEngine
         moving.TurnPlayed = Math.Min(moving.TurnPlayed, State.CurrentTurn - 1);
         owner.BattleArea.Add(moving);
         RecalculateFieldBuffs();
+        FlushZero63();   // v0.63.0 기간 동안의 전체 처리 (DP 0)
         FireMovedFromBreeding55(owner, moving);   // v0.55.0 효과로 옮겼으면 그 효과가 끝난 뒤
         return moving;
     }
