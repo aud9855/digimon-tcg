@@ -25,7 +25,7 @@ public partial class GoldfishEngine
 
     /// <summary>카드의 조그레스 조건 (공식 한글 문구가 없거나 읽지 못하면 null)</summary>
     internal static DnaRequirement? DnaOf(CardData card) =>
-        card.Type != CardType.Digimon ? null : DnaCache.GetOrAdd(card.CardId, _ => ParseKoreanDna(card));
+        card.Type != CardType.Digimon ? null : DnaCache.GetOrAdd(card.CardId, _ => ParseKoreanDna(card) ?? ParseEnglishDna72(card));   // v0.72.0 한글 〔조그레스〕를 읽지 못하면 공식 영어 카드 리스트의 [DNA Digivolve]
 
     /// <summary>조그레스 조건이 있는지</summary>
     public static bool HasDna(CardData card) => DnaOf(card) != null;
@@ -159,6 +159,57 @@ public partial class GoldfishEngine
         var right = ParseDnaSide(m.Groups["r"].Value.Trim());
         if (left == null || right == null) return null;
         return new DnaRequirement(left, right, int.Parse(m.Groups["n"].Value), $"{m.Groups["l"].Value.Trim()} + {m.Groups["r"].Value.Trim()}");
+    }
+
+    // ---- v0.72.0 공식 영어 카드 리스트의 조그레스 조건 (로컬 data/en/card_rules.json 의 Dna — tools/ensite/collect_en.ps1) ----
+    //  한글 데이터가 없는 카드 (EX11-073 · EX12 · AD1 등)와 한글 데이터가 옛 표기(《조그레스:레드 Lv.4+옐로 Lv.4에서 0》 · "조그레스 블루Lv.6+레드Lv.6:코스트0")라
+    //  읽지 못하던 카드 (BT8-015 · ST9-05 · EX9-021 등). 종합 룰 8-2-3: 조그레스의 진화 조건을 만족하는 자신의 디지몬 2마리 · 지정된 진화 코스트
+
+    private static DnaRequirement? ParseEnglishDna72(CardData card)
+    {
+        if (EnglishCardRules.Get(card.CardId) is not { Dna.Count: > 0 } en) return null;
+        string line = en.Dna[0].Trim();
+        var m = Regex.Match(line, @"^\[DNA Digivolve\]\s*(?<n>\d+)\s+from\s+(?<l>[^+]+?)\s*\+\s*(?<r>[^+]+?)\s*$", RegexOptions.IgnoreCase);   // 옛 표기 "0 from red Lv.4 + yellow Lv.4"
+        if (!m.Success) m = Regex.Match(line, @"^\[DNA Digivolve\]\s*(?<l>[^+]+?)\s*\+\s*(?<r>[^+:]+?)\s*:\s*Cost\s*(?<n>\d+)", RegexOptions.IgnoreCase);   // "Green Lv.6 + black Lv.6: Cost 0"
+        if (!m.Success) return null;
+        var left = ParseDnaSideEn72(m.Groups["l"].Value.Trim());
+        var right = ParseDnaSideEn72(m.Groups["r"].Value.Trim());
+        if (left == null || right == null) return null;
+        return new DnaRequirement(left, right, int.Parse(m.Groups["n"].Value), $"{m.Groups["l"].Value.Trim()} + {m.Groups["r"].Value.Trim()}");
+    }
+
+    /// <summary>"[Kimeramon]" · "Blue/yellow Lv.5" · "Lv.4" · "Lv.6 w/[Greymon] in name" · "yellow Lv.6 w/[Pulsemon] in text" · "Lv.4 w/[X] trait"</summary>
+    private static Func<CardData, bool>? ParseDnaSideEn72(string s)
+    {
+        Match m;
+        if ((m = Regex.Match(s, @"^\[(?<x>[^\]]+)\]$")).Success)
+        {
+            string x = m.Groups["x"].Value;
+            return c => c.Type == CardType.Digimon && CardNames.Is(c, x);   // 명칭 일치 (종합 룰 2-3-1-2)
+        }
+        var filters = new List<Func<CardData, bool>>();
+        if ((m = Regex.Match(s, @"^(?<c>(?:red|blue|yellow|green|black|purple|white)(?:\s*/\s*(?:red|blue|yellow|green|black|purple|white))*)\s+", RegexOptions.IgnoreCase)).Success)
+        {
+            var colors = Regex.Matches(m.Groups["c"].Value, "[a-z]+", RegexOptions.IgnoreCase).Select(x => EnglishCardRules.ColorOf(x.Value)).Where(x => x != null).Select(x => x!.Value).ToList();
+            filters.Add(c => c.AllColors.Any(colors.Contains));
+            s = s[m.Length..];
+        }
+        if (!(m = Regex.Match(s, @"^Lv\.\s*(?<n>\d+)\s*")).Success) return null;
+        int lv = int.Parse(m.Groups["n"].Value);
+        filters.Add(c => c.Level == lv);
+        s = s[m.Length..].Trim();
+        if (s.Length > 0)
+        {
+            if (!(m = Regex.Match(s, @"^w/\s*\[(?<x>[^\]]+)\]\s*(?<k>in name|in text|trait)$", RegexOptions.IgnoreCase)).Success) return null;
+            string x = m.Groups["x"].Value;
+            filters.Add(m.Groups["k"].Value.ToLowerInvariant() switch
+            {
+                "in name" => c => CardNames.Contains(c, x),                                     // 명칭에 포함 (2-3-1-3)
+                "in text" => c => TargetSpec.TextHas(c, x),                                     // 기술되어 있는
+                _ => c => TargetSpec.HasTrait(c, x + CardNames.TraitExactMark72),               // 특징 일치 (2-3-2-3)
+            });
+        }
+        return c => c.Type == CardType.Digimon && filters.All(f => f(c));
     }
 
     /// <summary>"블루/옐로 Lv.5" · "「키메라몬」" · "명칭에 「그레이몬」을 포함하는 Lv.6" · "「펜리루가몬」이 기술되어 있는 옐로인 Lv.6"</summary>

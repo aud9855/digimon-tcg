@@ -58,6 +58,7 @@ public partial class GoldfishEngine
     {
         _overclocked.Add(attacker);
         EffectLog(owner, $"[≪오버클럭≫] [{fodder.TopCard.Name}]을(를) 소멸시켜 [{attacker.TopCard.Name}]으로 레스트하지 않고 플레이어에게 어택합니다.");
+        NoteOverclockFodder72(fodder);   // v0.72.0 "If deleted by ＜Overclock＞" (EX11-060)
         DeleteFrom(owner, fodder, DeletionCause.Cost);
         return !owner.BattleArea.Contains(fodder) && owner.BattleArea.Contains(attacker) && !State.IsGameOver;
     }

@@ -3,6 +3,7 @@
 #
 #   .\collect_en.ps1             # 받은 적 없는 카테고리 페이지만 받고, data/en/card_rules.json 을 다시 만든다
 #   .\collect_en.ps1 -Refresh    # 모든 카테고리 페이지를 다시 받는다
+#   .\collect_en.ps1 -Offline    # 받지 않고 이미 받은 페이지로 data/en/card_rules.json 만 다시 만든다
 #
 # 영어 API 데이터에는 진화 조건이 하나(레벨 · 색 1개)뿐이라, 여러 색 · 두 번째 진화 조건과
 # 한글 데이터가 없는 카드의 [Special Digivolution Condition]을 이 파일에서 읽는다 (엔진: Data.EnglishCardRules).
@@ -10,7 +11,8 @@
 param(
   [string]$DataDir = (Join-Path $PSScriptRoot "..\..\data"),
   [int]$DelayMs = 1500,
-  [switch]$Refresh
+  [switch]$Refresh,
+  [switch]$Offline
 )
 
 $ErrorActionPreference = "Stop"
@@ -30,6 +32,7 @@ function Get-Page([string]$url) {
 }
 
 # 1. 카테고리 목록 (카드 리스트 첫 페이지의 category= 링크)
+if (-not $Offline) {
 $first = Get-Page ($Base + "?search=true&category=522001")
 $cats = [regex]::Matches($first, 'category=(52\d{4})') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
 Write-Host "카테고리 $($cats.Count)개"
@@ -40,8 +43,16 @@ foreach ($c in $cats) {
   $html = if ($c -eq "522001") { $first } else { Get-Page ($Base + "?search=true&category=$c") }
   [System.IO.File]::WriteAllText($file, $html, [System.Text.Encoding]::UTF8)
 }
+}
 
-# 2. 카드마다 진화 조건 (Digivolve Cost N) · [Special Digivolution Condition] 의 [Digivolve] 줄
+# 2. 카드마다 진화 조건 (Digivolve Cost N) · [Special Digivolution Condition] 의 [Digivolve] 줄 · [DNA Digivolve] 줄 (v0.72.0 조그레스 조건 — 한글 데이터가 없는 카드)
+function DnaLines([string]$part) {
+  $dna = @()
+  foreach ($m in [regex]::Matches($part, 'cardInfoTitSmall">\[Special Digivolution Condition\]</dt>\s*<dd[^>]*>([\s\S]*?)</dd>')) {
+    foreach ($line in ((Clean $m.Groups[1].Value) -split "`n")) { if ($line.StartsWith("[DNA Digivolve]")) { $dna += $line } }
+  }
+  return $dna
+}
 function Clean([string]$s) {
   $s = [regex]::Replace($s, '<br\s*/?>', "`n")
   $s = [regex]::Replace($s, '<[^>]+>', ' ')
@@ -55,7 +66,10 @@ foreach ($f in (Get-ChildItem $PageDir -Filter "c*.html" | Sort-Object Name)) {
     $idm = [regex]::Match($part, 'data-src="#([^"]+)"')
     if (-not $idm.Success) { continue }
     $id = ($idm.Groups[1].Value -replace '_P\d+$', '').Trim()
-    if ($cards.Contains($id)) { continue }   # 먼저 나온 카테고리(부스터 · 스타터)가 기준 — 프로모 재수록 페이지는 진화 조건 칸이 빠진 것이 있다
+    if ($cards.Contains($id)) {
+      if ($cards[$id].Dna.Count -eq 0) { $cards[$id].Dna = @(DnaLines $part) }   # 조그레스 조건 줄은 재수록 페이지에만 있는 것도 있다
+      continue
+    }   # 먼저 나온 카테고리(부스터 · 스타터)가 기준 — 프로모 재수록 페이지는 진화 조건 칸이 빠진 것이 있다
     $evo = @()
     foreach ($m in [regex]::Matches($part, 'cardInfoTit">Digivolve Cost (\d)</dt>\s*<dd[^>]*>([\s\S]*?)</dd>')) {
       $colors = @([regex]::Matches($m.Groups[2].Value, "cardColor_([a-z]+)") | ForEach-Object { $_.Groups[1].Value } | Where-Object { $_ })
@@ -72,7 +86,7 @@ foreach ($f in (Get-ChildItem $PageDir -Filter "c*.html" | Sort-Object Name)) {
     foreach ($m in [regex]::Matches($part, 'cardInfoTitSmall">\[Special Digivolution Condition\]</dt>\s*<dd[^>]*>([\s\S]*?)</dd>')) {
       foreach ($line in ((Clean $m.Groups[1].Value) -split "`n")) { if ($line.StartsWith("[Digivolve]")) { $special += $line } }
     }
-    $cards[$id] = [ordered]@{ CardId = $id; Evo = $evo; SpecialDigivolve = $special }
+    $cards[$id] = [ordered]@{ CardId = $id; Evo = $evo; SpecialDigivolve = $special; Dna = @(DnaLines $part) }
   }
 }
 $out = Join-Path $EnDir "card_rules.json"

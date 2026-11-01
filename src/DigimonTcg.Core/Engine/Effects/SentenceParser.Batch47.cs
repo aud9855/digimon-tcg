@@ -56,13 +56,13 @@ internal static partial class SentenceParser
 
     private static (bool Hit, string? Fixed) CardTextFix47(string clause, bool inherited, CardData card)
     {
-        string t = clause.Trim();
+        string t = TargetSpec.Unmark72(clause).Trim();   // v0.72.0 특징 일치 표식은 떼고 비교 (고친 문장에는 다시 붙인다)
         foreach (var f in CardTextFixes47)
             if (f.CardId == card.CardId && f.Broken == t)
             {
                 if (f.Fixed != null ? !(inherited || card.Type == CardType.Option) : !inherited) return (false, null);   // 듀얼 카드 옵션 쪽은 옵션 카드로 읽는다 (KeywordDictionary.OptionSideCard)
                 if (f.Fixed == null && !(card.EffectText ?? "").Contains("Inherited Effect", StringComparison.OrdinalIgnoreCase)) return (false, null);
-                return (true, f.Fixed);
+                return (true, f.Fixed == null ? null : MarkExactTraits72(f.Fixed, card));
             }
         return (false, null);
     }

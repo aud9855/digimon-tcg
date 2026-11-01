@@ -420,8 +420,9 @@ public static class KeywordDictionary
     {
         foreach (var (field, text) in new[] { (false, card.EffectText), (true, card.InheritedEffectText) })
         {
-            foreach (var (clause, options) in GroupChoices(SplitClauses(text)))
+            foreach (var (clause0, options) in GroupChoices(SplitClauses(text)))
             {
+                string clause = SentenceParser.OfficialClause72(card, clause0);   // v0.72.0 영어 API 문장이 공식 영어 카드 리스트와 다른 카드 (EX11-033 · EX11-042)
                 bool inherited = field;
                 if (Regex.IsMatch(clause, @"^Inherited Effect\b", RegexOptions.IgnoreCase)) inherited = true;
                 else if (Regex.IsMatch(clause, @"^Security Effect\b", RegexOptions.IgnoreCase))

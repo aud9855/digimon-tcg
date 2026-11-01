@@ -22,6 +22,7 @@ public sealed class EnglishCardRule
     public string CardId { get; set; } = string.Empty;
     public List<EnglishEvoCost> Evo { get; set; } = new();
     public List<string> SpecialDigivolve { get; set; } = new();   // [Special Digivolution Condition] 의 "[Digivolve] ~: Cost N" 줄
+    public List<string> Dna { get; set; } = new();                // v0.72.0 [Special Digivolution Condition] 의 "[DNA Digivolve] ~" 줄 (조그레스 조건)
 }
 
 /// <summary>

@@ -129,7 +129,7 @@ internal static partial class SentenceParser
         if ((m = GainTraitRe58.Match(t)).Success)
         {
             var q = Qualifier58(m.Groups["q"].Value);
-            string trait = TargetSpec.Names(m.Groups["x"].Value)[0];
+            string trait = TargetSpec.Unmark72(TargetSpec.Names(m.Groups["x"].Value)[0]);   // v0.72.0 얻는 특징은 특징 이름 그대로 (일치 표식은 뗀다)
             GoldfishEngine.ExtraTraitScripts58 = true;   // 읽기만 해도 켠다 (스크립트를 만들기 전에 지속 효과를 계산할 수 있다)
             if (def != null)
             {

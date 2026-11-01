@@ -36,7 +36,7 @@ internal static partial class SentenceParser
         if (Regex.IsMatch(c0, @"^Option Card Colou?r Requirements? (?:(?:Red|Blue|Yellow|Green|Black|Purple|White)[ /,]*)+\.?$", I)) return true;
         // 영어 데이터의 깨진 중복 문장 (디지타마 EX12-001): 진화원 칸 문장이 메인 칸 "Inherited Effect [시점] ~"의 본문과 똑같다 — 메인 칸 문장이 진화원 효과를 등록한다 (등록 없음)
         if (inherited && card.Type == CardType.Digitama && !Regex.IsMatch(c0, @"^\[", I)
-            && Regex.Matches(card.EffectText ?? "", @"Inherited Effect\s*(?:\[[^\]]+\]\s*)+(?<body>[^\r\n]+)", I).Any(g => string.Equals(g.Groups["body"].Value.Trim(), c0, StringComparison.Ordinal)))
+            && Regex.Matches(card.EffectText ?? "", @"Inherited Effect\s*(?:\[[^\]]+\]\s*)+(?<body>[^\r\n]+)", I).Any(g => string.Equals(g.Groups["body"].Value.Trim(), TargetSpec.Unmark72(c0), StringComparison.Ordinal)))   // v0.72.0 특징 일치 표식은 떼고 원문과 비교
             return true;
         // "[All Turns] While [Numemon] or [X Antibody] is in this Digimon's digivolution cards, it gains "[On Deletion] ~"" (BT15-057 — 공식
         //  "【서로의 턴】이 디지몬의 진화원에 「누메몬」/「X항체」가 있는 동안, 이 디지몬은 「【소멸 시】~」를 얻는다") — 소멸할 때의 진화원으로 판단하는 이 카드의 【소멸 시】

@@ -10,6 +10,25 @@
 
 ---
 
+## v0.72.0 — 2026-11-02
+미지원 문장 46차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A로 근거 확인) — 도감 효과 문장 지원 10,273 → 10,281 / 10,366 (99.2%, +8)
+- 모든 절이 동작하는 카드 4,227 → 4,235장 (수정 전 지원되던 문장 중 깨진 것 0 · 한글이 바뀐 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다
+- 특징 "가진"(일치) · "포함하는"(포함) 구분 (종합 룰 2-3-2-3 「특징으로 「X」를 가진」 = 일치 · 2-3-2-4 「특징에 「X」를 포함하는」 = 포함): 영어 "[X] trait" · "with the [X] trait"는 특징이 X와 일치하는 카드, "with [X] in any of its traits"는 X를 포함하는 특징. 전에는 둘 다 포함으로 봐서 [Machine] trait가 Machine Dragon에, [Angel]이 Archangel · Fallen Angel · Three Great Angels에, [Rock]이 Rock Dragon에, [Demon]이 Demon Lord에, [Warrior]가 Holy Warrior · Magic Warrior에 맞았다
+  - 공식 한글이 있는 카드는 한글 문구로 확인: 영어 "[X] trait" 문장은 한글도 "가진/갖는" (예외 BT13-050 — 영어 "[Fairy] trait trait" · 공식 한글 "특징으로 「요정형」을 포함하는" → 포함), 영어 "in any of its traits" 71장은 한글도 모두 "포함하는". 한글이 없는 카드는 영어 문구대로
+  - 특징 판정은 「/」로 나눈 특징 1개 단위 (2-3-2-2), 영어 데이터 잡음 "}}" · 어플몬 앱 이름 표시 " (App Name)"은 떼고 본다. 얻은 특징 ("gains the [X] trait") · 제외 특징 ("other than [X] trait")은 원래부터 일치
+  - 영향 카드 177장 (특징이 다른 특징 안에 들어 있는 16개: Machine 50 · Angel 35 · Mineral 25 · Rock 25 · Dragonkin 19 · Reptile 17 · Evil 12 · Demon 9 · Demon Lord 9 · Mutant 6 · Beast 5 · Fairy 4 · Warrior 3 · Holy Warrior 2 · Crustacean 1 · Mythical Beast 1) — 대상 · 조건 감사로 84장의 동작 변화를 확인 (나머지는 공개 · 시큐리티 · 지속 효과라 같은 경로). 진화 조건(〔진화〕 · [Digivolve])은 원래부터 일치
+- 조용한 오판정 바로잡음 — "When your Digimon are played or digivolve, if any of them have the [X] trait": 사건 카드(TriggerCard)만 봐서 디지몬 등장 · 진화 사건에서 언제나 거짓이었다 → 그 디지몬으로 판단 (16장: BT20-091 · BT21-061 · BT21-078 · BT21-083 · EX11-054 · EX11-065 · EX8-027 · EX8-060 · EX8-066 · EX9-044 · ST20-04 · ST20-06 · ST20-09 · ST21-04 · ST21-06 · ST21-09)
+- 조그레스 조건: 공식 한글 〔조그레스〕를 읽지 못하면 공식 영어 카드 리스트의 [DNA Digivolve] (로컬 data/en/card_rules.json — tools/ensite/collect_en.ps1에 조그레스 줄 · -Offline 추가). 새로 조그레스할 수 있는 30장: 한글이 없는 EX11-073 · EX12-017 · EX12-028 · EX12-032 · EX12-035 · EX12-037 · EX12-044 · EX12-055 · EX12-058 · EX12-060 · EX12-077 · EX13-016 · EX13-045 · AD1-011 · AD1-025 · BT24-037 · BT25-038 · BT25-103 · P-220 · P-221, 한글이 옛 표기(《조그레스:~에서 0》)라 읽지 못하던 BT8-015 · BT8-042 · BT8-084 · BT9-082 · ST9-05 · ST9-11 · ST10-06 · ST13-06 · EX9-021 · BT23-032 (종합 룰 8-2-3). EX11-059 레이나의 [NSo] 조그레스 대상으로 EX12-032가 나온다
+- 테이머 레스트 비용 묶음: EX11-058 "If played by ＜Decode＞" (≪디코드≫로 진화원에서 등장한 디지몬) · EX11-060 "If deleted by ＜Overclock＞" (≪오버클럭≫ 비용으로 소멸 — 종합 룰 16-34 · 설명문 괄호 뒤 마침표가 빠진 문장) · EX11-064 "For each of your opponent's face-up security cards, reduce this effect's digivolution cost by 1" · EX11-066 "Place all [Vemmon] among them as any of those Digimon's bottom digivolution cards" · BT22-092 "activate 1 of those Digimon's [Main] effects. If this activated any effect, gain 1 memory" (진화원 효과의 【메인】도 — 공식 Q&A BT22-092 Q1)
+- EX11-033 · EX11-042: 영어 API 문장이 깨져 있어 공식 영어 카드 리스트 문장으로 읽는다 — "You may play 1 [Maquinamon] from your hand or this Digimon's link cards without paying the cost" (EX11-033은 공식 시점 [When Moving] [When Digivolving])
+- EX11-006 "This Digimon linked with [Maquinamon] may digivolve into ~" — 링크 카드에 「Maquinamon」이 있는 이 디지몬
+- 기존 카드 동작 변경
+  - 위 특징 177장: 특징이 X를 포함하기만 하는 카드를 더 이상 고르지 · 세지 않는다
+  - 위 16장: 디지몬 등장 · 진화 때 실제로 발동
+  - 위 조그레스 30장: 조그레스할 수 있다
+- 읽지 않고 남긴 것: EX9-062 · EX9-074 (어셈블리 — 공식 영어 카드 리스트에도 어셈블리 조건이 없다) · 사용자 결정 대기 · 그 밖의 문장 85개
+- 테스트 15개 (EffectBatch72Tests), 전체 1,661개 통과 · 시뮬레이션 6,700판 (새 카드 · 영향 카드 1,500판 · 회귀 표본 5,200판) 예외 · 멈춤 · 카드 수 불일치 · 턴 상한 · 중복 객체 0 · AI 벤치마크 (720판) 기존 AI 56.5% · 개선 AI 68.1% (변화 없음)
+
 ## v0.71.0 — 2026-11-02
 미지원 문장 45차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A로 근거 확인) — 도감 효과 문장 지원 10,269 → 10,273 / 10,366 (99.1%, +4)
 - 모든 절이 동작하는 카드 4,223 → 4,227장 (수정 전 지원되던 문장 중 깨진 것 0 · 한글이 바뀐 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다

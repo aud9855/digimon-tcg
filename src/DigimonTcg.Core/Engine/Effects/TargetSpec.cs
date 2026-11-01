@@ -369,11 +369,16 @@ public sealed partial class TargetSpec
     /// v0.71.0 괄호만 있는 [X] — 명칭 일치 또는 특징 ("1 [Royal Knight] Digimon card"처럼 특징을 괄호만으로 적은 문장).
     /// [X Antibody]는 카드명 지정 (공식 Q&A: 「진화원에 「X항체」가 있을 때」는 특징이 아니라 카드명)
     /// </summary>
-    public static bool NameOrTrait71(CardData card, string x) => NameIs71(card, x) || !NameOnly71(x) && (TraitIs71(card.Traits, x) || GoldfishEngine.IsAppmonByAppName41(card, x));
-    public static bool NameOrTrait71(CardInstance d, string x) => NameIs71(d, x) || !NameOnly71(x) && (TraitIs71(d.TopCard.Traits, x) || TraitIs71(d.ExtraTraits58, x));
+    public static bool NameOrTrait71(CardData card, string x) => NameIs71(card, x) || !NameOnly71(Unmark72(x)) && (TraitIs71(card.Traits, x) || GoldfishEngine.IsAppmonByAppName41(card, Unmark72(x)));
+    public static bool NameOrTrait71(CardInstance d, string x) => NameIs71(d, x) || !NameOnly71(Unmark72(x)) && (TraitIs71(d.TopCard.Traits, x) || TraitIs71(d.ExtraTraits58, x));
 
     /// <summary>v0.71.0 특징이 x와 일치 (종합 룰 2-3-2-3 — 괄호만 있는 [X]는 포함이 아니라 일치. "Hudie/CS"처럼 한 칸에 적힌 특징은 나눠 본다) · 영어 데이터의 어플몬 특징 (HasTrait와 같다)</summary>
-    private static bool TraitIs71(IEnumerable<string> traits, string x) =>
+    private static bool TraitIs71(IEnumerable<string> traits, string x) => TraitIs71Core(traits, Unmark72(x));
+
+    /// <summary>v0.72.0 특징 일치 표식을 뗀 이름</summary>
+    internal static string Unmark72(string x) => x.IndexOf(CardNames.TraitExactMark72) < 0 ? x : x.Replace(CardNames.TraitExactMark72.ToString(), "");
+
+    private static bool TraitIs71Core(IEnumerable<string> traits, string x) =>
         traits.Any(t => t.Equals(x, StringComparison.OrdinalIgnoreCase) || t.Split('/').Any(w => w.Trim().Equals(x, StringComparison.OrdinalIgnoreCase)) || t.TrimEnd('}', ' ').Equals(x, StringComparison.OrdinalIgnoreCase));
     private static bool NameOnly71(string x) => x.Equals("X Antibody", StringComparison.OrdinalIgnoreCase);   // 내장 한글 카드는 공식 영어 이름도 본다
 
@@ -382,10 +387,12 @@ public sealed partial class TargetSpec
 
     /// <summary>v0.67.0 필드의 디지몬의 텍스트 (명칭은 바뀐 명칭으로)</summary>
     public static bool TextHas(CardInstance d, string x) =>
+        x.IndexOf(CardNames.TraitExactMark72) >= 0 ? TextHas(d, x.Replace(CardNames.TraitExactMark72.ToString(), "")) :
         d.Changed67 == null ? TextHas(d.TopCard, x)
         : NameHas(d, x) || d.TopCard.EffectText.Contains($"[{x}]", StringComparison.OrdinalIgnoreCase) || d.TopCard.InheritedEffectText.Contains($"[{x}]", StringComparison.OrdinalIgnoreCase);
 
     public static bool TextHas(CardData card, string x) =>
+        x.IndexOf(CardNames.TraitExactMark72) >= 0 ? TextHas(card, x.Replace(CardNames.TraitExactMark72.ToString(), "")) :
         NameHas(card, x) || card.EffectText.Contains($"[{x}]", StringComparison.OrdinalIgnoreCase)
         || card.InheritedEffectText.Contains($"[{x}]", StringComparison.OrdinalIgnoreCase);
 
@@ -398,24 +405,45 @@ public sealed partial class TargetSpec
     /// </summary>
     internal static bool TraitMatch71(string t, string x)
     {
+        if (x.Length > 0 && x[^1] == CardNames.TraitExactMark72) return TraitExact72(t, x[..^1]);   // v0.72.0 "[X] trait" — 특징 일치 (종합 룰 2-3-2-3)
         if (t.Equals(x, StringComparison.OrdinalIgnoreCase)) return true;
         if (IsAbbrev71(x)) return t.Split(TraitSep71, StringSplitOptions.RemoveEmptyEntries).Any(w => w.Equals(x, StringComparison.Ordinal));
         if (IsAllCaps71(t) && !IsAllCaps71(x)) return t.Contains(x, StringComparison.Ordinal);
         return t.Contains(x, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// v0.72.0 특징 일치 (종합 룰 2-3-2-3 "「X」 특징을 가진" · "with the [XX] trait"): 특징 1개(「/」로 나눈 것 — 2-3-2-2)가 x와 같다.
+    /// 영어 데이터의 잡음은 뗀다 — 끝의 "}}" ("X Antibody}}") · 어플몬 앱 이름 표시 " (App Name)" ("Search (App Name)" = 특징 「검색」).
+    /// 포함 판정(2-3-2-4 "특징에 「X」를 포함하는" · "with [XX] in any of its traits")은 TraitMatch71 그대로
+    /// </summary>
+    private static bool TraitExact72(string t, string x)
+    {
+        x = NormTrait72(x);
+        if (NormTrait72(t).Equals(x, StringComparison.OrdinalIgnoreCase)) return true;
+        return t.IndexOf('/') >= 0 && t.Split('/').Any(w => NormTrait72(w).Equals(x, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string NormTrait72(string s)
+    {
+        s = s.Trim().TrimEnd('}', ' ');
+        if (s.EndsWith("(App Name)", StringComparison.OrdinalIgnoreCase)) s = s[..^"(App Name)".Length].TrimEnd();
+        return s;
+    }
+
     private static readonly char[] TraitSep71 = { ' ', '/', '(', ')', '{', '}', '|' };
+    internal static bool IsAbbrev72(string x) => IsAbbrev71(x);
     private static bool IsAbbrev71(string x) => x.Length is >= 2 and <= 6 && char.IsUpper(x[0]) && x.All(char.IsLetter) && x.Count(char.IsUpper) >= 2;
     private static bool IsAllCaps71(string s) => s.Any(char.IsLetter) && !s.Any(char.IsLower);
 
     public static bool HasTrait(CardData card, string x) =>
         card.Traits.Any(t => TraitMatch71(t, x))
-        || GoldfishEngine.IsAppmonByAppName41(card, x);   // v0.53.0 영어 데이터의 어플몬 디지몬은 특징이 "Search (App Name)"뿐 — [Appmon] 특징 카드를 고르는 효과도 (링크 조건처럼) 어플몬으로 본다
+        || GoldfishEngine.IsAppmonByAppName41(card, Unmark72(x));   // v0.53.0 영어 데이터의 어플몬 디지몬은 특징이 "Search (App Name)"뿐 — [Appmon] 특징 카드를 고르는 효과도 (링크 조건처럼) 어플몬으로 본다
 
     /// <summary>"[Animal] in any of its traits other than [Sea Animal]" — 제외한 특징은 빼고 본다</summary>
     public static bool HasTrait(CardData card, string x, IReadOnlyCollection<string> except) =>
         except.Count == 0 ? HasTrait(card, x)
-        : card.Traits.Any(t => !except.Any(e => t.Equals(e, StringComparison.OrdinalIgnoreCase)) && TraitMatch71(t, x));
+        : card.Traits.Any(t => !except.Any(e => t.Equals(Unmark72(e), StringComparison.OrdinalIgnoreCase)) && TraitMatch71(t, x));
 
     /// <summary>v0.58.0 필드의 디지몬: 맨 위 카드의 특징 + 지속 효과로 얻은 특징 (EX7-010 "[Your Turn] This Digimon gains the [Three Musketeers] trait")</summary>
     public static bool HasTrait(CardInstance d, string x) =>
@@ -423,7 +451,7 @@ public sealed partial class TargetSpec
 
     public static bool HasTrait(CardInstance d, string x, IReadOnlyCollection<string> except) =>
         HasTrait(d.TopCard, x, except)
-        || d.ExtraTraits58.Count > 0 && d.ExtraTraits58.Any(t => !except.Any(e => t.Equals(e, StringComparison.OrdinalIgnoreCase)) && TraitMatch71(t, x));
+        || d.ExtraTraits58.Count > 0 && d.ExtraTraits58.Any(t => !except.Any(e => t.Equals(Unmark72(e), StringComparison.OrdinalIgnoreCase)) && TraitMatch71(t, x));
 
     /// <summary>
     /// 대상 고르기. harmful = 상대에게 불리한 효과(소멸 · DP − · 레스트 …)면 DP가 높은 것부터, 아니면 자신의 이 디지몬 → DP 높은 순.

@@ -55,7 +55,7 @@ internal static partial class SentenceParser
     /// </summary>
     internal static bool BrokenDuplicate42(string rawClause, CardData card)
     {
-        string broken = rawClause.Trim();
+        string broken = TargetSpec.Unmark72(rawClause).Trim();   // v0.72.0 특징 일치 표식은 뗀다
         if (!Regex.IsMatch(broken, @"\bwith (?:in|or|from) (?:the |your )?", I)) return false;
         foreach (Match good in Regex.Matches(card.EffectText ?? "", @"Inherited Effect\s*(?<c>[^\r\n]+)", I))
         {
