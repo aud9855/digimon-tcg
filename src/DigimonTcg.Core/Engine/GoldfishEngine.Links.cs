@@ -52,6 +52,7 @@ public partial class GoldfishEngine
     internal static bool? MeetsLinkRequirement(CardData card, CardInstance target)
     {
         if (CardScripts.For(card)?.LinkRequirement is { } req) return req(target);
+        if (EnglishLink73(card) is { } en73) return en73.Requirement(target);   // v0.73.0 공식 영어 〈링크〉 정보 (GoldfishEngine.Batch73)
         return KoreanLink(card) is { Requirement: { } koReq } ? koReq(target) : null;
     }
 
@@ -59,6 +60,7 @@ public partial class GoldfishEngine
     internal static int? LinkCostOf(CardData card)
     {
         if (CardScripts.For(card) is { LinkRequirement: not null } s) return s.LinkCost;
+        if (EnglishLink73(card) is { } en73) return en73.Cost;   // v0.73.0
         return KoreanLink(card)?.Cost;
     }
 
@@ -66,7 +68,7 @@ public partial class GoldfishEngine
     public int? GetLinkCost(CardData card) => LinkCostOf(card);
 
     /// <summary>〈링크 중〉 이 디지몬의 DP +N (공식 한글 문구가 있을 때만)</summary>
-    internal static int LinkDp(CardData card) => KoreanLink(card)?.Dp ?? 0;
+    internal static int LinkDp(CardData card) => EnglishLink73(card)?.Dp ?? KoreanLink(card)?.Dp ?? 0;   // v0.73.0 공식 영어 〈링크〉 정보 먼저 (한글 데이터가 없는 카드)
 
     /// <summary>패의 card를 링크할 수 있는 자신의 디지몬 (플레이어 메인 페이즈 — 화면이 쓴다)</summary>
     public IReadOnlyList<CardInstance> GetLinkTargets(CardData card)

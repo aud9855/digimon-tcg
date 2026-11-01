@@ -29,7 +29,8 @@ internal static partial class SentenceParser
             (card.InheritedEffectText ?? "").Contains("Link Requirements", StringComparison.OrdinalIgnoreCase)
             || card.Type == CardType.Digimon && card.Level >= 3 && card.Traits.Any(t => t.Contains("(App Name)", StringComparison.OrdinalIgnoreCase))
             || card.Type == CardType.Option && card.Traits.Any(t => t.Equals("Plug-In", StringComparison.OrdinalIgnoreCase))   // 링크하는 옵션 (ST22-08 「공격 플러그인 V」)
-            || KoreanCardData.Get(card.CardId) is { } ko && $"{ko.MainText} {ko.SourceText}".Contains("〈링크〉", StringComparison.Ordinal));
+            || KoreanCardData.Get(card.CardId) is { } ko && $"{ko.MainText} {ko.SourceText}".Contains("〈링크〉", StringComparison.Ordinal)
+            || GoldfishEngine.HasEnglishLink73(card));   // v0.73.0 공식 영어 〈링크〉 정보 (EX11-027 — 영어 API는 링크 효과를 진화원 효과 칸에 둔다)
 
     /// <summary>링크 카드의 진화원 효과로 등록된 것을 링크 효과(EffectSource.Link43)로 옮긴다 (【링크 시】는 메인 효과 OnLinked 그대로)</summary>
     internal static void RetagLinkEffects43(CardScript script, int linkSecurityAttack)
