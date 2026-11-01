@@ -127,7 +127,12 @@ public partial class GoldfishEngine
     /// </summary>
     internal List<CardData> TrashSourcesAt61(PlayerZones zone, CardInstance host, int n, bool top, bool cost = false)
     {
-        if (!cost && n > 0 && host.EvolutionSources.Count > 0 && SourceTrashReplacement61(zone, host, n) is { } r) host = r;
+        if (n > 0 && host.EvolutionSources.Count > 0 && StackProtected42(zone, host)) return new List<CardData>();   // v0.62.0 겹쳐진 카드 보호도 여기서 (BT21-060 · EX11-070 — 공식 Q&A BT21-060 Q1)
+        if (!cost && n > 0 && host.EvolutionSources.Count > 0 && SourceTrashReplacement61(zone, host, n) is { } r)
+        {
+            if (StackProtected42(zone, r)) return new List<CardData>();   // v0.62.0 대신 파기하는 디지몬의 겹쳐진 카드도 상대의 효과로 파기되지 않는다
+            host = r;
+        }
         if (!CardScripts.HasKeyword(host, Keyword.XAntibodySourcesProtected61))
         {
             if (!top)
@@ -152,8 +157,10 @@ public partial class GoldfishEngine
     /// </summary>
     internal List<CardData> TrashChosenSources61(PlayerZones zone, CardInstance host, IReadOnlyList<CardData> picks, bool cost = false)
     {
+        if (picks.Count > 0 && StackProtected42(zone, host)) return new List<CardData>();   // v0.62.0 겹쳐진 카드 보호도 여기서 (BT21-060 · EX11-070)
         if (!cost && picks.Count > 0 && SourceTrashReplacement61(zone, host, picks.Count) is { } r)
         {
+            if (StackProtected42(zone, r)) return new List<CardData>();   // v0.62.0
             var pool = TrashableSources61(r, r.EvolutionSources.ToList()).ToList();
             int k = Math.Min(picks.Count, pool.Count);
             if (k == 0) return new List<CardData>();

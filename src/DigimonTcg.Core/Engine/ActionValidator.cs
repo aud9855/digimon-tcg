@@ -110,7 +110,7 @@ public static class ActionValidator
     public static int EvolutionCost(CardInstance target, CardData evoCard)
     {
         int? normal = EvoRequirements48.NormalCost(target, evoCard);
-        int? special = CardScripts.SpecialEvolutionCost(evoCard, target);
+        int? special = GoldfishEngine.SpecialEvolutionCost62(evoCard, target);   // v0.62.0 BT8-059가 있으면 진화 조건을 무시하는 진화는 없다
         if (special == null) return normal ?? evoCard.EvoCost;
         return normal is int n ? Math.Min(n, special.Value) : special.Value;
     }
@@ -131,7 +131,7 @@ public static class ActionValidator
             return ActionResult.Fail($"[{target.TopCard.Name}]은(는) 카드 효과로 [{evoCard.Name}](으)로는 진화할 수 없습니다.");
 
         // 진화 조건을 무시하는 다른 진화 ("Your [Shoutmon] can digivolve into this card ~ for a memory cost of 4")
-        if (!MeetsNormalEvolution(target, evoCard) && CardScripts.SpecialEvolutionCost(evoCard, target) is int special)
+        if (!MeetsNormalEvolution(target, evoCard) && GoldfishEngine.SpecialEvolutionCost62(evoCard, target) is int special)   // v0.62.0 BT8-059
             return ActionResult.Success(KoreanEvolution47.Cost(evoCard, target) == special
                 ? $"진화 코스트 {special} 지불 (〔진화〕 조건). 진화 성공 시 카드 1장을 추가로 드로우합니다."   // v0.47.0 공식 한글 〔진화〕 진화 조건
                 : $"진화 코스트 {special} 지불 (카드 효과의 진화). 진화 성공 시 카드 1장을 추가로 드로우합니다.");

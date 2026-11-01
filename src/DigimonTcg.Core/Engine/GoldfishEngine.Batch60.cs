@@ -56,6 +56,7 @@ public partial class GoldfishEngine
     {
         d.AttackSecurityAttackBonus += sa;
         if (IsOpponentEffectFor(OwnerOf(d))) d.OppAttackSa60 += sa;
+        if (sa < 0) d.AttackSaParts62.Add((sa, IsOpponentEffectFor(OwnerOf(d)), EffectCategory61(d)));   // v0.62.0 EX6-031 부호별로
         NoteCat61(d, 3, sa, 0);   // v0.61.0 LM-020
     }
 

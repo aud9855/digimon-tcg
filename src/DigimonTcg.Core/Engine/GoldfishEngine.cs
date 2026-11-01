@@ -399,9 +399,12 @@ public partial class GoldfishEngine
         _usedMainAbilities.Clear();
         int awakened = 0;
         var woke = new List<CardInstance>();
+        bool wouldUnsuspend62 = WouldUnsuspendPossible62();   // v0.62.0 "When this Digimon would unsuspend" (BT7-055가 주는 효과) — 턴이 시작된 뒤 액티브 (종합 룰 6-2-1)
+        if (wouldUnsuspend62) SetTurnOwner(playerTurn: true);
         foreach (var instance in AllInstances(State.Player))
         {
-            if (instance.IsSuspended && !EffectRules.IsActive(instance.LockUntil60(5, instance.SkipUnsuspendUntil), State) && !EffectRules.IsUnsuspendLocked(State, instance) && !UnsuspendLock45(State.Player, instance, null, phase: true))   // "doesn't unsuspend during the next unsuspend phase" · v0.45.0 지속 효과
+            if (instance.IsSuspended && !EffectRules.IsActive(instance.LockUntil60(5, instance.SkipUnsuspendUntil), State) && !EffectRules.IsUnsuspendLocked(State, instance) && !UnsuspendLock45(State.Player, instance, null, phase: true)   // "doesn't unsuspend during the next unsuspend phase" · v0.45.0 지속 효과
+                && !(wouldUnsuspend62 && WouldUnsuspendPrevented62(State.Player, instance)))   // v0.62.0 (공식 Q&A BT7-055 Q1 — 1마리마다)
             {
                 instance.IsSuspended = false;
                 awakened++;
@@ -1183,9 +1186,12 @@ public partial class GoldfishEngine
         var aiWokeTamers = WakeTamers(State.DummyOpponent);   // v0.35.0 "can't unsuspend"인 테이머는 그대로
         _usedMainAbilities.Clear();
         var aiWoke = new List<CardInstance>();
+        bool wouldUnsuspend62 = WouldUnsuspendPossible62();   // v0.62.0 "When this Digimon would unsuspend" (BT7-055가 주는 효과)
+        if (wouldUnsuspend62) SetTurnOwner(playerTurn: false);
         foreach (var d in AllInstances(State.DummyOpponent))
         {
-            if (d.IsSuspended && !EffectRules.IsActive(d.LockUntil60(5, d.SkipUnsuspendUntil), State) && !EffectRules.IsUnsuspendLocked(State, d) && !UnsuspendLock45(State.DummyOpponent, d, null, phase: true)) { d.IsSuspended = false; aiWoke.Add(d); }   // v0.45.0 지속 효과
+            if (d.IsSuspended && !EffectRules.IsActive(d.LockUntil60(5, d.SkipUnsuspendUntil), State) && !EffectRules.IsUnsuspendLocked(State, d) && !UnsuspendLock45(State.DummyOpponent, d, null, phase: true)
+                && !(wouldUnsuspend62 && WouldUnsuspendPrevented62(State.DummyOpponent, d))) { d.IsSuspended = false; aiWoke.Add(d); }   // v0.45.0 지속 효과 · v0.62.0
             ResetTurnScopedState(d);
         }
         // 내 디지몬의 "이 턴 동안" 효과는 내 턴이 끝나면 사라진다

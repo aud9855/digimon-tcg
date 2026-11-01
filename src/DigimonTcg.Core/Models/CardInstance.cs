@@ -106,6 +106,28 @@ public class CardInstance
     /// 떠난 디지몬은 떠나기 전의 것이 남는다 (【소멸 시】를 얻었으면 소멸했을 때 발휘)</summary>
     public List<CardData> AuraGranted61 { get; } = new();
 
+    /// <summary>v0.62.0 EX6-031 "Change ＜Security A. -＞ to ＜Security A. +＞" — 지금 ≪시큐리티 어택 -N≫이 +N으로 바뀌는지 (엔진이 지속 효과를 계산할 때마다 채운다)</summary>
+    public bool SaFlip62 { get; set; }
+
+    /// <summary>v0.62.0 지금 받고 있는 ≪시큐리티 어택 -N≫의 몫 합계 (N의 합 — 카드 · 진화원 · 기간 효과 · 지속 효과마다 부호를 따로 센다. 이 어택 동안의 몫은 AttackSaParts62). SaFlip62일 때만 센다</summary>
+    public int SaNeg62 { get; set; }
+
+    /// <summary>v0.62.0 이 어택 동안 받은 ≪시큐리티 어택 -N≫ 하나하나 (상대의 효과인지 · 효과가 적힌 카드의 종류 — 받지 않는 동안은 빼고 센다)</summary>
+    public List<(int Sa, bool Opp, CardType? Type)> AttackSaParts62 { get; } = new();
+
+    /// <summary>v0.62.0 BT8-059 "Players can't ignore digivolution requirements" — 지금 필드에 그 효과가 있는지 (엔진이 지속 효과를 계산할 때마다 채운다)</summary>
+    public bool NoIgnoreReq62 { get; set; }
+
+    /// <summary>v0.62.0 ≪시큐리티 어택 -N≫을 +N으로 바꿀 때 더할 값 (-N을 빼고 +N을 더한다 = 2N)</summary>
+    internal int SaFlipBonus62()
+    {
+        if (!SaFlip62) return 0;
+        int n = SaNeg62;
+        foreach (var p in AttackSaParts62)
+            if (p.Sa < 0 && !(OppShield59 && p.Opp) && !(CatShield61 is { } t && p.Type == t)) n -= p.Sa;
+        return 2 * n;
+    }
+
     /// <summary>v0.61.0 지금 받지 않는 카드 종류 (엔진이 지속 효과를 계산할 때마다 채운다 — LM-020)</summary>
     public CardType? CatShield61 { get; set; }
 
@@ -346,7 +368,11 @@ public class CardInstance
             OppShield59 = OppShield59,
             OppAttackSa60 = OppAttackSa60,
             CatShield61 = CatShield61,
+            SaFlip62 = SaFlip62,
+            SaNeg62 = SaNeg62,
+            NoIgnoreReq62 = NoIgnoreReq62,
         };
+        v.AttackSaParts62.AddRange(AttackSaParts62);
         v.EvolutionSources = new Stack<CardData>(EvolutionSources.Reverse());
         foreach (var f in FaceDownSources) v.FaceDownSources.Add(f);
         foreach (var k in ActiveKeywords) v.ActiveKeywords.Add(k);
@@ -376,7 +402,7 @@ public class CardInstance
         FaceUpSources.Sum(s => s.InheritedSecurityAttackBonus);
 
     public int GetTotalBonusSecurityAttack() =>
-        TopCard.SecurityAttackBonus + GetInheritedSecurityAttackBonus() + TamerSecurityAttackBonus + TemporarySecurityAttackBonus + EffectSecurityAttackBonus + AttackSecurityAttackBonus - (OppShield59 ? OppAttackSa60 : 0) - CatShieldSum61(3);   // v0.60.0 상대의 효과를 받지 않는 동안 · v0.61.0 LM-020
+        TopCard.SecurityAttackBonus + GetInheritedSecurityAttackBonus() + TamerSecurityAttackBonus + TemporarySecurityAttackBonus + EffectSecurityAttackBonus + AttackSecurityAttackBonus - (OppShield59 ? OppAttackSa60 : 0) - CatShieldSum61(3) + SaFlipBonus62();   // v0.60.0 상대의 효과를 받지 않는 동안 · v0.61.0 LM-020 · v0.62.0 EX6-031
 
     public int GetSecurityAttackCount() =>
         Math.Max(0, 1 + GetTotalBonusSecurityAttack());

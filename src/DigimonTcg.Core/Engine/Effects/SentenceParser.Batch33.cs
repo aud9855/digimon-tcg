@@ -613,7 +613,8 @@ internal static partial class SentenceParser
             bool fromHand = from.Contains("hand"), fromTrash = from.Contains("trash");
             // 진화 조건을 무시하면 Lv. · 색을 보지 않는다. "ignoring its level"(BT12-089)은 Lv.만 — 색 조건은 본다
             bool Can(CardInstance d, CardData x) => x.Type == CardType.Digimon && !EffectRules.IsDigivolveLocked(null, d)
-                && (!levelOnly || EvoRequirements48.ColorOnly(d, x));   // v0.48.0 진화 조건 칸 전부의 색
+                && (!levelOnly || EvoRequirements48.ColorOnly(d, x))   // v0.48.0 진화 조건 칸 전부의 색
+                && (!d.NoIgnoreReq62 || GoldfishEngine.MeetsEvoRequirements62(d, x));   // v0.62.0 BT8-059 서로는 진화 조건을 무시할 수 없다
             return (c =>
             {
                 var bases = target != null ? Pick(target, c, security) : c.Owner.BattleArea.Where(nameFilter!).ToList();

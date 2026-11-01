@@ -465,6 +465,7 @@ public partial class GoldfishEngine
                 ApplyContinuousEffects(State.DummyOpponent, State.Player, State.OpponentAllSecurityAttackUntil);
             }
         }
+        ApplyNoIgnoreReq62();   // v0.62.0 BT8-059 서로는 진화 조건을 무시할 수 없다 (GoldfishEngine.Batch62)
     }
 
     private void ApplyContinuousEffects(PlayerZones owner, PlayerZones enemy, int allSecurityAttackUntil)
@@ -496,6 +497,7 @@ public partial class GoldfishEngine
             var enemyKw59 = EnemyKeywordAdded59(inst, enemyKwBefore59);
             foreach (var effect in statics.Where(e => e.Stat == StaticStat.Keyword && e.Keyword != null))
                 if (effect.Value(ctx) != 0) inst.ActiveKeywords.Add(effect.Keyword!.Value);
+            ApplyGrantedKeywordStatics62(inst, ctx);   // v0.62.0 효과로 받은 키워드 지속 효과 문장 (BT13-108 — GoldfishEngine.Batch62)
             // 다른 카드가 주는 키워드 ("All of your level 4 or lower Digimon gain ＜Jamming＞") — 효과를 가진 카드 기준으로 조건 판단
             foreach (var (aura, auraCtx) in DigimonAuras(owner, enemy, StaticStat.AllyKeyword).Concat(TamerAuras(owner, enemy, StaticStat.AllyKeyword)))
                 if (aura.Keyword != null && aura.AppliesTo(auraCtx, inst) && !CategoryShield51(inst, auraCtx) && aura.Value(auraCtx) != 0)
@@ -504,6 +506,7 @@ public partial class GoldfishEngine
             ApplyOppShield59(inst, enemyKw59);   // v0.59.0 상대의 효과를 받지 않는 동안: 상대 카드의 지속 효과 · 이미 받은 상대의 DP 효과를 빼고 계산 (GoldfishEngine.Batch59)
             ApplyDeferredOppKeywords60(inst, oppKw60);   // v0.60.0 이미 받은 상대의 기간 키워드도 (15-15-5-4)
             ApplyAuraGrants61(inst, owner, enemy);   // v0.61.0 다른 카드의 지속 효과로 얻는 효과 문장 (GoldfishEngine.Batch61)
+            ApplySideAuras62(inst, owner);   // v0.62.0 이 턴 동안 조건에 맞는 자신의 디지몬 전부가 얻는 것 (BT4-101 · BT9-102 — GoldfishEngine.Batch62)
             inst.HasGrantedBlocker = EffectRules.IsActive(inst.GrantedBlockerUntil, State) || CardScripts.HasKeyword(inst, Keyword.Blocker);
 
             int dp = inst.TimedDpBuffs.Sum(t => t.Dp) - inst.CatShieldSum61(1), sec = inst.TimedSecurityAttackBuffs.Sum(t => t.Count) - OppTimedSaShield60(inst) - inst.CatShieldSum61(2);   // v0.60.0 · v0.61.0 LM-020 이미 받은 그 종류의 기간 DP · ≪시큐리티 어택≫
@@ -537,6 +540,7 @@ public partial class GoldfishEngine
             inst.StaticUnsuspendLock45 = UnsuspendLock45(owner, inst, null, phase: false);   // v0.45.0 "don't unsuspend" 지속 효과 (BT12-057)
             inst.EffectDpBonus = dp;
             inst.EffectSecurityAttackBonus = sec;
+            ApplySaFlip62(inst, owner, enemy, statics, ctx);   // v0.62.0 EX6-031 ≪시큐리티 어택 -≫ → + (GoldfishEngine.Batch62)
             inst.TamerDpBonus = CategoryShield51(inst, CardType.Tamer) ? 0 : TamerStatics(owner, StaticStat.AllyDigimonDp).Where(e => e.Subject == null || e.Subject(inst)).Sum(e => e.Value(ctx));   // v0.51.0 LM-020 테이머의 효과를 받지 않는다
             inst.TamerSecurityAttackBonus = 0;
         }
@@ -1021,6 +1025,7 @@ public partial class GoldfishEngine
         attacker.AttackSecurityAttackBonus = 0;
         attacker.OppAttackSa60 = 0;   // v0.60.0
         attacker.ClearCatAttack61();   // v0.61.0
+        attacker.AttackSaParts62.Clear();   // v0.62.0
         RecalculateFieldBuffs();
         var owner = OwnerOf(attacker);
         if (owner.BattleArea.Contains(attacker) && !State.IsGameOver)
@@ -1445,6 +1450,12 @@ public partial class GoldfishEngine
         if (EffectRules.IsDigivolveLocked(State, target) || !CardScripts.EvoAllowed(target, evoCard))   // v0.34.0 "can only digivolve into ~"
         {
             EffectLog(owner, $"[{target.TopCard.Name}]은(는) 진화할 수 없습니다 (카드 효과).");
+            return;
+        }
+        if (target.NoIgnoreReq62 && !MeetsEvoRequirements62(target, evoCard))   // v0.62.0 BT8-059 서로는 진화 조건을 무시할 수 없다
+        {
+            Diag46.Hit("noIgnoreReq62");
+            EffectLog(owner, $"[{target.TopCard.Name}]은(는) 진화 조건을 무시하고 [{evoCard.Name}](으)로 진화할 수 없습니다 (서로는 진화 조건을 무시할 수 없다).");
             return;
         }
         if (!(from ?? owner.Hand).Remove(evoCard))
@@ -2072,8 +2083,10 @@ public partial class GoldfishEngine
     {
         if (!inst.IsSuspended || EffectRules.IsUnsuspendLocked(State, inst))
             return;
-        inst.IsSuspended = false;
         var owner = OwnerOf(inst);
+        if (WouldUnsuspendPossible62() && WouldUnsuspendPrevented62(owner, inst))   // v0.62.0 "When this Digimon would unsuspend" (BT7-055가 주는 효과)
+            return;
+        inst.IsSuspended = false;
         if (inst.TamerProxyOf != null) UnsuspendProxyTamer(owner, inst);   // v0.36.0
         bool mainPhase = ReferenceEquals(owner, State.Player) ? State.CurrentPhase == Phase.Main && _aiTurn == null : _aiTurn != null;
         FireUnsuspendedByEffect54(owner, inst, mainPhase);   // v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
@@ -2239,7 +2252,10 @@ public partial class GoldfishEngine
             summary = string.Empty;
         }
         else
+        {
+            RefreshSideAurasBeforeOnPlay62();   // v0.62.0 이 턴 동안 얻는 【등장 시】 (BT9-102)
             summary = RunEffects(EffectTrigger.OnPlay, owner, instance, card, includeInherited: false).Message;
+        }
 
         foreach (var other in owner.BattleArea.Where(d => !ReferenceEquals(d, instance) && (witness46 == null || witness46.Saw(d))).ToList())
             RunEffects(EffectTrigger.AllySameNamePlayed, owner, other, null, other: instance);

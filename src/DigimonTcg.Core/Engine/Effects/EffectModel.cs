@@ -119,6 +119,8 @@ public enum EffectTrigger
     AllyDigimonWouldDigivolve52,    // 자신의 디지몬이 진화하려 할 때 (코스트를 내기 전 — Other = 진화할 디지몬, TriggerCard = 진화할 카드 · EX2-056)
     // v0.53.0
     ThisDigimonDeletedAnother53,    // 이 디지몬이 다른 디지몬을 소멸시켰을 때 (배틀 · 이 디지몬의 효과 — 공식 Q&A EX1-064, Other = 소멸한 디지몬 · BT16-061)
+    // v0.62.0
+    ThisDigimonWouldUnsuspend62,    // 이 디지몬이 액티브가 되려 할 때 (액티브 페이즈 · 효과 모두 — EffectContext.PreventUnsuspend62로 막는다, BT7-055가 주는 효과)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
@@ -204,6 +206,8 @@ public enum Keyword
     XAntibodySourcesProtected61,       // 효과로 이 디지몬의 진화원의 「X항체」를 파기할 수 없다 (BT9-109 진화원 효과)
     ReplaceOtherSourceTrash61,         // 효과가 자신의 다른 디지몬의 진화원을 파기하려 할 때, 대신 이 디지몬의 진화원을 그 효과로 파기할 수 있다 (BT10-084)
     CannotBeAttackedBySa61,            // ≪시큐리티 어택≫을 가진 상대의 디지몬은 이 디지몬에게 어택할 수 없다 (BT10-042)
+    // v0.62.0
+    NoIgnoreEvoRequirements62,         // 서로는 진화 조건을 무시할 수 없다 (BT8-059 — 공식 Q&A BT8-059 Q1: 서로의 플레이어에게)
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>
@@ -240,6 +244,8 @@ public enum StaticStat
     // v0.61.0
     AllyGrant61,        // 자신의 디지몬 전부(Subject 조건)가 효과 문장을 얻는다 (StaticEffect.Grant61 — "All level 3 Digimon gain \"[When Attacking] Lose 1 memory.\"" BT5-091)
     EnemyGrant61,       // 상대의 디지몬 전부(Subject 조건)가 효과 문장을 얻는다 (BT8-031 · BT7-055)
+    // v0.62.0
+    AllySaFlip62,       // 자신의 디지몬 전부(Subject 조건)의 ≪시큐리티 어택 -N≫을 ≪시큐리티 어택 +N≫으로 (EX6-031)
 }
 
 /// <summary>옵션 [메인] 효과를 쓸 때 UI가 고르게 할 대상</summary>

@@ -166,6 +166,7 @@ public sealed class SmartAiPolicy : IAiPolicy
         {
             // 혼자 남은 ≪블로커≫는 시큐리티를 지키도록 남겨 둔다 (다이렉트 어택 기회는 예외)
             bool loneBlocker = attacker.HasBlocker && ai.BattleArea.Count == 1;
+            double granted62 = GrantedAttackPenalty62(engine, attacker, memory);   // v0.62.0 효과로 받은 【어택 시】 손해 (BT5-091 메모리 -1 · BT8-031 진화원 파기)
             // v0.34.0 어택 대상은 어택하는 디지몬마다 ("can't attack players" · "can also attack your opponent's unsuspended Digimon")
             var targets = new List<CardInstance?>();
             if (EffectRules.CanAttackPlayer(attacker)) targets.Add(null);
@@ -175,6 +176,7 @@ public sealed class SmartAiPolicy : IAiPolicy
                 double score = AiBoard.AttackScore(state, attacker, target, Tuning);
                 if (loneBlocker && score < 1000)
                     score -= Tuning.LoneBlockerPenalty;
+                if (score < 1000) score -= granted62;
                 if (score > bestScore)
                 {
                     bestScore = score;
@@ -183,6 +185,28 @@ public sealed class SmartAiPolicy : IAiPolicy
             }
         }
         return best;
+    }
+
+    private static readonly Regex LoseMemoryWhenAttacking62 = new(@"^\[When Attacking\]\s*Lose (?<n>\d+) memory\.?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex TrashOwnSourceWhenAttacking62 = new(@"^\[When Attacking\]\s*Trash the (?:bottom|top) digivolution card of this Digimon\.?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>
+    /// v0.62.0 어택하는 디지몬이 다른 카드의 효과로 받은 【어택 시】 효과의 손해 (점수 단위 — 메모리 1 = 옵션 코스트 1과 같은 0.6, 진화원 1장 = 디지몬 가치의 진화원 몫 0.6).
+    /// 메모리가 상대 쪽으로 넘어가면 이 턴이 끝나므로 더 크게 (BT5-091 "All level 3 Digimon gain "[When Attacking] Lose 1 memory."" — 이득이 클 때만 어택한다)
+    /// </summary>
+    internal static double GrantedAttackPenalty62(GoldfishEngine engine, CardInstance attacker, int memory)
+    {
+        if (attacker.GrantedEffects.Count == 0 && attacker.AuraGranted61.Count == 0) return 0;
+        int lose = 0;
+        double p = 0;
+        foreach (var g in engine.ActiveGrantedEffects(attacker))
+        {
+            string text = (g.EffectText ?? "").Trim();
+            if (LoseMemoryWhenAttacking62.Match(text) is { Success: true } m) lose += int.Parse(m.Groups["n"].Value);
+            else if (TrashOwnSourceWhenAttacking62.IsMatch(text) && attacker.EvolutionSources.Count > 0) p += 0.6;
+        }
+        if (lose > 0) p += lose * 0.6 + (memory - lose < 0 ? 3.0 : 0);
+        return p;
     }
 
     public bool ShouldUseMainAbility(GoldfishEngine engine, GoldfishEngine.MainAbility ability, int memory)

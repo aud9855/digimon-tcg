@@ -213,6 +213,12 @@ public partial class GoldfishEngine
         from ??= owner.Hand;
         if (!owner.Tamers.Contains(tamer) || !from.Contains(evoCard) || evoCard.Type != CardType.Digimon)
             return null;
+        if (NoIgnoreReq62 && CardScripts.TamerEvolutionCost(evoCard, tamer) == null)   // v0.62.0 BT8-059 — 테이머에서 진화하는 진화 조건이 없는 진화 (진화 조건 무시)
+        {
+            Diag46.Hit("noIgnoreReq62");
+            EffectLog(owner, $"테이머 [{tamer.Name}]은(는) 진화 조건을 무시하고 [{evoCard.Name}](으)로 진화할 수 없습니다 (서로는 진화 조건을 무시할 수 없다).");
+            return null;
+        }
         if (!ReferenceEquals(from, owner.Hand)) from.Remove(evoCard);   // 트래시의 카드로 (EvolveTamerCore는 패에서만 뺀다)
         var inst = EvolveTamerCore(owner, tamer, evoCard, cost, out int paid);
         if (ReferenceEquals(owner, State.Player)) { State.TotalMemorySpent += paid; State.TotalEvolutionsCount++; }
