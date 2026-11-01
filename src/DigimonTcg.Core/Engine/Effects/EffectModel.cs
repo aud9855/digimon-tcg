@@ -193,6 +193,8 @@ public enum Keyword
     StackProtectedFromOpponent,        // 겹쳐진 카드(맨 위 카드 · 진화원)가 상대의 효과로 파기되지 않는다 (공식 BT21-060 "이 디지몬에 겹쳐져 있는 카드는 상대의 효과로 파기되지 않는다" — ≪퇴화≫도)
     // v0.55.0
     CanAttackUnsuspendedLevel4OrLower55, // 액티브 상태인 Lv.4 이하의 상대 디지몬에게도 어택할 수 있다 (EX1-061 진화원 효과)
+    // v0.58.0
+    UnaffectedByOpponentDuringAttacks58, // 어택 중(어느 쪽의 어택이든 어택 선언 ~ 어택 종료)에는 상대의 효과를 받지 않는다 (BT27-103 "During attacks, your opponent's effects don't affect this Digimon")
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>
@@ -224,6 +226,8 @@ public enum StaticStat
     TamerCannotBeDeleted46,  // 자신의 테이머(Subject — 테이머 카드만 든 가짜 디지몬으로 본다)는 소멸하지 않는다 ("All of your [Yuu Amano] can't be deleted" BT11-082)
     DpFloor45,          // 이 디지몬의 DP는 N 미만이 되지 않는다 (값 = N — "can't have less than 1000 DP" EX11-070)    // 액티브가 되지 않는다 (값 = 비트: 1 자신의 디지몬 · 2 상대의 디지몬 · 4 자신의 테이머 · 8 상대의 테이머 · 16 액티브 페이즈에서만) — BT12-057 · EX10-023 · BT6-092
    // 상대의 디지몬 전부(Subject 조건)의 DP ("all of your opponent's suspended Digimon get -4000 DP" BT16-101)
+    // v0.58.0
+    ExtraTrait58,       // 이 디지몬이 특징을 얻는다 (StaticEffect.Trait58, 값이 0이 아니면 얻은 상태 — "[Your Turn] This Digimon gains the [Three Musketeers] trait" EX7-010)
 }
 
 /// <summary>옵션 [메인] 효과를 쓸 때 UI가 고르게 할 대상</summary>
@@ -266,6 +270,9 @@ public sealed record StaticEffect(StaticStat Stat, EffectSource Source, Func<Sta
 
     /// <summary>v0.34.0 "All of your other ~" — 효과를 가진 디지몬 자신은 받지 않는다</summary>
     public bool ExcludeSource { get; init; }
+
+    /// <summary>v0.58.0 Stat == ExtraTrait58일 때 얻는 특징</summary>
+    public string? Trait58 { get; init; }
 
     /// <summary>v0.40.0 효과를 가진 디지몬(StaticContext.Digimon)을 보는 받는 디지몬 조건 — "All of your other Digimon with the same name as this Digimon" (P-045 · BT5-063 · EX1-051)</summary>
     public Func<StaticContext, CardInstance, bool>? SubjectOf { get; init; }

@@ -238,7 +238,7 @@ internal static partial class SentenceParser
             var match = op.Match;
             return c => c.Owner.Hand.Any(x => x.Type == CardType.Option && match(x));
         }
-        return null;
+        return OptionTargetFeasible58(text);   // v0.58.0 대상 · 시큐리티가 있는지 (SentenceParser.Batch58.cs)
     }
 
     // =====================================================================

@@ -122,7 +122,7 @@ internal static partial class SentenceParser
             if (tm.Success)
             {
                 var xs = TargetSpec.Names(tm.Groups["x"].Value);
-                c2 = c => cond(c) && c.Digimon != null && xs.Any(x => TargetSpec.HasTrait(c.Digimon.TopCard, x));
+                c2 = c => cond(c) && c.Digimon != null && xs.Any(x => TargetSpec.HasTrait(c.Digimon, x));
             }
             pending.Registrations.Add(d => d.Static(StaticStat.Keyword, source, c => c2(c) ? 1 : 0, Keyword.NegateSecurityOptions));
             return "";

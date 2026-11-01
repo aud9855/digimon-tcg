@@ -104,7 +104,7 @@ public sealed partial class TargetSpec
             else
             {
                 string x = a.Groups[3].Value;
-                spec.Filters.Add(word.EndsWith("trait") ? d => HasTrait(d.TopCard, x) : d => NameHas(d.TopCard, x) || HasTrait(d.TopCard, x));
+                spec.Filters.Add(word.EndsWith("trait") ? d => HasTrait(d, x) : d => NameHas(d.TopCard, x) || HasTrait(d, x));
             }
         }
         // 색: "your blue Digimon" · "red or black Digimon"
@@ -210,7 +210,7 @@ public sealed partial class TargetSpec
             {
                 var xs = Names(m.Groups["x"].Value);
                 var ex = Names(m.Groups["ex"].Value);
-                spec.Filters.Add(d => xs.Any(x => HasTrait(d.TopCard, x, ex)));
+                spec.Filters.Add(d => xs.Any(x => HasTrait(d, x, ex)));
             }
             else if ((m = Regex.Match(rest, $@"^(?:with |and |or )?(?<x>{NameList}) in (?:its|their) texts?", RegexOptions.IgnoreCase)).Success)
             {
@@ -333,7 +333,7 @@ public sealed partial class TargetSpec
             return m;
         }
         if ((m = Regex.Match(rest, $@"^without (?:the )?(?<x>{NameList}) traits?", RegexOptions.IgnoreCase)).Success)
-        { var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => !xs.Any(x => HasTrait(d.TopCard, x))); return m; }
+        { var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => !xs.Any(x => HasTrait(d, x))); return m; }
         if ((m = Regex.Match(rest, $@"^without (?<x>{NameList}) in (?:its|their) names?", RegexOptions.IgnoreCase)).Success)
         { var xs = Names(m.Groups["x"].Value); spec.Filters.Add(d => !xs.Any(x => NameHas(d.TopCard, x))); return m; }
         return null;
@@ -369,6 +369,14 @@ public sealed partial class TargetSpec
     public static bool HasTrait(CardData card, string x, IReadOnlyCollection<string> except) =>
         except.Count == 0 ? HasTrait(card, x)
         : card.Traits.Any(t => !except.Any(e => t.Equals(e, StringComparison.OrdinalIgnoreCase)) && t.Contains(x, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>v0.58.0 필드의 디지몬: 맨 위 카드의 특징 + 지속 효과로 얻은 특징 (EX7-010 "[Your Turn] This Digimon gains the [Three Musketeers] trait")</summary>
+    public static bool HasTrait(CardInstance d, string x) =>
+        HasTrait(d.TopCard, x) || d.ExtraTraits58.Count > 0 && d.ExtraTraits58.Any(t => t.Contains(x, StringComparison.OrdinalIgnoreCase));
+
+    public static bool HasTrait(CardInstance d, string x, IReadOnlyCollection<string> except) =>
+        HasTrait(d.TopCard, x, except)
+        || d.ExtraTraits58.Count > 0 && d.ExtraTraits58.Any(t => !except.Any(e => t.Equals(e, StringComparison.OrdinalIgnoreCase)) && t.Contains(x, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// 대상 고르기. harmful = 상대에게 불리한 효과(소멸 · DP − · 레스트 …)면 DP가 높은 것부터, 아니면 자신의 이 디지몬 → DP 높은 순.

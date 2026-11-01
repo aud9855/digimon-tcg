@@ -41,6 +41,8 @@ internal static partial class SentenceParser
             }
             // 문이 열린 채로 다시 읽는다 (31차의 셈 · 동작 · 조건은 문이 열려 있을 때만) — 바꿔 쓸 것이 없어도
             string alt = ClauseRewrite57(rawClause);
+            // v0.58.0 바꿔 쓴 것도 31차 셈 · 동작 · 조건 · 비용 표현(HintParse57)도 없으면 다시 읽지 않는다 — 결과는 같고, 읽지 못하는 절마다 원래 규칙 전체를 한 번 더 읽어 도감 계산이 두 배 넘게 걸렸다
+            if (alt == rawClause && !HintParse57.IsMatch(rawClause)) return err;
             if (TryParse56(alt, inherited, card, null) != null) return err;
             if (def != null) TryParse56(alt, inherited, card, def);
             return null;
@@ -52,6 +54,12 @@ internal static partial class SentenceParser
             if (def != null) WrapGate57(def, before);
         }
     }
+
+    /// <summary>
+    /// v0.58.0 문이 열려 있을 때만 읽는 31차 표현 (ParseCounter57 · ParseEventCondition57 · ParseStaticCondition57 · ParseCost57 · ParseAction57)이 절에 있는지.
+    /// 없으면 문을 열고 다시 읽어도 결과가 같다 (도감 결과가 바뀌지 않는 것을 전 카드로 확인)
+    /// </summary>
+    private static readonly Regex HintParse57 = new(@"DP this Digimon has|of this Digimon's link cards|same-level cards|colou?r your Digimon have|or more (?:suspended )?Digimon with|or more colou?rs in its digivolution|no Digimon with (?:equal|DP equal)|up to \d+ memory|Tamers? (?:this effect )?suspended|memory paid|from your trash for its memory cost|DigiXros from your trash", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     /// <summary>31차 규칙으로 등록한 시점 효과는 처리할 때도 문을 연다</summary>
     private static void WrapGate57(CardScriptDefinition def, int from)
@@ -393,6 +401,7 @@ internal static partial class SentenceParser
         var optionTexts = rawOptions.Select(o => Normalize(o).TrimStart('・').Trim()).ToArray();
         var values = optionTexts.Select(t => SplitSentences(t).Sum(AiEvaluator.EstimateSentenceValue)).ToArray();
         int recommended = Array.IndexOf(values, values.Max());
+        var recommend58 = Recommender58(optionTexts, values);   // v0.58.0 고를 때마다 지금 할 수 있는 선택지를 추천 (SentenceParser.Batch58.cs)
 
         Action<EffectContext> resolve = c =>
         {
@@ -421,7 +430,7 @@ internal static partial class SentenceParser
             {
                 if (chooseEach)
                 {
-                    int pick = options.Count == 1 ? 0 : c.Engine.ChooseOption(c.Owner, $"[{c.Card.Name}] 발휘할 효과를 1개 고르세요. ({i + 1}/{k})", optionTexts, recommended);
+                    int pick = options.Count == 1 ? 0 : c.Engine.ChooseOption(c.Owner, $"[{c.Card.Name}] 발휘할 효과를 1개 고르세요. ({i + 1}/{k})", optionTexts, recommend58(c));
                     foreach (var s in options[Math.Clamp(pick, 0, options.Count - 1)]) RunStep(s, c);
                 }
                 else

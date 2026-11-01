@@ -64,6 +64,9 @@ public class CardInstance
     /// <summary>v0.37.0 지속 효과로 더해진 색 ("This Digimon is also treated as yellow" · "~ treated as also having the color of its digivolution cards") — 엔진이 지속 효과를 계산할 때마다 다시 채운다</summary>
     public HashSet<CardColor> ExtraColors { get; } = new();
 
+    /// <summary>v0.58.0 지속 효과로 얻은 특징 ("[Your Turn] This Digimon gains the [Three Musketeers] trait" EX7-010) — 엔진이 지속 효과를 계산할 때마다 다시 채운다</summary>
+    public HashSet<string> ExtraTraits58 { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>v0.42.0 지금 필드에서의 지속 효과 조건 판단용 (엔진이 지속 효과를 계산할 때 채운다 — 조건이 붙은 진화 조건 무시 진화)</summary>
     public Func<DigimonTcg.Core.Engine.Effects.StaticContext>? LiveContext42 { get; set; }
     internal PlayerZones? LiveOwner42 { get; set; }
@@ -266,6 +269,7 @@ public class CardInstance
         foreach (var f in FaceDownSources) v.FaceDownSources.Add(f);
         foreach (var k in ActiveKeywords) v.ActiveKeywords.Add(k);
         foreach (var c in ExtraColors) v.ExtraColors.Add(c);
+        foreach (var t in ExtraTraits58) v.ExtraTraits58.Add(t);
         v.LinkedCards.AddRange(LinkedCards);
         v.TimedDpBuffs.AddRange(TimedDpBuffs);
         v.TimedKeywords.AddRange(TimedKeywords);

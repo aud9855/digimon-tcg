@@ -278,7 +278,7 @@ internal static partial class SentenceParser
         {
             var ts = TargetSpec.Names(m.Groups["x"].Value);
             List<(CardInstance Host, CardData Card)> Able(EffectContext c) =>
-                c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && ts.Any(t => TargetSpec.HasTrait(d.TopCard, t)))
+                c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && ts.Any(t => TargetSpec.HasTrait(d, t)))
                     .SelectMany(d => d.SourcesWhere(x => !d.IsFaceDown(x) && x.Type == CardType.Digimon && x.Level == d.TopCard.Level && c.Engine.CanPlayByEffect(c.Owner, x, PlayOrigin.Sources)).Select(x => (d, x))).ToList();
             return (c => Able(c).Count > 0,
                     c =>

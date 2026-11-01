@@ -450,6 +450,7 @@ public partial class GoldfishEngine
         PruneFaceUp(State.Player);
         PruneFaceUp(State.DummyOpponent);
         SyncTamerProxies();   // v0.36.0 디지몬으로 취급하는 테이머 (GoldfishEngine.TamerAsDigimon.cs)
+        ApplyExtraTraits58();   // v0.58.0 지속 효과로 얻은 특징 (GoldfishEngine.Batch58.cs)
         ApplyContinuousEffects(State.Player, State.DummyOpponent, State.PlayerAllSecurityAttackUntil);
         ApplyContinuousEffects(State.DummyOpponent, State.Player, State.OpponentAllSecurityAttackUntil);
         if (_tamerProxies.Count > 0 || AnyTamerAura())
@@ -2246,7 +2247,8 @@ public partial class GoldfishEngine
     internal bool IsUnaffectedBy(PlayerZones effectOwner, CardInstance target) =>
         (ReferenceEquals(CurrentAttacker, target) && !OwnerOf(target).Equals(effectOwner) && CardScripts.HasKeyword(target, Keyword.Progress))
         || UnaffectedByKeyword34(effectOwner, target)   // v0.34.0 "isn't affected by your opponent's (Digimon's) effects"
-        || UnaffectedCategory50(target);   // v0.50.0 LM-020 선언한 카드 종류의 효과 (이 디지몬의 효과 이외)
+        || UnaffectedCategory50(target)   // v0.50.0 LM-020 선언한 카드 종류의 효과 (이 디지몬의 효과 이외)
+        || UnaffectedDuringAttacks58(effectOwner, target);   // v0.58.0 BT27-103 어택 중에는 상대의 효과를 받지 않는다
 
     /// <summary>
     /// v0.51.0 LM-020 "this Digimon isn't affected by that category's effects, other than this Digimon's effects" — 주인이 적혀 있지 않으니 자신의 효과도 받지 않는다.

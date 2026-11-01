@@ -196,7 +196,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(ev, $@"^this Digimon with (?<x>{TargetSpec.NameList}) in its text or the (?<t>{TargetSpec.NameList}) trait wins (?:a|the) battle$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); var ts = TargetSpec.Names(m.Groups["t"].Value);
-            return One(EffectTrigger.WonBattle, c => c.Self != null && (xs.Any(x => (c.Self.TopCard.EffectText + " " + c.Self.TopCard.InheritedEffectText + " " + c.Self.TopCard.Name).Contains(x, StringComparison.OrdinalIgnoreCase)) || ts.Any(t => TargetSpec.HasTrait(c.Self.TopCard, t))));
+            return One(EffectTrigger.WonBattle, c => c.Self != null && (xs.Any(x => (c.Self.TopCard.EffectText + " " + c.Self.TopCard.InheritedEffectText + " " + c.Self.TopCard.Name).Contains(x, StringComparison.OrdinalIgnoreCase)) || ts.Any(t => TargetSpec.HasTrait(c.Self, t))));
         }
         return null;
     }
@@ -527,7 +527,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cond, $@"^you have (?<x>{TargetSpec.NameList}) or (?:a|an) (?<t>{TargetSpec.NameList}) trait Digimon$", RegexOptions.IgnoreCase)).Success)
         {
             var xs = TargetSpec.Names(m.Groups["x"].Value); var ts = TargetSpec.Names(m.Groups["t"].Value);
-            return z => z.Tamers.Any(t => xs.Any(x => CardNames.Is(t, x))) || z.BattleArea.Any(d => xs.Any(x => CardNames.Is(d.TopCard, x)) || ts.Any(t => TargetSpec.HasTrait(d.TopCard, t)));
+            return z => z.Tamers.Any(t => xs.Any(x => CardNames.Is(t, x))) || z.BattleArea.Any(d => xs.Any(x => CardNames.Is(d.TopCard, x)) || ts.Any(t => TargetSpec.HasTrait(d, t)));
         }
         // v0.40.0 "you have a Tamer with inherited effects" (BT21-091 — 색 조건 무시. 사건 · 지속 효과 쪽의 같은 조건과 같은 판정)
         if (Regex.IsMatch(cond, @"^you have an? Tamer with inherited effects$", RegexOptions.IgnoreCase))

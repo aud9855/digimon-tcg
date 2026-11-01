@@ -83,7 +83,7 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(p, $@"^(?:any|1|one) of your (?<other>other )?Digimon that's (?<c>{Colors}) or has the (?<x>{TargetSpec.NameList}) traits?$", RegexOptions.IgnoreCase)).Success)
         {
             var col = Enum.Parse<CardColor>(m.Groups["c"].Value, ignoreCase: true); var xs = TargetSpec.Names(m.Groups["x"].Value);
-            return d => d.Colors.Contains(col) || xs.Any(x => TargetSpec.HasTrait(d.TopCard, x));
+            return d => d.Colors.Contains(col) || xs.Any(x => TargetSpec.HasTrait(d, x));
         }
         // "1 of your [Eosmon]" — 같은 명칭 (OwnDigimonFilter는 이름을 포함하는 디지몬)
         p = Regex.Replace(p, @"^(?:any|one) of your\b", "1 of your", RegexOptions.IgnoreCase);

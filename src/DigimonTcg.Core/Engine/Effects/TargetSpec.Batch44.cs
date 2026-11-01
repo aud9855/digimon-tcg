@@ -64,7 +64,7 @@ public sealed partial class TargetSpec
         {
             var xs = Names(m.Groups["a"].Value);
             if (ParseCore(m.Groups["pre"].Value + " Digimon") is not { } baseSpec) return null;
-            baseSpec.Filters.Add(d => xs.Any(x => NameHas(d.TopCard, x) || HasTrait(d.TopCard, x)));
+            baseSpec.Filters.Add(d => xs.Any(x => NameHas(d.TopCard, x) || HasTrait(d, x)));
             return baseSpec;
         }
         if ((m = Regex.Match(phrase, @"^(?<pre>(?:\d+|all) of your) (?<a>\[[^\]]+\]) or (?<b>Digimon with .+)$", I44)).Success

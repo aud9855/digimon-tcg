@@ -66,7 +66,7 @@ internal static partial class SentenceParser
             if ((m = Regex.Match(c0, @"^you have (?<n>\d+) or more suspended Digimon with (?<x>\[[^\]]+\])$", I)).Success)
             {
                 string x = m.Groups["x"].Value.Trim('[', ']'); int n = int.Parse(m.Groups["n"].Value);
-                return c => c.Owner.BattleArea.Count(d => d.IsSuspended && TargetSpec.HasTrait(d.TopCard, x)) >= n;
+                return c => c.Owner.BattleArea.Count(d => d.IsSuspended && TargetSpec.HasTrait(d, x)) >= n;
             }
             // "you have 3 or more [Hero] trait Tamers with different names" (BT21-010 · BT21-040 — 공식 "명칭이 서로 다른 특징 「히어로」를 가진 자신의 테이머가 3명 이상")
             if ((m = Regex.Match(c0, @"^you have (?<n>\d+) or more (?<x>\[[^\]]+\]) trait Tamers with different names$", I)).Success)
