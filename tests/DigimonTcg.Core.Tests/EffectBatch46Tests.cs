@@ -759,7 +759,7 @@ public class EffectBatch46Tests
     }
 
     [Fact]
-    public void EX2_048_MotherDReaperInBreedingArea_CanBeHost()
+    public void EX2_048_MotherDReaperInBreedingArea_IsNotHost()   // v0.76.0 바로잡음: 육성 에어리어를 지정하지 않은 효과는 육성 에어리어의 카드를 고를 수 없다 (종합 룰 3-4-7-5)
     {
         var (state, engine, _) = NewMainPhase();
         var bub = Digimon("B46-BUBBLES2", 3, "[On Play] Place 1 of your [ADR-02 Searcher]s from in play or from your hand under 1 of your [Mother D-Reaper]s as its bottom digivolution card.", playCost: 0);
@@ -769,7 +769,7 @@ public class EffectBatch46Tests
         state.Player.Hand.Add(searcher);
         state.Player.Hand.Add(bub);
         Assert.True(engine.PlayCard(bub).CanExecute);
-        Assert.True(mother.HasSource("B46-SEARCH2"));
-        Assert.DoesNotContain(searcher, state.Player.Hand);
+        Assert.False(mother.HasSource("B46-SEARCH2"));
+        Assert.Contains(searcher, state.Player.Hand);
     }
 }

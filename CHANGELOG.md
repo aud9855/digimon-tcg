@@ -10,6 +10,28 @@
 
 ---
 
+## v0.76.0 — 2026-11-02
+미지원 문장 50차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A · 공식 카드 문구로 근거 확인) — 도감 효과 문장 지원 10,300 → 10,312 / 10,366 (99.5%, +12)
+- 모든 절이 동작하는 카드 4,253 → 4,265장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다
+- 버그 수정 (규칙 위반 — 동작이 바뀜):
+  - EX2-048 · EX2-049 · BT19-100: 육성 에어리어의 「마더 디・리퍼」를 고르거나 그 진화원을 세지 않는다. 육성 에어리어를 지정하지 않은 효과는 육성 에어리어의 카드를 고를 수 없고 정보도 참조할 수 없다 (종합 룰 3-4-7-5 · 3-4-7-8, 공식 Q&A EX2-049 Q1). 같은 문형의 EX2-053 · EX2-054 · EX2-055 · BT19-078은 이미 배틀 에어리어만 봤다. 「마더 디・리퍼」는 v0.75.0부터 배틀 에어리어로 이동할 수 있다 (4-17-2)
+  - EX2-048: 필드의 「ADR-02=서쳐」를 놓을 때 맨 위 카드만 놓고 그 진화원 · 링크 카드는 트래시 (종합 룰 4-7-7 · 4-7-8 — 전에는 진화원째 놓았다). 효과이므로 "떠나려 할 때" 효과로 막을 수 있다
+- P-158 공식 영어 (API 문장 중간의 마침표가 비용을 끊었다): "By returning this Tamer to the bottom of the deck, you may play 1 play cost 3 or lower Digimon card with the [D-Reaper] trait ~. For each digivolution card of 1 of your [Mother D-Reaper]s, add 1 to this effect's play cost maximum." — 배틀 에어리어의 「마더 디・리퍼」 1마리의 진화원만 센다. BT27-070 · BT27-084는 공식 영어 카드 리스트에 BT-27이 아직 없어 그대로 (BT-26까지)
+- BT13-020 "For the turn, treat the Tamer played with this effect as a 12000 DP Digimon with ＜Rush＞, and it cannot digivolve" — 앞 문장이 등장시킨 테이머만 디지몬으로도 취급 (공식 Q&A BT13-020 Q1). ≪속공≫이 있으므로 등장한 턴에도 어택한다. 등장시키지 않았으면 이미 있는 「최건우」는 바뀌지 않는다
+- BT15-082 "remove 2000 from this effect's playable card's DP maximum" — 상대의 시큐리티 1장마다 등장시킬 수 있는 DP 상한 -2000 (공식 Q&A BT15-082 Q1)
+- BT11-086 "If DigiXrosing, add 1 to the number of cards you play with this effect" — 디지크로스로 등장했을 때만 같은 조건의 카드를 1장 더 (한 효과 — 함께 등장한 카드의 【등장 시】는 효과가 끝난 뒤). 【진화 시】는 1장
+- BT11-105 "you may digivolve 1 of your Digimon into 1 [Destromon] or [Galacticmon] from your trash for its digivolution cost" — 진화 코스트를 지불하고 트래시의 카드로 진화. 진화할 카드가 없어도 「벰몬」을 놓을 수 있다 (공식 Q&A BT11-105 Q1)
+- 등장 코스트 합계로 여러 장 골라 소멸: BT11-107 (명칭에 「그레이몬」을 포함하는 자신의 디지몬 1마리의 등장 코스트까지 상대의 디지몬 · 테이머 — 적게 골라도 된다, 공식 Q&A BT11-107 Q1) · BT8-070 (진화원에 레드 카드가 있으면 상대의 디지몬, 블랙 카드가 있으면 상대의 테이머를 합쳐서 6까지 — 둘 다 있으면 함께, 공식 Q&A BT8-070 Q1)
+- 육성 에어리어를 지정한 효과 (종합 룰 3-4-7-5 — 지정했으므로 고를 수 있다):
+  - BT23-072 [패] 【메인】 비용 "By paying 3 cost and placing this card as the bottom digivolution card of your [King Drasil_7D6] or [Mother Eater] in the breeding area" — 육성 에어리어에 그 카드가 없으면 발휘를 선언할 수 없다 (공식 Q&A BT23-072 Q1)
+  - BT23-073 비용 "by deleting this Digimon or placing it as the bottom digivolution card of your [Mother Eater] in the breeding area" — 둘 중 하나 (추천: 놓기). 놓을 때 맨 위 카드만, 진화원은 트래시 (4-7-7 · 4-7-8)
+  - EX6-060 "place 1 card with the [Seven Great Demon Lords] trait card from your trash ~ [Gate of Deadly Sins] in the breeding area" — "trait card"의 "card"가 겹친 문장 (공식 Q&A EX6-060 Q1: 배틀 이외로 벗어날 때)
+  - BT13-112 "Delete 1 of your opponent's Digimon, or you may play 1 of each ~ from the digivolution cards of your Digimon in the breeding area ~. When a Digimon is played by this effect, trash 1 of your Digimon in the breeding area, and all of your Digimon gain ＜Rush＞ for the turn." — 둘 중 하나. 등장시켰으면 육성 에어리어의 카드를 진화원째 파기 (디지타마 카드도 「디지몬」 — 종합 룰 4-3-1)하고 그때 자신의 디지몬 전부 이 턴 동안 ≪속공≫
+- 명칭이 서로 다른 카드 1장씩 등장: EX10-061 (이 디지몬의 진화원에서) · BT13-112 (육성 에어리어의 디지몬의 진화원에서) — 같은 명칭은 1장만 (공식 Q&A BT13-112 Q1)
+- 기존 카드 동작 변경: EX2-048 · EX2-049 · BT19-100 (위의 버그 수정). 그 밖의 카드는 바뀌지 않음 (50차 규칙은 원래 규칙이 읽지 못한 절만)
+- 읽지 않고 남긴 것: 남은 문장 54개 — 사용자 결정 대기 27 (테이머 아래 카드 모델 20 등) · 깨진 데이터 2 (BT27-070 · BT27-084 — 공식 영어 리스트에 아직 없음) · 큰 모델 변경 25
+- 테스트 26개 (EffectBatch76Tests), 전체 1,737개 통과 (EffectBatch46 · 66 · 69의 육성 에어리어 「마더 디・리퍼」 테스트 4개는 바로잡은 규칙대로 고침) · 시뮬레이션 7,300판 (새 카드 · 영향 카드 1,500판 + 드문 카드 600판 · 회귀 표본 5,200판) 예외 · 멈춤 · 카드 수 불일치 · 턴 상한 · 중복 객체 0 — 회귀 표본 승패는 v0.75.0과 같음 (e1만 1판 차이) · AI 벤치마크 (720판) 기존 AI 56.5% · 개선 AI 68.1% — 변화 없음 (벤치마크 추천 덱에 바뀐 카드가 없다)
+
 ## v0.75.0 — 2026-11-02
 미지원 문장 49차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A · 공식 카드 문구로 근거 확인) — 도감 효과 문장 지원 10,297 → 10,300 / 10,366 (99.4%, +3)
 - 모든 절이 동작하는 카드 4,250 → 4,253장 (수정 전 지원되던 문장 중 깨진 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다

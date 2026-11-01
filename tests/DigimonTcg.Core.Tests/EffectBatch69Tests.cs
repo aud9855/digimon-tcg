@@ -214,7 +214,7 @@ public class EffectBatch69Tests
     }
 
     // =====================================================================
-    // 4. BT19-100 「마더 디・리퍼」의 진화원 1장마다 (육성 에어리어의 디지타마) · 【시큐리티】 진화원 매수 이하의 등장 코스트
+    // 4. BT19-100 「마더 디・리퍼」의 진화원 1장마다 (v0.76.0 배틀 에어리어의 것만 — 종합 룰 3-4-7-5 · 3-4-7-8) · 【시큐리티】 진화원 매수 이하의 등장 코스트
     // =====================================================================
 
     private const string Dzone = "[Security] [Opponent's Turn] When an opponent's Digimon attacks, if all of your Digimon and Tamers have the [B69DR] trait, for each of 1 of your [B69Mother]'s digivolution cards, the attacking Digimon get -1000 DP for the turn.";
@@ -229,9 +229,9 @@ public class EffectBatch69Tests
         var (state, engine) = NewMainPhase();
         var opp = state.DummyOpponent;   // 플레이어의 턴 = AI에게는 상대의 턴
         FaceUp(opp, sec);
-        var mother = new CardInstance(Card("B69-MOTHER", "", CardType.Digitama, level: 2, name: "B69Mother"), 1);
+        var mother = new CardInstance(Card("B69-MOTHER", "", CardType.Digitama, level: 2, name: "B69Mother", traits: "B69DR"), 1) { IsOwnersTurn = false };
         mother.AddBottomSource(Digimon("B69-S1", 3)); mother.AddBottomSource(Digimon("B69-S2", 3)); mother.AddBottomSource(Digimon("B69-S3", 4));
-        opp.BreedingArea = mother;   // 「마더 디・리퍼」는 디지타마 — 육성 에어리어
+        opp.BattleArea.Add(mother);   // v0.76.0 배틀 에어리어의 「마더 디・리퍼」만 센다 (종합 룰 3-4-7-5 · 3-4-7-8)
         Put(opp, Digimon("B69-DRD", 4, traits: "B69DR")).IsOwnersTurn = false;
         var attacker = Put(state.Player, Digimon("B69-ATK", 6, dp: 12000));
         engine.FireForSide(EffectTrigger.OpponentDigimonAttacks, opp, attacker);
@@ -251,7 +251,7 @@ public class EffectBatch69Tests
         var (state, engine) = NewMainPhase();
         var mother = new CardInstance(Card("B69-MOTHER2", "", CardType.Digitama, level: 2, name: "B69Mother"), 1);
         mother.AddBottomSource(Digimon("B69-S4", 3)); mother.AddBottomSource(Digimon("B69-S5", 3));
-        state.Player.BreedingArea = mother;
+        mother.IsOwnersTurn = true; state.Player.BattleArea.Add(mother);   // v0.76.0 배틀 에어리어의 「마더 디・리퍼」만 센다
         var cheap = Digimon("B69-CHEAP", 4, playCost: 2, traits: "B69DR");
         var dear = Digimon("B69-DEAR", 6, playCost: 7, traits: "B69DR");
         state.Player.Hand.Add(dear); state.Player.Hand.Add(cheap);

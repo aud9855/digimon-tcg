@@ -376,10 +376,12 @@ internal static partial class SentenceParser
 
     // ---- BT19-100 「마더 디・리퍼」의 진화원 1장마다 ----
 
-    /// <summary>자신의 「name」 1마리의 진화원 매수 (배틀 · 육성 에어리어 — 여러 마리면 고른다, 추천: 가장 많은 것)</summary>
+    /// <summary>자신의 「name」 1마리의 진화원 매수 (배틀 에어리어 — 여러 마리면 고른다, 추천: 가장 많은 것)</summary>
     private static int SourceCount69(EffectContext c, string name, string label)
     {
-        var hosts = (c.Owner.BreedingArea is { } br ? c.Owner.BattleArea.Append(br) : c.Owner.BattleArea).Where(d => d.TamerProxyOf == null && CardNames.Is(d, name))   // 「마더 디・리퍼」는 디지타마 — 육성 에어리어에 있다 (EX2-007)
+        // v0.76.0 바로잡음: 육성 에어리어의 「마더 디・리퍼」는 세지 않는다 — 육성 에어리어를 지정하지 않은 효과는 그 카드를 고르거나 정보를 참조할 수 없다 (종합 룰 3-4-7-5 · 3-4-7-8).
+        //  같은 문형의 EX2-053 · EX2-054 · EX2-055 · BT19-078 (배틀 에어리어만)과 같다
+        var hosts = c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && CardNames.Is(d, name))
            .OrderByDescending(d => d.EvolutionSources.Count).ToList();
         if (hosts.Count == 0) return -1;
         var h = hosts.Count == 1 || hosts[0].EvolutionSources.Count == hosts[^1].EvolutionSources.Count ? hosts[0]

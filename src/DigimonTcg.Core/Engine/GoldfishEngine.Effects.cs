@@ -1394,6 +1394,7 @@ public partial class GoldfishEngine
         if (card.Type == CardType.Tamer)
         {
             AddTamer(owner, card);
+            LastTamerPlayedByEffect76 = card;   // v0.76.0 BT13-020 "the Tamer played with this effect"
             EffectLog(owner, $"[효과] 테이머 [{card.Name}] 코스트 없이 등장");
             if (DeferPlayed47(owner, null, card, triggerOnPlay)) { RecalculateFieldBuffs(); return; }   // v0.47.0 효과 하나로 함께 등장 — 효과가 끝난 뒤 한꺼번에 (GoldfishEngine.Batch47Play)
             var witness46 = CaptureWitness46();   // v0.46.0

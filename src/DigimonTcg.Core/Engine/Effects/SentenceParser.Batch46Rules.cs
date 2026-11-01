@@ -173,7 +173,8 @@ internal static partial class SentenceParser
             return (c =>
             {
                 var hosts = c.Owner.BattleArea.Where(d => IsY(d.TopCard)).ToList();
-                if (c.Owner.BreedingArea is { } b46 && IsY(b46.TopCard)) hosts.Add(b46);   // 육성 에어리어의 「마더 디・리퍼」(디지타마)도
+                // v0.76.0 바로잡음: 육성 에어리어의 「마더 디・리퍼」는 고르지 않는다 — 육성 에어리어를 지정하지 않은 효과는 육성 에어리어의 카드를 고를 수 없다 (종합 룰 3-4-7-5).
+                //  「마더 디・리퍼」(EX2-007)는 DP를 가지므로 배틀 에어리어로 이동해 쓴다 (4-17-2 — v0.75.0)
                 if (hosts.Count == 0) { c.LastStepResolved = false; return; }
                 var host = hosts.Count == 1 ? hosts[0] : c.Engine.ChooseTargets(c.Owner, hosts, 1, $"[{c.Card.Name}] 진화원 아래에 놓을 디지몬을 고르세요.", optional: false, preselected: hosts[0]).FirstOrDefault() ?? hosts[0];
                 var field = c.Owner.BattleArea.Where(d => !ReferenceEquals(d, host) && IsX(d.TopCard)).ToList();
@@ -190,7 +191,8 @@ internal static partial class SentenceParser
                 }
                 if (field.Count == 0) { c.LastStepResolved = false; return; }
                 var mv = field.Count == 1 ? field[0] : c.Engine.ChooseTargets(c.Owner, field, 1, $"[{c.Card.Name}] 진화원 아래에 놓을 디지몬을 고르세요.", optional: false, preselected: field[0]).FirstOrDefault() ?? field[0];
-                if (c.Engine.PlaceDigimonUnder46(c.Owner, mv, host)) { Diag46.Hit("placeNamedUnder"); c.Log($"[{c.Card.Name}] [{mv.TopCard.Name}]을(를) [{host.TopCard.Name}]의 진화원 아래에 놓았습니다."); }
+                // v0.76.0 바로잡음: 필드의 서쳐는 맨 위 카드만 놓이고 그 진화원 · 링크 카드는 트래시 (종합 룰 4-7-7 · 4-7-8 — 전에는 진화원째 놓았다). 효과이므로 "떠나려 할 때"로 막을 수 있다
+                if (c.Engine.PlaceDigimonUnder(c.Owner, mv, host, canPrevent: true)) { Diag46.Hit("placeNamedUnder"); c.Log($"[{c.Card.Name}] [{mv.TopCard.Name}]을(를) [{host.TopCard.Name}]의 진화원 아래에 놓았습니다."); }
                 else c.LastStepResolved = false;
             }, null);
         }

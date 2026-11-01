@@ -243,9 +243,10 @@ internal static partial class SentenceParser
         if (pa == null) return (null, $"미지원 공개 조건 ({spec.PickA})");
         if (pb == null) return (null, $"미지원 공개 조건 ({spec.PickB})");
         string? hostName = spec.VerbA.StartsWith("host:", StringComparison.Ordinal) ? spec.VerbA[5..] : null;
-        // EX2-049 "under 1 of your [Mother D-Reaper]s" — 그 이름의 자신의 디지몬 (배틀 에어리어 또는 육성 에어리어 — 「마더 디・리퍼」는 디지타마)
+        // EX2-049 "under 1 of your [Mother D-Reaper]s" — 그 이름의 배틀 에어리어의 자신의 디지몬.
+        //  v0.76.0 바로잡음: 육성 에어리어의 것은 고르지 않는다 (종합 룰 3-4-7-5 · 공식 Q&A EX2-049 Q1 — 「마더 디・리퍼」가 배틀 에어리어에 없어도 발휘하고, 놓을 곳이 없을 뿐)
         List<CardInstance> Hosts(EffectContext c) => hostName == null ? new List<CardInstance>()
-            : c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && CardNames.Is(d, hostName)).Concat(c.Owner.BreedingArea is { } br && CardNames.Is(br, hostName) ? new[] { br } : Array.Empty<CardInstance>()).ToList();
+            : c.Owner.BattleArea.Where(d => d.TamerProxyOf == null && CardNames.Is(d, hostName)).ToList();
         if ((spec.VerbA == "place" || spec.VerbB == "place") && card.Type != CardType.Digimon) return (null, "미지원: 디지몬이 아닌 카드의 진화원 놓기");
         var matchA = RevealAlias66.Wrap(pa.Value.Match);
         var matchB = RevealAlias66.Wrap(pb.Value.Match);

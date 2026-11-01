@@ -412,14 +412,14 @@ public class EffectBatch66Tests
     }
 
     [Fact]
-    public void EX2_049_PlacesSearcherUnderMotherDReaperInBreedingArea()
+    public void EX2_049_PlacesSearcherUnderMotherDReaperInBattleArea()
     {
         var jeri = Digimon(Uid("B66-JERI-"), 3, "[Main] You may suspend this Digimon to Reveal the top 5 cards of your deck. Place 1 [ADR-02 Searcher] among them under 1 of your [Mother D-Reaper]s as its bottom digivolution card. Place the remaining cards at the bottom of your deck in any order.", color: CardColor.Purple);
         AllSupported(jeri);
         var (state, engine) = NewMainPhase();
         engine.PlayerChoices = new Answers();
         var mother = new CardInstance(Card(Uid("B66-MDR-"), "", CardType.Digitama, level: 2, name: "Mother D-Reaper", color: CardColor.Purple), 1);
-        state.Player.BreedingArea = mother;   // 「마더 디・리퍼」는 디지타마 — 육성 에어리어에 있다
+        mother.IsOwnersTurn = true; state.Player.BattleArea.Add(mother);   // v0.76.0 배틀 에어리어의 「마더 디・리퍼」 (육성 에어리어의 것은 고르지 않는다 — 종합 룰 3-4-7-5)
         var me = Put(state.Player, jeri);
         var searcher = Digimon(Uid("B66-ADR-"), 3, name: "ADR-02 Searcher", color: CardColor.Purple);
         state.Player.MainDeck.Insert(2, searcher);

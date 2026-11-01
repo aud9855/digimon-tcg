@@ -58,7 +58,7 @@ internal static partial class SentenceParser
     };
 
     internal static string OfficialClause75(CardData card, string clause) =>
-        OfficialClauses75.TryGetValue((card.CardId, clause.Trim()), out var official) ? official : clause;
+        OfficialClauses75.TryGetValue((card.CardId, clause.Trim()), out var official) ? official : OfficialClause76(card, clause);   // v0.76.0 (SentenceParser.Batch76)
 
     private static (Action<EffectContext>? Act, string? Error)? ParseAction75(string s, CardData card, List<EffectTrigger> triggers)
     {
