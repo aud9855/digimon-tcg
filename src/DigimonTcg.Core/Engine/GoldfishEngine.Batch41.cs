@@ -185,7 +185,7 @@ public partial class GoldfishEngine
         if (effects.Count == 0) return 0;
         if (onlyOne && effects.Count > 1)
         {
-            int i = ChooseOption(owner, $"[{card.Name}]의 어느 효과를 발휘할까요?", effects.Select((e, k) => $"효과 {k + 1} ({e.Trigger})").ToList(), 0);
+            int i = ChooseOption(owner, $"[{card.Name}]의 어느 효과를 발휘할까요?", effects.Select((e, k) => $"효과 {k + 1} ({SentenceParser.TriggerLabel69(e.Trigger)})").ToList(), 0);   // v0.69.0 시점 이름은 한글로
             effects = new List<CardEffect> { effects[Math.Clamp(i, 0, effects.Count - 1)] };
         }
         _activateDepth41++;

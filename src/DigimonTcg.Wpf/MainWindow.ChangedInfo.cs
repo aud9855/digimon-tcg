@@ -29,13 +29,28 @@ public partial class MainWindow
             Opacity = inactive ? 0.6 : 1.0,
             Child = new TextBlock
             {
-                Text = text,
+                Text = CompactChangedInfo(text),   // v0.69.0 카드 폭(104)에 맞게 줄여 2줄까지 (전체 문장은 툴팁)
                 Foreground = BrushFromHex(inactive ? "#A6ADC8" : "#CBA6F7"),
                 FontWeight = FontWeights.Bold,
                 FontSize = 9.5,
                 TextTrimming = TextTrimming.CharacterEllipsis,
+                TextWrapping = TextWrapping.Wrap,
+                MaxHeight = 26,
                 VerticalAlignment = VerticalAlignment.Center,
             },
         };
+    }
+
+    /// <summary>
+    /// v0.69.0 필드 배지용 짧은 문장 — v0.68.0에는 카드 폭에서 「원래 명칭 「스카…」처럼 잘려 무엇이 바뀌었는지 보이지 않았다.
+    /// 「원래 명칭 「스카몬」 · 화이트 · DP 3,000」 → 「「스카몬」 화이트 DP 3,000」, 「이 턴 동안 레드/블루로도 취급」 → 「+레드/블루 (이 턴)」
+    /// </summary>
+    internal static string CompactChangedInfo(string text)
+    {
+        string s = System.Text.RegularExpressions.Regex.Replace(text, @"원래 명칭 (「[^」]*」)(?: · ([^·(]+?))? · DP ([\d,]+)", m => $"{m.Groups[1].Value}{(m.Groups[2].Success ? " " + m.Groups[2].Value.Trim() : "")} DP {m.Groups[3].Value}");
+        s = System.Text.RegularExpressions.Regex.Replace(s, @"이 턴 동안 (\S+)로도 취급", "+$1 (이 턴)");
+        // 받지 않는 동안: 끝의 "(지금은 받지 않음)" 대신 앞의 표시를 ⊘로 (흐린 배지 · 툴팁에 전체 문장)
+        const string off = " (지금은 받지 않음)";
+        return s.EndsWith(off, System.StringComparison.Ordinal) ? "⊘ " + s[..^off.Length].TrimStart('✦', ' ') : s;
     }
 }

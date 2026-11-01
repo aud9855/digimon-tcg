@@ -53,7 +53,47 @@ internal static partial class SentenceParser
         [EffectTrigger.OpponentDigimonMovedFromBreeding] = "상대 디지몬이 육성 에어리어에서 이동했을 때",
         [EffectTrigger.AllyFaceUpSecurityPlaced] = "앞면으로 놓였을 때", [EffectTrigger.OpponentFaceUpSecurityPlaced] = "상대 카드가 앞면으로 놓였을 때",
         [EffectTrigger.AllyCheckedFaceUpSecurity] = "앞면 카드를 체크했을 때", [EffectTrigger.ThisDigimonWouldDnaDigivolve] = "DNA 진화하려 할 때",
+        // v0.69.0 로그에 영어 이름(AllyDigimonAttacks 등)으로 남던 나머지 시점 — 공식 한글 카드 문장의 "~했을 때" 표현. "시큐리티" · 정확히 "메인"은 쓰지 않는다 (Emit이 결과 메시지로 보낸다 — 대신 "시큐")
+        [EffectTrigger.OpponentDigimonDeletedByZeroDp] = "상대의 디지몬이 DP 0으로 소멸했을 때", [EffectTrigger.AllySameNamePlayed] = "같은 명칭의 디지몬이 등장했을 때",
+        [EffectTrigger.OpponentTurnEndWithoutAttack] = "상대의 턴 종료 시 (어택 없음)", [EffectTrigger.ThisDigimonSuspends] = "이 디지몬이 레스트 상태가 되었을 때",
+        [EffectTrigger.OpponentDigimonAttacks] = "상대의 디지몬이 어택했을 때", [EffectTrigger.OpponentDigimonDeleted] = "상대의 디지몬이 소멸했을 때",
+        [EffectTrigger.AllyDigimonDeleted] = "자신의 디지몬이 소멸했을 때", [EffectTrigger.AllyDigimonPlayed] = "자신의 디지몬이 등장했을 때",
+        [EffectTrigger.AllyDigimonDigivolved] = "자신의 디지몬이 진화했을 때", [EffectTrigger.AllyDigimonAttacks] = "자신의 디지몬이 어택했을 때",
+        [EffectTrigger.AllyDigimonSuspended] = "자신의 디지몬이 레스트 상태가 되었을 때", [EffectTrigger.OpponentDigimonSuspended] = "상대의 디지몬이 레스트 상태가 되었을 때",
+        [EffectTrigger.WonBattle] = "배틀에서 이겼을 때", [EffectTrigger.WhenMoving] = "이동 시", [EffectTrigger.ActivateMain] = "메인 (기동)",
+        [EffectTrigger.AllyTamerSuspended] = "자신의 테이머가 레스트 상태가 되었을 때", [EffectTrigger.ThisDigimonUnsuspendedInMain] = "메인 페이즈에 액티브 상태가 되었을 때",
+        [EffectTrigger.ThisDigimonUnsuspendedInUnsuspendPhase] = "액티브 페이즈에 액티브 상태가 되었을 때", [EffectTrigger.OpponentDigimonPlayed] = "상대의 디지몬이 등장했을 때",
+        [EffectTrigger.AllyOptionUsed] = "자신이 옵션 카드를 사용했을 때", [EffectTrigger.OpponentOptionUsed] = "상대가 옵션 카드를 사용했을 때",
+        [EffectTrigger.DigiBurstTrashedThis] = "디지버스트로 이 카드가 파기되었을 때", [EffectTrigger.AllyDigiBurst] = "자신의 디지몬이 디지버스트를 발휘했을 때",
+        [EffectTrigger.OpponentTamerPlayed] = "상대의 테이머가 등장했을 때", [EffectTrigger.OpponentTamerSuspended] = "상대의 테이머가 레스트 상태가 되었을 때",
+        [EffectTrigger.ThisDigimonWouldLeave] = "이 디지몬이 배틀 에어리어를 떠나려 할 때", [EffectTrigger.ThisDigimonWouldBeDeleted] = "이 디지몬이 소멸하려 할 때",
+        [EffectTrigger.AllyDigimonWouldLeave] = "자신의 디지몬이 배틀 에어리어를 떠나려 할 때", [EffectTrigger.AllyDigimonWouldBeDeleted] = "자신의 디지몬이 소멸하려 할 때",
+        [EffectTrigger.AllySecurityRemoved] = "자신의 시큐에서 카드가 빠졌을 때", [EffectTrigger.OpponentSecurityRemoved] = "상대의 시큐에서 카드가 빠졌을 때",
+        [EffectTrigger.AllySecurityAdded] = "자신의 시큐에 카드가 놓였을 때", [EffectTrigger.OpponentSecurityAdded] = "상대의 시큐에 카드가 놓였을 때",
+        [EffectTrigger.AttackTargetSwitched] = "어택 대상이 변경되었을 때", [EffectTrigger.AllyAttackTargetSwitched] = "자신의 디지몬의 어택 대상이 변경되었을 때",
+        [EffectTrigger.OpponentHandTrashed] = "상대의 패가 파기되었을 때", [EffectTrigger.AllyDeckTrashed] = "자신의 덱이 파기되었을 때",
+        [EffectTrigger.OpponentHandAddedByEffect] = "효과로 상대의 패에 카드가 추가되었을 때", [EffectTrigger.AllyHandAddedByEffect] = "효과로 자신의 패에 카드가 추가되었을 때",
+        [EffectTrigger.HandMain] = "패 · 메인", [EffectTrigger.TrashMain] = "트래시 · 메인", [EffectTrigger.AllyTamerPlayed] = "자신의 테이머가 등장했을 때",
+        [EffectTrigger.AllyDigimonUnsuspended] = "자신의 디지몬이 액티브 상태가 되었을 때", [EffectTrigger.OpponentDigimonUnsuspended] = "상대의 디지몬이 액티브 상태가 되었을 때",
+        [EffectTrigger.AllyDeletedOpponentInBattle] = "자신의 디지몬이 배틀에서 상대의 디지몬을 소멸시켰을 때", [EffectTrigger.SourceTrashedThis] = "이 카드가 진화원에서 파기되었을 때",
+        [EffectTrigger.AllySourcesTrashed] = "자신의 디지몬의 진화원이 파기되었을 때", [EffectTrigger.OpponentSourcesTrashed] = "상대의 디지몬의 진화원이 파기되었을 때",
+        [EffectTrigger.AllySourcesAdded] = "자신의 디지몬의 진화원에 카드가 놓였을 때", [EffectTrigger.OpponentSourcesAdded] = "상대의 디지몬의 진화원에 카드가 놓였을 때",
+        [EffectTrigger.ThisTrashedFromSecurity] = "이 카드가 시큐에서 파기되었을 때", [EffectTrigger.ThisTrashedFromDeck] = "이 카드가 덱에서 파기되었을 때",
+        [EffectTrigger.ThisTrashedFromHand] = "이 카드가 패에서 파기되었을 때", [EffectTrigger.ThisTrashedFromBattleArea] = "이 카드가 배틀 에어리어에서 파기되었을 때",
+        [EffectTrigger.AllyOptionPlaced] = "자신의 옵션 카드가 배틀 에어리어에 놓였을 때", [EffectTrigger.OptionTrashedFromBattleArea] = "배틀 에어리어의 옵션 카드가 파기되었을 때",
+        [EffectTrigger.AllyTamerWouldLeave] = "자신의 테이머가 배틀 에어리어를 떠나려 할 때", [EffectTrigger.AllyTamerReturnedToHand] = "자신의 테이머가 패로 되돌아갔을 때",
+        [EffectTrigger.AllyDigimonLeft] = "자신의 디지몬이 배틀 에어리어를 떠났을 때", [EffectTrigger.OpponentDigimonLeft] = "상대의 디지몬이 배틀 에어리어를 떠났을 때",
+        [EffectTrigger.DigimonReturnedToHand] = "디지몬이 패로 되돌아갔을 때", [EffectTrigger.AllyCheckedSecurity] = "자신의 디지몬이 체크했을 때",
+        [EffectTrigger.AllyTrashToHand] = "트래시에서 패로 되돌아갔을 때", [EffectTrigger.AllyTrashToDeck] = "트래시에서 덱으로 되돌아갔을 때",
+        [EffectTrigger.ThisDigimonWouldDigivolve] = "이 디지몬이 진화하려 할 때", [EffectTrigger.AllyTopPlacedUnder] = "자신의 디지몬의 맨 위 카드가 진화원에 놓였을 때",
+        [EffectTrigger.ThisSourcesToDeck] = "이 디지몬의 진화원이 덱으로 되돌아갔을 때", [EffectTrigger.AllyUnderTamerPlaced] = "자신의 테이머 아래에 카드가 놓였을 때",
+        [EffectTrigger.AllyTopStackedTrashed43] = "자신의 디지몬의 카드가 위에서부터 파기되었을 때", [EffectTrigger.AllyEffectAddedToDeck46] = "자신의 효과로 덱에 카드가 추가되었을 때",
+        [EffectTrigger.AllyDigimonWouldDigivolve52] = "자신의 디지몬이 진화하려 할 때", [EffectTrigger.ThisDigimonDeletedAnother53] = "이 디지몬이 다른 디지몬을 소멸시켰을 때",
+        [EffectTrigger.ThisDigimonWouldUnsuspend62] = "이 디지몬이 액티브 상태가 되려 할 때",
     };
+
+    /// <summary>v0.69.0 시점의 한글 이름 (로그 · 고르기 창 — 모든 EffectTrigger에 있다, 없으면 영어 이름)</summary>
+    internal static string TriggerLabel69(EffectTrigger t) => Labels.GetValueOrDefault(t, t.ToString());
 
     private static readonly Dictionary<string, Keyword> GrantableKeywords = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -80,7 +120,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse68(rawClause, inherited, card, def);   // v0.68.0 원래 규칙(41차까지)이 읽지 못한 절만 42차 규칙으로 (SentenceParser.Batch68.cs) · v0.67.0 원래 규칙(40차까지)이 읽지 못한 절만 41차 규칙으로 (SentenceParser.Batch67.cs) · v0.66.0 원래 규칙(39차까지)이 읽지 못한 절만 40차 규칙으로 (SentenceParser.Batch66.cs) · v0.65.0 원래 규칙(38차까지)이 읽지 못한 절만 39차 규칙으로 (SentenceParser.Batch65.cs) · v0.64.0 원래 규칙(37차까지)이 읽지 못한 절만 38차 규칙으로 (SentenceParser.Batch64.cs) · v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse69(rawClause, inherited, card, def);   // v0.69.0 원래 규칙(42차까지)이 읽지 못한 절만 43차 규칙으로 (SentenceParser.Batch69.cs) · v0.68.0 원래 규칙(41차까지)이 읽지 못한 절만 42차 규칙으로 (SentenceParser.Batch68.cs) · v0.67.0 원래 규칙(40차까지)이 읽지 못한 절만 41차 규칙으로 (SentenceParser.Batch67.cs) · v0.66.0 원래 규칙(39차까지)이 읽지 못한 절만 40차 규칙으로 (SentenceParser.Batch66.cs) · v0.65.0 원래 규칙(38차까지)이 읽지 못한 절만 39차 규칙으로 (SentenceParser.Batch65.cs) · v0.64.0 원래 규칙(37차까지)이 읽지 못한 절만 38차 규칙으로 (SentenceParser.Batch64.cs) · v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -2440,6 +2480,7 @@ internal static partial class SentenceParser
             var (canPay, pay, recommend, describe) = cost.Value;
             (pay, recommend) = CostForRest60(by.Groups["cost"].Value, by.Groups["rest"].Value, card, pay, recommend);
             recommend = CostForRest66(by.Groups["cost"].Value, by.Groups["rest"].Value, recommend);
+            recommend = CostForRest69(by.Groups["cost"].Value, by.Groups["rest"].Value, recommend);   // v0.69.0 이 테이머를 진화시킬 카드가 있을 때만 (SentenceParser.Batch69)
             recommend = CostForRest68(by.Groups["cost"].Value, by.Groups["rest"].Value, recommend);   // v0.68.0 패 1장을 파기하는 비용 · 강한 효과 (SentenceParser.Batch68Ai)   // v0.66.0 패 → 진화원 비용은 뒤의 효과의 값으로 (SentenceParser.Batch66)   // v0.60.0 AI 추천 · ≪디지버스트≫ 진화원 고르기를 뒤의 효과에 맞춘다 (SentenceParser.Batch60Ai.cs)
             var innerStep = inner.Step;
             Action<EffectContext> paidAct = c =>
@@ -2547,6 +2588,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction66(s.TrimEnd('.'), card, triggers) is { } act66) act = act66;   // v0.66.0 (SentenceParser.Batch66.cs)
         if (act.Error != null && ParseAction67(s.TrimEnd('.'), card, triggers) is { } act67) act = act67;   // v0.67.0 (SentenceParser.Batch67.cs)
         if (act.Error != null && ParseAction68(s.TrimEnd('.'), card, triggers) is { } act68) act = act68;   // v0.68.0 (SentenceParser.Batch68.cs)
+        if (act.Error != null && ParseAction69(s.TrimEnd('.'), card, triggers) is { } act69) act = act69;   // v0.69.0 (SentenceParser.Batch69.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -3138,7 +3180,7 @@ internal static partial class SentenceParser
 
     private static Func<EffectContext, bool>? ParseEventCondition(string cond) => DeletionView45(ParseEventConditionChain(cond));   // v0.45.0 【소멸 시】 · "소멸했을 때"의 조건은 소멸 직전 모습으로 (SentenceParser.Batch45.cs)
 
-    private static Func<EffectContext, bool>? ParseEventConditionChain(string cond) => ColorDigimonOrTamer40(cond) ?? ParseEventConditionCore(cond) ?? ParseEventCondition38(cond) ?? ParseEventCondition40(cond) ?? ParseEventCondition41(cond) ?? ParseEventCondition43(cond) ?? ParseEventCondition44(cond) ?? ParseEventCondition45(cond) ?? ParseEventCondition49(cond) ?? ParseEventCondition50(cond) ?? ParseEventCondition51(cond) ?? ParseEventCondition57(cond) ?? ParseEventCondition64(cond) ?? ParseEventCondition66(cond);   // v0.66.0 (Batch66)   // v0.64.0 (Batch64)   // v0.57.0   // v0.51.0 · v0.50.0 · v0.49.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.41.0 (Batch41Cond) · v0.40.0 "a blue or green Digimon or Tamer"는 원래 규칙보다 먼저 (원래는 테이머의 색을 보지 않았다)   // v0.40.0 (Batch40Step) · v0.38.0 읽지 못한 조건만 (Batch38b)
+    private static Func<EffectContext, bool>? ParseEventConditionChain(string cond) => ColorDigimonOrTamer40(cond) ?? ParseEventConditionCore(cond) ?? ParseEventCondition38(cond) ?? ParseEventCondition40(cond) ?? ParseEventCondition41(cond) ?? ParseEventCondition43(cond) ?? ParseEventCondition44(cond) ?? ParseEventCondition45(cond) ?? ParseEventCondition49(cond) ?? ParseEventCondition50(cond) ?? ParseEventCondition51(cond) ?? ParseEventCondition57(cond) ?? ParseEventCondition64(cond) ?? ParseEventCondition66(cond) ?? ParseEventCondition69(cond);   // v0.69.0 (Batch69)   // v0.66.0 (Batch66)   // v0.64.0 (Batch64)   // v0.57.0   // v0.51.0 · v0.50.0 · v0.49.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.41.0 (Batch41Cond) · v0.40.0 "a blue or green Digimon or Tamer"는 원래 규칙보다 먼저 (원래는 테이머의 색을 보지 않았다)   // v0.40.0 (Batch40Step) · v0.38.0 읽지 못한 조건만 (Batch38b)
 
     private static Func<EffectContext, bool>? ParseEventConditionCore(string cond)
     {

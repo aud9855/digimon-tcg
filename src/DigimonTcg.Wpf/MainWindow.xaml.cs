@@ -2315,8 +2315,15 @@ public partial class MainWindow : Window
                 FontSize = 11.5
             });
 
-            if (ChangedInfoBadge(opp, OpponentZoneSlotWidth - 14) is { } oppChanged)   // v0.68.0 효과로 바뀐 정보
-                infoStack.Children.Add(oppChanged);
+            // v0.68.0 효과로 바뀐 정보 — v0.69.0 상대 칸은 높이가 정해져 있어 정보 줄 아래에 두면 배틀 에어리어 안내 줄에 가려졌다 → 카드 그림 아래쪽에 겹쳐 놓는다 (이름은 아래 줄에 다시 있다)
+            if (ChangedInfoBadge(opp, OpponentZoneSlotWidth - 14) is { } oppChanged)
+            {
+                oppChanged.VerticalAlignment = VerticalAlignment.Bottom;
+                oppChanged.HorizontalAlignment = HorizontalAlignment.Center;
+                oppChanged.Margin = new Thickness(0, 0, 0, 2);
+                Grid.SetRow(oppChanged, 0);
+                row.Children.Add(oppChanged);
+            }
 
             if (opp.LinkedCards.Count > 0)
             {

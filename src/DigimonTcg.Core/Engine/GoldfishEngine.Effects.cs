@@ -304,6 +304,8 @@ public partial class GoldfishEngine
                 prevented |= RunBreedingWouldLeave46(zones, inst, deletion);   // v0.46.0 [육성] "~ would leave the battle area" (BT18-086 · BT22-007)
             if (!prevented && !LeaveEscaped46(inst))
                 prevented |= RunTrashWouldLeave46(zones, inst, deletion);      // v0.46.0 [트래시] "When one of your [Dorugamon] would be deleted" (BT17-065)
+            if (!prevented && !LeaveEscaped46(inst))
+                prevented |= RunFaceUpSecurityWouldLeave69(zones, inst, deletion);   // v0.69.0 [시큐리티]【서로의 턴】 앞면 시큐리티의 "~ would leave the battle area" (ST22-10 — GoldfishEngine.Batch69)
         }
         finally
         {
@@ -690,6 +692,8 @@ public partial class GoldfishEngine
                 yield return (e, ctx);
         }
         foreach (var x in BreedingAuras42(side, enemy, stat))   // v0.42.0 [육성] 지속 효과 (GoldfishEngine.Batch42)
+            yield return x;
+        foreach (var x in SecurityAuras69(side, enemy, stat))   // v0.69.0 앞면 시큐리티의 [시큐리티]【서로의 턴】 지속 효과 (GoldfishEngine.Batch69)
             yield return x;
     }
 
