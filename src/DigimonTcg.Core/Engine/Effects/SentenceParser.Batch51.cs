@@ -645,8 +645,8 @@ internal static partial class SentenceParser
                 foreach (var d in c.Enemy.BattleArea.Where(d => !c.Engine.IsUnaffectedBy(c.Owner, d)))
                 {
                     int i = d.TimedSecurityAttackBuffs.FindLastIndex(b => b.Count == -o);
-                    if (i >= 0) d.TimedSecurityAttackBuffs.RemoveAt(i);
-                    d.TimedSecurityAttackBuffs.Add((-n, until));
+                    if (i >= 0) c.Engine.RemoveTimedSaAt60(d, i);
+                    c.Engine.AddTimedSa60(d, -n, until);
                 }
                 c.RecalculateFieldBuffs();
                 Diag46.Hit("securityMinusInstead51");

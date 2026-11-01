@@ -196,7 +196,7 @@ internal static partial class SentenceParser
                 bool enemyTurn = c.Engine.IsTurnOf(c.Enemy);
                 int until = c.TurnSequence + (enemyTurn ? 2 : 1);
                 foreach (var d in c.LastTargets.Where(d => c.Enemy.BattleArea.Contains(d) && d.IsSuspended))
-                    d.SkipUnsuspendUntil = Math.Max(d.SkipUnsuspendUntil, until);
+                    c.Engine.Lock60(d, LockKind60.SkipUnsuspend, until);
                 foreach (var t in c.LastTamers35.Where(t => c.Enemy.Tamers.Contains(t)))
                     c.Enemy.TamerCannotUnsuspendUntil[t] = Math.Max(c.Enemy.TamerCannotUnsuspendUntil.GetValueOrDefault(t), until);
                 Diag44.Hit("suspendedCardsSkipUnsuspend");
@@ -223,7 +223,7 @@ internal static partial class SentenceParser
                 bool enemyTurn = c.Engine.IsTurnOf(c.Enemy);
                 int until = c.TurnSequence + (enemyTurn ? 2 : 1);
                 foreach (var d in c.Enemy.BattleArea.Where(d => !c.Engine.IsUnaffectedBy(c.Owner, d)))
-                    d.SkipUnsuspendUntil = Math.Max(d.SkipUnsuspendUntil, until);
+                    c.Engine.Lock60(d, LockKind60.SkipUnsuspend, until);
                 foreach (var t in c.Enemy.Tamers.Distinct())
                     c.Enemy.TamerCannotUnsuspendUntil[t] = Math.Max(c.Enemy.TamerCannotUnsuspendUntil.GetValueOrDefault(t), until);
                 Diag44.Hit("enemyCardsSkipUnsuspend");

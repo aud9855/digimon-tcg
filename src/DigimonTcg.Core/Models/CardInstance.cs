@@ -75,6 +75,24 @@ public class CardInstance
     /// <summary>v0.59.0 지금 상대의 효과를 받지 않는 상태인지 (엔진이 지속 효과를 계산할 때마다 채운다 — "isn't affected by your opponent's effects" · BT27-103 어택 중)</summary>
     public bool OppShield59 { get; set; }
 
+    /// <summary>v0.60.0 상대의 효과로 받은 기간 키워드 · ≪시큐리티 어택 ±N≫ (TimedKeywords · TimedSecurityAttackBuffs 중 상대 효과의 몫) · 이 어택 동안의 ≪시큐리티 어택≫ 몫 —
+    /// 상대의 효과를 받지 않는 동안에는 빼고 계산한다 (종합 룰 15-15-5-1 · 15-15-5-2 · 15-15-5-4: 받지 않는 디지몬에게 준 ≪S 어택 -1≫은 가지지 않는다)</summary>
+    public List<(DigimonTcg.Core.Engine.Effects.Keyword Keyword, int Until)> OppTimedKeywords60 { get; } = new();
+    public List<(int Count, int Until)> OppTimedSa60 { get; } = new();
+    public int OppAttackSa60 { get; set; }
+
+    /// <summary>v0.60.0 "~ 할 수 없다" 기간 효과 중 상대의 효과로 받은 기간 · 그 밖의 효과로 받은 기간 (LockKind60 순서: 어택 · 블록 · 진화 · 레스트 · 액티브 · 다음 액티브 페이즈) —
+    /// 상대의 효과를 받지 않는 동안에는 상대의 효과로 받은 것을 빼고 판단한다 (15-15-5-1 · 15-15-5-2)</summary>
+    public int[] OppLockUntil60 { get; } = new int[6];
+    public int[] OwnLockUntil60 { get; } = new int[6];
+
+    /// <summary>v0.60.0 기간 잠금(어택 · 블록 등)이 지금 유효한지 — 상대의 효과를 받지 않는 동안에는 상대의 효과로 받은 기간을 빼고 본다</summary>
+    internal int LockUntil60(int kind, int value)
+    {
+        if (!OppShield59 || OppLockUntil60[kind] == 0 || value > OppLockUntil60[kind]) return value;   // 상대 효과의 몫이 없거나 다른 효과가 더 길게 걸었다
+        return OwnLockUntil60[kind];
+    }
+
     /// <summary>v0.42.0 지금 필드에서의 지속 효과 조건 판단용 (엔진이 지속 효과를 계산할 때 채운다 — 조건이 붙은 진화 조건 무시 진화)</summary>
     public Func<DigimonTcg.Core.Engine.Effects.StaticContext>? LiveContext42 { get; set; }
     internal PlayerZones? LiveOwner42 { get; set; }
@@ -277,6 +295,7 @@ public class CardInstance
             DpFloor45 = DpFloor45,
             OppTempDp59 = OppTempDp59,
             OppShield59 = OppShield59,
+            OppAttackSa60 = OppAttackSa60,
         };
         v.EvolutionSources = new Stack<CardData>(EvolutionSources.Reverse());
         foreach (var f in FaceDownSources) v.FaceDownSources.Add(f);
@@ -286,6 +305,8 @@ public class CardInstance
         v.LinkedCards.AddRange(LinkedCards);
         v.TimedDpBuffs.AddRange(TimedDpBuffs);
         v.OppTimedDp59.AddRange(OppTimedDp59);
+        v.OppTimedKeywords60.AddRange(OppTimedKeywords60);
+        v.OppTimedSa60.AddRange(OppTimedSa60);
         v.TimedKeywords.AddRange(TimedKeywords);
         v.GrantedEffects.AddRange(GrantedEffects);
         return v;
@@ -304,7 +325,7 @@ public class CardInstance
         FaceUpSources.Sum(s => s.InheritedSecurityAttackBonus);
 
     public int GetTotalBonusSecurityAttack() =>
-        TopCard.SecurityAttackBonus + GetInheritedSecurityAttackBonus() + TamerSecurityAttackBonus + TemporarySecurityAttackBonus + EffectSecurityAttackBonus + AttackSecurityAttackBonus;
+        TopCard.SecurityAttackBonus + GetInheritedSecurityAttackBonus() + TamerSecurityAttackBonus + TemporarySecurityAttackBonus + EffectSecurityAttackBonus + AttackSecurityAttackBonus - (OppShield59 ? OppAttackSa60 : 0);   // v0.60.0 상대의 효과를 받지 않는 동안
 
     public int GetSecurityAttackCount() =>
         Math.Max(0, 1 + GetTotalBonusSecurityAttack());

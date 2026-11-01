@@ -458,21 +458,21 @@ internal static partial class SentenceParser
             {
                 foreach (var p in list)
                 {
-                    foreach (var kw in p.Keywords) d.TimedKeywords.Add((kw, until));
+                    foreach (var kw in p.Keywords) c.Engine.AddTimedKeyword60(d, kw, until);
                     if (p.Grants != null)
                         foreach (var (k, sa) in p.Grants)
                         {
-                            if (k is { } kw2) d.TimedKeywords.Add((kw2, until));
-                            else d.TimedSecurityAttackBuffs.Add((sa, until));
+                            if (k is { } kw2) c.Engine.AddTimedKeyword60(d, kw2, until);
+                            else c.Engine.AddTimedSa60(d, sa, until);
                         }
                     switch (p.Field)
                     {
-                        case "attack": d.CannotAttackUntil = Math.Max(d.CannotAttackUntil, until); break;
-                        case "block": d.CannotBlockUntil = Math.Max(d.CannotBlockUntil, until); break;
-                        case "attack+block": d.CannotAttackUntil = Math.Max(d.CannotAttackUntil, until); d.CannotBlockUntil = Math.Max(d.CannotBlockUntil, until); break;
-                        case "digivolve": d.CannotDigivolveUntil = Math.Max(d.CannotDigivolveUntil, until); break;
-                        case "suspend": d.CannotSuspendUntil = Math.Max(d.CannotSuspendUntil, until); break;
-                        case "unsuspend": d.CannotUnsuspendUntil = Math.Max(d.CannotUnsuspendUntil, until); break;
+                        case "attack": c.Engine.Lock60(d, LockKind60.Attack, until); break;
+                        case "block": c.Engine.Lock60(d, LockKind60.Block, until); break;
+                        case "attack+block": c.Engine.Lock60(d, LockKind60.Attack, until); c.Engine.Lock60(d, LockKind60.Block, until); break;
+                        case "digivolve": c.Engine.Lock60(d, LockKind60.Digivolve, until); break;
+                        case "suspend": c.Engine.Lock60(d, LockKind60.Suspend, until); break;
+                        case "unsuspend": c.Engine.Lock60(d, LockKind60.Unsuspend, until); break;
                     }
                 }
             }

@@ -90,10 +90,10 @@ internal static class BuiltInCardScripts
         });
 
     /// <summary>다음 상대의 턴 종료 시까지 어택 · 블록 불가</summary>
-    private static void LockAttackAndBlock(CardInstance target, int until)
+    private static void LockAttackAndBlock(EffectContext c, CardInstance target, int until)
     {
-        target.CannotAttackUntil = Math.Max(target.CannotAttackUntil, until);
-        target.CannotBlockUntil = Math.Max(target.CannotBlockUntil, until);
+        c.Engine.Lock60(target, LockKind60.Attack, until);
+        c.Engine.Lock60(target, LockKind60.Block, until);
     }
 
     /// <summary>UI가 고른 대상이 상대 디지몬이면 그것</summary>
@@ -258,14 +258,14 @@ internal static class BuiltInCardScripts
                     c.Message = "진화원을 갖지 않은 상대 디지몬이 없어 효과가 없습니다.";
                     return;
                 }
-                LockAttackAndBlock(enemy, c.TurnSequence + 1);
+                LockAttackAndBlock(c, enemy, c.TurnSequence + 1);
                 c.Message = $"❄️ 소로 블루: 상대 [{enemy.TopCard.Name}]은(는) 다음 상대 턴 종료 시까지 어택 · 블록 불가!";
             }, filter: d => d.EvolutionSources.Count == 0, rule: "진화원을 갖지 않은 상대 디지몬")
             .Security(c =>
             {
                 var t = c.PickEnemy(d => d.EvolutionSources.Count == 0, c.Other);
                 if (t == null) { c.SecurityResult("진화원을 갖지 않은 디지몬이 없어 불발", "불발"); return; }
-                LockAttackAndBlock(t, c.TurnSequence + 1);
+                LockAttackAndBlock(c, t, c.TurnSequence + 1);
                 c.SecurityResult($"[{t.TopCard.Name}]은(는) 다음 자신의 턴 종료 시까지 어택 · 블록 불가", $"[{t.TopCard.Name}] 봉인");
             });
 
@@ -428,7 +428,7 @@ internal static class BuiltInCardScripts
         {
             var enemy = c.PickEnemy(d => !d.IsSuspended) ?? c.PickEnemy();
             if (enemy == null) return;
-            LockAttackAndBlock(enemy, c.TurnSequence + 1);
+            LockAttackAndBlock(c, enemy, c.TurnSequence + 1);
             c.Log($"[진화 시] 로제몬: 상대 [{enemy.TopCard.Name}]은(는) 다음 상대 턴 종료 시까지 어택 · 블록 불가");
         });
 

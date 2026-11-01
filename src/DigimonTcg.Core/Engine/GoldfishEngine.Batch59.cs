@@ -31,7 +31,7 @@ public partial class GoldfishEngine
         if (n <= 0 || bottomUp.Count == 0) return new List<CardData>();
         if (bottomUp.Count <= n) return self.RemoveBottomSources(n);
         var order = Enumerable.Range(0, bottomUp.Count)
-            .OrderBy(i => BurstTrashedEffect59(bottomUp[i]) ? 0 : 1).ThenBy(i => i).ToList();
+            .OrderBy(i => BurstTrashedEffect59(bottomUp[i]) ? 0 : BurstUse60?.Invoke(bottomUp[i]) == true ? 1 : 2).ThenBy(i => i).ToList();   // v0.60.0 뒤의 효과가 트래시에서 쓰는 카드 (GoldfishEngine.Batch60)
         var ranked = order.Select(i => bottomUp[i]).ToList();
         var picked = ChooseCardIndexes(owner, CardChoiceZone.DigivolutionCards, ranked, n, upTo: false,
             $"[{self.TopCard.Name}] ≪디지버스트 {n}≫ — 파기할 진화원 {n}장을 고르세요.");

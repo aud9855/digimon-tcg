@@ -255,7 +255,7 @@ internal static partial class SentenceParser
                 var names = new List<string>();
                 foreach (var d in Pick(digiT, c, security))
                 {
-                    if (un) d.CannotUnsuspendUntil = Math.Max(d.CannotUnsuspendUntil, until); else d.CannotSuspendUntil = Math.Max(d.CannotSuspendUntil, until);
+                    if (un) c.Engine.Lock60(d, LockKind60.Unsuspend, until); else c.Engine.Lock60(d, LockKind60.Suspend, until);
                     names.Add(d.TopCard.Name);
                 }
                 // 테이머: "can't suspend"는 액티브 상태인 것, "can't unsuspend"는 레스트 상태인 것을 먼저 추천
@@ -310,8 +310,8 @@ internal static partial class SentenceParser
                 names.Add("테이머 " + t.Name);
                 continue;
             }
-            if (un) d.CannotUnsuspendUntil = Math.Max(d.CannotUnsuspendUntil, until);
-            else d.CannotSuspendUntil = Math.Max(d.CannotSuspendUntil, until);
+            if (un) c.Engine.Lock60(d, LockKind60.Unsuspend, until);
+            else c.Engine.Lock60(d, LockKind60.Suspend, until);
             names.Add(d.TopCard.Name);
         }
         c.LastTargets = picks.Where(d => !tamerOf.ContainsKey(d)).ToList();

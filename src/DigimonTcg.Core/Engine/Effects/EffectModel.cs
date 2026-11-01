@@ -195,6 +195,11 @@ public enum Keyword
     CanAttackUnsuspendedLevel4OrLower55, // 액티브 상태인 Lv.4 이하의 상대 디지몬에게도 어택할 수 있다 (EX1-061 진화원 효과)
     // v0.58.0
     UnaffectedByOpponentDuringAttacks58, // 어택 중(어느 쪽의 어택이든 어택 선언 ~ 어택 종료)에는 상대의 효과를 받지 않는다 (BT27-103 "During attacks, your opponent's effects don't affect this Digimon")
+    // v0.60.0
+    NegateAllSecurity60,               // 이 디지몬이 체크한 카드의 【시큐리티】 효과는 발휘하지 않는다 (카드 종류 무관 — EX6-010 진화원 효과)
+    NegateEnemyOptionSecurity60,       // 상대의 옵션 카드의 【시큐리티】 효과는 발휘하지 않는다 (이 디지몬의 주인이 하는 체크 전부 — BT12-112)
+    CannotLeaveExceptOwnOrDeletion60,  // 자신의 효과 · 소멸 이외로 배틀 에어리어를 떠나지 않는다 (EX6-044 진화원 효과)
+    CannotLeaveExceptDeletion60,       // 소멸 이외로 배틀 에어리어를 떠나지 않는다 (자신의 효과도 — BT16-051 기간)
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>

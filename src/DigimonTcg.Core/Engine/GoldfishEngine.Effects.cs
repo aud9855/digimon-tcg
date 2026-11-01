@@ -16,7 +16,7 @@ public static partial class EffectRules
     public static bool IsActive(int until, GameState state) => until > 0 && until >= state.TurnSequence;
 
     public static bool CanBlock(GameState state, CardInstance blocker) =>
-        blocker.HasBlocker && !CardScripts.HasKeyword(blocker, Keyword.CannotBlock) && !blocker.IsSuspended && !IsActive(blocker.CannotBlockUntil, state) && !IsSuspendLocked(state, blocker);
+        blocker.HasBlocker && !CardScripts.HasKeyword(blocker, Keyword.CannotBlock) && !blocker.IsSuspended && !IsActive(blocker.LockUntil60(1, blocker.CannotBlockUntil), state) && !IsSuspendLocked(state, blocker);
 
     /// <summary>attacker가 blocker에게 블록당하지 않는지</summary>
     public static bool IsUnblockableBy(GameState state, CardInstance attacker, CardInstance blocker) =>
@@ -40,7 +40,7 @@ public static partial class EffectRules
 
     /// <summary>blocker가 attacker의 어택을 블록할 수 있는지 (≪충돌≫이면 ≪블로커≫가 없어도)</summary>
     public static bool CanBlockAgainst(GameState state, CardInstance blocker, CardInstance attacker) =>
-        (blocker.HasBlocker || ForcesBlock(attacker)) && !CardScripts.HasKeyword(blocker, Keyword.CannotBlock) && !blocker.IsSuspended && !IsActive(blocker.CannotBlockUntil, state) && !IsSuspendLocked(state, blocker);
+        (blocker.HasBlocker || ForcesBlock(attacker)) && !CardScripts.HasKeyword(blocker, Keyword.CannotBlock) && !blocker.IsSuspended && !IsActive(blocker.LockUntil60(1, blocker.CannotBlockUntil), state) && !IsSuspendLocked(state, blocker);
 
     /// <summary>
     /// 상대(AI · 연습 더미)가 내 어택을 블록할 블로커. null = 블록하지 않음.
@@ -104,17 +104,17 @@ public static partial class EffectRules
     public static bool CanAttackPlayer(CardInstance attacker) => !CardScripts.HasKeyword(attacker, Keyword.CannotAttackPlayers);
 
     public static bool IsAttackLocked(GameState state, CardInstance digimon) =>
-        IsActive(digimon.CannotAttackUntil, state) || IsSuspendLocked(state, digimon) || CardScripts.HasKeyword(digimon, Keyword.CannotAttack);   // 어택하면 레스트가 되므로 레스트 불가 = 어택 불가
+        IsActive(digimon.LockUntil60(0, digimon.CannotAttackUntil), state) || IsSuspendLocked(state, digimon) || CardScripts.HasKeyword(digimon, Keyword.CannotAttack);   // 어택하면 레스트가 되므로 레스트 불가 = 어택 불가
 
     /// <summary>"This Digimon can't digivolve" (지속) · "~ can't digivolve until their turn ends" (기간) — 패 · 효과 · DNA 진화 모두 (v0.29.0)</summary>
     public static bool IsDigivolveLocked(GameState? state, CardInstance digimon) =>
-        CardScripts.HasKeyword(digimon, Keyword.CannotDigivolve) || state != null && IsActive(digimon.CannotDigivolveUntil, state);
+        CardScripts.HasKeyword(digimon, Keyword.CannotDigivolve) || state != null && IsActive(digimon.LockUntil60(2, digimon.CannotDigivolveUntil), state);
 
     /// <summary>"can't suspend" — 레스트가 될 수 없으면 블록(레스트해서 막기)도 할 수 없다</summary>
-    public static bool IsSuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.CannotSuspendUntil, state) || CardScripts.HasKeyword(digimon, Keyword.CannotSuspend);   // v0.37.0 지속 효과 (EX8-026)
+    public static bool IsSuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.LockUntil60(3, digimon.CannotSuspendUntil), state) || CardScripts.HasKeyword(digimon, Keyword.CannotSuspend);   // v0.37.0 지속 효과 (EX8-026)
 
     /// <summary>"can't unsuspend" — 액티브 페이즈 · 효과로 액티브가 되지 않는다</summary>
-    public static bool IsUnsuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.CannotUnsuspendUntil, state) || digimon.StaticUnsuspendLock45 && Diag45.HitTrue("unsuspendLock");   // v0.45.0 지속 효과 (BT12-057)
+    public static bool IsUnsuspendLocked(GameState state, CardInstance digimon) => IsActive(digimon.LockUntil60(4, digimon.CannotUnsuspendUntil), state) || digimon.StaticUnsuspendLock45 && Diag45.HitTrue("unsuspendLock");   // v0.45.0 지속 효과 (BT12-057)
 }
 
 /// <summary>
@@ -264,6 +264,7 @@ public partial class GoldfishEngine
     {
         if (!zones.BattleArea.Contains(inst))
             return false;
+        if (canPrevent && LeaveLocked60(zones, inst, deletion)) return true;   // v0.60.0 EX6-044
         var outer = CurrentLeave;
         CurrentLeave = new LeaveInfo(inst, deletion, inBattle, !inBattle && ReferenceEquals(CurrentEffectOwner, zones), canPrevent,
             deletion ? LeaveDestination.Deleted : destination);
@@ -481,10 +482,11 @@ public partial class GoldfishEngine
             inst.TimedDpBuffs.RemoveAll(t => t.Until < State.TurnSequence);
             if (inst.OppTimedDp59.Count > 0) inst.OppTimedDp59.RemoveAll(t => t.Until < State.TurnSequence);   // v0.59.0
             inst.TimedSecurityAttackBuffs.RemoveAll(t => t.Until < State.TurnSequence);
+            ExpireOppTimed60(inst);   // v0.60.0
             if (inst.TimedPlayCostMods45.Count > 0) inst.TimedPlayCostMods45.RemoveAll(t => t.Until < State.TurnSequence);   // v0.45.0 등장 코스트 변경 (BT16-060)
             inst.PlayCostDelta45 = inst.TimedPlayCostMods45.Sum(t => t.Delta);
             inst.ActiveKeywords.Clear();
-            foreach (var (k, _) in inst.TimedKeywords) inst.ActiveKeywords.Add(k);
+            var oppKw60 = AddTimedKeywordsSplit60(inst);   // v0.60.0 상대의 효과로 받은 기간 키워드는 받지 않는 상태를 정한 뒤에 (GoldfishEngine.Batch60)
             var statics = StaticEffectsOf(inst).ToList();
             ApplyExtraColors37(inst, statics, ctx);   // v0.37.0 "This Digimon is also treated as yellow" (색 조건보다 먼저)
             var enemyKwBefore59 = EnemyKeywordProbe59(inst);
@@ -498,9 +500,10 @@ public partial class GoldfishEngine
                     inst.ActiveKeywords.Add(aura.Keyword.Value);
 
             ApplyOppShield59(inst, enemyKw59);   // v0.59.0 상대의 효과를 받지 않는 동안: 상대 카드의 지속 효과 · 이미 받은 상대의 DP 효과를 빼고 계산 (GoldfishEngine.Batch59)
+            ApplyDeferredOppKeywords60(inst, oppKw60);   // v0.60.0 이미 받은 상대의 기간 키워드도 (15-15-5-4)
             inst.HasGrantedBlocker = EffectRules.IsActive(inst.GrantedBlockerUntil, State) || CardScripts.HasKeyword(inst, Keyword.Blocker);
 
-            int dp = inst.TimedDpBuffs.Sum(t => t.Dp), sec = inst.TimedSecurityAttackBuffs.Sum(t => t.Count);
+            int dp = inst.TimedDpBuffs.Sum(t => t.Dp), sec = inst.TimedSecurityAttackBuffs.Sum(t => t.Count) - OppTimedSaShield60(inst);   // v0.60.0
             foreach (var effect in statics)
             {
                 if (effect.Stat == StaticStat.Dp) dp += effect.Value(ctx);
@@ -1012,6 +1015,7 @@ public partial class GoldfishEngine
         attacker.AttackTargetLocked = false;
         attacker.AttackDpBonus = 0;
         attacker.AttackSecurityAttackBonus = 0;
+        attacker.OppAttackSa60 = 0;   // v0.60.0
         RecalculateFieldBuffs();
         var owner = OwnerOf(attacker);
         if (owner.BattleArea.Contains(attacker) && !State.IsGameOver)
@@ -1056,6 +1060,13 @@ public partial class GoldfishEngine
     private (string Message, bool PlayAfterBattle) ResolveSecurityDigimonEffect(CardData securityCard, PlayerZones owner, CardInstance attacker)
     {
         _afterBattle59.Clear();   // v0.59.0 배틀이 없었던 앞의 "배틀 종료 시"는 버린다
+        if (SecurityEffectBlocked60(attacker, securityCard) && (CardScripts.For(securityCard)?.Effects.Any(e => e.Trigger == EffectTrigger.Security) ?? false))   // v0.60.0 EX6-010 · EX3-073 — 효과 없이 배틀
+        {
+            SecurityPlayWithoutBattle = false;
+            string blocked = $"[{securityCard.Name}]의 [시큐리티] 효과는 [{attacker.TopCard.Name}]의 효과로 발휘하지 않습니다.";
+            Log(blocked);
+            return (blocked, false);
+        }
         if (!(CardScripts.For(securityCard)?.Effects.Any(e => e.Trigger == EffectTrigger.Security) ?? false))
             { SecurityPlayWithoutBattle = false; return (string.Empty, false); }
         var ctx = RunEffects(EffectTrigger.Security, owner, null, securityCard, other: attacker, chosenTarget: attacker, includeInherited: false);

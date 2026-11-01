@@ -80,7 +80,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse59(rawClause, inherited, card, def);   // v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse60(rawClause, inherited, card, def);   // v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -592,6 +592,7 @@ internal static partial class SentenceParser
             var cost = ParseCost(costText, card);
             if (cost == null) return $"미지원 비용 (By {costText})";
             var (canPay, pay, recommend, describe) = cost.Value;
+            if (burst.Success) (pay, recommend) = CostForRest60(costText, string.Join(" ", rawOptions), card, pay, recommend);   // v0.60.0 ≪디지버스트≫ 진화원 고르기를 아래 효과에 맞춘다 (SentenceParser.Batch60Ai.cs)
             var baseCond = cond;
             cond = c =>
             {
@@ -2438,6 +2439,7 @@ internal static partial class SentenceParser
             var inner = ParseStep(by.Groups["rest"].Value, card, triggers);
             if (inner.Error != null || inner.Step == null) return (null, inner.Error ?? "미지원 비용 뒤 문장");
             var (canPay, pay, recommend, describe) = cost.Value;
+            (pay, recommend) = CostForRest60(by.Groups["cost"].Value, by.Groups["rest"].Value, card, pay, recommend);   // v0.60.0 AI 추천 · ≪디지버스트≫ 진화원 고르기를 뒤의 효과에 맞춘다 (SentenceParser.Batch60Ai.cs)
             var innerStep = inner.Step;
             Action<EffectContext> paidAct = c =>
             {
@@ -2537,6 +2539,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction57(s.TrimEnd('.'), card, triggers) is { } act57) act = act57;   // v0.57.0 (SentenceParser.Batch57.cs)
         if (act.Error != null && ParseAction58(s.TrimEnd('.'), card, triggers) is { } act58) act = act58;   // v0.58.0 (SentenceParser.Batch58.cs)
         if (act.Error != null && ParseAction59(s.TrimEnd('.'), card, triggers) is { } act59) act = act59;   // v0.59.0 (SentenceParser.Batch59.cs)
+        if (act.Error != null && ParseAction60(s.TrimEnd('.'), card, triggers) is { } act60) act = act60;   // v0.60.0 (SentenceParser.Batch60.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -4008,7 +4011,7 @@ internal static partial class SentenceParser
                 int until = Until(c, d);
                 foreach (var x in played)
                 {
-                    if (noDigivolve) x.CannotDigivolveUntil = Math.Max(x.CannotDigivolveUntil, until);
+                    if (noDigivolve) c.Engine.Lock60(x, LockKind60.Digivolve, until);
                     c.Engine.ScheduleDeletionAtTurnEnd(x, c.Owner, until);
                 }
                 Emit(c, label, $"[{string.Join(", ", played.Select(x => x.TopCard.Name))}]{(noDigivolve ? "은(는) 진화할 수 없고," : "은(는)")} {whenKo}에 소멸");
@@ -4514,8 +4517,8 @@ internal static partial class SentenceParser
                 {
                     foreach (var (k, sa) in grants)
                     {
-                        if (k is { } kw) d.TimedKeywords.Add((kw, until));
-                        else d.TimedSecurityAttackBuffs.Add((sa, until));
+                        if (k is { } kw) c.Engine.AddTimedKeyword60(d, kw, until);
+                        else c.Engine.AddTimedSa60(d, sa, until);
                     }
                     c.Engine.ApplyDpChange(d, dp, until, $"{c.Card.Name} [{label}]");
                 }
@@ -4557,9 +4560,9 @@ internal static partial class SentenceParser
                 foreach (var d in list)
                     foreach (var (k, sa) in grants)
                     {
-                        if (k is { } kw) d.TimedKeywords.Add((kw, until));
-                        else if (dur == Duration.ThisAttack) d.AttackSecurityAttackBonus += sa;
-                        else d.TimedSecurityAttackBuffs.Add((sa, until));
+                        if (k is { } kw) c.Engine.AddTimedKeyword60(d, kw, until);
+                        else if (dur == Duration.ThisAttack) c.Engine.AddAttackSa60(d, sa);
+                        else c.Engine.AddTimedSa60(d, sa, until);
                     }
                 c.RecalculateFieldBuffs();
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] 키워드 획득" : "대상이 없습니다");
@@ -4577,8 +4580,8 @@ internal static partial class SentenceParser
                 var list = Pick(target, c, security);
                 foreach (var d in list)
                 {
-                    if (what.Contains("attack")) d.CannotAttackUntil = Math.Max(d.CannotAttackUntil, until);
-                    if (what.Contains("block")) d.CannotBlockUntil = Math.Max(d.CannotBlockUntil, until);
+                    if (what.Contains("attack")) c.Engine.Lock60(d, LockKind60.Attack, until);
+                    if (what.Contains("block")) c.Engine.Lock60(d, LockKind60.Block, until);
                 }
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] {(what.Contains("block") && what.Contains("attack") ? "어택 · 블록" : what.Contains("block") ? "블록" : "어택")} 불가" : "대상이 없습니다");
             }, null);
@@ -4595,7 +4598,7 @@ internal static partial class SentenceParser
                 int until = Until(c, dur);
                 var list = Pick(target, c, security);
                 foreach (var d in list)
-                    d.CannotDigivolveUntil = Math.Max(d.CannotDigivolveUntil, until);
+                    c.Engine.Lock60(d, LockKind60.Digivolve, until);
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] 진화 불가" : "대상이 없습니다");
             }, null);
         }
@@ -4626,8 +4629,8 @@ internal static partial class SentenceParser
                 var list = Pick(target, c, security);
                 foreach (var d in list)
                 {
-                    if (un) d.CannotUnsuspendUntil = Math.Max(d.CannotUnsuspendUntil, until);
-                    else d.CannotSuspendUntil = Math.Max(d.CannotSuspendUntil, until);
+                    if (un) c.Engine.Lock60(d, LockKind60.Unsuspend, until);
+                    else c.Engine.Lock60(d, LockKind60.Suspend, until);
                 }
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] {(un ? "액티브" : "레스트")}가 될 수 없음" : "대상이 없습니다");
             }, null);
@@ -4646,7 +4649,7 @@ internal static partial class SentenceParser
                 {
                     // 대상 주인의 턴이면 그다음 주인 턴, 아니면 바로 다음 턴의 액티브 페이즈
                     bool ownersTurn = c.Engine.IsTurnOf(c.Owner.BattleArea.Contains(d) ? c.Owner : c.Enemy);
-                    d.SkipUnsuspendUntil = Math.Max(d.SkipUnsuspendUntil, c.TurnSequence + (ownersTurn ? 2 : 1));
+                    c.Engine.Lock60(d, LockKind60.SkipUnsuspend, c.TurnSequence + (ownersTurn ? 2 : 1));
                 }
                 Emit(c, label, list.Count > 0 ? $"[{string.Join(", ", list.Select(d => d.TopCard.Name))}] 다음 액티브 페이즈에 액티브가 되지 않음" : "대상이 없습니다");
             }, null);

@@ -362,8 +362,8 @@ internal static partial class SentenceParser
                         if (kws != null)
                             foreach (var (k, sa) in kws)
                             {
-                                if (k is { } kw) d.TimedKeywords.Add((kw, until));
-                                else d.TimedSecurityAttackBuffs.Add((sa, until));
+                                if (k is { } kw) c.Engine.AddTimedKeyword60(d, kw, until);
+                                else c.Engine.AddTimedSa60(d, sa, until);
                             }
                         if (dp != 0) c.Engine.ApplyDpChange(d, dp, until, $"{c.Card.Name} [{label}]");
                     }

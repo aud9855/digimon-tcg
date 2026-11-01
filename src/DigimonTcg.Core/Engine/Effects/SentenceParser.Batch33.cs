@@ -686,8 +686,8 @@ internal static partial class SentenceParser
                 foreach (var d in list)
                     foreach (var (k, sa) in pgrants)
                     {
-                        if (k is { } kw) d.TimedKeywords.Add((kw, until));
-                        else d.TimedSecurityAttackBuffs.Add((sa, until));
+                        if (k is { } kw) c.Engine.AddTimedKeyword60(d, kw, until);
+                        else c.Engine.AddTimedSa60(d, sa, until);
                     }
                 c.RecalculateFieldBuffs();
                 if (list.Count == 0) c.LastStepResolved = false;

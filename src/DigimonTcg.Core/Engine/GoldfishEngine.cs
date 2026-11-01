@@ -401,7 +401,7 @@ public partial class GoldfishEngine
         var woke = new List<CardInstance>();
         foreach (var instance in AllInstances(State.Player))
         {
-            if (instance.IsSuspended && !EffectRules.IsActive(instance.SkipUnsuspendUntil, State) && !EffectRules.IsUnsuspendLocked(State, instance) && !UnsuspendLock45(State.Player, instance, null, phase: true))   // "doesn't unsuspend during the next unsuspend phase" · v0.45.0 지속 효과
+            if (instance.IsSuspended && !EffectRules.IsActive(instance.LockUntil60(5, instance.SkipUnsuspendUntil), State) && !EffectRules.IsUnsuspendLocked(State, instance) && !UnsuspendLock45(State.Player, instance, null, phase: true))   // "doesn't unsuspend during the next unsuspend phase" · v0.45.0 지속 효과
             {
                 instance.IsSuspended = false;
                 awakened++;
@@ -859,7 +859,7 @@ public partial class GoldfishEngine
             State.LastRevealedSecurityCard = securityCard;
 
             // [공식 룰 A] [시큐리티] 효과가 있는 테이머 → 배틀 없이 코스트 없이 상대 필드에 등장 (효과가 없으면 아래에서 트래시)
-            if (securityCard.Type == CardType.Tamer && EffectRules.HasSecurityEffect(securityCard) && CanPlayByEffect(opp, securityCard, PlayOrigin.Security))   // v0.36.0 효과로 등장
+            if (securityCard.Type == CardType.Tamer && EffectRules.HasSecurityEffect(securityCard) && !SecurityEffectBlocked60(attacker, securityCard) && CanPlayByEffect(opp, securityCard, PlayOrigin.Security))   // v0.36.0 효과로 등장
             {
                 AddTamer(opp, securityCard);
                 RecalculateFieldBuffs();
@@ -878,7 +878,7 @@ public partial class GoldfishEngine
             {
                 opp.Trash.Add(securityCard);
                 SecurityOptionOutcome outcome;
-                if (CardScripts.HasKeyword(attacker, Keyword.NegateSecurityOptions)) // 워그레이몬(BT1): 체크한 옵션 카드의 [시큐리티] 효과는 발휘하지 않는다
+                if (SecurityEffectBlocked60(attacker, securityCard)) // 워그레이몬(BT1): 체크한 옵션 카드의 [시큐리티] 효과는 발휘하지 않는다 · v0.60.0 BT12-112 · EX6-010 · EX3-073 (GoldfishEngine.Batch60)
                 {
                     outcome = new SecurityOptionOutcome(
                         $"🔥 [{attacker.TopCard.Name}] 체크한 옵션 [{securityCard.Name}]의 [시큐리티] 효과를 무효로 했습니다!",
@@ -1184,7 +1184,7 @@ public partial class GoldfishEngine
         var aiWoke = new List<CardInstance>();
         foreach (var d in AllInstances(State.DummyOpponent))
         {
-            if (d.IsSuspended && !EffectRules.IsActive(d.SkipUnsuspendUntil, State) && !EffectRules.IsUnsuspendLocked(State, d) && !UnsuspendLock45(State.DummyOpponent, d, null, phase: true)) { d.IsSuspended = false; aiWoke.Add(d); }   // v0.45.0 지속 효과
+            if (d.IsSuspended && !EffectRules.IsActive(d.LockUntil60(5, d.SkipUnsuspendUntil), State) && !EffectRules.IsUnsuspendLocked(State, d) && !UnsuspendLock45(State.DummyOpponent, d, null, phase: true)) { d.IsSuspended = false; aiWoke.Add(d); }   // v0.45.0 지속 효과
             ResetTurnScopedState(d);
         }
         // 내 디지몬의 "이 턴 동안" 효과는 내 턴이 끝나면 사라진다
@@ -1196,7 +1196,7 @@ public partial class GoldfishEngine
             d.ActiveSkillBuffLabels.Clear();
         }
         // ≪재기동≫: 상대의 액티브 페이즈에 내 디지몬도 액티브가 된다
-        foreach (var d in State.Player.BattleArea.Where(d => d.IsSuspended && HasReboot(d) && !EffectRules.IsActive(d.SkipUnsuspendUntil, State) && !EffectRules.IsUnsuspendLocked(State, d) && !UnsuspendLock45(State.Player, d, null, phase: true)))
+        foreach (var d in State.Player.BattleArea.Where(d => d.IsSuspended && HasReboot(d) && !EffectRules.IsActive(d.LockUntil60(5, d.SkipUnsuspendUntil), State) && !EffectRules.IsUnsuspendLocked(State, d) && !UnsuspendLock45(State.Player, d, null, phase: true)))
         {
             d.IsSuspended = false;
             Log($"[≪재기동≫] 내 [{d.TopCard.Name}]이(가) 상대의 액티브 페이즈에 액티브 상태가 되었습니다.");
@@ -1531,7 +1531,7 @@ public partial class GoldfishEngine
             finally { _securityCheckRemoval = false; }
 
             // 1) 내 시큐리티에서 [시큐리티] 효과가 있는 [테이머]가 나온 경우 -> 코스트 지불 없이 내 테이머 존에 무료 등장!
-            if (mySec.Type == CardType.Tamer && EffectRules.HasSecurityEffect(mySec) && CanPlayByEffect(State.Player, mySec, PlayOrigin.Security))   // v0.36.0 효과로 등장
+            if (mySec.Type == CardType.Tamer && EffectRules.HasSecurityEffect(mySec) && !SecurityEffectBlocked60(aiAttacker, mySec) && CanPlayByEffect(State.Player, mySec, PlayOrigin.Security))   // v0.36.0 효과로 등장
             {
                 AddTamer(State.Player, mySec);
                 RecalculateFieldBuffs();
@@ -1548,7 +1548,7 @@ public partial class GoldfishEngine
             {
                 State.Player.Trash.Add(mySec);
                 SecurityOptionOutcome outcome;
-                if (CardScripts.HasKeyword(aiAttacker, Keyword.NegateSecurityOptions))
+                if (SecurityEffectBlocked60(aiAttacker, mySec))   // v0.60.0
                 {
                     outcome = new SecurityOptionOutcome(
                         $"🔥 AI [{aiAttacker.TopCard.Name}]이(가) 체크한 내 옵션 [{mySec.Name}]의 [시큐리티] 효과를 무효로 했습니다!",
