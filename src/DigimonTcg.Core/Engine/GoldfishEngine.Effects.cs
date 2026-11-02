@@ -1058,6 +1058,7 @@ public partial class GoldfishEngine
         {
             RunEffects(EffectTrigger.EndOfAttack, owner, attacker, attacker.TopCard);
             RecalculateFieldBuffs();
+            RunAttachedOnDeletion80(owner, attacker);   // v0.80.0 BT16-015 【소멸 시】 효과에 【어택 종료 시】를 추가
         }
         FinishExecuteAttack(attacker);   // ≪에그제큐트≫: 어택 종료 시 소멸
     }

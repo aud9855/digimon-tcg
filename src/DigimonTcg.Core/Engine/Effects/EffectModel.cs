@@ -123,6 +123,8 @@ public enum EffectTrigger
     ThisDigimonWouldUnsuspend62,    // 이 디지몬이 액티브가 되려 할 때 (액티브 페이즈 · 효과 모두 — EffectContext.PreventUnsuspend62로 막는다, BT7-055가 주는 효과)
     // v0.70.0
     StartOfOpponentsMainPhase70,    // [상대의 메인 페이즈 개시 시] (EX3-024 — 턴 플레이어의 [자신의 메인 페이즈 개시 시] 다음에 상대의 디지몬)
+    // v0.80.0
+    OpponentHandAddedCount80,       // 효과 하나로 상대의 패가 늘어났을 때 — 드로우 포함, 그 효과로 늘어난 장수 = GoldfishEngine.OppHandAddedCount80 (BT10-077 · 공식 Q&A BT10-077 Q1 · EX7-013 Q1)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
@@ -210,6 +212,8 @@ public enum Keyword
     CannotBeAttackedBySa61,            // ≪시큐리티 어택≫을 가진 상대의 디지몬은 이 디지몬에게 어택할 수 없다 (BT10-042)
     // v0.62.0
     NoIgnoreEvoRequirements62,         // 서로는 진화 조건을 무시할 수 없다 (BT8-059 — 공식 Q&A BT8-059 Q1: 서로의 플레이어에게)
+    // v0.80.0
+    AttachEndOfAttackToOnDeletion80,   // 이 디지몬의 【소멸 시】 효과 전부에 【어택 종료 시】를 추가 (BT16-015 — 어택 종료 시에도 【소멸 시】 효과가 유발)
 }
 
 /// <summary>지속 효과가 바꾸는 수치</summary>
@@ -397,6 +401,9 @@ public sealed class CardScript
 
     /// <summary>"(While ~,) cards from your trash may also be placed for this card's DigiXros" — 이 조건(자신의 필드)이면 트래시도 디지크로스 재료</summary>
     public Func<PlayerZones, bool>? XrosFromTrash { get; set; }
+
+    /// <summary>v0.80.0 BT7-112 테이머에서 진화하는 비용: 패 · 트래시의 조건 카드 Count장을 원하는 순서대로 덱 아래로 (없으면 null)</summary>
+    public (int Count, Func<CardData, bool> Match)? TamerEvoPlaceToDeck80 { get; set; }
 
     /// <summary>
     /// v0.77.0 "When you would play this card, by placing 1 [Shoutmon] as a digivolution card under this Digimon, reduce the cost by 1 and you may place cards in your trash as digivolution cards for a DigiXros"

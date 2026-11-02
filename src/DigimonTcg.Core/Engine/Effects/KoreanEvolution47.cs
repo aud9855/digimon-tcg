@@ -47,7 +47,7 @@ public static partial class KoreanEvolution47
     public static Parsed For(CardData evoCard)
     {
         if (evoCard.Type != CardType.Digimon) return Empty;
-        if (KoreanCardData.Get(evoCard.CardId) is not { } ko) return English48(evoCard);   // v0.48.0 한글 데이터가 없는 카드: 공식 영어 카드 리스트의 [Special Digivolution Condition]
+        if (KoreanCardData.Get(evoCard.CardId) is not { } ko || ko.MainFromEnglish80) return English48(evoCard);   // v0.48.0 한글 데이터가 없는 카드: 공식 영어 카드 리스트의 [Special Digivolution Condition] (v0.80.0 한글 문구가 그 카드의 것이 아닌 카드도 — EX9-062)
         string? text = ko.MainText;
         if (string.IsNullOrEmpty(text) || !text.Contains("〔진화〕", StringComparison.Ordinal)) return Empty;
         return Cache.GetOrAdd(text, Parse);
@@ -300,14 +300,14 @@ public static partial class KoreanEvolution47
     {
         string nx = Norm(x);
         if (KoName(c).Contains(nx, StringComparison.Ordinal)) return true;
-        if (KoreanCardData.Get(c.CardId) is { } ko)
+        if (KoreanCardData.Get(c.CardId) is { MainFromEnglish80: false } ko)   // v0.80.0 한글 메인 문구를 쓰지 않는 카드는 영어로
             return Norm(StripNotes(ko.MainText) + StripNotes(ko.SourceText)).Contains(nx, StringComparison.Ordinal);
         return EnglishNames(nx).Any(en => TargetSpec.TextHas(c, en));
     }
 
     private static bool KeywordWritten(CardData c, string k)
     {
-        if (KoreanCardData.Get(c.CardId) is { } ko)
+        if (KoreanCardData.Get(c.CardId) is { MainFromEnglish80: false } ko)
             return $"{StripNotes(ko.MainText)}{StripNotes(ko.SourceText)}".Contains($"《{k}》", StringComparison.Ordinal);
         string en = k switch { "세이브" => "Save", _ => k };
         return $"{c.EffectText}{c.InheritedEffectText}".Contains($"＜{en}＞", StringComparison.OrdinalIgnoreCase);

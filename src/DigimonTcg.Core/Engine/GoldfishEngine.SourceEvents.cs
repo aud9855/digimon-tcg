@@ -89,6 +89,8 @@ public partial class GoldfishEngine
                 // 뽑은 카드를 같은 효과로 곧 버려 패가 그대로여도 "패가 늘어났다" (공식 Q&A BT15-002 · BT15-026 · BT15-083) — v0.30.0
                 bool drew = DrawSerial.GetValueOrDefault(zones) != _sourceWatchDraws.GetValueOrDefault(zones);
                 if (addedToHand.Count == 0 && !drew) continue;
+                int added80 = Math.Max(addedToHand.Count, DrawSerial.GetValueOrDefault(zones) - _sourceWatchDraws.GetValueOrDefault(zones));   // v0.80.0 이 효과로 늘어난 장수 (BT10-077)
+                var first80 = addedToHand.Count > 0 ? addedToHand[0] : null;
                 var zonesOfHand = zones;
                 var firstAdded = addedToHand.Count > 0 ? addedToHand[0] : zones.Trash.LastOrDefault();
                 bool byDigimon = digimonAdds.Contains(zones);
@@ -101,6 +103,7 @@ public partial class GoldfishEngine
                     HandAddedByDigimonEffect = byDigimon;
                     try { FireForSide(EffectTrigger.AllyHandAddedByEffect, zonesOfHand, null, triggerCard: firstAdded); }
                     finally { HandAddedByDigimonEffect = outerKind; }
+                    FireOppHandAddedCount80(zonesOfHand, added80, first80);   // v0.80.0 BT10-077 (이 사건은 BT10-077만 본다)
                 });
             }
 

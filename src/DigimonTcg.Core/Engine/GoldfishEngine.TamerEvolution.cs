@@ -38,6 +38,7 @@ public partial class GoldfishEngine
     /// ("자신의 시큐리티가 3장 이하인 동안," · 테이머 아래 카드 장수)을 owner의 필드로 판단한다
     /// </summary>
     public int? TamerEvolutionCostFor(PlayerZones owner, CardData evoCard, CardData tamer) =>
+        !CanPayTamerEvoPlace80(owner, evoCard) ? null :   // v0.80.0 BT7-112 비용을 낼 수 없으면 테이머에서 진화할 수 없다
         CardScripts.TamerEvolutionCost(evoCard, tamer, new StaticContext { Engine = this, State = State, Owner = owner, Enemy = EnemyOf(owner), OwnersTurn = IsTurnOf(owner) });
 
     /// <summary>플레이어: 패의 evoCard로 자신의 테이머 tamer를 진화시킬 수 있는지 (메모리는 일반 진화처럼 상대 쪽으로 넘어가도 된다)</summary>
@@ -77,6 +78,7 @@ public partial class GoldfishEngine
     /// <summary>테이머 → 디지몬 (진화원 맨 아래가 테이머) + 진화 · 메모리 · 드로우. [진화 시]는 부른 쪽이 발휘한다</summary>
     private CardInstance EvolveTamerCore(PlayerZones owner, CardData tamer, CardData evoCard, int cost, out int paid)
     {
+        PayTamerEvoPlace80(owner, evoCard);   // v0.80.0 BT7-112 진화를 선언한 뒤 비용 (공식 Q&A BT7-112 Q1)
         bool enteredThisTurn = TamerEnteredThisTurn(owner, tamer);
         bool suspended = owner.SuspendedTamers.Remove(tamer);
         owner.Tamers.Remove(tamer);

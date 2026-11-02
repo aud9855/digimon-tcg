@@ -35,7 +35,8 @@ internal static partial class SentenceParser
     /// <summary>
     /// 조건을 잃으면 되돌릴지 — 대상 조건이 DP를 보거나 이 효과의 디지몬과 비교하면 처리 자체로 조건이 바뀔 수 있어 처음 판단 그대로 (나중에 나온 디지몬은 받는다)
     /// </summary>
-    private static bool Dynamic63(TargetSpec t) => t.ContextFilters.Count == 0 && !Regex.IsMatch(t.Text, @"\bDP\b|\bas (?:much|many|high)\b", RegexOptions.IgnoreCase);
+    private static bool Dynamic63(TargetSpec t) => (t.ContextFilters.Count == 0 || t.Dynamic80) &&   // v0.80.0 Dynamic80 (BT23-024 가장 등장 코스트가 높은 디지몬 이외)
+        !Regex.IsMatch(t.Text, @"\bDP\b|\bas (?:much|many|high)\b", RegexOptions.IgnoreCase);
 
     /// <summary>처리 전: 전체 처리면 대상 쪽 상태를 적어 둔다 (아니면 null)</summary>
     private static Dictionary<CardInstance, GoldfishEngine.Before63>? WholeBegin63(EffectContext c, TargetSpec t, Duration dur) =>

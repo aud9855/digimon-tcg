@@ -10,6 +10,25 @@
 
 ---
 
+## v0.80.0 — 2026-11-02
+미지원 문장 54차 묶음 + 한글 ↔ 영어 카드 대조 (종합 룰 Ver.4.3 · 공식 Q&A · 공식 영어 카드 리스트 · 한글 카드 이미지로 근거 확인) — 도감 효과 문장 지원 10,331 → 10,336 / 10,366 (99.7%, +5)
+- 모든 절이 동작하는 카드 4,284 → 4,289장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다
+- 한글 ↔ 영어 카드 대조 (공식 한글 데이터와 영어 데이터가 모두 있는 3,814장 — 종류 · Lv. · 색 · 등장 코스트 · DP · 이름 · 효과 시점 · 〔진화〕 조건): 같은 번호에 다른 카드가 붙은 경우는 0장. 지역 번호 차이도 없음 (한글에만 있는 번호는 토큰 5개). 한국 사이트 문구가 틀린 카드만 고쳤다 (카드 문구는 저장소에 넣지 않고 카드 번호만)
+  - 버그 수정 (동작이 바뀜): EX9-062 — 한국 사이트의 메인 문구가 다른 카드의 것 (〔진화〕 Lv.3 · 코스트 2 · 《트레이닝》 · 【어택 시】 — 한글 카드 이미지와 공식 영어는 〔진화〕 Lv.4 · 코스트 3 · 【등장 시】【진화 시】). 그 문구의 〔진화〕 조건으로 특징 「DM」 Lv.3에서 코스트 2로 진화할 수 있었다 → 이제 공식 영어 조건 (Lv.4 · 코스트 3), 메인 효과 표시는 생성 한글
+  - 버그 수정 (동작이 바뀜): BT19-053 — 한국 사이트 〔진화〕 조건의 Lv. 오타 (Lv.4 → 카드 이미지 · 공식 영어 Lv.5). 특징 「로얄 베이스」 Lv.4에서 진화할 수 있었다 → Lv.5에서만
+  - 표시 수정: EX1-029 (메인 문구 없음 · 하단 문구가 바뀐 메인 효과) · EX7-022 (〔진화〕 뒤가 잘림) · P-011 (메인 문구 = 진화원 효과) → 생성 한글. BT3-068 · BT17-001 ~ BT17-006 (한글 진화원 효과가 빠짐) → 생성 한글. EX3-004 (메인 문구 뒤에 진화원 효과를 한 번 더 적음) → 그 앞까지
+  - 안전장치: 데이터가 바뀌어 같은 번호의 카드 종류가 다르거나 Lv. · 등장 코스트 · DP 중 둘 이상이 다르면 그 카드의 한글 데이터를 쓰지 않는다 (지금은 0장 — 하나만 다른 것은 영어 API 수치 오류 · 한국 사이트 오타였다)
+- BT26-078 [트래시] "~ When any of your [Chronomon] text or [Titan] trait Digimon are played, if your opponent has 5 or more memory, by returning this card to the bottom of the deck, 1 of them gains ＜Rush＞ and ＜Execute＞ for the turn." — 등장한 디지몬 1마리 (BT23-072 "1 of the played Digimon"과 같은 처리, ≪에그제큐트≫ 종합 룰 16-38)
+- BT23-024 "~ by unsuspending it, other than their highest play cost Digimon, none of your opponent's Digimon can suspend until their turn ends." — 대상을 고르지 않는 전체 처리 (종합 룰 15-11-2-2 나중에 나온 디지몬도 · 15-11-2-3-2 · 15-11-2-3-3 조건은 그때그때): 그때 상대의 배틀 에어리어에서 등장 코스트가 가장 높은 디지몬(같으면 모두)만 레스트할 수 있다. 그 디지몬이 떠나면 다음으로 높은 디지몬이 레스트할 수 있게 된다. "it" = 이 디지몬
+- BT16-015 "[Your Turn] While [Phoenixmon] or [X Antibody] is in this Digimon's digivolution cards, attach [End of Attack] to all of this Digimon's [On Deletion] effects." — 어택이 끝났을 때 이 디지몬의 【소멸 시】 효과(메인 · 진화원)도 발휘, 조건이 있는 효과는 조건을 만족해야 (공식 Q&A BT16-015 Q1)
+- BT7-112 "By placing 10 Tamer cards and/or cards with the [Hybrid] trait from your hand and/or trash at the bottom of your deck in any order, you may digivolve this card from your hand onto one of your Tamers as if the Tamer is a level 6 Digimon." — 진화를 선언한 뒤 비용으로 10장을 덱 아래로 (공식 Q&A BT7-112 Q1), 진화 코스트는 Lv.6에서의 진화 코스트 7 (공식 영어 카드 리스트). 10장이 없으면 테이머에서 진화할 수 없다. 영어 · 한글 데이터는 같은 카드
+- BT10-077 "~ When an effect adds cards to your opponent's hand, by choosing and trashing 1 of this Digimon's digivolution cards, your opponent trashes cards from their hand equal to the number of cards added to their hand by the effect." — 효과 하나로 늘어난 장수 (드로우 포함, 동시에 유발한 다른 효과의 몫은 따로 — 공식 Q&A BT10-077 Q1 · EX7-013 Q1). 이 카드만 새 사건 ("효과로 상대의 패가 늘어났을 때")으로 — 같은 문구의 다른 카드 (BT11-028 · BT11-081 · EX4-015 등 13장)는 지금처럼 패로 되돌리기에만 반응 (바꾸려면 사용자 확인)
+- 디지크로스 집중 검사 (저장소에 넣지 않은 하네스): 디지크로스 카드 77장 × 100번 효과 등장 (패 · 트래시 · 코스트 지불/없음 · 플레이어/AI) 7,700번 중 디지크로스 2,971번 — 카드 수 · 중복 객체 · 코스트 감소(재료 장수 × N) 어긋남 0. 디지크로스 덱 시뮬레이션 1,500판 이상 없음
+- 테스트 18개 (EffectBatch80Tests), 전체 1,808개 통과 (KeywordTests · KoreanEffectRendererTests의 "읽지 못하는 문장" 예는 지원된 BT16-015 대신 EX9-062 어셈블리로)
+- 시뮬레이션 9,700판 (새 카드 · 영향 카드 1,500판 · 디지크로스 덱 1,500판 · 회귀 표본 5,200판 · 그 밖 1,500판) 예외 · 멈춤 · 카드 수 불일치 · 턴 상한 · 중복 객체 0 — 회귀 표본 승패는 e1 · m1 · tb가 v0.79.0과 같음, a1 2판 (표본 덱에 BT23-024) · ta 2판 (표본 덱에 BT19-053) 차이 · AI 벤치마크 (720판) 기존 AI 56.5% · 개선 AI 68.1% — 변화 없음 (벤치마크 추천 덱에 바뀐 카드가 없다)
+- 그대로 둔 것: 영어 API의 수치 · 문구 오류 (BT20-056 등장 코스트 0 → 공식 12 · BT23-036 DP 12 · BT23-010 DP 0 · BT6-066 [Your Turn] → 공식 [Opponent's Turn] 등) — 엔진 동작이 바뀌어 다음 묶음에서 사용자 확인. 사용자 결정 대기 문장은 53차 목록 그대로
+
+
 ## v0.79.0 — 2026-11-02
 미지원 문장 53차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A · 공식 카드 문구로 근거 확인) — 도감 효과 문장 지원 10,325 → 10,331 / 10,366 (99.7%, +6)
 - 모든 절이 동작하는 카드 4,278 → 4,284장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다
