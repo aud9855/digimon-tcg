@@ -421,6 +421,13 @@ public sealed class CardScriptDefinition
         return this;
     }
 
+    /// <summary>v0.84.0 어셈블리에서만 이 Lv.로도 취급 (어셈블리하는 카드의 영어 이름)</summary>
+    public CardScriptDefinition AsmLevelAlias84(string englishName, int level)
+    {
+        _script.AsmLevelAliases84.Add((englishName, level));
+        return this;
+    }
+
     /// <summary>이 조건이면 트래시의 카드도 이 카드의 디지크로스 재료</summary>
     public CardScriptDefinition XrosFromTrash(Func<PlayerZones, bool> condition)
     {

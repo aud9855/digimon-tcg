@@ -76,6 +76,8 @@ public partial class GoldfishEngine
         {
             (payCost, xros57) = PayXrosFieldCostOnEffectPlay78(owner, card, fieldCost78);   // v0.78.0 BT12-112 · BT21-030 효과로 등장할 때도 (종합 룰 7-2-2-13 · 7-2-3-1)
         }
+        if (Assembly84 && card.Type == CardType.Digimon && !card.IsDual && origin != PlayOrigin.Token && AssemblyOf84(card) != null)
+            payCost = EffectPlayAssembly84(owner, card, payCost);   // v0.84.0 효과로 등장시킬 때도 어셈블리 (종합 룰 7-3-2-10 · Q&A P-205 Q5397, 코스트 없이 등장해도)
         if (payCost is int cost)
         {
             AddMemory(owner, -cost);
@@ -89,6 +91,7 @@ public partial class GoldfishEngine
             if (_pendingXros57 != null) owner.Trash.AddRange(_pendingXros57);   // 놓지 못했으면 트래시로 되돌린다
             _pendingXros57 = null;
             DropPendingUnderByEffect78(owner);   // v0.78.0 놓지 못했으면 트래시로
+            DropPendingAsm84(owner);   // v0.84.0 놓지 못했으면 트래시로 (7-3-2-8)
         }
         return true;
     }

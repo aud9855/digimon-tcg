@@ -208,7 +208,7 @@ public static class KoreanCardData
                 string genSec = Generated(card, inherited: true);
                 return genSec.Length == 0 ? genMain : genMain.Length == 0 ? genSec : genMain + "\n" + genSec;
             }
-            return Generated(card, inherited: false);
+            return WithAssembly84(card, Generated(card, inherited: false));
         }
         string main = ko.MainFromEnglish80 ? Generated(card, inherited: false) : Clean(ko.MainText);   // v0.80.0 한글 문구가 그 카드의 것이 아니면 생성 한글
         if (card.Type is CardType.Tamer or CardType.Option)
@@ -219,8 +219,12 @@ public static class KoreanCardData
                 sec = Generated(card, inherited: true);
             return sec.Length == 0 ? main : main.Length == 0 ? sec : main + "\n" + sec;
         }
-        return main;
+        return WithAssembly84(card, main);
     }
+
+    /// <summary>v0.84.0 어셈블리 조건 (공식 영어 카드 리스트 [Special Play Condition] — 영어 API · 한국 사이트 문구에 없다)을 효과 아래 줄에</summary>
+    private static string WithAssembly84(CardData card, string text) =>
+        card.Type == CardType.Digimon && Engine.GoldfishEngine.AssemblyDisplayKo84(card) is { } a ? (text.Length == 0 ? a : text + "\n" + a) : text;
 
     public static string DisplayInheritedEffectText(CardData card)
     {

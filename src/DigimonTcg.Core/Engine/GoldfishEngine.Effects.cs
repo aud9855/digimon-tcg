@@ -1430,6 +1430,11 @@ public partial class GoldfishEngine
             _xrosByEffect57[inst] = (card, xros57.Count, State.TurnSequence);
             _pendingXros57 = null;
         }
+        if (_pendingAsm84 is { } asm84)   // v0.84.0 효과 등장의 어셈블리 카드
+        {
+            PlaceAsm84(inst, asm84);
+            _pendingAsm84 = null;
+        }
         if (_pendingUnderByEffect78 is { } under78)   // v0.78.0 BT12-112 · BT21-030 등장할 때 효과로 놓은 「샤우트몬」 (디지크로스 재료 아래)
         {
             foreach (var x in under78) inst.AddBottomSource(x);

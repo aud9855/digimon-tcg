@@ -399,6 +399,9 @@ public sealed class CardScript
     /// <summary>디지크로스에서만 이 이름으로도 취급 ("This card is also treated as [Shoutmon] for a DigiXros") — 영어 이름</summary>
     public List<string> XrosAliases { get; } = new();
 
+    /// <summary>v0.84.0 어셈블리에서만 이 Lv.로도 취급 (EX9-062 "This card is also treated as level 4 for [Kimeramon]'s assembly") — 어셈블리하는 카드의 영어 이름 · Lv.</summary>
+    public List<(string Name, int Level)> AsmLevelAliases84 { get; } = new();
+
     /// <summary>"(While ~,) cards from your trash may also be placed for this card's DigiXros" — 이 조건(자신의 필드)이면 트래시도 디지크로스 재료</summary>
     public Func<PlayerZones, bool>? XrosFromTrash { get; set; }
 

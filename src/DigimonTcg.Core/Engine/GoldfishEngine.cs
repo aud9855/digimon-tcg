@@ -548,6 +548,8 @@ public partial class GoldfishEngine
         int fieldCost77 = TakeXrosFieldCostReduce77();   // v0.77.0 BT12-112 · BT21-030 (막혀도 비운다)
         int cost = Math.Max(0, CardScripts.EffectivePlayCost(State.Player, card, State.DummyOpponent) - (PlayCostReductionBlocked(State.Player, card) ? 0 : XrosReduction(card, xros.Count) + fieldCost77));   // v0.77.0 BT12-112 · BT21-030   // 카드의 코스트 감소 효과 반영 (v0.36.0 마이너스할 수 없으면 디지크로스도)
         cost = ApplyPlayCostOptions(State.Player, card, cost);   // "by ~ing, reduce the play cost" — 비용을 낼지 묻는다
+        var asm84 = card.Type == CardType.Digimon && !card.IsDual ? TakeAssembly84(State.Player, card, paying: true, cost) : (Taken: new List<CardData>(), Reduce: 0);   // v0.84.0 어셈블리 — 등장할 때 효과 다음, 코스트 지불 직전 (종합 룰 7-3-2-2 · 7-3-3-2)
+        cost -= asm84.Reduce;
         State.MemoryGauge -= cost;
         State.TotalMemorySpent += cost;
         if (card.Type != CardType.Digimon || card.IsDual) DropPendingUnderPlayed(State.Player);
@@ -558,6 +560,7 @@ public partial class GoldfishEngine
         {
             var instance = new CardInstance(card, State.CurrentTurn);
             PlaceXrosMaterials(instance, xros);
+            PlaceAsm84(instance, asm84.Taken);   // v0.84.0
             PlacePendingUnderPlayed(instance);   // v0.34.0 "by placing ~ under it, reduce the play cost"
             State.Player.BattleArea.Add(instance);
             RecalculateFieldBuffs();
@@ -1862,8 +1865,11 @@ public partial class GoldfishEngine
         int fieldCost77 = TakeXrosFieldCostReduce77();   // v0.77.0 BT12-112 · BT21-030 (막혀도 비운다)
         int cost = Math.Max(0, CardScripts.EffectivePlayCost(opp, card, State.Player) - (PlayCostReductionBlocked(opp, card) ? 0 : XrosReduction(card, xros.Count) + fieldCost77));   // v0.77.0 BT12-112 · BT21-030   // v0.36.0
         cost = ApplyPlayCostOptions(opp, card, cost);
+        var asm84 = TakeAssembly84(opp, card, paying: true, cost);   // v0.84.0 어셈블리 (코스트 지불 직전)
+        cost -= asm84.Reduce;
         var summoned = new CardInstance(card, State.CurrentTurn) { IsOwnersTurn = true };
         PlaceXrosMaterials(summoned, xros);
+        PlaceAsm84(summoned, asm84.Taken);   // v0.84.0
         PlacePendingUnderPlayed(summoned);   // v0.34.0
         opp.BattleArea.Add(summoned);
         ctx.Memory -= cost;

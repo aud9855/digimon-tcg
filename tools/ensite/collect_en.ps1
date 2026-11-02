@@ -53,6 +53,13 @@ function DnaLines([string]$part) {
   }
   return $dna
 }
+# v0.84.0 [Special Play Condition] 의 "Assembly -N: ~" 줄 (어셈블리 조건 — 종합 룰 2-3-10 · 7-3. 엔진: GoldfishEngine.Assembly84)
+function AssemblyLine([string]$part) {
+  foreach ($m in [regex]::Matches($part, 'cardInfoTitSmall">\[Special Play Condition\]</dt>\s*<dd[^>]*>([\s\S]*?)</dd>')) {
+    foreach ($line in ((Clean $m.Groups[1].Value) -split "`n")) { if ($line.StartsWith("Assembly")) { return $line } }
+  }
+  return $null
+}
 function Clean([string]$s) {
   $s = [regex]::Replace($s, '<br\s*/?>', "`n")
   $s = [regex]::Replace($s, '<[^>]+>', ' ')
@@ -68,6 +75,7 @@ foreach ($f in (Get-ChildItem $PageDir -Filter "c*.html" | Sort-Object Name)) {
     $id = ($idm.Groups[1].Value -replace '_P\d+$', '').Trim()
     if ($cards.Contains($id)) {
       if ($cards[$id].Dna.Count -eq 0) { $cards[$id].Dna = @(DnaLines $part) }   # 조그레스 조건 줄은 재수록 페이지에만 있는 것도 있다
+      if (-not $cards[$id].Assembly) { $cards[$id].Assembly = AssemblyLine $part }   # v0.84.0 어셈블리 조건도
       continue
     }   # 먼저 나온 카테고리(부스터 · 스타터)가 기준 — 프로모 재수록 페이지는 진화 조건 칸이 빠진 것이 있다
     $evo = @()
@@ -100,7 +108,8 @@ foreach ($f in (Get-ChildItem $PageDir -Filter "c*.html" | Sort-Object Name)) {
       Colors = @($(if ($colM.Success) { [regex]::Matches($colM.Groups[1].Value, "cardColor_([a-z]+)") | ForEach-Object { $_.Groups[1].Value } }))
       PlayCost = $(if ($costM.Success) { [int]$costM.Groups[1].Value } else { $null })
       DP = $(if ($dpM.Success) { [int]$dpM.Groups[1].Value } else { $null })
-      Form = $(if ($formM.Success) { Clean $formM.Groups[1].Value } else { $null }) }
+      Form = $(if ($formM.Success) { Clean $formM.Groups[1].Value } else { $null })
+      Assembly = AssemblyLine $part }
   }
 }
 $out = Join-Path $EnDir "card_rules.json"

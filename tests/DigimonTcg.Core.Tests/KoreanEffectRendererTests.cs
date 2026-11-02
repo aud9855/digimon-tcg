@@ -72,13 +72,13 @@ public class KoreanEffectRendererTests
         var card = new CardData
         {
             CardId = "KO-MIXED", Name = "KO-MIXED", Type = CardType.Digimon, Color = CardColor.Red, Level = 5, DP = 7000,
-            EffectText = "[On Play] Gain 1 memory.\nThis card is also treated as level 4 for [Kimeramon]'s assembly.",
+            EffectText = "[On Play] Gain 1 memory.\n[All Turns] [Once Per Turn] When any of your opponent's Digimon or Tamers digivolve or effects place cards under them, by trashing any 2 of this Digimon's digivolution cards, trash your opponent's top security card.",
         };
         var lines = KoreanEffectRenderer.Render(card, inherited: false)!.Split('\n');
         Assert.Equal("【등장 시】 메모리를 +1 한다.", lines[0]);
         Assert.StartsWith(KoreanEffectRenderer.UntranslatedMark, lines[1]);
-        Assert.Contains("[Kimeramon]'s assembly", lines[1]);   // v0.80.0 앞의 예(BT16-015 "attach [End of Attack]")는 지원됨
-        Assert.Null(KoreanEffectRenderer.RenderClause("This card is also treated as level 4 for [Kimeramon]'s assembly."));
+        Assert.Contains("effects place cards under them", lines[1]);   // v0.84.0 앞의 예(EX9-062 어셈블리)는 지원됨 · v0.80.0 앞의 예(BT16-015 "attach [End of Attack]")는 지원됨
+        Assert.Null(KoreanEffectRenderer.RenderClause("[All Turns] [Once Per Turn] When any of your opponent's Digimon or Tamers digivolve or effects place cards under them, by trashing any 2 of this Digimon's digivolution cards, trash your opponent's top security card."));
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class KoreanEffectRendererTests
             Assert.Equal(builtIn.EffectText, builtIn.DisplayEffectText);
 
             // 번역할 수 없는 문장뿐이면 영어 원문
-            var english = new CardData { CardId = "KO-ENGLISH", Name = "KO-ENGLISH", Type = CardType.Digimon, EffectText = "This card is also treated as level 4 for [Kimeramon]'s assembly." };
+            var english = new CardData { CardId = "KO-ENGLISH", Name = "KO-ENGLISH", Type = CardType.Digimon, EffectText = "[All Turns] [Once Per Turn] When any of your opponent's Digimon or Tamers digivolve or effects place cards under them, by trashing any 2 of this Digimon's digivolution cards, trash your opponent's top security card." };   // v0.84.0 앞의 예(EX9-062 어셈블리)는 지원됨
             Assert.Equal(english.EffectText, english.DisplayEffectText);
         }
         finally

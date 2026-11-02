@@ -272,6 +272,7 @@ public sealed class SmartAiPolicy : IAiPolicy
         foreach (var card in ai.Hand.Where(c => c.Type == CardType.Digimon && !c.IsDual && !EffectRules.PlayDpBlocked(state, ai, c)).Distinct())   // 듀얼 카드는 등장하지 않는다
         {
             int cost = engine.PreviewPlayCostWithOptions(ai, card);   // "비용을 내면 -N" 선택형 감소까지 (엔진이 AI 등장 때 추천대로 내는 것과 같은 기준)
+            cost = Math.Max(0, cost - engine.PreviewAssemblyReduction84(ai, card));   // v0.84.0 어셈블리 (트래시의 카드로 조건을 채울 수 있으면 엔진이 AI 등장 때 한다)
             if (cost > memory + MaxMemoryHandOver)
                 continue;
             bool canGrow = ai.Hand.Any(h => h.Type == CardType.Digimon && h.EvoRequirementLevel == card.Level && h.EvoRequirementColor == card.Color);

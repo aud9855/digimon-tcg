@@ -33,6 +33,9 @@ public sealed class EnglishCardRule
 
     // v0.82.0 형태 (Form — "Mega" · "Stnd./Appmon") — 영어 API 특징에 형태가 빠진 카드를 채운다 (Data.OfficialCardData82)
     public string? Form { get; set; }
+
+    // v0.84.0 어셈블리 조건 ([Special Play Condition] 의 "Assembly -6: 4 [Negamon]" 줄 — 종합 룰 2-3-10 · 7-3). 없으면 null (엔진: GoldfishEngine.Assembly84)
+    public string? Assembly { get; set; }
 }
 
 /// <summary>
