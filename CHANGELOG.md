@@ -10,6 +10,26 @@
 
 ---
 
+## v0.79.0 — 2026-11-02
+미지원 문장 53차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A · 공식 카드 문구로 근거 확인) — 도감 효과 문장 지원 10,325 → 10,331 / 10,366 (99.7%, +6)
+- 모든 절이 동작하는 카드 4,278 → 4,284장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다
+- 규칙 수정 (동작이 바뀜) — 효과로 등장할 때의 디지크로스를 모든 디지크로스 카드에 (종합 룰 7-2-2-13 "효과로 디지크로스 조건을 가진 디지몬 카드를 등장시킬 때도, 디지크로스할 수 있습니다" · 7-2-3-3 "등장 코스트를 지불하는 경우, 증감된 후의 등장 코스트를 지불" — 코스트 없이 등장해도 디지크로스할 수 있다 · 공식 Q&A P-098 Q1 · BT11-076 Q1)
+  - 전에는 BT10-104 (트래시의 카드만) · BT12-112 · BT21-030 (코스트를 내는 효과 등장)만 디지크로스했다. 이제 디지크로스 조건(공식 한글 문구)을 가진 디지몬 카드가 효과로 등장하면 (코스트를 내든 내지 않든, 패 · 트래시 · 진화원 · 테이머 아래 · 오픈한 카드 어디서든) 등장 코스트 지불 직전에 디지크로스를 선언할 수 있다
+  - 재료는 패 · 배틀 에어리어 (7-2-3-2), 트래시 · 테이머 아래는 그것을 허락하는 효과가 있을 때만 (BT10-104 · BT11-086 · BT17-057 · BT18-065 · 테이머 효과). 등장할 때 효과(BT12-112 · BT21-030)를 먼저 (7-2-3-1). 강제가 아니다 (7-2-2-12)
+  - 플레이어: 후보가 있으면 "효과로 등장하는 [카드]를 디지크로스할까요?"를 한 번 묻고 칸마다 고른다. AI: 코스트를 내면 보통 등장처럼 패의 카드로 코스트를 줄이고, 코스트 없이면 패 · 필드의 카드는 "디지크로스했다면" 효과가 있는 카드일 때만 쓴다 (트래시 · 테이머 아래는 언제나), 트래시 · 테이머 아래 → 패 → 필드 순
+  - 코스트 없이 등장할 때도 디지크로스했다면 【등장 시】 "디지크로스했다면" · 진화원 효과가 발휘된다 (P-098 Q1 · BT11-076 Q1)
+  - BT10-104는 트래시의 카드에 더해 패 · 배틀 에어리어의 카드도 디지크로스에 쓸 수 있다 (7-2-3-2)
+  - BT12-112 · BT21-030이 코스트 없이 효과로 등장할 때도 「샤우트몬」을 놓는 효과를 고를 수 있다 (코스트 감소는 의미가 없고 트래시의 카드만 열린다 — 추천은 아니오. 52차에서는 묻지 않았다)
+- 버그 수정 (로그만): EX13-076 등 "그 후, 이 디지몬을 액티브로 할 수 있다"가 이미 액티브일 때 "대상이 없습니다"로 남아 【배틀에서 이겼을 때】가 두 번 발휘한 것처럼 보였다 — 효과는 한 번만 발휘했다. 이제 "[X]은(는) 이미 액티브 상태입니다" ("Unsuspend ~" · "Suspend ~" 동작 공통)
+- EX5-058 "If there are 4 or more total Digimon, play 1 [Fujitsumon] Token suspended to your battle area. (~) If there are 3 or fewer, play it suspended to your opponent's battle area." — 처리할 때 서로의 배틀 에어리어의 디지몬 합계로 놓을 쪽을 정한다. 상대의 배틀 에어리어에 놓인 토큰은 상대의 디지몬 (공식 Q&A EX5-058 Q1). 토큰 효과 "[All Turns] This Digimon doesn't unsuspend" — 효과로도 액티브가 되지 않는다. 토큰 이름 「후지쓰몬」
+- BT23-013 "~ 1 [Atho, René & Por] Token (~) or, from your hand or trash, 1 Digimon card with [Sistermon] in its name ~. This effect can't play cards with the same names as any of your Digimon." — 토큰 1마리 또는 카드 1장 중 하나, 자신의 디지몬(토큰 포함)과 같은 명칭은 고를 수 없다
+- BT19-091 "~ This effect can't play tokens with the same names as your Digimon. Then, 1 of your level 5 Digimon gains ＜Alliance＞ twice for the turn and attacks." — 같은 명칭의 토큰은 빼고 등장, ≪연계≫ 2개 = 어택했을 때 ≪연계≫를 2번 (다른 디지몬 1마리씩)
+- BT26-086 "link up to 7 [Appmon] trait cards with different names from this Digimon's digivolution cards" — 명칭이 서로 다른 카드만
+- BT20-098 "By returning 9 levels' total worth of Digimon cards from your opponent's trash to the bottom of the deck, you may play 1 [Ghost] trait Digimon card of each returned card's level ~" — Lv. 합계가 정확히 9 (공식 Q&A BT20-098 Q1 — 8 이하는 안 되고 일부만 실행할 수 없다), 되돌린 카드의 Lv.마다 1장 (같은 Lv.을 여러 장 되돌려도 그 Lv.은 1장 — 사용자 확인 대상)
+- BT10-041 "use 1 Option card with [Plug-In] in its name or that's yellow and has a memory cost of 5 or less ~. Place the Option card used with this effect on top of your security stack face down instead of placing it in your trash." — 색 조건 무시 · 코스트 없이 사용, 사용 뒤 트래시 대신 시큐리티 맨 위에 뒷면으로 (시큐리티에 놓을 수 없으면 트래시 — 공식 Q&A BT10-041 Q1)
+- 그대로 둔 것: BT27-070 · BT27-084는 공식 영어 카드 리스트에 BT-27이 아직 없어 그대로 (EX-13 · BT-26까지). EX9-062 어셈블리 — 카드 데이터(영어 API · 공식 한글)에 어셈블리 조건이 없어 그대로. 큰 모델 변경 남음: BT10-077 (효과 하나로 늘어난 패 매수) · BT26-078 ([트래시] ≪처형≫ 부여) · BT7-112 (테이머를 Lv.6으로 진화) · BT16-015 · BT23-024 (메타 · 가장 높은 코스트 제외 지속)
+- 테스트 13개 (EffectBatch79Tests), 전체 1,790개 통과 (EffectBatch78Tests의 BT12-112 코스트 없는 등장 테스트는 바뀐 동작으로) · 시뮬레이션 7,500판 (새 카드 · 영향 카드 1,500판 + 800판 · 회귀 표본 5,200판) 예외 · 멈춤 · 카드 수 불일치 · 턴 상한 · 중복 객체 0 — 회귀 표본 승패는 v0.78.0과 같음 (e1만 1판 차이 — 표본 덱에 BT23-013이 있다) · AI 벤치마크 (720판) 기존 AI 56.5% · 개선 AI 68.1% — 변화 없음 (벤치마크 추천 덱에 효과로 디지크로스 카드를 등장시키는 카드가 없다)
+
 ## v0.78.0 — 2026-11-02
 미지원 문장 52차 묶음 (종합 룰 Ver.4.3 · 공식 Q&A · 공식 카드 문구로 근거 확인) — 도감 효과 문장 지원 10,321 → 10,325 / 10,366 (99.6%, +4)
 - 모든 절이 동작하는 카드 4,274 → 4,278장 (수정 전 지원되던 문장 중 깨진 것 0, 한글이 바뀐 것 0). 새로 지원한 문장 모두 생성 한글이 붙는다

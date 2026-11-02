@@ -63,7 +63,11 @@ public partial class GoldfishEngine
         if (toBreeding)
             return PlayToBreeding(owner, card);
         List<CardData>? xros57 = null;
-        if (payCost is int xrosCost && EffectXrosFromTrash57 > 0 && origin == PlayOrigin.Trash && card.Type == CardType.Digimon && !card.IsDual && DigiXrosOf(card) is { } req57)
+        if (EffectPlayXros79 && card.Type == CardType.Digimon && !card.IsDual && origin != PlayOrigin.Token && DigiXrosOf(card) != null)
+        {
+            (payCost, xros57) = EffectPlayDigiXros79(owner, card, payCost);   // v0.79.0 모든 디지크로스 카드 — 효과로 등장시킬 때도 디지크로스 (종합 룰 7-2-2-13 · 7-2-3-3, 코스트 없이 등장해도)
+        }
+        else if (payCost is int xrosCost && EffectXrosFromTrash57 > 0 && origin == PlayOrigin.Trash && card.Type == CardType.Digimon && !card.IsDual && DigiXrosOf(card) is { } req57)
         {
             xros57 = TakeXrosFromTrash57(owner, card, req57);   // v0.57.0 트래시의 카드로 디지크로스 (BT10-104)
             if (xros57.Count > 0 && !PlayCostReductionBlocked(owner, card)) payCost = Math.Max(0, xrosCost - req57.Reduction * xros57.Count);

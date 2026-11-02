@@ -123,8 +123,9 @@ public class EffectBatch78Tests
         });
     }
 
+    // v0.79.0 코스트 없이 효과로 등장해도 "등장할 때" 효과와 디지크로스를 할 수 있다 (종합 룰 7-2-2-13 · 7-2-3-3 — 53차 묶음). 플레이어가 고르면 「샤우트몬」을 아래에 놓는다 (추천은 아니오)
     [Fact]
-    public void X7_FreeEffectPlay_DoesNotAskShoutmon()
+    public void X7_FreeEffectPlay_ShoutmonOptional79()
     {
         string id = Uid("B78-X7F-");
         WithKoreanCards(new[] { new KoreanCard { CardId = id, Name = "테스트X7F", MainText = "디지크로스 -2:「테스트에이F」" } }, () =>
@@ -135,8 +136,8 @@ public class EffectBatch78Tests
             var shout = Put(state.Player, Digimon("B78-SHOUTF", 3, name: "Shoutmon"));
             state.Player.Trash.Add(x7);
             Assert.True(engine.TryPlayByEffect(state.Player, x7, PlayOrigin.Trash, () => state.Player.Trash.Remove(x7)));
-            Assert.Contains(shout, state.Player.BattleArea);
-            Assert.Equal(2, state.Player.BattleArea.Count);
+            Assert.DoesNotContain(shout, state.Player.BattleArea);
+            Assert.Contains(shout.TopCard, Assert.Single(state.Player.BattleArea).EvolutionSources);
             Assert.Equal(4, state.MemoryGauge);
         });
     }

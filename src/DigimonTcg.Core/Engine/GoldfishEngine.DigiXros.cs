@@ -50,18 +50,18 @@ public partial class GoldfishEngine
     /// 패에서 card를 등장시키기 전에 디지크로스 재료를 고르고 떼어 낸다 (아직 아래에 놓지 않음). 반환: 고른 재료(위 → 아래)
     /// 플레이어는 칸마다 고른다(추천 = 패의 카드). AI · 선택 창이 없으면 패의 카드만 쓴다 (필드의 디지몬은 남긴다).
     /// </summary>
-    private List<CardData> TakeXrosMaterials(PlayerZones owner, CardData card)
+    private List<CardData> TakeXrosMaterials(PlayerZones owner, CardData card, XrosEffectPlay79? effectPlay = null)   // v0.79.0 effectPlay: 효과 등장의 디지크로스 (종합 룰 7-2-2-13)
     {
         var req = DigiXrosOf(card);
         var taken = new List<CardData>();
         if (req == null) return taken;
         bool ask = ShouldAskPlayer(owner);
-        bool trash77 = PayXrosFieldCost77(owner, card, req);   // v0.77.0 BT12-112 · BT21-030 등장할 때 효과가 먼저 (종합 룰 7-2-2-2)
+        bool trash77 = PayXrosFieldCost77(owner, card, req, free79: effectPlay is { Paying: false });   // v0.77.0 BT12-112 · BT21-030 등장할 때 효과가 먼저 (종합 룰 7-2-2-2)
         var pool = new List<XrosCandidate>();
         pool.AddRange(owner.Hand.Where(c => c.Type == CardType.Digimon).Select(c => new XrosCandidate(c, null, owner.Hand)));
         if (ask) pool.AddRange(owner.BattleArea.Where(d => !IsToken(d.TopCard)).Select(d => new XrosCandidate(d.TopCard, d, null)));
         else pool.AddRange(owner.BattleArea.Where(d => !IsToken(d.TopCard) && IsXrosSubstitute77(owner, d)).Select(d => new XrosCandidate(d.TopCard, d, null)));   // v0.77.0 BT10-111 — AI는 패의 카드로 채우지 못한 칸만 (패 다음 후보)
-        if (CardScripts.For(card)?.XrosFromTrash is { } fromTrash && fromTrash(owner) || trash77)   // v0.77.0 trash77
+        if (CardScripts.For(card)?.XrosFromTrash is { } fromTrash && fromTrash(owner) || trash77 || effectPlay is { Trash: true })   // v0.77.0 trash77 · v0.79.0 BT10-104 효과 등장의 트래시
             pool.AddRange(owner.Trash.Where(c => c.Type == CardType.Digimon).Select(c => new XrosCandidate(c, null, owner.Trash)));
         // 테이머: "by suspending this Tamer, you may place cards from under your Tamers as digivolution cards for a DigiXros"
         var underTamer = owner.Tamers.Distinct().FirstOrDefault(t => owner.HasActiveTamer(t) && CardScripts.For(t)?.XrosUnderTamersFor is { } f && f(card));
@@ -89,6 +89,7 @@ public partial class GoldfishEngine
             }
         }
         bool GroupFull54(XrosCandidate p, List<XrosCandidate> already) => p.Group54 != null && already.Any(x => x.Group54 == p.Group54);
+        if (effectPlay != null && !GateEffectPlayXros79(owner, card, req, pool, effectPlay, ask)) return taken;   // v0.79.0 효과 등장: 후보 정리 · 할지 묻는다 (7-2-2-12 강제가 아니다)
 
         var used = new HashSet<XrosCandidate>();
         var picked = new List<XrosCandidate>();

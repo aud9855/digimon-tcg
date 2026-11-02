@@ -47,7 +47,7 @@ public partial class GoldfishEngine
     /// BT12-112 · BT21-030: 등장할 때 효과 (디지크로스 선언보다 먼저 — 종합 룰 7-2-2-2). 배틀 에어리어의 그 이름 디지몬 1마리(맨 위 카드)를 이 카드 아래에 놓으면
     /// (진화원 · 링크는 트래시 — 4-7-7 · 4-7-8, 공식 Q&amp;A BT12-112 Q1 배틀 에어리어의 것만) 코스트 -N, 트래시의 카드도 디지크로스 재료. 반환: 트래시를 열었는지
     /// </summary>
-    private bool PayXrosFieldCost77(PlayerZones owner, CardData card, XrosRequirement req)
+    private bool PayXrosFieldCost77(PlayerZones owner, CardData card, XrosRequirement req, bool free79 = false)   // v0.79.0 free79: 코스트 없이 효과로 등장 (코스트 감소는 의미 없고 트래시만 열린다)
     {
         _xrosFieldCostReduce77 = 0;
         if (CardScripts.For(card)?.XrosFieldCost77 is not { } fc) return false;
@@ -55,9 +55,9 @@ public partial class GoldfishEngine
         if (pool.Count == 0) return false;
         // 추천: 플레이어는 예, AI는 트래시에 디지크로스 재료가 2장 이상일 때 (필드의 디지몬을 잃는다)
         int trashMats = owner.Trash.Count(c => c.Type == CardType.Digimon && req.Slots.Any(s => s.Match(c)));
-        bool rec = ShouldAskPlayer(owner) || trashMats >= 2;
+        bool rec = !free79 && (ShouldAskPlayer(owner) || trashMats >= 2);   // v0.79.0 코스트 없이 등장하면 필드의 디지몬만 잃으므로 추천하지 않는다
         string names = string.Join("/", fc.Names);
-        if (!AskYesNo(owner, null, $"[{card.Name}] 자신의 [{names}] 1마리를 이 카드 아래에 놓아 등장 코스트 -{fc.Reduce}, 트래시의 카드도 디지크로스에 쓸까요? (그 디지몬의 진화원은 트래시)", rec))
+        if (!AskYesNo(owner, null, $"[{card.Name}] 자신의 [{names}] 1마리를 이 카드 아래에 놓아 등장 코스트 -{fc.Reduce}, 트래시의 카드도 디지크로스에 쓸까요? (그 디지몬의 진화원은 트래시{(free79 ? " · 코스트 없이 등장하므로 코스트 감소는 없음" : "")})", rec))
             return false;
         var ranked = pool.OrderBy(d => d.EvolutionSources.Count).ThenBy(d => d.GetCurrentDP()).ToList();
         var pick = ranked.Count == 1 ? ranked[0]

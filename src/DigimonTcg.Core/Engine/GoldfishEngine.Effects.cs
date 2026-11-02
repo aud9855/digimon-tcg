@@ -1004,7 +1004,7 @@ public partial class GoldfishEngine
         if (!owner.BattleArea.Contains(attacker))
             return null;
 
-        if (CardScripts.HasKeyword(attacker, Keyword.Alliance))
+        for (int alliance79 = AllianceTimes79(attacker); alliance79 > 0 && owner.BattleArea.Contains(attacker); alliance79--)   // v0.79.0 ≪연계≫ 2개면 2번 (BT19-091 — GoldfishEngine.Batch79)
         {
             var options = owner.BattleArea.Where(d => !ReferenceEquals(d, attacker) && !d.IsSuspended).ToList();
             if (options.Count > 0)
@@ -2410,6 +2410,7 @@ public partial class GoldfishEngine
         else if (optionCtx.ThisCardMoved) { }   // v0.37.0 "place this card as the bottom digivolution card of ~" — 진화원이 되었다
         else if (optionCtx.ThisCardToSecurityTop is bool secTop && !SecurityAddBlocked65(owner)) PlaceSecurityFaceUp(owner, optionCard, secTop);   // "place this card face up as the bottom security card" · v0.65.0 BT9-103이면 트래시 (공식 Q&A BT10-041 Q1)
         else if (optionCtx.PlaceInBattleArea) PlaceOption(owner, optionCard);
+        else if (PlaceUsedOptionOnSecurity79(owner, optionCard)) { }   // v0.79.0 BT10-041 트래시 대신 시큐리티 맨 위에 뒷면으로 (GoldfishEngine.Batch79)
         else owner.Trash.Add(optionCard);
         // "When you use an Option card" / "When a player uses an Option card"
         Defer54(() =>   // v0.55.0 효과로 사용한 옵션이면 그 효과가 끝난 뒤
