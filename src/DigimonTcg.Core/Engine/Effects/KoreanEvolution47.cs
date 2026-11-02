@@ -49,7 +49,9 @@ public static partial class KoreanEvolution47
         if (evoCard.Type != CardType.Digimon) return Empty;
         if (KoreanCardData.Get(evoCard.CardId) is not { } ko || ko.MainFromEnglish80) return English48(evoCard);   // v0.48.0 한글 데이터가 없는 카드: 공식 영어 카드 리스트의 [Special Digivolution Condition] (v0.80.0 한글 문구가 그 카드의 것이 아닌 카드도 — EX9-062)
         string? text = ko.MainText;
-        if (string.IsNullOrEmpty(text) || !text.Contains("〔진화〕", StringComparison.Ordinal)) return Empty;
+        if (string.IsNullOrEmpty(text)) return Empty;
+        text = OldNotationToNew81(text);   // v0.81.0 옛 표기 "진화:「X」에서 N" (KoreanEvolution47.Old81.cs)
+        if (!text.Contains("〔진화〕", StringComparison.Ordinal)) return Empty;
         return Cache.GetOrAdd(text, Parse);
     }
 

@@ -103,7 +103,7 @@ public partial class GoldfishEngine
                     HandAddedByDigimonEffect = byDigimon;
                     try { FireForSide(EffectTrigger.AllyHandAddedByEffect, zonesOfHand, null, triggerCard: firstAdded); }
                     finally { HandAddedByDigimonEffect = outerKind; }
-                    FireOppHandAddedCount80(zonesOfHand, added80, first80);   // v0.80.0 BT10-077 (이 사건은 BT10-077만 본다)
+                    FireOppHandAddedCount80(zonesOfHand, added80, first80);   // v0.80.0 BT10-077 · v0.81.0 "When an effect adds cards to your opponent's hand" 카드 전부
                 });
             }
 

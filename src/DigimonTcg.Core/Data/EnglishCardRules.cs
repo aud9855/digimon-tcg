@@ -16,13 +16,20 @@ public sealed class EnglishEvoCost
     public string From { get; set; } = string.Empty;
 }
 
-/// <summary>공식 영어 카드 리스트의 카드 1장 (진화 조건만)</summary>
+/// <summary>공식 영어 카드 리스트의 카드 1장 (진화 조건 · v0.81.0 카드 수치)</summary>
 public sealed class EnglishCardRule
 {
     public string CardId { get; set; } = string.Empty;
     public List<EnglishEvoCost> Evo { get; set; } = new();
     public List<string> SpecialDigivolve { get; set; } = new();   // [Special Digivolution Condition] 의 "[Digivolve] ~: Cost N" 줄
     public List<string> Dna { get; set; } = new();                // v0.72.0 [Special Digivolution Condition] 의 "[DNA Digivolve] ~" 줄 (조그레스 조건)
+
+    // v0.81.0 카드 수치 — 영어 API 수치가 틀린 카드를 고칠 때만 쓴다 (Data.OfficialCardData81). 칸이 없거나 숫자가 아니면 null
+    public string? CardType { get; set; }                         // Digi-Egg · Digimon · Tamer · Option
+    public int? Lv { get; set; }
+    public List<string>? Colors { get; set; }
+    public int? PlayCost { get; set; }                            // 등장 코스트 · 사용 코스트
+    public int? DP { get; set; }
 }
 
 /// <summary>

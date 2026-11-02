@@ -95,6 +95,7 @@ public class CardCatalogService
                         merged[def.CardId] = def;
                     }
                     _catalog = merged.Values.OrderBy(c => c.CardId).ToList();
+                    ApplyOfficialData81();
                     loadedFromCache = true;
                 }
             }
@@ -150,13 +151,57 @@ public class CardCatalogService
         return changed;
     }
 
+    // ---- v0.81.0 영어 API의 수치 · 문구 오류를 공식 값으로 (메모리에서만 — 캐시 파일에는 API 값 그대로) ----
+
+    /// <summary>고친 카드의 API 값 (캐시 파일에는 이 값을 저장한다)</summary>
+    private sealed record ApiValues81(CardData Live, int PlayCost, int DP, string EffectText, string InheritedEffectText,
+        bool IsBlocker, int SecurityAttackBonus, int InheritedSecurityAttackBonus);
+    private readonly Dictionary<string, ApiValues81> _apiValues81 = new(StringComparer.Ordinal);
+
+    /// <summary>v0.81.0 공식 값으로 고친 칸 (카드 번호 · 칸 · API 값 · 공식 값) — Data.OfficialCardData81</summary>
+    public IReadOnlyList<OfficialCardData81.Change> OfficialChanges81 => _apiValues81.Values.SelectMany(v => _changes81.GetValueOrDefault(v.Live.CardId) ?? new()).ToList();
+    private readonly Dictionary<string, List<OfficialCardData81.Change>> _changes81 = new(StringComparer.Ordinal);
+
+    private void ApplyOfficialData81()
+    {
+        // 도감에서 빠졌거나 다시 받은 카드(다른 객체)는 지운다 — 같은 객체는 이미 고쳤으므로 그대로
+        foreach (var id in _apiValues81.Keys.ToList())
+            if (!_catalog.Any(c => ReferenceEquals(c, _apiValues81[id].Live))) { _apiValues81.Remove(id); _changes81.Remove(id); }
+        foreach (var card in _catalog)
+        {
+            if (_apiValues81.TryGetValue(card.CardId, out var had) && ReferenceEquals(had.Live, card))
+                continue;
+            var api = new ApiValues81(card, card.PlayCost, card.DP, card.EffectText, card.InheritedEffectText,
+                card.IsBlocker, card.SecurityAttackBonus, card.InheritedSecurityAttackBonus);
+            List<OfficialCardData81.Change> changes;
+            try { changes = OfficialCardData81.Apply(card); }
+            catch { continue; }   // 공식 데이터를 읽지 못하면 API 값 그대로
+            if (changes.Count == 0)
+                continue;
+            if (changes.Any(x => x.Field.Contains("효과")))
+                KeywordDictionary.ApplyDataKeywords(card);   // 고친 문구로 키워드 수치 (≪블로커≫ · ≪시큐리티 어택≫) 다시 계산
+            _apiValues81[card.CardId] = api;
+            _changes81[card.CardId] = changes;
+        }
+    }
+
+    private CardData ApiCopy81(CardData card)
+    {
+        if (!_apiValues81.TryGetValue(card.CardId, out var api) || !ReferenceEquals(api.Live, card))
+            return card;
+        var copy = card.CloneShallow66();
+        copy.PlayCost = api.PlayCost; copy.DP = api.DP; copy.EffectText = api.EffectText; copy.InheritedEffectText = api.InheritedEffectText;
+        copy.IsBlocker = api.IsBlocker; copy.SecurityAttackBonus = api.SecurityAttackBonus; copy.InheritedSecurityAttackBonus = api.InheritedSecurityAttackBonus;
+        return copy;
+    }
+
     /// <summary>도감을 캐시 파일에 저장한다. 캐시를 읽지 못한 채 실행 중이라 저장하지 않았으면 false</summary>
     public bool SaveCache()
     {
         if (_cacheWriteBlocked)
             return false;
         // 다른 프로세스(앱 · 테스트)가 동시에 읽어도 반쯤 쓴 파일을 보지 않도록 임시 파일에 쓴 뒤 한 번에 바꾼다
-        string json = JsonSerializer.Serialize(_catalog, JsonOptions);
+        string json = JsonSerializer.Serialize(_apiValues81.Count == 0 ? _catalog : _catalog.Select(ApiCopy81).ToList(), JsonOptions);
         string temp = _cacheFilePath + "." + Environment.ProcessId + ".tmp";
         File.WriteAllText(temp, json);
         File.Move(temp, _cacheFilePath, overwrite: true);
@@ -377,6 +422,7 @@ public class CardCatalogService
         }
 
         _catalog = map.Values.OrderBy(c => c.CardId).ToList();
+        ApplyOfficialData81();
         bool saved = SaveCache();
 
         int implemented = _catalog.Count(c => c.IsEffectImplemented);

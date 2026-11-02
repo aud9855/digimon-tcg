@@ -80,9 +80,9 @@ internal static partial class SentenceParser
             return One(EffectTrigger.AllyDeckTrashed);
         // "When effects add (cards) to your opponent's hand" · "When an effect adds cards to your or your opponent's hand"
         if (Regex.IsMatch(ev, @"^(?:an effect adds|effects add) (?:(?:a card|cards) )?to your opponent's hand$", RegexOptions.IgnoreCase))
-            return One(EffectTrigger.OpponentHandAddedByEffect);
+            return One(EffectTrigger.OpponentHandAddedCount80);   // v0.81.0 드로우 · 서치 포함 (공식 Q&A BT10-077 Q1 · EX7-013 Q1)
         if (Regex.IsMatch(ev, @"^(?:an effect adds|effects add) (?:(?:a card|cards) )?to (?:your or your opponent's|either player's|a player's) hand$", RegexOptions.IgnoreCase))
-            return Many(null, EffectTrigger.AllyHandAddedByEffect, EffectTrigger.OpponentHandAddedByEffect);
+            return Many(null, EffectTrigger.AllyHandAddedByEffect, EffectTrigger.OpponentHandAddedCount80);   // v0.81.0
 
         // ---- 어택 ----
         // "When you attack with a Digimon" · "~ with a black Digimon" · "~ with a level 5 green Digimon" · "~ with a Digimon with [Gargomon] or [Rapidmon] in its name"

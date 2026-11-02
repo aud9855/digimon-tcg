@@ -491,7 +491,7 @@ internal static partial class SentenceParser
                         c.Engine.ApplyDpChange(d, p.Dp, until, $"{c.Card.Name} [{label}]");
             WholeEnd63(c, target, whole, targets, until, Late);
             if (targets.Count == 0) c.LastStepResolved = false;
-            Emit(c, label, targets.Count > 0 ? $"[{string.Join(", ", targets.Select(d => d.TopCard.Name))}] {string.Join(" · ", list.Select(p => p.Text))}" : "대상이 없습니다");
+            Emit(c, label, targets.Count > 0 ? $"[{string.Join(", ", targets.Select(d => d.TopCard.Name))}] {string.Join(" · ", list.Select(KoreanEffectRenderer.PredLog81))}" : "대상이 없습니다");   // v0.81.0 술어도 한글로 (전에는 "can't suspend" 등 영어)
         }, null);
     }
 

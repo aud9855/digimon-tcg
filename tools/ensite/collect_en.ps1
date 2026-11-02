@@ -86,7 +86,18 @@ foreach ($f in (Get-ChildItem $PageDir -Filter "c*.html" | Sort-Object Name)) {
     foreach ($m in [regex]::Matches($part, 'cardInfoTitSmall">\[Special Digivolution Condition\]</dt>\s*<dd[^>]*>([\s\S]*?)</dd>')) {
       foreach ($line in ((Clean $m.Groups[1].Value) -split "`n")) { if ($line.StartsWith("[Digivolve]")) { $special += $line } }
     }
-    $cards[$id] = [ordered]@{ CardId = $id; Evo = $evo; SpecialDigivolve = $special; Dna = @(DnaLines $part) }
+    # v0.81.0 카드 수치 (종류 · Lv. · 색 · 코스트 · DP) — 영어 API 수치가 틀린 카드를 고칠 때 공식 한글과 맞춰 본다 (엔진: Data.OfficialCardData81)
+    $typeM = [regex]::Match($part, '<li class="cardType">([\s\S]*?)</li>')
+    $lvM = [regex]::Match($part, '<li class="cardLv">\s*Lv\.(\d+)\s*</li>')
+    $colM = [regex]::Match($part, 'cardInfoTit">Color</dt>\s*<dd[^>]*>([\s\S]*?)</dd>')
+    $costM = [regex]::Match($part, 'cardInfoTit">(?:Play Cost|Cost)</dt>\s*<dd[^>]*>\s*(\d+)\s*</dd>')
+    $dpM = [regex]::Match($part, 'cardInfoTit">DP</dt>\s*<dd[^>]*>\s*(\d+)\s*</dd>')
+    $cards[$id] = [ordered]@{ CardId = $id; Evo = $evo; SpecialDigivolve = $special; Dna = @(DnaLines $part)
+      CardType = $(if ($typeM.Success) { Clean $typeM.Groups[1].Value } else { $null })
+      Lv = $(if ($lvM.Success) { [int]$lvM.Groups[1].Value } else { $null })
+      Colors = @($(if ($colM.Success) { [regex]::Matches($colM.Groups[1].Value, "cardColor_([a-z]+)") | ForEach-Object { $_.Groups[1].Value } }))
+      PlayCost = $(if ($costM.Success) { [int]$costM.Groups[1].Value } else { $null })
+      DP = $(if ($dpM.Success) { [int]$dpM.Groups[1].Value } else { $null }) }
   }
 }
 $out = Join-Path $EnDir "card_rules.json"

@@ -361,6 +361,13 @@ public static partial class KoreanEffectRenderer
         return TargetKo(subj) is { } k ? (k, "그 디지몬") : null;
     }
 
+    /// <summary>v0.81.0 로그용 술어 한글 ("레스트할 수 없다" · "DP +2000 한다" · "《블로커》를 얻는다") — 한글로 바꾸지 못하면 영어 그대로</summary>
+    internal static string PredLog81(SentenceParser.Pred34 p)
+    {
+        try { return PredKo34(p)?.Plain ?? p.Text; }
+        catch { return p.Text; }
+    }
+
     /// <summary>술어 → (말투, 끝맺음, 이어짐, "~할 수 있다"). 말투: t = "~은/는", o = "~을/를 DP", p = "~의 【진화 시】 효과는"</summary>
     private static (char Style, string Plain, string And)? PredKo34(SentenceParser.Pred34 p)
     {

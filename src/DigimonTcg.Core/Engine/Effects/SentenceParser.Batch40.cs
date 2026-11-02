@@ -184,7 +184,7 @@ internal static partial class SentenceParser
         }
         // "When effects add cards to your opponent's hand or trash cards from under your Tamers" (BT25-029)
         if (Regex.IsMatch(ev, @"^effects add cards to your opponent's hand or trash cards from under your Tamers$", I))
-            return (new List<EffectTrigger> { EffectTrigger.OpponentHandAddedByEffect, EffectTrigger.UnderTamersTrashed }, null);
+            return (new List<EffectTrigger> { EffectTrigger.OpponentHandAddedCount80, EffectTrigger.UnderTamersTrashed }, null);   // v0.81.0 효과로 상대의 패가 늘어났을 때 (드로우 포함)
         // "When one of your Digimon's effects adds to this Digimon's digivolution cards" (BT17-056)
         if (Regex.IsMatch(ev, @"^(?:one|any) of your Digimon's effects adds? (?:cards )?to this Digimon's digivolution cards$", I))
             return One(EffectTrigger.AllySourcesAdded, c => ReferenceEquals(c.Other, c.Self) && ReferenceEquals(c.Engine.CurrentSourceEffectOwner, c.Owner));

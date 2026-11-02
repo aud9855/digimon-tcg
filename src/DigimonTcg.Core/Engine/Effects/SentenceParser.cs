@@ -275,7 +275,12 @@ internal static partial class SentenceParser
         if (evoMod.Success)
         {
             string evoLabels = evoMod.Groups["labels"].Value;
-            if (Regex.IsMatch(evoLabels, @"\[(?!Your Turn\]|Once Per Turn\])[^\]]+\]", RegexOptions.IgnoreCase)) return $"미지원 진화 코스트 감소 시점: {evoLabels.Trim()}";
+            if (Regex.IsMatch(evoLabels, @"\[(?!Your Turn\]|Once Per Turn\])[^\]]+\]", RegexOptions.IgnoreCase))
+            {
+                // v0.81.0 [Main]만 (BT5-092 공식 에라타 — 공식 영어 · 공식 한글 【메인】): 자신의 메인 페이즈의 진화 = 진화는 자신의 메인 페이즈에만 하므로 [Your Turn]과 같게 (그 밖의 시점은 지금처럼 미지원)
+                if (!Regex.IsMatch(evoLabels, @"^\s*\[Main\]\s*$", RegexOptions.IgnoreCase)) return $"미지원 진화 코스트 감소 시점: {evoLabels.Trim()}";
+                evoLabels = "[Your Turn]";
+            }
             var subject = evoMod.Groups["spec"].Success || evoMod.Groups["names"].Success ? EvoCostSubject.AnyOwnDigimon : EvoCostSubject.ThisDigimon;
             Func<EffectContext, CardInstance, bool>? filter = evoMod.Groups["sus"].Success ? (_, d) => d.IsSuspended : null;
             if (evoMod.Groups["fdw"].Success) filter = (_, d) => d.FaceDownSourceCount > 0;   // v0.35.0 "this Digimon with face-down digivolution cards" (EX9-003)
@@ -986,7 +991,7 @@ internal static partial class SentenceParser
         if (Regex.IsMatch(ev, @"^(?:a card is|cards are) trashed from your deck$", RegexOptions.IgnoreCase))
             return One(EffectTrigger.AllyDeckTrashed);
         if (Regex.IsMatch(ev, @"^an effect adds (?:a card|cards) to your opponent's hand$", RegexOptions.IgnoreCase))
-            return One(EffectTrigger.OpponentHandAddedByEffect);
+            return One(EffectTrigger.OpponentHandAddedCount80);   // v0.81.0 효과 하나로 상대의 패가 늘어났을 때 (드로우 · 서치 포함 — 공식 Q&A BT10-077 Q1 · EX7-013 Q1)
         // v0.29.0: "When an effect adds a card to your hand" (효과로 드로우 · 패에 추가 — 효과 하나가 끝난 뒤 1번)
         if (Regex.IsMatch(ev, @"^an effect adds (?:a card|cards) to your hand$", RegexOptions.IgnoreCase))
             return One(EffectTrigger.AllyHandAddedByEffect);

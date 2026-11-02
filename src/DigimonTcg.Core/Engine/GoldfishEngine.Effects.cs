@@ -1234,9 +1234,13 @@ public partial class GoldfishEngine
         PurgeTokens(zones);
         NotifyLeftBattleArea(zones, inst);   // v0.33.0
         if (!IsToken(inst.TopCard)) NotifyReturnedToHand(zones, inst);   // v0.33.0 "When another Digimon is returned to the hand"
-        var returned54 = inst.TopCard;
-        var witness54 = DeferWitness54();
-        Defer54(() => { if (!State.IsGameOver) FireForSide(EffectTrigger.OpponentHandAddedByEffect, EnemyOf(zones), null, triggerCard: returned54, witness: witness54); });   // "When an effect adds cards to your opponent's hand" · v0.54.0 효과 처리 중이면 그 효과가 끝난 뒤
+        // "When an effect adds cards to your opponent's hand" — v0.81.0 효과 하나로 패가 늘어났을 때로 통일 (드로우 · 서치 포함 — 공식 Q&A BT10-077 Q1 · EX7-013 Q1):
+        // 효과를 처리하는 중이면 그 효과가 끝난 뒤 늘어난 장수로 1번 (EndSourceWatch), 효과 처리 밖에서 되돌렸으면 여기서 1장으로
+        if (_sourceWatch == null)
+        {
+            var returned54 = inst.TopCard;
+            Defer54(() => FireOppHandAddedCount80(zones, 1, returned54));
+        }
     }
 
     /// <summary>≪퇴화 N≫ — 버린 매수 반환</summary>
