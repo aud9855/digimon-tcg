@@ -48,13 +48,43 @@ public static class DeckValidator
             errors.Add("메인 덱에는 디지타마 카드를 넣을 수 없습니다.");
 
         var allCards = mainDeck.Concat(digitamaDeck);
-        foreach (var group in allCards.GroupBy(c => c.CardId))
+        foreach (var group in allCards.GroupBy(c => CopyGroupKey(c.CardId)))
         {
-            if (group.Count() > MaxCopiesPerCard)
-                errors.Add($"동일 카드 번호({group.Key})는 최대 {MaxCopiesPerCard}장까지만 투입할 수 있습니다. (현재 {group.Count()}장)");
+            int max = MaxCopiesFor(group.Key);
+            if (group.Count() > max)
+                errors.Add($"동일 카드 번호({string.Join(" · ", group.Select(c => c.CardId).Distinct())})는 최대 {max}장까지만 투입할 수 있습니다. (현재 {group.Count()}장)");
         }
 
         return (errors.Count == 0, errors);
+    }
+
+    // ---- v0.83.0 카드에 적힌 덱 구성 규칙 (영어 API 문구에는 없다 — 공식 영어 카드 리스트 · 공식 한글 카드) ----
+
+    /// <summary>"You can include up to 50 copies of cards with this card's card number in your deck." (공식 영어 카드 리스트 — 공식 한글 · 일본어도 같은 규칙)</summary>
+    private static readonly HashSet<string> FiftyCopies83 = new(System.StringComparer.OrdinalIgnoreCase)
+    {
+        "BT6-085", "EX2-046", "BT11-061", "EX9-048", "BT22-079", "EX11-027",
+    };
+
+    /// <summary>"※Card Number: Also treated as [P-009]. A deck may not have more than 4 total copies of this and [P-009]." (공식 영어 카드 리스트 RB1)</summary>
+    private static readonly Dictionary<string, string> AlsoCardNumber83 = new(System.StringComparer.OrdinalIgnoreCase)
+    {
+        ["RB1-004"] = "P-009", ["RB1-006"] = "P-058", ["RB1-007"] = "P-010",
+    };
+
+    /// <summary>같은 카드 번호로 세는 묶음의 대표 번호 (RB1-004 → P-009)</summary>
+    public static string CopyGroupKey(string cardId) =>
+        AlsoCardNumber83.TryGetValue(cardId, out var other) ? other : cardId;
+
+    /// <summary>이 카드 번호를 덱에 넣을 수 있는 최대 장수 (보통 4 · 카드에 적힌 50장 규칙)</summary>
+    public static int MaxCopiesFor(string cardId) =>
+        FiftyCopies83.Contains(CopyGroupKey(cardId)) ? 50 : MaxCopiesPerCard;
+
+    /// <summary>덱에 이미 들어 있는 같은 카드 번호(묶음 포함)의 장수</summary>
+    public static int CopiesInDeck(IEnumerable<CardData> cards, string cardId)
+    {
+        string key = CopyGroupKey(cardId);
+        return cards.Count(c => string.Equals(CopyGroupKey(c.CardId), key, System.StringComparison.OrdinalIgnoreCase));
     }
 
     public static DeckRatioSummary CalculateRatios(

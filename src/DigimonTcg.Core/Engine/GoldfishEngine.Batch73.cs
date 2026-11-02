@@ -22,6 +22,10 @@ public partial class GoldfishEngine
     {
         // "[Maquinamon] in text" — 이름 · 특징 · 효과 등 카드의 어디든 [Maquinamon]이 기술된 카드 (공식 Q&A EX11-027 Q5822)
         ["EX11-027"] = new(d => TargetSpec.TextHas(d, "Maquinamon"), 2, 2000),
+        // v0.83.0 링크하는 옵션 (종합 룰 2-3-11-4 하단 텍스트의 「링크」 · 10-1-1 — 옵션 카드도 「링크」를 가지면 링크 카드): 공식 영어 [Link Condition] · [Link DP] (공식 일본어도 같다)
+        //   BT25-100 "＜Link＞ [TS] trait: Cost 2" · DP +2000 / BT25-101 "＜Link＞ [Vulcanusmon]: Cost 3" · DP +4000
+        ["BT25-100"] = new(d => TargetSpec.HasTrait(d, "TS"), 2, 2000),
+        ["BT25-101"] = new(d => CardNames.Is(d, "Vulcanusmon"), 3, 4000),
     };
 
     /// <summary>공식 영어 〈링크〉 정보가 있는 카드 (SentenceParser.IsLinkCard43 — 하단 텍스트는 링크 효과)</summary>

@@ -57,6 +57,15 @@ public static class CardNames
         ["AD1-020"] = new[] { "Tommy Himi", "Takuya Kanbara", "Zoe Orimoto" }, ["AD1-021"] = new[] { "Marcus Damon" },
         ["AD1-023"] = new[] { "J.P. Shibayama", "Koji Minamoto", "Koichi Kimura" }, ["EX12-041"] = new[] { "Mamemon" }, ["EX13-053"] = new[] { "Mamemon" },
         ["EX13-029"] = new[] { "Wizardmon" }, ["EX13-066"] = new[] { "Sistermon Ciel (Awakened)" }, ["P-147"] = new[] { "Pulsemon" }, ["P-223"] = new[] { "Sakuyamon" },
+        // v0.83.0 영어 API에 빠진 명칭 규칙 줄 (공식 영어 "The name of this card/Digimon is also treated as [X]" — 공식 일본어 · 공식 한글도 같은 규칙)
+        ["BT8-061"] = new[] { "Mamemon" }, ["BT8-062"] = new[] { "SkullKnightmon", "DeadlyAxemon" }, ["BT10-061"] = new[] { "SkullKnightmon", "DeadlyAxemon" },
+        ["EX2-012"] = new[] { "ChaosGallantmon" }, ["BT10-111"] = new[] { "Shoutmon" }, ["BT11-063"] = new[] { "Numemon" },
+        ["P-072"] = new[] { "MetalGreymon" }, ["P-073"] = new[] { "WereGarurumon" },
+        // "~ is also treated as having [X] in its name" (명칭에 X를 포함하는 것으로도 취급 — EX4-048과 같다)
+        ["BT9-068"] = new[] { "Greymon" }, ["BT9-051"] = new[] { "Leomon" }, ["BT11-054"] = new[] { "Leomon" },
+        // 「시스터몬 시엘」 · 「시스터몬 느와르」 두 명칭을 함께 가진 카드 (공식 영어 이름 Sistermon Ciel + 규칙 "Also ~ [Sistermon Noir]" (BT23-077 · ST12-13) ·
+        //  공식 일본어 · 공식 한글 이름 Sistermon Noir + 규칙 "~ Sistermon Ciel로도 취급" (BT23-077 · ST12-13 · 공식 한글 BT6-084)) — 영어 API 이름(Ciel)에 Noir를 더한다
+        ["BT6-084"] = new[] { "Sistermon Noir" }, ["ST12-13"] = new[] { "Sistermon Noir" }, ["BT23-077"] = new[] { "Sistermon Noir" },
     };
 
     /// <summary>v0.71.0 이 카드가 〈룰〉로 함께 가지는 명칭 (없으면 빈 목록)</summary>

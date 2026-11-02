@@ -1346,16 +1346,22 @@ public partial class GoldfishEngine
     {
         if (ReturnBlocked34(zones, inst))   // v0.34.0
             return;
-        if (TryPreventLeave(zones, inst, deletion: false, inBattle: false, destination: LeaveDestination.Deck))
-            return;
+        bool top83 = TakeDeckTop83(out int saved83);   // v0.83.0 덱 위로 되돌리는 효과 (GoldfishEngine.Batch83) — 떠나기 전 처리 동안은 끈다
+        try
+        {
+            if (TryPreventLeave(zones, inst, deletion: false, inBattle: false, destination: LeaveDestination.Deck))
+                return;
+        }
+        finally { DeckTop83 = saved83; }
         if (!zones.BattleArea.Remove(inst))
             return;
         ApplyOverflow(zones, inst.GetFaceUpStackBottomUp().Append(inst.TopCard));
         TrashLinks(zones, inst);
-        zones.MainDeck.Add(inst.TopCard);
+        var toDeck83 = new List<CardData> { inst.TopCard };
         bool trashSources74 = _trashSourcesOnBottom74.Remove(inst);   // v0.74.0 BT5-109 "그 디지몬이 갖는 진화원은 파기한다" (GoldfishEngine.Batch74)
         foreach (var s in inst.GetEvolutionStackBottomUp().Reverse())
-            (trashSources74 ? zones.Trash : zones.MainDeck).Add(s);
+            (trashSources74 ? zones.Trash : (ICollection<CardData>)toDeck83).Add(s);
+        PutToDeck83(zones, toDeck83, top83);
         inst.EvolutionSources.Clear();
         PurgeTokens(zones);
         NotifyLeftBattleArea(zones, inst);   // v0.33.0

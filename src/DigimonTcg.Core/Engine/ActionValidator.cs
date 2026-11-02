@@ -81,11 +81,11 @@ public static class ActionValidator
             fieldColors.UnionWith(zones.TamerColorsOf66(t).Take(1));   // v0.66.0 BT18-078 바뀐 원래 색 (아니면 t.Color)
         foreach (var d in zones.BattleArea)   // v0.37.0 "This Digimon is also treated as yellow"
             fieldColors.UnionWith(d.ExtraColors);
-        // 여러 색 카드는 두 번째 색도 그 카드의 색으로 친다
+        // 여러 색 카드는 두 번째 색도 그 카드의 색으로 친다 (v0.83.0 3색 카드는 세 번째 색도 — CardData.AllColors)
         foreach (var c in zones.BattleArea.Where(d => d.BaseColor66 == null).Select(d => d.TopCard).Concat(zones.Tamers.Where(t => !zones.TamerColors66.Any(x => ReferenceEquals(x.Tamer, t)))).Append(zones.BreedingArea?.TopCard))
         {
-            if (c?.SecondaryColor is CardColor second)
-                fieldColors.Add(second);
+            if (c != null)
+                fieldColors.UnionWith(c.AllColors);
         }
 
         return option.AllColors.Where(c => !fieldColors.Contains(c)).ToList();

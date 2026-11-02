@@ -14,10 +14,18 @@ public class CardData
     public CardColor Color { get; set; }
     public CardColor? SecondaryColor { get; set; }                  // 여러 색 카드의 두 번째 색 (없으면 null)
 
-    /// <summary>카드의 모든 색 (여러 색 카드면 2개)</summary>
+    /// <summary>
+    /// v0.83.0 3색 이상 카드의 세 번째 색부터 (API에는 색 칸이 2개뿐 — Data.OfficialCardData83이 공식 카드 리스트의 색으로 메모리에서만 채운다. 저장하지 않는다)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyList<CardColor> ExtraColors83 { get; set; } = System.Array.Empty<CardColor>();
+
+    /// <summary>카드의 모든 색 (여러 색 카드면 2개 · v0.83.0 3색 이상 카드면 3개 이상)</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public IReadOnlyList<CardColor> AllColors =>
-        SecondaryColor is CardColor second && second != Color ? new[] { Color, second } : new[] { Color };
+        ExtraColors83.Count > 0 && SecondaryColor is CardColor s3 && s3 != Color
+            ? new[] { Color, s3 }.Concat(ExtraColors83.Where(c => c != Color && c != s3)).Distinct().ToArray()
+            : SecondaryColor is CardColor second && second != Color ? new[] { Color, second } : new[] { Color };
     /// <summary>v0.66.0 같은 값의 얕은 복사본 (BT15-060 · BT17-068 공개 중의 다른 모습 — 고르는 조건을 볼 때만)</summary>
     internal CardData CloneShallow66() => (CardData)MemberwiseClone();
 

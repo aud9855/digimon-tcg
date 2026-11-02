@@ -102,7 +102,7 @@ internal static partial class SentenceParser
         string rest = m.Groups["rest"].Value.Trim();
         var tmpCard = new CardData
         {
-            CardId = card.CardId + "#breed46", Name = card.Name, Type = card.Type, Level = card.Level, Color = card.Color, SecondaryColor = card.SecondaryColor,
+            CardId = card.CardId + "#breed46", Name = card.Name, Type = card.Type, Level = card.Level, Color = card.Color, SecondaryColor = card.SecondaryColor, ExtraColors83 = card.ExtraColors83,
             Traits = card.Traits, EffectText = card.EffectText, InheritedEffectText = card.InheritedEffectText, PlayCost = card.PlayCost, DP = card.DP,
         };
         var tdef = new CardScriptBuilder().Card(tmpCard.CardId);

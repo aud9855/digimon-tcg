@@ -49,7 +49,7 @@ public static class StarterDecks
         ["BT1-084"] = "Omnimon", ["BT2-009"] = "Guilmon", ["BT2-020"] = "Gallantmon", ["BT2-021"] = "Veemon",
         ["BT2-032"] = "UlforceVeedramon", ["BT2-039"] = "Magnadramon", ["BT2-052"] = "Hagurumon", ["BT2-059"] = "Kurisarimon",
         ["BT2-065"] = "WarGreymon", ["BT2-068"] = "Impmon", ["BT2-074"] = "Devimon", ["BT2-080"] = "Piedmon",
-        ["BT3-031"] = "Imperialdramon Dragon Mode", ["BT3-112"] = "Omnimon Alter-S", ["BT5-086"] = "Omnimon", ["ST1-01"] = "Koromon",
+        ["BT3-031"] = "Imperialdramon: Dragon Mode", ["BT3-112"] = "Omnimon Alter-S", ["BT5-086"] = "Omnimon", ["ST1-01"] = "Koromon",
         ["ST1-02"] = "Biyomon", ["ST1-03"] = "Agumon", ["ST1-04"] = "Dracomon", ["ST1-05"] = "Birdramon",
         ["ST1-06"] = "Coredramon", ["ST1-07"] = "Greymon", ["ST1-08"] = "Garudamon", ["ST1-09"] = "MetalGreymon",
         ["ST1-10"] = "Phoenixmon", ["ST1-11"] = "WarGreymon", ["ST1-12"] = "Tai Kamiya", ["ST1-13"] = "Shadow Wing",

@@ -82,7 +82,7 @@ internal static partial class SentenceParser
         if (Regex.IsMatch(rest, @"\bfor each of their\b|\beach of them\b", RegexOptions.IgnoreCase)) return false;
         var tmp = new CardData
         {
-            CardId = card.CardId + "#sec69", Name = card.Name, Type = CardType.Digimon, Level = card.Level, Color = card.Color, SecondaryColor = card.SecondaryColor,
+            CardId = card.CardId + "#sec69", Name = card.Name, Type = CardType.Digimon, Level = card.Level, Color = card.Color, SecondaryColor = card.SecondaryColor, ExtraColors83 = card.ExtraColors83,
             Traits = card.Traits, EffectText = card.EffectText, InheritedEffectText = card.InheritedEffectText, PlayCost = card.PlayCost, DP = card.DP,
         };
         var tdef = new CardScriptBuilder().Card(tmp.CardId);

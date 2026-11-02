@@ -106,7 +106,7 @@ public partial class GoldfishEngine
                 if (CardNames.Is(dnaCard, forName))
                     yield return new CardData
                     {
-                        CardId = d.TopCard.CardId + "#DNA", Name = asName, EnglishName = d.TopCard.EnglishName, Type = CardType.Digimon, Level = level, Color = d.TopCard.Color, SecondaryColor = d.TopCard.SecondaryColor,
+                        CardId = d.TopCard.CardId + "#DNA", Name = asName, EnglishName = d.TopCard.EnglishName, Type = CardType.Digimon, Level = level, Color = d.TopCard.Color, SecondaryColor = d.TopCard.SecondaryColor, ExtraColors83 = d.TopCard.ExtraColors83,
                         DP = d.TopCard.DP, PlayCost = d.TopCard.PlayCost, Traits = d.TopCard.Traits,
                     };
         if (CardScripts.For(d.TopCard) is not { DnaAliases.Count: > 0 } script) yield break;
@@ -114,7 +114,7 @@ public partial class GoldfishEngine
             if (CardNames.Is(dnaCard, forName))
                 yield return new CardData
                 {
-                    CardId = d.TopCard.CardId + "#DNA", Name = asName, EnglishName = asName, Type = CardType.Digimon, Level = level, Color = d.TopCard.Color, SecondaryColor = d.TopCard.SecondaryColor,
+                    CardId = d.TopCard.CardId + "#DNA", Name = asName, EnglishName = asName, Type = CardType.Digimon, Level = level, Color = d.TopCard.Color, SecondaryColor = d.TopCard.SecondaryColor, ExtraColors83 = d.TopCard.ExtraColors83,
                     DP = d.TopCard.DP, PlayCost = d.TopCard.PlayCost, Traits = d.TopCard.Traits,
                 };
     }

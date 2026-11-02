@@ -166,7 +166,12 @@ public static class OfficialCardData82
         ["EX13-054"] = new[] { "Mutant" }, ["EX13-056"] = new[] { "Machine" }, ["EX13-066"] = new[] { "Data" }, ["EX13-076"] = new[] { "Free" },
         ["LM-040"] = new[] { "Sea Beast" }, ["LM-042"] = new[] { "Three Great Angels" }, ["LM-044"] = new[] { "Fallen Angel" }, ["P-164"] = new[] { "Aquatic" },
         ["P-170"] = new[] { "Three Musketeers" }, ["P-209"] = new[] { "Demon" }, ["P-213"] = new[] { "Dragonkin" }, ["P-215"] = new[] { "Mineral" },
-        ["P-241"] = new[] { "Leviathan" }, ["ST18-06"] = new[] { "Vegetation" }, ["ST18-09"] = new[] { "Vegetation" }, ["ST18-12"] = new[] { "Bird Dragon" },    };
+        ["P-241"] = new[] { "Leviathan" }, ["ST18-06"] = new[] { "Vegetation" }, ["ST18-09"] = new[] { "Vegetation" }, ["ST18-12"] = new[] { "Bird Dragon" },
+        // v0.83.0 P-101 공식 영어 "This card/Digimon is also treated as having the [Cyborg] trait." (공식 일본어 · 공식 한글 〈룰〉 특징도 같다)
+        ["P-101"] = new[] { "Cyborg" },
+        // v0.83.0 「시스터몬 느와르」의 속성 (공식 영어 BT23-077 "(Rule) Also has ~ Trait: [Virus]" · ST12-13 "traits include [Virus]" · 공식 일본어 · 공식 한글은 이름 · 속성이 Noir · 바이러스종) — API는 데이터종만
+        ["BT6-084"] = new[] { "Virus" }, ["ST12-13"] = new[] { "Virus" }, ["BT23-077"] = new[] { "Virus" },
+    };
 
     /// <summary>특징 오류: (카드 번호, 뺄 특징, 넣을 특징) — 공식 영어 · 공식 일본어 (· 공식 한글)가 같고 API만 다른 것</summary>
     internal static readonly (string Id, string[] Remove, string[] Add)[] TraitFixes =

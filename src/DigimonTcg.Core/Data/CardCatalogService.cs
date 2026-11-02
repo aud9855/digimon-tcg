@@ -155,7 +155,7 @@ public class CardCatalogService
 
     /// <summary>고친 카드의 API 값 (캐시 파일에는 이 값을 저장한다)</summary>
     private sealed record ApiValues81(CardData Live, int PlayCost, int DP, string EffectText, string InheritedEffectText,
-        bool IsBlocker, int SecurityAttackBonus, int InheritedSecurityAttackBonus, List<string> Traits, CardColor? SecondaryColor);   // v0.82.0 특징 · 두 번째 색
+        bool IsBlocker, int SecurityAttackBonus, int InheritedSecurityAttackBonus, List<string> Traits, CardColor? SecondaryColor, string Name);   // v0.82.0 특징 · 두 번째 색 · v0.83.0 이름
     private readonly Dictionary<string, ApiValues81> _apiValues81 = new(StringComparer.Ordinal);
 
     /// <summary>v0.81.0 공식 값으로 고친 칸 (카드 번호 · 칸 · API 값 · 공식 값) — Data.OfficialCardData81</summary>
@@ -172,7 +172,7 @@ public class CardCatalogService
             if (_apiValues81.TryGetValue(card.CardId, out var had) && ReferenceEquals(had.Live, card))
                 continue;
             var api = new ApiValues81(card, card.PlayCost, card.DP, card.EffectText, card.InheritedEffectText,
-                card.IsBlocker, card.SecurityAttackBonus, card.InheritedSecurityAttackBonus, card.Traits, card.SecondaryColor);
+                card.IsBlocker, card.SecurityAttackBonus, card.InheritedSecurityAttackBonus, card.Traits, card.SecondaryColor, card.Name);
             List<OfficialCardData81.Change> changes;
             try { changes = OfficialCardData81.Apply(card); }
             catch { continue; }   // 공식 데이터를 읽지 못하면 API 값 그대로
@@ -191,7 +191,7 @@ public class CardCatalogService
             return card;
         var copy = card.CloneShallow66();
         copy.PlayCost = api.PlayCost; copy.DP = api.DP; copy.EffectText = api.EffectText; copy.InheritedEffectText = api.InheritedEffectText;
-        copy.Traits = api.Traits; copy.SecondaryColor = api.SecondaryColor;
+        copy.Traits = api.Traits; copy.SecondaryColor = api.SecondaryColor; copy.Name = api.Name;
         copy.IsBlocker = api.IsBlocker; copy.SecurityAttackBonus = api.SecurityAttackBonus; copy.InheritedSecurityAttackBonus = api.InheritedSecurityAttackBonus;
         return copy;
     }

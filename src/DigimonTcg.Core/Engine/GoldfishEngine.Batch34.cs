@@ -301,12 +301,17 @@ public partial class GoldfishEngine
     {
         if (!owner.Tamers.Contains(tamer))
             return;
-        if (TryPreventTamerLeave(owner, tamer, true, LeaveDestination.Deck))
-            return;
+        bool top83 = TakeDeckTop83(out int saved83);   // v0.83.0 덱 위로 되돌리는 효과 (GoldfishEngine.Batch83)
+        try
+        {
+            if (TryPreventTamerLeave(owner, tamer, true, LeaveDestination.Deck))
+                return;
+        }
+        finally { DeckTop83 = saved83; }
         if (!owner.Tamers.Remove(tamer))
             return;
         owner.SuspendedTamers.Remove(tamer);
-        owner.MainDeck.Add(tamer);
+        if (top83) owner.MainDeck.Insert(0, tamer); else owner.MainDeck.Add(tamer);
         ClearUnderTamersIfNoTamer(owner);
     }
 

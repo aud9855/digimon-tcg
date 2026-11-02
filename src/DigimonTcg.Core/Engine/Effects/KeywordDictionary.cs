@@ -252,7 +252,7 @@ public static class KeywordDictionary
     public static CardData OptionSideCard(CardData dual) => new()
     {
         CardId = dual.CardId, Name = dual.Name, EnglishName = dual.EnglishName, Type = CardType.Option,
-        Color = dual.Color, SecondaryColor = dual.SecondaryColor, PlayCost = dual.PlayCost,
+        Color = dual.Color, SecondaryColor = dual.SecondaryColor, ExtraColors83 = dual.ExtraColors83, PlayCost = dual.PlayCost,
         EffectText = dual.InheritedEffectText, Traits = dual.Traits, ImageUrl = dual.ImageUrl, Rarity = dual.Rarity,
     };
 

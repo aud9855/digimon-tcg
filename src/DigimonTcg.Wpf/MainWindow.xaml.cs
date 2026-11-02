@@ -5042,12 +5042,13 @@ public partial class MainWindow : Window
 
     private void AddCardToBuilderDeck(CardData card)
     {
-        int currentCopies = _builderMainDeck.Count(c => c.CardId == card.CardId) +
-                            _builderDigitamaDeck.Count(c => c.CardId == card.CardId);
+        // v0.83.0 카드에 적힌 덱 구성 규칙 (50장까지 · RB1 카드 번호 묶음 — DeckValidator)
+        int currentCopies = DeckValidator.CopiesInDeck(_builderMainDeck.Concat(_builderDigitamaDeck), card.CardId);
+        int maxCopies = DeckValidator.MaxCopiesFor(card.CardId);
 
-        if (currentCopies >= DeckValidator.MaxCopiesPerCard)
+        if (currentCopies >= maxCopies)
         {
-            ShowToast(false, $"동일 카드 번호({card.CardId})는 최대 4장까지만 넣을 수 있습니다.");
+            ShowToast(false, $"동일 카드 번호({card.CardId})는 최대 {maxCopies}장까지만 넣을 수 있습니다.");
             return;
         }
 
