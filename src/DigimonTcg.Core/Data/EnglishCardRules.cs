@@ -30,6 +30,9 @@ public sealed class EnglishCardRule
     public List<string>? Colors { get; set; }
     public int? PlayCost { get; set; }                            // 등장 코스트 · 사용 코스트
     public int? DP { get; set; }
+
+    // v0.82.0 형태 (Form — "Mega" · "Stnd./Appmon") — 영어 API 특징에 형태가 빠진 카드를 채운다 (Data.OfficialCardData82)
+    public string? Form { get; set; }
 }
 
 /// <summary>

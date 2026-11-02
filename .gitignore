@@ -39,3 +39,6 @@ data/cards_cache.json.*
 
 # 공식 영어 카드 리스트에서 받은 진화 조건 (개인 로컬 사용 전용, tools/ensite)
 data/en/
+
+# 공식 일본어 카드 리스트 (digimoncard.com) — 데이터 대조용 (개인 로컬 사용 전용, 커밋하지 않는다)
+data/jp/

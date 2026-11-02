@@ -74,7 +74,7 @@ public static class OfficialCardData81
         if (StarterDecks.IsBuiltInCard(card.CardId) || card.IsTamerProxy)
             return changes;
 
-        foreach (var f in TextFixes)
+        foreach (var f in TextFixes.Concat(OfficialCardData82.TextFixes))   // v0.82.0 링크 효과 시점 · 효과 시점 · LM-025 (OfficialCardData82)
         {
             if (!string.Equals(f.Id, card.CardId, StringComparison.OrdinalIgnoreCase)) continue;
             string text = f.Inherited ? card.InheritedEffectText : card.EffectText;
@@ -86,6 +86,8 @@ public static class OfficialCardData81
             if (f.Inherited) card.InheritedEffectText = fixedText; else card.EffectText = fixedText;
             changes.Add(new Change(card.CardId, f.Inherited ? "진화원 효과" : "효과", f.Api, f.Official));
         }
+
+        OfficialCardData82.ApplyValuesAndTraits(card, changes);   // v0.82.0 수치 · 색 · 특징 (공식 영어 · 공식 일본어 · 공식 한글)
 
         if (card.IsDual)
             return changes;

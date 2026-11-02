@@ -143,7 +143,8 @@ public partial class GoldfishEngine
         bool includeInherited = true,
         IReadOnlyList<CardData>? sources = null,
         CardData? triggerCard = null,
-        bool optionSide = false)
+        bool optionSide = false,
+        IReadOnlyList<CardData>? deletedLinks82 = null)
     {
         var ctx = new EffectContext(this, owner, self, other, chosenTarget) { TriggerCard = triggerCard, Trigger = trigger };
         if (trigger == EffectTrigger.OnDeletion) ctx.DeletedSources44 = sources;   // v0.44.0 소멸하기 전의 진화원 ("If [X] was in this Digimon's digivolution cards")
@@ -224,6 +225,12 @@ public partial class GoldfishEngine
             // v0.43.0 링크 카드의 링크 효과 (링크되어 있는 동안 — GoldfishEngine.Batch43)
             if (includeInherited && self != null && sources == null && self.LinkedCards.Count > 0)
                 RunLinkEffects43(ctx, self, trigger);
+            // v0.82.0 【소멸 시】 링크 효과 (BT24-036 · BT24-057 · BT24-071 — 공식 영어 · 일본어 [On Deletion]): 소멸하기 전에 링크되어 있던 카드 (이미 트래시 — 진화원 효과의 【소멸 시】와 같다)
+            else if (includeInherited && self != null && deletedLinks82 is { Count: > 0 })
+                foreach (var link in CardIdentity55.Each(deletedLinks82).ToList())
+                    if (CardScripts.For(link) is { } linkScript)
+                        foreach (var effect in linkScript.Effects.Where(e => e.Trigger == trigger && e.Source == EffectSource.Link43).ToList())
+                            Resolve(ctx, link, effect);
         }
         finally
         {
@@ -890,6 +897,7 @@ public partial class GoldfishEngine
             if (saved.Count > 0) EffectLog(zones, $"[≪머티리얼 세이브≫] [{string.Join(", ", saved.Select(s => s.Name))}]을(를) 테이머 아래에 놓았습니다.");
         }
         zones.Trash.Add(instance.TopCard);
+        var links82 = instance.LinkedCards.ToList();   // v0.82.0 【소멸 시】 링크 효과용 — 트래시로 가기 전에 링크되어 있던 카드
         TrashLinks(zones, instance);
         while (instance.EvolutionSources.Count > 0)
             zones.Trash.Add(instance.EvolutionSources.Pop());
@@ -903,7 +911,7 @@ public partial class GoldfishEngine
         {
             var outerCause = CurrentDeletionCause;
             CurrentDeletionCause = cause;   // 이 효과들이 볼 수 있게 ("deleted by an effect" · "by dropping to 0 DP")
-            RunEffects(EffectTrigger.OnDeletion, zones, instance, instance.TopCard, sources: stack);
+            RunEffects(EffectTrigger.OnDeletion, zones, instance, instance.TopCard, sources: stack, deletedLinks82: links82);
             FireForSide(EffectTrigger.AllyDigimonDeleted, zones, instance, witness: witness46);
             FireForSide(EffectTrigger.OpponentDigimonDeleted, EnemyOf(zones), instance, witness: witness46);
             CurrentDeletionCause = outerCause;

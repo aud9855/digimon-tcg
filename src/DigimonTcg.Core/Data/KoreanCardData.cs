@@ -111,6 +111,16 @@ public static class KoreanCardData
         ["BT19-053"] = (4, 5),   // 카드 이미지 · 공식 영어 "[Digivolve] Lv.5 w/[Royal Base] trait: Cost 3"
     };
 
+    /// <summary>
+    /// v0.82.0 공식 한글의 효과 시점 표기가 공식 영어 · 공식 일본어(두 곳이 같다)와 다른 카드: (카드 번호, 하단 문구인지, 틀린 표기, 맞는 표기).
+    /// 엔진은 공식 영어 · 일본어대로 동작하므로 화면의 한글도 맞춘다 (그 표기가 문구에 1번만 있을 때만)
+    /// </summary>
+    internal static readonly (string Id, bool Source, string Wrong, string Right)[] TimingFix82 =
+    {
+        ("BT8-081", false, "【어택 시】", "【어택 종료 시】"),   // 공식 영어 [End of Attack] · 공식 일본어 【アタック終了時】
+        ("LM-025", true, "【메인】", "【어택 시】"),           // 진화원 효과 — 공식 영어 [When Attacking] · 공식 일본어 【アタック時】
+    };
+
     /// <summary>같은 번호의 영어 카드와 다른 카드로 보여 한글 데이터를 쓰지 않은 카드 번호 (지금 데이터에는 없다 — 데이터가 바뀌었을 때를 위한 안전장치)</summary>
     public static IReadOnlyCollection<string> IdentityMismatches80 => _identityMismatches80;
     private static List<string> _identityMismatches80 = new();
@@ -128,6 +138,13 @@ public static class KoreanCardData
                 var m = System.Text.RegularExpressions.Regex.Match(t, @"〔진화〕[^〔【]*?코스트\s*\d+");
                 if (m.Success && m.Value.Contains($"Lv.{fix.Wrong}", StringComparison.Ordinal))
                     k.MainText = t[..m.Index] + m.Value.Replace($"Lv.{fix.Wrong}", $"Lv.{fix.Right}", StringComparison.Ordinal) + t[(m.Index + m.Length)..];
+            }
+        foreach (var (id, source, wrong, right) in TimingFix82)
+            if (map.TryGetValue(id, out var k) && (source ? k.SourceText : k.MainText) is { } t
+                && t.IndexOf(wrong, StringComparison.Ordinal) is var at and >= 0 && t.IndexOf(wrong, at + 1, StringComparison.Ordinal) < 0)
+            {
+                string fixedText = t[..at] + right + t[(at + wrong.Length)..];
+                if (source) k.SourceText = fixedText; else k.MainText = fixedText;
             }
         // 메인 문구 뒤에 진화원 효과를 한 번 더 붙여 적은 카드 (EX3-004 "・진화원 효과 【자신의 턴】~") — 하단 문구가 있으면 그 앞까지만
         foreach (var k in map.Values)

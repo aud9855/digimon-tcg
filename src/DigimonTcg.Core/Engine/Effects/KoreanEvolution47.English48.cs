@@ -83,7 +83,7 @@ public static partial class KoreanEvolution47
         var bad = new List<string>();
         foreach (var line0 in lines)
         {
-            string line = line0.Trim();
+            string line = OldEnglishToNew82(line0.Trim());   // v0.82.0 옛 표기 "[Digivolve] 0 from [Agumon]" (KoreanEvolution47.OldEn82.cs)
             if (!line.StartsWith("[Digivolve]", StringComparison.Ordinal)) continue;
             string rest = line["[Digivolve]".Length..].Trim();
             while (rest.Length > 0)
@@ -170,6 +170,14 @@ public static partial class KoreanEvolution47
                 var ns = NamesEn(um.Groups["n"].Value); var ts = NamesEn(um.Groups["t"].Value); int k = int.Parse(um.Groups["k"].Value);
                 list.Add(new Condition(um.Value.Trim(), cost, (c, _) => c.Type == CardType.Tamer && ns.Any(x => CardNames.Is(c, x)),
                     And(field, UnderField(c => ts.Any(t => TraitIsEn(c, t)), k)), true));
+                rest = after;
+                continue;
+            }
+            if (OldAtomEn82(rest) is { } old)   // v0.82.0 옛 표기에만 있는 조건 모양
+            {
+                list.Add(new Condition(old.Text, cost, old.Match, field, false));
+                after = rest[old.Length..].TrimStart();
+                AtomEnds(ref after);
                 rest = after;
                 continue;
             }

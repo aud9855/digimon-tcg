@@ -51,6 +51,12 @@ public static class CardNames
         ["BT18-088"] = new[] { "Takuya Kanbara", "Koji Minamoto" }, ["BT20-087"] = new[] { "Kota Domoto", "Yuji Musya" },
         ["BT20-089"] = new[] { "Eiji Nagasumi", "Leon Alexander" }, ["EX10-064"] = new[] { "Yuu Amano", "Nene Amano" },
         ["EX10-068"] = new[] { "Ken Ichijoji" },
+        // v0.82.0 공식 영어 "(Rule) Name: ~" · 공식 일본어 〈ルール〉名称 (두 곳이 같다) — 빠져 있던 카드
+        ["EX4-072"] = new[] { "Plug-In" }, ["BT22-014"] = new[] { "Greymon" }, ["BT24-080"] = new[] { "ChaosGallantmon" },
+        ["BT24-086"] = new[] { "Shuu Yulin" }, ["EX11-053"] = new[] { "X Antibody" }, ["EX11-066"] = new[] { "Zenith" },
+        ["AD1-020"] = new[] { "Tommy Himi", "Takuya Kanbara", "Zoe Orimoto" }, ["AD1-021"] = new[] { "Marcus Damon" },
+        ["AD1-023"] = new[] { "J.P. Shibayama", "Koji Minamoto", "Koichi Kimura" }, ["EX12-041"] = new[] { "Mamemon" }, ["EX13-053"] = new[] { "Mamemon" },
+        ["EX13-029"] = new[] { "Wizardmon" }, ["EX13-066"] = new[] { "Sistermon Ciel (Awakened)" }, ["P-147"] = new[] { "Pulsemon" }, ["P-223"] = new[] { "Sakuyamon" },
     };
 
     /// <summary>v0.71.0 이 카드가 〈룰〉로 함께 가지는 명칭 (없으면 빈 목록)</summary>

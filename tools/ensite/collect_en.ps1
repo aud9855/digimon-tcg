@@ -92,12 +92,15 @@ foreach ($f in (Get-ChildItem $PageDir -Filter "c*.html" | Sort-Object Name)) {
     $colM = [regex]::Match($part, 'cardInfoTit">Color</dt>\s*<dd[^>]*>([\s\S]*?)</dd>')
     $costM = [regex]::Match($part, 'cardInfoTit">(?:Play Cost|Cost)</dt>\s*<dd[^>]*>\s*(\d+)\s*</dd>')
     $dpM = [regex]::Match($part, 'cardInfoTit">DP</dt>\s*<dd[^>]*>\s*(\d+)\s*</dd>')
+    # v0.82.0 형태 (Form — 특징의 하나, 종합 룰 2-3-2) — 영어 API 특징에 형태가 빠진 카드를 채울 때 쓴다 (엔진: Data.OfficialCardData82)
+    $formM = [regex]::Match($part, 'cardInfoTit">Form</dt>\s*<dd[^>]*>([\s\S]*?)</dd>')
     $cards[$id] = [ordered]@{ CardId = $id; Evo = $evo; SpecialDigivolve = $special; Dna = @(DnaLines $part)
       CardType = $(if ($typeM.Success) { Clean $typeM.Groups[1].Value } else { $null })
       Lv = $(if ($lvM.Success) { [int]$lvM.Groups[1].Value } else { $null })
       Colors = @($(if ($colM.Success) { [regex]::Matches($colM.Groups[1].Value, "cardColor_([a-z]+)") | ForEach-Object { $_.Groups[1].Value } }))
       PlayCost = $(if ($costM.Success) { [int]$costM.Groups[1].Value } else { $null })
-      DP = $(if ($dpM.Success) { [int]$dpM.Groups[1].Value } else { $null }) }
+      DP = $(if ($dpM.Success) { [int]$dpM.Groups[1].Value } else { $null })
+      Form = $(if ($formM.Success) { Clean $formM.Groups[1].Value } else { $null }) }
   }
 }
 $out = Join-Path $EnDir "card_rules.json"

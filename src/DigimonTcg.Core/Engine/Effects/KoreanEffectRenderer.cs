@@ -1948,6 +1948,7 @@ public static partial class KoreanEffectRenderer
         "end of attack" => "【어택 종료 시】",
         "end of all turns" => "【서로의 턴 종료 시】",
         "on move" or "when moving" => "【이동 시】",
+        "when linking" => "【링크 시】",   // v0.82.0 링크 효과 (Data.OfficialCardData82)
         "counter" => "【카운터】",
         "hand" => "[패]",
         "trash" => "[트래시]",

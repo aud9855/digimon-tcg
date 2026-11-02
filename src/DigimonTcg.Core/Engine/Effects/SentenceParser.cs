@@ -440,6 +440,7 @@ internal static partial class SentenceParser
         var triggers = new List<EffectTrigger>();
         var qualifier = Qualifier.None;
         bool oncePerTurn = false, twicePerTurn = false;
+        bool whenLinking82 = false;
         string? zoneLabel = null;   // [Hand] · [Trash] — 패 · 트래시에서 쓰는 효과
         foreach (var label in labels)
         {
@@ -449,6 +450,7 @@ internal static partial class SentenceParser
             else if (label.Equals("Your Turn", StringComparison.OrdinalIgnoreCase)) qualifier = Qualifier.YourTurn;
             else if (label.Equals("Opponent's Turn", StringComparison.OrdinalIgnoreCase)) qualifier = Qualifier.OpponentsTurn;
             else if (label.Equals("All Turns", StringComparison.OrdinalIgnoreCase)) qualifier = Qualifier.AllTurns;
+            else if (label.Equals("When Linking", StringComparison.OrdinalIgnoreCase) && inherited && (IsLinkCard43(card) || _forceLinked41)) { triggers.Add(EffectTrigger.OnLinked); whenLinking82 = true; }   // v0.82.0 링크 카드의 링크 효과 【링크 시】 (공식 시점을 적은 문구 — Data.OfficialCardData82)
             else if (label.Equals("Once Per Turn", StringComparison.OrdinalIgnoreCase)) oncePerTurn = true;
             else if (label.Equals("Twice Per Turn", StringComparison.OrdinalIgnoreCase)) twicePerTurn = true;
             else return $"미지원 시점 [{label}]";
@@ -522,6 +524,7 @@ internal static partial class SentenceParser
             triggers.Add(EffectTrigger.OnLinked);
             inherited = false;
         }
+        if (whenLinking82) inherited = false;   // v0.82.0 【링크 시】는 링크된 디지몬 기준으로 이 카드의 효과 (위와 같다)
 
         var pending = new Pending();
         string? error;
