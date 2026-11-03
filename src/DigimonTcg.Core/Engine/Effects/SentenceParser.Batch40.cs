@@ -170,11 +170,13 @@ internal static partial class SentenceParser
             return One(EffectTrigger.AllyTopPlacedUnder, c => ReferenceEquals(c.Other, c.Self) && c.Engine.TopPlacedAsBottom40);
         if (Regex.IsMatch(ev, @"^(?:an effect places|effects place) the top card of (?:one|any) of your Digimon in a Digimon's digivolution cards$", I))
             return One(EffectTrigger.AllyTopPlacedUnder);
-        // "When a purple card is placed under this Tamer" (BT10-093 — 엔진은 테이머 아래 카드를 쪽마다 모은다)
-        if ((m = Regex.Match(ev, $@"^(?:a|an|any) (?:(?<color>{Colors}) )?cards? (?:is|are) placed under (?:this Tamer|one of your Tamers|your Tamers)$", I)).Success)
+        // "When a purple card is placed under this Tamer" (BT10-093 — v0.85.0 "this Tamer"는 이 테이머 아래에 놓였을 때만)
+        if ((m = Regex.Match(ev, $@"^(?:a|an|any) (?:(?<color>{Colors}) )?cards? (?:is|are) placed under (?:(?<this>this Tamer)|one of your Tamers|your Tamers)$", I)).Success)
         {
             CardColor? color = m.Groups["color"].Success ? Enum.Parse<CardColor>(m.Groups["color"].Value, true) : null;
-            return One(EffectTrigger.AllyUnderTamerPlaced, c => color == null || c.Engine.CurrentSourceCards.Any(s => s.AllColors.Contains(color.Value)));
+            bool thisT = m.Groups["this"].Success;
+            return One(EffectTrigger.AllyUnderTamerPlaced, c => c.Engine.CurrentSourceCards.Any(s => (color == null || s.AllColors.Contains(color.Value))
+                && (!thisT || c.Card.Type != CardType.Tamer || ReferenceEquals(c.Owner.HostOfUnderTamer(s), c.Card) || !c.Owner.UnderTamers.Any(u => ReferenceEquals(u, s)))));
         }
         // "When this card is trashed as a digivolution card by the effect of [Rasenmon]" (BT8-081 — 「라센몬」의 ≪디지버스트≫로 진화원에서 파기되었을 때)
         if ((m = Regex.Match(ev, @"^this card is trashed as a digivolution card by the effect of (?<x>\[[^\]]+\])$", I)).Success)

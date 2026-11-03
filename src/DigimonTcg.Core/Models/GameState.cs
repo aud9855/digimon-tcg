@@ -55,8 +55,59 @@ public class PlayerZones
     public Func<int>? MemoryProbe43 { get; set; }
     public List<CardData> Tamers { get; set; } = new List<CardData>();
 
-    // 자신의 테이머 아래에 놓인 카드 (≪세이브≫ 등 — 어느 테이머 아래인지는 구분하지 않는다)
+    // 자신의 테이머 아래에 놓인 카드 전부 (≪세이브≫ 등 — 놓인 순서, 뒤가 아래). v0.85.0 어느 테이머 아래인지는 UnderTamerHosts85
     public List<CardData> UnderTamers { get; set; } = new List<CardData>();
+
+    /// <summary>
+    /// v0.85.0 테이머 아래 카드 → 그 카드가 놓인 테이머 (카드 객체 → 테이머 카드 객체). 종합 룰 4-4-2 · 4-7-8 · 16-20 (≪세이브≫ "자신의 테이머 1명의 밑에"):
+    /// 테이머 아래 카드는 테이머마다 따로 겹쳐지고, 그 테이머가 에어리어를 떠나면 그 아래 카드만 함께 파기된다.
+    /// 테이머마다의 순서 = UnderTamers 안의 순서 (뒤가 아래). 놓을 테이머를 정하지 않고 넣은 카드(테스트 준비)는 첫 테이머 아래로 본다
+    /// </summary>
+    public Dictionary<CardData, CardData> UnderTamerHosts85 { get; } = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>v0.85.0 이 테이머 아래 카드가 놓인 테이머 (그 테이머가 필드에 없으면 null — 떠난 테이머 아래에 남은 카드)</summary>
+    public CardData? HostOfUnderTamer(CardData under)
+    {
+        if (UnderTamerHosts85.TryGetValue(under, out var host))
+        {
+            foreach (var t in Tamers) if (ReferenceEquals(t, host)) return host;
+            return null;
+        }
+        return Tamers.Count > 0 ? Tamers[0] : null;
+    }
+
+    /// <summary>v0.85.0 테이머 tamer 아래의 카드 (위 → 아래)</summary>
+    public List<CardData> UnderOf(CardData tamer) => UnderTamers.Where(x => ReferenceEquals(HostOfUnderTamer(x), tamer)).ToList();
+
+    /// <summary>v0.85.0 테이머 tamer 아래의 카드 장 수</summary>
+    public int UnderCountOf(CardData tamer) => UnderTamers.Count == 0 ? 0 : UnderTamers.Count(x => ReferenceEquals(HostOfUnderTamer(x), tamer));
+
+    /// <summary>v0.85.0 테이머 tamer 아래의 앞면 카드 (정보를 참조하는 곳 — 종합 룰 4-7-9)</summary>
+    public IEnumerable<CardData> FaceUpUnderOf(CardData tamer) => UnderTamers.Where(x => ReferenceEquals(HostOfUnderTamer(x), tamer) && !IsFaceDownUnderTamer(x));
+
+    /// <summary>v0.85.0 테이머 tamer 아래의 뒷면 카드 장 수</summary>
+    public int FaceDownUnderCountOf(CardData tamer) => FaceDownUnderTamers.Count == 0 ? 0 : UnderTamers.Count(x => FaceDownUnderTamers.Contains(x) && ReferenceEquals(HostOfUnderTamer(x), tamer));
+
+    /// <summary>v0.85.0 카드를 테이머 tamer 아래 맨 아래에 놓는다 (종합 룰 4-4-2 — 원래 있던 곳에서 이미 뺀 카드)</summary>
+    public void PlaceUnderTamer85(CardData tamer, CardData card)
+    {
+        UnderTamers.Add(card);
+        UnderTamerHosts85[card] = tamer;
+    }
+
+    /// <summary>v0.85.0 테이머 아래 카드 1장을 뺀다 (어느 테이머 아래든 · 뒷면 표시도 지운다). 없었으면 false</summary>
+    public bool RemoveUnderTamer85(CardData card)
+    {
+        int i = UnderTamers.FindIndex(x => ReferenceEquals(x, card));
+        if (i < 0) return false;
+        UnderTamers.RemoveAt(i);
+        if (!UnderTamers.Any(x => ReferenceEquals(x, card)))
+        {
+            FaceDownUnderTamers.Remove(card);
+            UnderTamerHosts85.Remove(card);
+        }
+        return true;
+    }
 
     // v0.35.0 테이머 아래에 뒷면으로 놓인 카드 (참조로 구분 — 놓을 때 엔진이 카드를 복사한다). 종합 룰 4-7-4 · 4-7-9: 지정이 없으면 앞면, 뒷면 카드는 정보를 참조할 수 없다
     public HashSet<CardData> FaceDownUnderTamers { get; set; } = new HashSet<CardData>(ReferenceEqualityComparer.Instance);
@@ -116,12 +167,16 @@ public class PlayerZones
     /// <summary>테이머 아래 앞면 카드 (정보를 참조하는 곳 — ≪세이브≫ · 디지크로스 · 등장)</summary>
     public IEnumerable<CardData> FaceUpUnderTamers => FaceDownUnderTamers.Count == 0 ? UnderTamers : UnderTamers.Where(c => !FaceDownUnderTamers.Contains(c));
 
-    /// <summary>카드를 테이머 아래에 뒷면으로 놓는다 (복사본을 놓고 반환 — 맨 아래 = 목록의 끝)</summary>
-    public CardData AddUnderTamerFaceDown(CardData card)
+    /// <summary>카드를 테이머 아래에 뒷면으로 놓는다 (복사본을 놓고 반환 — 맨 아래 = 목록의 끝). v0.85.0 테이머를 정하지 않으면 첫 테이머 아래로 본다</summary>
+    public CardData AddUnderTamerFaceDown(CardData card) => AddUnderTamerFaceDown(null, card);
+
+    /// <summary>v0.85.0 카드를 테이머 tamer 아래 맨 아래에 뒷면으로 놓는다 (복사본을 놓고 반환)</summary>
+    public CardData AddUnderTamerFaceDown(CardData? tamer, CardData card)
     {
         var copy = CardInstance.CopyCard(card);
         UnderTamers.Add(copy);
         FaceDownUnderTamers.Add(copy);
+        if (tamer != null) UnderTamerHosts85[copy] = tamer;
         return copy;
     }
 

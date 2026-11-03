@@ -102,7 +102,7 @@ internal static partial class SentenceParser
             if (underTamer)
             {
                 if (!tamerOk || enemy.Tamers.Count == 0) { c.LastStepResolved = false; return; }
-                ok = c.Engine.PlaceDigimonUnderTamers41(enemy, v);
+                ok = c.Engine.PlaceDigimonUnderTamers41(enemy, v, c.Owner);
                 where = "상대의 테이머 아래";
             }
             else

@@ -52,7 +52,7 @@ internal static partial class SentenceParser
         var pool = new List<PoolCard>();
         Func<CardData, bool> ok = x => p.Match(x) && !ReferenceEquals(x, c.Card);
         if (p.Trash) pool.AddRange(PoolFrom(c.Owner.Trash, ok));
-        if (p.Under) pool.AddRange(PoolFrom(c.Owner.UnderTamers, ok));
+        if (p.Under) pool.AddRange(PoolFrom(c.Owner.UnderTamers, x => !c.Owner.IsFaceDownUnderTamer(x) && ok(x)));   // v0.85.0 뒷면 카드는 정보가 없다 (종합 룰 4-7-9) · 여러 테이머 아래에서 (공식 Q&A P-096 Q4183)
         if (p.Hand) pool.AddRange(PoolFrom(c.Owner.Hand, ok));
         return pool;
     }

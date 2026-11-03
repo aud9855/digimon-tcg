@@ -250,12 +250,12 @@ internal static partial class SentenceParser
         if (!Gate50) return null;
         string s = cond.Trim();
         Match m;
-        // "there are 4 or more [Hybrid] trait cards under this Tamer" (AD1-020 · AD1-023 — 테이머 아래 카드는 한 묶음: "this Tamer has N cards under it"과 같다)
+        // "there are 4 or more [Hybrid] trait cards under this Tamer" (AD1-020 · AD1-023 — "this Tamer has N cards under it"과 같다, v0.85.0 이 테이머 아래만)
         if ((m = Regex.Match(s, @"^there are (?<n>\d+) or more (?<x>\[[^\]]+\]) trait cards under this Tamer$", I)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);
             var ts = TargetSpec.Names(m.Groups["x"].Value);
-            return c => c.Owner.UnderTamers.Count(x => !c.Owner.IsFaceDownUnderTamer(x) && ts.Any(t => TargetSpec.HasTrait(x, t))) >= n && Diag46.HitTrue("condUnderTamerTrait50");
+            return c => c.Card.Type == CardType.Tamer && c.Owner.FaceUpUnderOf(c.Card).Count(x => ts.Any(t => TargetSpec.HasTrait(x, t))) >= n && Diag46.HitTrue("condUnderTamerTrait50");   // v0.85.0 이 테이머 아래만
         }
         // "attacking a Digimon with DP higher than this Digimon" (BT14-048 — 【어택 시】 어택 대상 디지몬의 DP가 이 디지몬보다 높다)
         if (Regex.IsMatch(s, @"^attacking a Digimon with (?:DP higher than|more DP than|higher DP than) this Digimon$", I))
@@ -420,15 +420,19 @@ internal static partial class SentenceParser
                     chosen.Add(pool[idx[0]]);
                 }
                 var placed = new List<string>();
-                foreach (var (x, hand) in chosen)
-                    if (hand ? c.Owner.Hand.Remove(x) : c.Owner.Trash.Remove(x)) { c.Owner.UnderTamers.Add(x); placed.Add(x.Name); }
+                // v0.85.0 고른 카드는 모두 이 테이머 / 고른 테이머 1명 아래 (BT18-095 · BT18-097 "자신의 테이머 1명의 아래에")
+                var host = chosen.Count == 0 ? null : DestHost85(c, thisTamer, _ => true, chosen.Select(x => x.Card).ToList(), false);
+                if (host != null)
+                    foreach (var (x, hand) in chosen)
+                        if (hand ? c.Owner.Hand.Remove(x) : c.Owner.Trash.Remove(x)) { c.Engine.PlaceUnderTamer85(c.Owner, host, x); placed.Add(x.Name); }
                 if (placed.Count == 0) c.LastStepResolved = false;
+                else c.LastCard = host;
                 Diag46.Hit(names ? "differentNamesUnderTamer50" : "differentColorsUnderTamer50");
                 Emit(c, label, placed.Count > 0 ? $"[{string.Join(", ", placed)}]을(를) 테이머 아래에" : "놓을 카드가 없습니다");
             }, null);
         }
         // "1 of your Tamers with 5 or more cards under it may digivolve into [EmperorGreymon] in the hand or trash, ignoring digivolution requirements and without paying the cost" (BT18-095 · BT18-097)
-        //  — 테이머 아래 카드는 한 묶음 ("this Tamer has N cards under it"과 같은 판단)
+        //  — v0.85.0 아래에 카드가 N장 이상 있는 테이머만 (테이머마다)
         if ((m = Regex.Match(s, @"^1 of your Tamers with (?<n>\d+) or more cards under it may digivolve into (?<x>\[[^\]]+\]) in the (?<from>hand or trash|hand|trash), ignoring (?:its )?digivolution requirements and without paying (?:the|its) costs?$", I)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);
@@ -437,14 +441,14 @@ internal static partial class SentenceParser
             bool hand = from.Contains("hand"), trash = from.Contains("trash");
             return (c =>
             {
-                if (c.Owner.UnderTamers.Count < n || c.Owner.Tamers.Count == 0 || c.Owner.BattleArea.Count >= 12) { c.LastStepResolved = false; Emit(c, label, $"아래에 카드가 {n}장 이상 있는 테이머가 없습니다"); return; }
+                if (!c.Owner.Tamers.Any(t => c.Owner.UnderCountOf(t) >= n) || c.Owner.BattleArea.Count >= 12) { c.LastStepResolved = false; Emit(c, label, $"아래에 카드가 {n}장 이상 있는 테이머가 없습니다"); return; }
                 var options = new List<(CardData Tamer, CardData Evo, List<CardData> Zone)>();
                 foreach (var z in new[] { hand ? c.Owner.Hand : null, trash ? c.Owner.Trash : null })
                 {
                     if (z == null) continue;
                     var evo = z.Where(x => x.Type == CardType.Digimon && CardNames.Is(x, name)).OrderByDescending(x => x.DP).FirstOrDefault();
                     if (evo == null) continue;
-                    foreach (var t in c.Owner.Tamers.Distinct()) options.Add((t, evo, z));
+                    foreach (var t in c.Owner.Tamers.Distinct().Where(t => c.Owner.UnderCountOf(t) >= n).OrderByDescending(t => c.LastCard != null && ReferenceEquals(t, c.LastCard))) options.Add((t, evo, z));
                 }
                 if (options.Count == 0) { c.LastStepResolved = false; Emit(c, label, $"진화할 [{name}]이(가) 없습니다"); return; }
                 var texts = options.Select(o => $"[{o.Tamer.Name}] → [{o.Evo.Name}] ({(ReferenceEquals(o.Zone, c.Owner.Trash) ? "트래시" : "패")})").ToList();

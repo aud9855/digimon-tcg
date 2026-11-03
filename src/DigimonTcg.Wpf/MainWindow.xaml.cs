@@ -2686,35 +2686,7 @@ public partial class MainWindow : Window
             TamerZonePanel.Children.Add(optionChip);
         }
 
-        // 테이머 아래에 놓인 카드 (≪세이브≫ · ≪머티리얼 세이브≫ 등 — 효과는 엔진이 처리, 여기서는 장수와 카드만 보여 준다)
-        var underTamers = _gameState.Player.UnderTamers;
-        if (underTamers.Count > 0)
-        {
-            // v0.35.0 뒷면으로 놓인 카드는 "🂠" 표시 (자신의 카드라 내용은 볼 수 있다 — 종합 룰 4-7-10)
-            string names = string.Join(", ", underTamers.Select(c => _gameState.Player.IsFaceDownUnderTamer(c) ? $"🂠{c.DisplayName}" : c.DisplayName));
-            int underFaceDown = _gameState.Player.FaceDownUnderTamerCount;
-            var underChip = new Border
-            {
-                Background = BrushFromHex("#33CBA6F7"),
-                BorderBrush = BrushFromHex("#CBA6F7"),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(4),
-                Padding = new Thickness(8, 2, 8, 2),
-                Margin = new Thickness(0, 0, 6, 0),
-                Cursor = System.Windows.Input.Cursors.Hand,
-                ToolTip = $"테이머 아래에 놓인 카드 {underTamers.Count}장: {names}",
-                Child = new TextBlock
-                {
-                    Text = $"📥 테이머 아래 {underTamers.Count}장{(underFaceDown > 0 ? $" (뒷면 {underFaceDown})" : "")}",
-                    Foreground = BrushFromHex("#CBA6F7"),
-                    FontWeight = FontWeights.Bold,
-                    FontSize = 11
-                }
-            };
-            underChip.MouseEnter += (_, _) => UpdateCardInspector(underTamers[^1]);
-            underChip.MouseLeftButtonUp += (_, _) => ShowToast(true, $"📥 테이머 아래에 놓인 카드 {underTamers.Count}장: {names}");
-            TamerZonePanel.Children.Add(underChip);
-        }
+        // v0.85.0 테이머 아래 카드는 테이머마다 그 테이머 카드 위에 보여 준다 (MainWindow.FieldLayout.cs CreateUnderTamerPeek85)
         // 놓인 옵션 · 테이머 아래 카드가 없으면 줄을 숨겨 필드를 넓게 쓴다
         TamerStripBorder.Visibility = TamerZonePanel.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 

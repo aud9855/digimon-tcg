@@ -10,7 +10,7 @@ namespace DigimonTcg.Core.Engine;
 /// (for a memory cost of 2)" (BT4 · BT6 · BT7 · BT12 · BT17, 28문장).
 /// 공식 Q&A BT4-011 · BT7-011: 테이머를 디지몬으로도 취급하여 진화한다 — "디지몬이 진화할 때 · 진화했을 때" 효과가 유발되고, "진화할 수 없다"면 진화할 수 없다.
 /// 종합 룰 3-4-5: 에어리어의 카드 위에 카드가 겹쳐지면 그 존재가 변화한 것 (새로 등장한 것이 아니다) — 테이머가 이번 턴에 나온 것이 아니면 어택할 수 있다.
-/// 종합 룰 4-3-2: 디지몬 아래에 겹쳐진 카드는 진화원 — 테이머 아래의 카드는 그 디지몬의 진화원이 된다 (테이머 아래 카드는 테이머마다 나누어 두지 않으므로, 테이머가 1명일 때만).
+/// 종합 룰 4-3-2: 디지몬 아래에 겹쳐진 카드는 진화원 — 그 테이머 아래의 카드는 그 디지몬의 진화원이 된다 (v0.85.0 테이머마다).
 /// </summary>
 public partial class GoldfishEngine
 {
@@ -81,17 +81,14 @@ public partial class GoldfishEngine
         PayTamerEvoPlace80(owner, evoCard);   // v0.80.0 BT7-112 진화를 선언한 뒤 비용 (공식 Q&A BT7-112 Q1)
         bool enteredThisTurn = TamerEnteredThisTurn(owner, tamer);
         bool suspended = owner.SuspendedTamers.Remove(tamer);
+        var underOfTamer = TakeAllUnder85(owner, tamer);   // v0.85.0 테이머 존에서 빼기 전에 (그 테이머 아래 카드)
         owner.Tamers.Remove(tamer);
         int entry = _tamerEntries.FindIndex(e => ReferenceEquals(e.Zones, owner) && ReferenceEquals(e.Tamer, tamer) && (enteredThisTurn || e.Sequence != State.TurnSequence));
         if (entry >= 0) _tamerEntries.RemoveAt(entry);
         var inst = new CardInstance(tamer, enteredThisTurn ? State.CurrentTurn : State.CurrentTurn - 1) { IsSuspended = suspended, IsOwnersTurn = IsTurnOf(owner) };
-        // 테이머 아래의 카드 → 진화원 (테이머가 이 1명뿐일 때만 — 누구 아래인지 나누어 두지 않는다)
-        if (owner.Tamers.Count == 0)
-        {
-            foreach (var under in owner.UnderTamers) { var placed = inst.AddBottomSource(under); if (owner.IsFaceDownUnderTamer(under)) inst.FaceDownSources.Add(placed); }   // v0.35.0 뒷면은 뒷면 그대로
-            owner.UnderTamers.Clear();
-            owner.FaceDownUnderTamers.Clear();
-        }
+        // 그 테이머 아래의 카드 → 진화원 (종합 룰 3-4-5 · 4-3-2 — v0.85.0 테이머마다: 진화한 테이머 아래 카드만, 다른 테이머 아래 카드는 그대로)
+        foreach (var (under, faceDown) in underOfTamer) { var placed = inst.AddBottomSource(under); if (faceDown) inst.FaceDownSources.Add(placed); }   // v0.35.0 뒷면은 뒷면 그대로
+        TrashOrphanUnderTamers85(owner);
         owner.BattleArea.Add(inst);
         owner.Hand.Remove(evoCard);
         paid = ApplyEvoCostModifiers(owner, inst, evoCard, cost);

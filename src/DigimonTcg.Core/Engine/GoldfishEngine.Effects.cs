@@ -475,6 +475,8 @@ public partial class GoldfishEngine
         ExpireColors66();   // v0.66.0 BT18-078 바뀐 원래 색의 기간 (GoldfishEngine.Batch66)
         ExpireChanges67();   // v0.67.0 BT8-040 이 턴 동안의 색 · 「스카몬」으로 바뀐 원래 명칭 · DP의 기간 (GoldfishEngine.Batch67)
         SyncTamerProxies();   // v0.36.0 디지몬으로 취급하는 테이머 (GoldfishEngine.TamerAsDigimon.cs)
+        TrashOrphanUnderTamers85(State.Player, late: true);   // v0.85.0 안전망 — 떠난 테이머 아래에 남은 카드 (떠난 곳마다 이미 보낸다)
+        TrashOrphanUnderTamers85(State.DummyOpponent, late: true);
         ApplyExtraTraits58();   // v0.58.0 지속 효과로 얻은 특징 (GoldfishEngine.Batch58.cs)
         ApplyContinuousEffects(State.Player, State.DummyOpponent, State.PlayerAllSecurityAttackUntil);
         ApplyContinuousEffects(State.DummyOpponent, State.Player, State.OpponentAllSecurityAttackUntil);
@@ -892,9 +894,12 @@ public partial class GoldfishEngine
         {
             var saved = ChooseCards(zones, CardChoiceZone.DigivolutionCards, instance.SourcesWhere(IsXrosMaterial).OrderByDescending(s => s.Level).ToList(),
                 materialSave, upTo: true, $"≪머티리얼 세이브 {materialSave}≫ 테이머 아래에 놓을 진화원을 고르세요.");
-            foreach (var s in saved)
-                if (instance.TakeSource(x => ReferenceEquals(x, s)) != null) zones.UnderTamers.Add(s);
-            if (saved.Count > 0) EffectLog(zones, $"[≪머티리얼 세이브≫] [{string.Join(", ", saved.Select(s => s.Name))}]을(를) 테이머 아래에 놓았습니다.");
+            // v0.85.0 종합 룰 16-21-4: 1회의 ≪머티리얼 세이브≫로 놓는 카드는 전부 테이머 1명 밑에
+            var host = saved.Count == 0 ? null : ChooseUnderTamerHost85(zones, zones, saved, $"≪머티리얼 세이브 {materialSave}≫ 진화원을 놓을 테이머를 고르세요.");
+            if (host != null)
+                foreach (var s in saved)
+                    if (instance.TakeSource(x => ReferenceEquals(x, s)) != null) PlaceUnderTamer85(zones, host, s);
+            if (host != null && saved.Count > 0) EffectLog(zones, $"[≪머티리얼 세이브≫] [{string.Join(", ", saved.Select(s => s.Name))}]을(를) [{host.Name}] 아래에 놓았습니다.");
         }
         zones.Trash.Add(instance.TopCard);
         var links82 = instance.LinkedCards.ToList();   // v0.82.0 【소멸 시】 링크 효과용 — 트래시로 가기 전에 링크되어 있던 카드
@@ -2022,11 +2027,18 @@ public partial class GoldfishEngine
     }
 
     /// <summary>효과로 테이머 아래 카드를 파기한 뒤 (v0.31.0) — "When effects trash cards from under your Tamers / this Tamer"</summary>
-    internal void NotifyUnderTamersTrashed(PlayerZones owner, IReadOnlyCollection<CardData> trashed)
+    internal void NotifyUnderTamersTrashed(PlayerZones owner, IReadOnlyCollection<CardData> trashed, IReadOnlyList<CardData>? hosts = null)
     {
         if (trashed.Count == 0 || State.IsGameOver)
             return;
-        RunOrDefer(() => FireForSide(EffectTrigger.UnderTamersTrashed, owner, null, triggerCard: trashed.First()));
+        var hostList = hosts ?? Array.Empty<CardData>();   // v0.85.0 그 카드가 있던 테이머들 ("~ from under this Tamer")
+        RunOrDefer(() =>
+        {
+            var outer = UnderTamerEventHosts85;
+            UnderTamerEventHosts85 = hostList;
+            try { FireForSide(EffectTrigger.UnderTamersTrashed, owner, null, triggerCard: trashed.First()); }
+            finally { UnderTamerEventHosts85 = outer; }
+        });
     }
 
     /// <summary>효과로 디지몬의 링크 카드를 파기한 뒤 (v0.31.0) — "When effects trash any of this Digimon's / your Digimon's link cards"</summary>
@@ -2532,18 +2544,10 @@ public partial class GoldfishEngine
     }
 
     /// <summary>
-    /// 테이머가 배틀 에어리어를 떠난 뒤: 테이머 아래 카드는 어느 테이머 아래인지 구분하지 않으므로,
-    /// 테이머가 한 장도 남지 않았을 때 전부 트래시로 보낸다 (테이머가 떠나면 그 아래 카드는 트래시)
+    /// 테이머가 배틀 에어리어를 떠난 뒤: 떠난 테이머 아래에 있던 카드를 트래시로 보낸다 (종합 룰 4-7-8).
+    /// v0.85.0 전에는 테이머 아래 카드를 한 묶음으로 두어 테이머가 한 명도 남지 않았을 때만 보냈다
     /// </summary>
-    internal void ClearUnderTamersIfNoTamer(PlayerZones zones)
-    {
-        if (zones.Tamers.Count > 0 || zones.UnderTamers.Count == 0)
-            return;
-        zones.Trash.AddRange(zones.UnderTamers);
-        EffectLog(zones, $"테이머가 없어져 테이머 아래 카드 {zones.UnderTamers.Count}장을 트래시로 보냅니다.");
-        zones.UnderTamers.Clear();
-        zones.FaceDownUnderTamers.Clear();
-    }
+    internal void ClearUnderTamersIfNoTamer(PlayerZones zones) => TrashOrphanUnderTamers85(zones);   // v0.85.0 떠난 테이머 아래 카드만 (GoldfishEngine.UnderTamer85.cs)
 
     /// <summary>옵션 카드를 배틀 에어리어에 놓는다 (≪딜레이≫: 놓은 다음 턴부터 [메인]으로 파기해 효과를 발휘)</summary>
     /// <summary>

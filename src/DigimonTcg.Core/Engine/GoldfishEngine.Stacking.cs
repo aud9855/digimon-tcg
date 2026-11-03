@@ -220,7 +220,8 @@ public partial class GoldfishEngine
             EffectLog(owner, $"테이머 [{tamer.Name}]은(는) 진화 조건을 무시하고 [{evoCard.Name}](으)로 진화할 수 없습니다 (서로는 진화 조건을 무시할 수 없다).");
             return null;
         }
-        if (!ReferenceEquals(from, owner.Hand)) from.Remove(evoCard);   // 트래시의 카드로 (EvolveTamerCore는 패에서만 뺀다)
+        if (ReferenceEquals(from, owner.UnderTamers)) owner.RemoveUnderTamer85(evoCard);   // v0.85.0 테이머 아래의 카드로
+        else if (!ReferenceEquals(from, owner.Hand)) from.Remove(evoCard);   // 트래시의 카드로 (EvolveTamerCore는 패에서만 뺀다)
         var inst = EvolveTamerCore(owner, tamer, evoCard, cost, out int paid);
         if (ReferenceEquals(owner, State.Player)) { State.TotalMemorySpent += paid; State.TotalEvolutionsCount++; }
         EffectLog(owner, $"[효과로 진화] 테이머 [{tamer.Name}] → [{evoCard.Name}(Lv.{evoCard.Level})] (코스트 {paid})");

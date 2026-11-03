@@ -47,13 +47,16 @@ public sealed class WpfChoiceProvider : IChoiceProvider
         var cards = new WrapPanel { Margin = new Thickness(0, 12, 0, 0), MaxWidth = 860 };
         foreach (var option in options)
         {
-            bool mine = state.Player.BattleArea.Contains(option);
+            // v0.85.0 테이머 (효과가 고르는 "자신의 테이머 1명" — 엔진이 테이머 카드만 든 가짜 디지몬으로 넘긴다): 누구의 테이머인지 · 그 테이머 아래 카드 장 수
+            bool tamer = option.TopCard.Type == CardType.Tamer && option.TamerProxyOf == null && !state.Player.BattleArea.Contains(option) && !state.DummyOpponent.BattleArea.Contains(option);
+            bool mine = tamer ? state.Player.Tamers.Any(t => ReferenceEquals(t, option.TopCard)) : state.Player.BattleArea.Contains(option);
             var content = new StackPanel { Width = 120 };
             if (_cardVisual != null)
                 content.Children.Add(_cardVisual(option.TopCard));
+            string stats = tamer ? TamerStats(mine ? state.Player : state.DummyOpponent, option) : DigimonStats(option);
             content.Children.Add(new TextBlock
             {
-                Text = $"{(mine ? "내" : "상대")} {option.TopCard.DisplayName}\n{DigimonStats(option)}"
+                Text = $"{(mine ? "내" : "상대")} {(tamer ? "테이머 " : "")}{option.TopCard.DisplayName}\n{stats}"
                        + (ReferenceEquals(option, recommended) ? "\n★ 추천" : ""),
                 Foreground = Brushes.White,
                 TextAlignment = TextAlignment.Center,
@@ -158,6 +161,13 @@ public sealed class WpfChoiceProvider : IChoiceProvider
     private sealed record IndexKey(int Index);
 
     /// <summary>카드 아래 설명 (좁은 칸에서 어색하게 끊기지 않도록 줄을 나눈다)</summary>
+    /// <summary>v0.85.0 테이머 칸 설명: 아래 카드 장 수 (뒷면 장 수) · 레스트</summary>
+    private static string TamerStats(PlayerZones zones, CardInstance fake)
+    {
+        int n = zones.UnderCountOf(fake.TopCard), fd = zones.FaceDownUnderCountOf(fake.TopCard);
+        return $"아래 카드 {n}장" + (fd > 0 ? $" (뒷면 {fd})" : "") + (fake.IsSuspended ? "\n레스트 상태" : "");
+    }
+
     private static string DigimonStats(CardInstance d) =>
         $"Lv.{d.TopCard.Level} · DP {d.GetCurrentDP():N0}" + (d.IsSuspended ? "\n레스트 상태" : "");
 

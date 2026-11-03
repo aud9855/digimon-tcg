@@ -34,19 +34,26 @@ internal static partial class SentenceParser
         var hosts = z.BattleArea.Where(d => d.TamerProxyOf == null && d.EvolutionSources.Count > 0 && !c.Engine.IsUnaffectedBy(c.Owner, d))
             .OrderByDescending(d => d.GetCurrentDP()).ThenByDescending(d => d.EvolutionSources.Count).ToList();
         var groups = hosts.Select(d => (Host: (CardInstance?)d, Cards: d.GetEvolutionStackBottomUp().AsEnumerable().Reverse().ToList())).ToList();
-        if (z.UnderTamers.Count > 0 && z.Tamers.Count > 0) groups.Add((null, z.UnderTamers.ToList()));
-        groups = groups.Where(g => g.Cards.Count > 0 && (g.Host == null || !c.Engine.StackProtected42(z, g.Host))).ToList();
+        // v0.85.0 테이머마다 한 무리 (Host = 그 테이머를 나타내는 가짜 디지몬 — tamerOf)
+        var tamerOf = new Dictionary<CardInstance, CardData>(ReferenceEqualityComparer.Instance);
+        foreach (var t in z.Tamers.Distinct().Where(t => z.UnderCountOf(t) > 0))
+        {
+            var fake = new CardInstance(t, 0) { IsSuspended = !z.HasActiveTamer(t) };
+            tamerOf[fake] = t;
+            groups.Add((fake, z.UnderOf(t)));
+        }
+        groups = groups.Where(g => g.Cards.Count > 0 && (g.Host == null || tamerOf.ContainsKey(g.Host) || !c.Engine.StackProtected42(z, g.Host))).ToList();
         if (groups.Count == 0 || n <= 0) { c.LastStepResolved = false; Emit(c, label, "파기할 아래의 카드가 없습니다"); return 0; }
         if (may && !c.Engine.AskYesNo(c.Owner, null, $"[{c.Card.Name}] 상대의 디지몬/테이머 아래의 카드를 {n}장 파기할까요?", recommended: true)) { c.LastStepResolved = false; return 0; }
         if (one)
         {
             // 1마리(명)를 먼저 고른다 — 플레이어는 디지몬을 고르고(테이머 아래면 고르지 않음), AI는 가장 많이 파기할 수 있는 곳
-            var best = groups.OrderByDescending(g => Math.Min(n, g.Cards.Count)).ThenByDescending(g => g.Host?.GetCurrentDP() ?? 0).First();
-            var digis = groups.Where(g => g.Host != null).Select(g => g.Host!).ToList();
-            if (digis.Count > 0 && ReferenceEquals(c.Owner, c.State.Player))
+            var best = groups.OrderByDescending(g => Math.Min(n, g.Cards.Count)).ThenByDescending(g => tamerOf.ContainsKey(g.Host!) ? 0 : g.Host!.GetCurrentDP()).First();
+            var choices = groups.Select(g => g.Host!).ToList();
+            if (choices.Count > 1 && ReferenceEquals(c.Owner, c.State.Player))
             {
-                var pickHost = c.Engine.ChooseTargets(c.Owner, digis, 1, $"[{c.Card.Name}] 아래의 카드를 파기할 상대의 디지몬을 고르세요.", optional: groups.Any(g => g.Host == null), best.Host).FirstOrDefault();
-                best = pickHost == null ? groups.First(g => g.Host == null) : groups.First(g => ReferenceEquals(g.Host, pickHost));
+                var pickHost = c.Engine.ChooseTargets(c.Owner, choices, 1, $"[{c.Card.Name}] 아래의 카드를 파기할 상대의 디지몬 · 테이머를 고르세요.", optional: false, best.Host).FirstOrDefault();
+                if (pickHost != null) best = groups.First(g => ReferenceEquals(g.Host, pickHost));
             }
             groups = new() { best };
         }
@@ -55,22 +62,27 @@ internal static partial class SentenceParser
             $"[{c.Card.Name}] 파기할 상대의 디지몬/테이머 아래의 카드를 고르세요 ({Math.Min(n, pool.Count)}장).").Distinct().Where(i => i >= 0 && i < pool.Count).Select(i => pool[i]).ToList();
         int done = 0;
         var trashed = new List<CardData>();
+        var underTrashed = new List<CardData>();
+        var underHosts = new List<CardData>();
         foreach (var (host, x) in picks)
         {
-            if (host != null)
+            if (host != null && tamerOf.TryGetValue(host, out var tamer))
+            {
+                if (!z.RemoveUnderTamer85(x)) continue;
+                underTrashed.Add(x);
+                if (!underHosts.Any(t => ReferenceEquals(t, tamer))) underHosts.Add(tamer);
+            }
+            else if (host != null)
             {
                 if (!z.BattleArea.Contains(host) || host.TakeSource(y => ReferenceEquals(y, x)) == null) continue;
             }
-            else
-            {
-                if (!z.UnderTamers.Remove(x)) continue;
-                z.FaceDownUnderTamers.Remove(x);
-            }
+            else continue;
             z.Trash.Add(x);
             trashed.Add(x);
             done++;
         }
         if (trashed.Count > 0) c.Engine.ApplyOverflowPublic34(z, trashed);
+        if (underTrashed.Count > 0) c.Engine.NotifyUnderTamersTrashed(z, underTrashed, underHosts);   // v0.85.0 상대의 효과로 파기된 것도 "When effects trash cards from under ~"
         c.RecalculateFieldBuffs();
         c.PaidCount = done;
         if (done == 0) c.LastStepResolved = false;

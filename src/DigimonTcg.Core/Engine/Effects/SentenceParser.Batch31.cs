@@ -33,9 +33,11 @@ internal static partial class SentenceParser
             var colors = ColorList(m.Groups["color"].Value);
             return One(EffectTrigger.AllyTamerDeleted, c => c.TriggerCard != null && (colors.Count == 0 || c.TriggerCard.AllColors.Any(colors.Contains)));
         }
-        // "When effects trash cards from under your Tamers" · "~ from under this Tamer" (테이머 아래 카드 — 엔진은 테이머 아래 카드를 한 묶음으로 둔다)
-        if (Regex.IsMatch(ev, @"^(?:an effect trashes|effects trash) (?:a card|cards) from under (?:your Tamers|this Tamer|(?:one|any) of your Tamers)$", RegexOptions.IgnoreCase))
-            return One(EffectTrigger.UnderTamersTrashed);
+        // "When effects trash cards from under your Tamers" · "~ from under this Tamer" (v0.85.0 "this Tamer"는 이 테이머 아래에서 파기되었을 때만)
+        if ((m = Regex.Match(ev, @"^(?:an effect trashes|effects trash) (?:a card|cards) from under (?:your Tamers|(?<this>this Tamer)|(?:one|any) of your Tamers)$", RegexOptions.IgnoreCase)).Success)
+            return m.Groups["this"].Success
+                ? One(EffectTrigger.UnderTamersTrashed, c => c.Engine.UnderTamerEventHosts85.Count == 0 || c.Engine.UnderTamerEventHosts85.Any(t => ReferenceEquals(t, c.Card)))
+                : One(EffectTrigger.UnderTamersTrashed);
 
         // ---- 링크 카드 ----
         // "When effects trash any of this Digimon's link cards" · "When effects trash any of your Digimon's link cards"
@@ -327,16 +329,18 @@ internal static partial class SentenceParser
         }
 
         // ---- 테이머 아래: "Place the top 2 cards of your deck face down under this Tamer" ----
-        if ((m = Regex.Match(s, @"^(?:you may )?place the top (?<n>\d+) cards of your deck(?<fd> face down)? under (?:this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success)
+        if ((m = Regex.Match(s, @"^(?:you may )?place the top (?<n>\d+) cards of your deck(?<fd> face down)? under (?<where>this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);
             bool fd = m.Groups["fd"].Success;   // v0.35.0 뒷면으로
+            var hostSpec = ParseUnderHost85(m.Groups["where"].Value);   // v0.85.0 이 테이머 / 테이머 1명 — 덱 위에서 1장씩 그 테이머 아래에 (공식 Q&A BT25-090 Q6413)
             return (c =>
             {
-                if (c.Owner.Tamers.Count == 0 || c.Owner.MainDeck.Count == 0) { c.LastStepResolved = false; return; }
+                if (!HasUnderHost85(c, hostSpec) || c.Owner.MainDeck.Count == 0) { c.LastStepResolved = false; return; }
+                if (UnderHost85(c, hostSpec, c.Owner.MainDeck.Take(n).ToList(), fd) is not { } host) { c.LastStepResolved = false; return; }
                 int placed = 0;
-                for (; placed < n && c.Owner.MainDeck.Count > 0; placed++) { var top = c.Owner.MainDeck[0]; c.Owner.MainDeck.RemoveAt(0); if (fd) c.Engine.PlaceFaceDownUnderTamer(c.Owner, top); else c.Owner.UnderTamers.Add(top); }
-                Emit(c, label, $"덱 위 {placed}장을 테이머 아래에 놓는다");
+                for (; placed < n && c.Owner.MainDeck.Count > 0; placed++) { var top = c.Owner.MainDeck[0]; c.Owner.MainDeck.RemoveAt(0); c.Engine.PlaceUnderTamer85(c.Owner, host, top, fd); }
+                Emit(c, label, $"덱 위 {placed}장을 [{host.Name}] 아래에 놓는다");
             }, null);
         }
 

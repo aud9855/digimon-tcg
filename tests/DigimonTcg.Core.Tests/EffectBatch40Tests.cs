@@ -228,11 +228,19 @@ public class EffectBatch40Tests
         var (state, engine, _) = NewMainPhase();
         var tamer = Tamer("B40-BT10093", "[All Turns] [Once Per Turn] When a purple card is placed under this Tamer, ＜Draw 1＞ (Draw 1 card from your deck.) and memory +1.", CardColor.Purple);
         AssertFull(tamer);
-        var placer = Tamer("B40-PLACER", "[Main] By placing 1 purple card from your hand under this Tamer, ＜Draw 1＞.", CardColor.Purple);
+        // v0.85.0 테이머 아래 카드는 테이머마다: 다른 테이머 아래에 놓이면 "이 테이머 아래에" 유발하지 않는다
+        var placerSelf = Tamer("B40-PLACER-SELF", "[Main] By placing 1 purple card from your hand under this Tamer, ＜Draw 1＞.", CardColor.Purple);
+        var placer = Tamer("B40-PLACER", "[Main] By placing 1 purple card from your hand under 1 of your Tamers, ＜Draw 1＞.", CardColor.Purple);
         state.Player.Tamers.Add(tamer);
+        state.Player.Tamers.Add(placerSelf);
         state.Player.Tamers.Add(placer);
+        state.Player.Hand.Add(Digimon("B40-PURP0", 3, color: CardColor.Purple));
+        engine.RunEffects(EffectTrigger.ActivateMain, state.Player, null, placerSelf, includeInherited: false);
+        Assert.Equal(8, state.MemoryGauge);   // 유발하지 않았다
+        Assert.Equal(1, state.Player.UnderCountOf(placerSelf));
         state.Player.Hand.Add(Digimon("B40-PURP", 3, color: CardColor.Purple));
-        engine.RunEffects(EffectTrigger.ActivateMain, state.Player, null, placer, includeInherited: false);
+        engine.RunEffects(EffectTrigger.ActivateMain, state.Player, null, placer, includeInherited: false);   // 추천: 이 카드를 쓰는 테이머 (BT10-093) 아래
+        Assert.Equal(1, state.Player.UnderCountOf(tamer));
         Assert.Equal(9, state.MemoryGauge);
         Assert.Equal("【서로의 턴】 [턴에 1회] 이 테이머 아래에 퍼플인 카드가 놓였을 때, 《1 드로우》 (자신의 덱에서 카드를 1장 드로우한다)하고, 메모리를 +1 한다.", KoreanEffectRenderer.RenderClause(tamer.EffectText));
     }

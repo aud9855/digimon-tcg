@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using DigimonTcg.Core.Models;
@@ -51,14 +52,8 @@ public partial class GoldfishEngine
         return copy;
     }
 
-    /// <summary>카드(원래 있던 곳에서 이미 뺀)를 테이머 아래에 뒷면으로 놓는다 (맨 아래). 놓인 복사본 반환</summary>
-    internal CardData PlaceFaceDownUnderTamer(PlayerZones owner, CardData card)
-    {
-        var copy = owner.AddUnderTamerFaceDown(card);
-        FaceDownPlacedTotal++;
-        EffectLog(owner, $"[테이머 아래 뒷면] 카드 1장을 테이머 아래에 뒷면으로 놓았습니다 (뒷면 {owner.FaceDownUnderTamerCount}장)");
-        return copy;
-    }
+    /// <summary>카드(원래 있던 곳에서 이미 뺀)를 테이머 tamer 아래 맨 아래에 뒷면으로 놓는다. 놓인 복사본 반환 (v0.85.0 테이머마다)</summary>
+    internal CardData PlaceFaceDownUnderTamer(PlayerZones owner, CardData tamer, CardData card) => PlaceUnderTamer85(owner, tamer, card, faceDown: true);
 
     /// <summary>inst의 진화원 중 아래에서부터 뒷면 카드 n장을 파기한다 (트래시로). 파기한 카드 반환</summary>
     internal List<CardData> TrashBottomFaceDownSources(PlayerZones owner, CardInstance inst, int n)
@@ -72,22 +67,9 @@ public partial class GoldfishEngine
         return picks;
     }
 
-    /// <summary>테이머 아래 뒷면 카드를 아래에서부터 n장 파기한다. 파기한 카드 반환</summary>
-    internal List<CardData> TrashBottomFaceDownUnderTamers(PlayerZones owner, int n)
-    {
-        var trashed = new List<CardData>();
-        for (int i = owner.UnderTamers.Count - 1; i >= 0 && trashed.Count < n; i--)
-        {
-            var x = owner.UnderTamers[i];
-            if (!owner.IsFaceDownUnderTamer(x)) continue;
-            owner.UnderTamers.RemoveAt(i);
-            owner.FaceDownUnderTamers.Remove(x);
-            owner.Trash.Add(x);
-            trashed.Add(x);
-        }
-        if (trashed.Count > 0) NotifyUnderTamersTrashed(owner, trashed);   // v0.31.0 "When effects trash cards from under your Tamers"
-        return trashed;
-    }
+    /// <summary>테이머 아래 뒷면 카드를 아래에서부터 n장 파기한다 (v0.85.0 여러 테이머 아래에서 함께 — 공식 Q&A ST24-06 Q6212). 파기한 카드 반환</summary>
+    internal List<CardData> TrashBottomFaceDownUnderTamers(PlayerZones owner, int n, Func<CardData, bool>? tamerFilter = null) =>
+        TrashBottomUnderTamers85(owner, n, faceDownOnly: true, tamerFilter, "테이머 아래 뒷면 카드 파기");
 
     /// <summary>
     /// 룰 처리 (종합 룰 17-1-3-2-4): 맨 위 카드가 뒷면 카드가 된 디지몬(≪퇴화≫ · 맨 위 카드 파기 등)은 그 카드와 아래 카드를 함께 파기한다 (소멸이 아니다)

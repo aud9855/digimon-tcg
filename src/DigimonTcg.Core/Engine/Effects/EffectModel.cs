@@ -125,6 +125,8 @@ public enum EffectTrigger
     StartOfOpponentsMainPhase70,    // [상대의 메인 페이즈 개시 시] (EX3-024 — 턴 플레이어의 [자신의 메인 페이즈 개시 시] 다음에 상대의 디지몬)
     // v0.80.0
     OpponentHandAddedCount80,       // 효과 하나로 상대의 패가 늘어났을 때 — 드로우 포함, 그 효과로 늘어난 장수 = GoldfishEngine.OppHandAddedCount80 (BT10-077 · 공식 Q&A BT10-077 Q1 · EX7-013 Q1)
+    // v0.85.0
+    OpponentUnderTamerPlaced85,     // 효과로 상대의 테이머 아래에 카드가 놓였을 때 (EX10-056 — CurrentSourceCards = 놓인 카드)
 }
 
 /// <summary>효과가 적힌 곳 — 맨 위 카드(메인)인지, 진화원인지</summary>
@@ -332,6 +334,9 @@ public sealed class StaticContext
 
     /// <summary>DpInBattle 계산 때: 배틀 상대가 진화원을 가졌는지 (시큐리티 디지몬은 진화원이 없다)</summary>
     public bool BattleOpponentHasSources { get; init; }
+
+    /// <summary>v0.85.0 테이머에서 진화할 때 그 테이머 (〔진화〕 "「X」가 아래에 있는 「테이머」" — 그 테이머 아래 카드를 센다)</summary>
+    public CardData? Tamer85 { get; init; }
 }
 
 /// <summary>[자신의 턴 개시 시] 메모리 보정 (테이머) — 상대 필드가 Condition을 만족하면 장마다 Amount. Reason은 로그 표시용</summary>
@@ -531,6 +536,9 @@ public sealed record FieldPlayCostModifier(
 
     /// <summary>v0.42.0 비용을 낸 뒤 줄이는 양 (Amount는 미리보기) — "reduce the play cost by the play cost of the deleted Digimon" (BT13-103)</summary>
     public Func<EffectContext, int>? PaidAmount42 { get; init; }
+
+    /// <summary>v0.85.0 옵션 카드의 사용 코스트를 줄이는 효과 ("When you would use an Option card with the [Glowing Dawn] trait, ~, reduce the cost by 3" BT25-049 · BT25-090) — 등장에는 걸리지 않는다</summary>
+    public bool UseOption85 { get; init; }
 }
 
 /// <summary>진화 코스트 감소가 걸리는 진화: 이 디지몬이 진화할 때 · 자신의 디지몬이 진화할 때 · (패의) 이 카드로 진화할 때</summary>

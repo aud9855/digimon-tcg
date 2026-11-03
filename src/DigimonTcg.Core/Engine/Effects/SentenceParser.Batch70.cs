@@ -115,7 +115,7 @@ internal static partial class SentenceParser
             {
                 int limit = byLevel ? (c.Other?.TopCard.Level ?? -1) : c.Engine.MemoryOf(c.Enemy);
                 var zone = fromUnder ? c.Owner.UnderTamers : c.Owner.Hand;
-                var pool = zone.Where(x => x.Type == CardType.Option && match(x) && x.PlayCost <= limit && !(fromUnder && c.Owner.IsFaceDownUnderTamer(x))
+                var pool = zone.Where(x => x.Type == CardType.Option && match(x) && x.PlayCost <= limit && !(fromUnder && (c.Owner.IsFaceDownUnderTamer(x) || !ReferenceEquals(c.Owner.HostOfUnderTamer(x), c.Card)))   // v0.85.0 이 테이머 아래만
                     && ActionValidator.MissingOptionColors(c.Owner, x, c.Enemy).Count == 0 && !EffectRules.OptionUseBlocked(c.State, c.Owner)).Distinct().OrderByDescending(x => x.PlayCost).ToList();
                 if (pool.Count == 0) { c.LastStepResolved = false; Emit(c, label, $"사용할 수 있는 옵션 카드가 없습니다 ({(byLevel ? "Lv." : "상대의 메모리 ")}{limit})"); return; }
                 var pick = pool.Count == 1 ? pool[0] : c.Engine.ChooseCards(c.Owner, fromUnder ? CardChoiceZone.Other : CardChoiceZone.Hand, pool, 1, upTo: false, $"[{c.Card.Name}] 코스트 없이 사용할 옵션 카드를 고르세요 (사용 코스트 {limit} 이하).").FirstOrDefault() ?? pool[0];

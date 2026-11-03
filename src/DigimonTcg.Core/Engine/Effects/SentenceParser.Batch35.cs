@@ -196,12 +196,13 @@ internal static partial class SentenceParser
             if (thisTamer && card.Type != CardType.Tamer) return null;
             return (c =>
             {
-                bool ok = thisTamer ? c.Owner.Tamers.Contains(c.Card) : c.Owner.Tamers.Any(tamerOk);
+                bool ok = HostOk85(c, thisTamer, tamerOk);
                 if (!ok || c.Owner.MainDeck.Count == 0) { c.LastStepResolved = false; Emit(c, label, "놓을 테이머 · 카드가 없습니다"); return; }
                 var top = c.Owner.MainDeck[0];
+                if (DestHost85(c, thisTamer, tamerOk, new[] { top }, fd) is not { } host) { c.LastStepResolved = false; return; }   // v0.85.0 테이머 1명
                 c.Owner.MainDeck.RemoveAt(0);
-                if (fd) c.Engine.PlaceFaceDownUnderTamer(c.Owner, top); else c.Owner.UnderTamers.Add(top);
-                Emit(c, label, fd ? "덱 위 1장을 테이머 아래에 뒷면으로 놓는다" : "덱 위 1장을 테이머 아래에 놓는다");
+                c.Engine.PlaceUnderTamer85(c.Owner, host, top, fd);
+                Emit(c, label, fd ? $"덱 위 1장을 [{host.Name}] 아래에 뒷면으로 놓는다" : $"덱 위 1장을 [{host.Name}] 아래에 놓는다");
             }, null);
         }
         // "From 1 of your opponent's Digimon, trash any 1 digivolution card for each of this Digimon's face-down digivolution cards" (EX9-018) — 한 마리에서 셈만큼

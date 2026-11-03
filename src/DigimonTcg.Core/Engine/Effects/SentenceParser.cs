@@ -73,7 +73,7 @@ internal static partial class SentenceParser
         [EffectTrigger.AllySecurityAdded] = "자신의 시큐에 카드가 놓였을 때", [EffectTrigger.OpponentSecurityAdded] = "상대의 시큐에 카드가 놓였을 때",
         [EffectTrigger.AttackTargetSwitched] = "어택 대상이 변경되었을 때", [EffectTrigger.AllyAttackTargetSwitched] = "자신의 디지몬의 어택 대상이 변경되었을 때",
         [EffectTrigger.OpponentHandTrashed] = "상대의 패가 파기되었을 때", [EffectTrigger.AllyDeckTrashed] = "자신의 덱이 파기되었을 때",
-        [EffectTrigger.OpponentHandAddedByEffect] = "효과로 상대의 패에 카드가 추가되었을 때", [EffectTrigger.OpponentHandAddedCount80] = "효과로 상대의 패가 늘어났을 때", [EffectTrigger.AllyHandAddedByEffect] = "효과로 자신의 패에 카드가 추가되었을 때",
+        [EffectTrigger.OpponentHandAddedByEffect] = "효과로 상대의 패에 카드가 추가되었을 때", [EffectTrigger.OpponentHandAddedCount80] = "효과로 상대의 패가 늘어났을 때", [EffectTrigger.OpponentUnderTamerPlaced85] = "효과로 상대의 테이머 아래에 카드가 놓였을 때", [EffectTrigger.AllyHandAddedByEffect] = "효과로 자신의 패에 카드가 추가되었을 때",
         [EffectTrigger.HandMain] = "패 · 메인", [EffectTrigger.TrashMain] = "트래시 · 메인", [EffectTrigger.AllyTamerPlayed] = "자신의 테이머가 등장했을 때",
         [EffectTrigger.AllyDigimonUnsuspended] = "자신의 디지몬이 액티브 상태가 되었을 때", [EffectTrigger.OpponentDigimonUnsuspended] = "상대의 디지몬이 액티브 상태가 되었을 때",
         [EffectTrigger.AllyDeletedOpponentInBattle] = "자신의 디지몬이 배틀에서 상대의 디지몬을 소멸시켰을 때", [EffectTrigger.SourceTrashedThis] = "이 카드가 진화원에서 파기되었을 때",
@@ -123,7 +123,7 @@ internal static partial class SentenceParser
 
     /// <summary>절 하나를 읽어 def에 등록한다. 성공하면 null, 실패하면 미지원 이유. def가 null이면 읽기만 한다 (지원 상태 판단)</summary>
     public static string? TryParse(string rawClause, bool inherited, CardData card, CardScriptDefinition? def) =>
-        TryParse84(rawClause, inherited, card, def);   // v0.84.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch84.cs) · v0.83.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch83.cs) · v0.80.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch80.cs) · v0.79.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch79.cs) · v0.78.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch78.cs) · v0.77.0 원래 규칙이 읽지 못한 절만 같은 뜻 다른 표기로 · 디지크로스 (SentenceParser.Batch77.cs) · v0.76.0 원래 규칙이 읽지 못한 절만 같은 뜻 다른 표기로 (SentenceParser.Batch76.cs) · v0.75.0 한 줄의 "When ~" 문장 둘 = 한 효과 (SentenceParser.Batch75.cs) · v0.74.0 원래 규칙이 읽지 못한 절만 같은 뜻 다른 표기로 (SentenceParser.Batch74.cs) · v0.73.0 원래 규칙이 읽지 못한 절만 같은 뜻 다른 표기로 (SentenceParser.Batch73.cs) · v0.72.0 "[X] trait" 특징 일치 표식 (SentenceParser.Batch72.cs) · v0.71.0 원래 규칙(44차까지)이 읽지 못한 절만 (SentenceParser.Batch71.cs) · v0.70.0 괄호 안의 명칭 제외 · 원래 규칙(43차까지)이 읽지 못한 절만 (SentenceParser.Batch70.cs) · v0.69.0 원래 규칙(42차까지)이 읽지 못한 절만 43차 규칙으로 (SentenceParser.Batch69.cs) · v0.68.0 원래 규칙(41차까지)이 읽지 못한 절만 42차 규칙으로 (SentenceParser.Batch68.cs) · v0.67.0 원래 규칙(40차까지)이 읽지 못한 절만 41차 규칙으로 (SentenceParser.Batch67.cs) · v0.66.0 원래 규칙(39차까지)이 읽지 못한 절만 40차 규칙으로 (SentenceParser.Batch66.cs) · v0.65.0 원래 규칙(38차까지)이 읽지 못한 절만 39차 규칙으로 (SentenceParser.Batch65.cs) · v0.64.0 원래 규칙(37차까지)이 읽지 못한 절만 38차 규칙으로 (SentenceParser.Batch64.cs) · v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
+        TryParse85(rawClause, inherited, card, def);   // v0.85.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch85New.cs) · v0.84.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch84.cs) · v0.83.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch83.cs) · v0.80.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch80.cs) · v0.79.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch79.cs) · v0.78.0 원래 규칙이 읽지 못한 절만 (SentenceParser.Batch78.cs) · v0.77.0 원래 규칙이 읽지 못한 절만 같은 뜻 다른 표기로 · 디지크로스 (SentenceParser.Batch77.cs) · v0.76.0 원래 규칙이 읽지 못한 절만 같은 뜻 다른 표기로 (SentenceParser.Batch76.cs) · v0.75.0 한 줄의 "When ~" 문장 둘 = 한 효과 (SentenceParser.Batch75.cs) · v0.74.0 원래 규칙이 읽지 못한 절만 같은 뜻 다른 표기로 (SentenceParser.Batch74.cs) · v0.73.0 원래 규칙이 읽지 못한 절만 같은 뜻 다른 표기로 (SentenceParser.Batch73.cs) · v0.72.0 "[X] trait" 특징 일치 표식 (SentenceParser.Batch72.cs) · v0.71.0 원래 규칙(44차까지)이 읽지 못한 절만 (SentenceParser.Batch71.cs) · v0.70.0 괄호 안의 명칭 제외 · 원래 규칙(43차까지)이 읽지 못한 절만 (SentenceParser.Batch70.cs) · v0.69.0 원래 규칙(42차까지)이 읽지 못한 절만 43차 규칙으로 (SentenceParser.Batch69.cs) · v0.68.0 원래 규칙(41차까지)이 읽지 못한 절만 42차 규칙으로 (SentenceParser.Batch68.cs) · v0.67.0 원래 규칙(40차까지)이 읽지 못한 절만 41차 규칙으로 (SentenceParser.Batch67.cs) · v0.66.0 원래 규칙(39차까지)이 읽지 못한 절만 40차 규칙으로 (SentenceParser.Batch66.cs) · v0.65.0 원래 규칙(38차까지)이 읽지 못한 절만 39차 규칙으로 (SentenceParser.Batch65.cs) · v0.64.0 원래 규칙(37차까지)이 읽지 못한 절만 38차 규칙으로 (SentenceParser.Batch64.cs) · v0.63.0 원래 규칙(36차까지)이 읽지 못한 절만 37차 규칙으로 (SentenceParser.Batch63.cs) · v0.62.0 원래 규칙(35차까지)이 읽지 못한 절만 36차 규칙으로 (SentenceParser.Batch62.cs) · v0.61.0 원래 규칙(34차까지)이 읽지 못한 절만 35차 규칙으로 (SentenceParser.Batch61.cs) · v0.60.0 원래 규칙(33차까지)이 읽지 못한 절만 34차 규칙으로 (SentenceParser.Batch60.cs) · v0.59.0 원래 규칙(32차까지)이 읽지 못한 절만 33차 규칙으로 (SentenceParser.Batch59.cs) · v0.58.0 원래 규칙(31차까지)이 읽지 못한 절만 32차 규칙으로 (SentenceParser.Batch58.cs) · v0.57.0 원래 규칙(30차까지)이 읽지 못한 절만 31차 규칙으로 (SentenceParser.Batch57.cs) · v0.56.0 원래 규칙(29차까지)이 읽지 못한 절만 30차 규칙으로 (SentenceParser.Batch56.cs) · v0.55.0 원래 규칙(28차까지)이 읽지 못한 절만 29차 규칙으로 (SentenceParser.Batch55.cs) · v0.54.0 원래 규칙(27차까지)이 읽지 못한 절만 28차 규칙으로 (SentenceParser.Batch54.cs) · v0.53.0 원래 규칙(26차까지)이 읽지 못한 절만 27차 규칙으로 (SentenceParser.Batch53.cs) · v0.52.0 원래 규칙(25차까지)이 읽지 못한 절만 26차 규칙으로 (SentenceParser.Batch52.cs) · v0.51.0 원래 규칙(24차까지)이 읽지 못한 절만 25차 규칙으로 (SentenceParser.Batch51.cs) · v0.50.0 원래 규칙(23차까지)이 읽지 못한 절만 24차 규칙으로 (SentenceParser.Batch50.cs) · v0.49.0 원래 규칙(22차까지)이 읽지 못한 절만 23차 규칙으로 (SentenceParser.Batch49.cs) · v0.48.0 원래 규칙(21차까지)이 읽지 못한 절만 22차 규칙으로 (SentenceParser.Batch48.cs) · v0.47.0 원래 규칙(20차까지)이 읽지 못한 절만 21차 규칙으로 (SentenceParser.Batch47.cs) · v0.46.0 원래 규칙(19차까지)이 읽지 못한 절만 20차 규칙으로 (SentenceParser.Batch46.cs) · v0.45.0 원래 규칙(18차까지)이 읽지 못한 절만 19차 규칙으로 (SentenceParser.Batch45.cs) · v0.44.0 원래 규칙(17차까지)이 읽지 못한 절만 18차 규칙으로 (SentenceParser.Batch44.cs) · v0.43.0 원래 규칙(16차까지)이 읽지 못한 절만 17차 규칙으로 (SentenceParser.Batch43.cs) · v0.42.0 원래 규칙(15차까지)이 읽지 못한 절만 16차 규칙으로 (SentenceParser.Batch42.cs) · v0.41.0 원래 규칙(14차까지)이 읽지 못한 절만 15차 규칙으로 (SentenceParser.Batch41.cs) · v0.40.0 (Batch40)
 
     private static string? TryParseCore(string rawClause, bool inherited, CardData card, CardScriptDefinition? def)
     {
@@ -1392,7 +1392,7 @@ internal static partial class SentenceParser
                 && (!mine || ReferenceEquals(c.Engine.CurrentSourceEffectOwner, c.Owner))
                 && c.Engine.CurrentSourceCards.Any(what));
         }
-        return ParseEventPhrase31(ev) ?? ParseEventPhrase32(ev) ?? ParseEventPhrase33(ev) ?? ParseEventPhrase40(ev) ?? ParseEventPhrase43(ev) ?? ParseEventPhrase44(ev) ?? ParseEventPhrase45(ev) ?? ParseEventPhrase46(ev) ?? ParseEventPhrase52(ev) ?? ParseEventPhrase53(ev) ?? ParseEventPhrase80(ev);   // v0.80.0 (Batch80 — 표식 사건만)   // v0.52.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44Extra) · v0.43.0 (Batch43Extra)   // v0.40.0 (SentenceParser.Batch40.cs) · v0.31.0 (SentenceParser.Batch31.cs) · v0.32.0 (SentenceParser.Batch32.cs)
+        return ParseEventPhrase31(ev) ?? ParseEventPhrase32(ev) ?? ParseEventPhrase33(ev) ?? ParseEventPhrase40(ev) ?? ParseEventPhrase43(ev) ?? ParseEventPhrase44(ev) ?? ParseEventPhrase45(ev) ?? ParseEventPhrase46(ev) ?? ParseEventPhrase52(ev) ?? ParseEventPhrase53(ev) ?? ParseEventPhrase80(ev) ?? ParseEventPhrase85(ev);   // v0.85.0 (Batch85New)   // v0.80.0 (Batch80 — 표식 사건만)   // v0.52.0   // v0.46.0 · v0.45.0   // v0.44.0 (Batch44Extra) · v0.43.0 (Batch43Extra)   // v0.40.0 (SentenceParser.Batch40.cs) · v0.31.0 (SentenceParser.Batch31.cs) · v0.32.0 (SentenceParser.Batch32.cs)
     }
 
     /// <summary>
@@ -2614,6 +2614,7 @@ internal static partial class SentenceParser
         if (act.Error != null && ParseAction80(s.TrimEnd('.'), card, triggers) is { } act80) act = act80;   // v0.80.0 (SentenceParser.Batch80.cs)
         if (act.Error != null && ParseAction83(s.TrimEnd('.'), card, triggers) is { } act83) act = act83;   // v0.83.0 (SentenceParser.Batch83.cs)
         if (act.Error != null && ParseAction84(s.TrimEnd('.'), card, triggers) is { } act84) act = act84;   // v0.84.0 (SentenceParser.Batch84.cs)
+        if (act.Error != null && ParseAction85(s.TrimEnd('.'), card, triggers) is { } act85) act = act85;   // v0.85.0 (SentenceParser.Batch85New.cs)
         // "This Digimon may unsuspend" · "1 of your Digimon may unsuspend" · "1 Digimon may gain ＜Security A. -1＞ until ~" — 주어 뒤의 may = "~할 수 있다"
         if (act.Error != null && !optional
             && Regex.Match(s.TrimEnd('.'), @"^(?<t>(?!you\b)[^,]+?) may (?<v>unsuspend|gain|get)\b(?<rest>[^,]*)$", RegexOptions.IgnoreCase) is { Success: true } may)
@@ -2698,7 +2699,7 @@ internal static partial class SentenceParser
 
     /// <summary>비용 구절 → (낼 수 있는지, 내기, AI 추천, 설명)</summary>
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCost(string cost, CardData card) =>
-        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card) ?? ParseCost43(cost, card) ?? ParseCost44(cost, card) ?? ParseCost45(cost, card) ?? ParseCost46(cost, card) ?? ParseCost50(cost, card) ?? ParseCost51(cost, card) ?? ParseCost52(cost, card) ?? ParseCost53(cost, card) ?? ParseCost55(cost, card) ?? ParseCost57(cost, card) ?? ParseCost59(cost, card) ?? ParseCost74(cost, card) ?? ParseCost76(cost, card) ?? ParseCost77(cost, card) ?? ParseCost78(cost, card) ?? ParseCost79(cost, card);   // v0.79.0 (Batch79)   // v0.78.0 (Batch78)   // v0.77.0 (Batch77)   // v0.76.0 (Batch76)   // v0.74.0 (Batch74)   // v0.59.0   // v0.57.0   // v0.55.0   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
+        ParseCostCore(cost, card) ?? ParseCost38(cost, card) ?? ParseCost39(cost, card) ?? ParseCost40(cost, card) ?? ParseCost43(cost, card) ?? ParseCost44(cost, card) ?? ParseCost45(cost, card) ?? ParseCost46(cost, card) ?? ParseCost50(cost, card) ?? ParseCost51(cost, card) ?? ParseCost52(cost, card) ?? ParseCost53(cost, card) ?? ParseCost55(cost, card) ?? ParseCost57(cost, card) ?? ParseCost59(cost, card) ?? ParseCost74(cost, card) ?? ParseCost76(cost, card) ?? ParseCost77(cost, card) ?? ParseCost78(cost, card) ?? ParseCost79(cost, card) ?? ParseCost85(cost, card);   // v0.85.0 (Batch85New)   // v0.79.0 (Batch79)   // v0.78.0 (Batch78)   // v0.77.0 (Batch77)   // v0.76.0 (Batch76)   // v0.74.0 (Batch74)   // v0.59.0   // v0.57.0   // v0.55.0   // v0.52.0   // v0.51.0 · v0.50.0 · v0.46.0 · v0.45.0   // v0.44.0 · v0.43.0 (Batch43Extra)   // v0.40.0 (Batch40Step) · v0.39.0 (Batch39Cost)   // v0.38.0 읽지 못한 비용만 (SentenceParser.Batch38.cs)
 
     private static (Func<EffectContext, bool> CanPay, Action<EffectContext> Pay, Func<EffectContext, bool> Recommend, string Describe)? ParseCostCore(string cost, CardData card)
     {
@@ -2838,17 +2839,13 @@ internal static partial class SentenceParser
         if ((m = Regex.Match(cost, @"^trashing (?:the|(?<n>\d+)) bottom (?<fd>face[- ]down )?cards? (?:under card )?(?:from )?under (?:any of |one of |1 of )?your Tamers$", RegexOptions.IgnoreCase)).Success)
         {
             int n = m.Groups["n"].Success ? int.Parse(m.Groups["n"].Value) : 1;
+            // v0.85.0 테이머마다 그 테이머 아래의 맨 아래 카드 — 여러 테이머 아래에서 합계 n장이어도 된다 (공식 Q&A ST24-06 Q6212 · BT25-035 Q6301)
             if (m.Groups["fd"].Success)
                 return (c => c.Owner.FaceDownUnderTamerCount >= n,
                         c => c.Engine.TrashBottomFaceDownUnderTamers(c.Owner, n),
                         _ => true, $"테이머 아래 뒷면 카드 {n}장을 파기하여");
-            return (c => c.Owner.UnderTamers.Count >= n,
-                    c =>
-                    {
-                        var trashed = new List<CardData>();
-                        for (int i = 0; i < n; i++) { var x = c.Owner.UnderTamers[^1]; c.Owner.UnderTamers.RemoveAt(c.Owner.UnderTamers.Count - 1); c.Owner.Trash.Add(x); trashed.Add(x); }
-                        c.Engine.NotifyUnderTamersTrashed(c.Owner, trashed);   // v0.31.0 "When effects trash cards from under your Tamers"
-                    },
+            return (c => c.Owner.UnderTamers.Count(x => c.Owner.HostOfUnderTamer(x) != null) >= n,
+                    c => c.Engine.TrashBottomUnderTamers85(c.Owner, n, faceDownOnly: false, null, "테이머 아래 카드 파기"),   // v0.31.0 "When effects trash cards from under your Tamers"
                     _ => true, $"테이머 아래 카드 {n}장을 파기하여");
         }
         if (Regex.IsMatch(cost, @"^trashing (?:the top card of your security stack|your top security card)$", RegexOptions.IgnoreCase))
@@ -3016,18 +3013,21 @@ internal static partial class SentenceParser
                     _ => true, trash ? $"링크 카드 {n}장을 파기하여" : $"링크 카드 {n}장을 진화원 맨 아래에 놓아");
         }
         // "placing 1 Digimon card with ＜Save＞ in its text from your hand (face down) under this Tamer"
-        if ((m = Regex.Match(cost, @"^placing (?<pick>.+?) from your hand (?<fd>face down )?under (?:this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success
+        if ((m = Regex.Match(cost, @"^placing (?<pick>.+?) from your hand (?<fd>face down )?under (?<where>this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success
             && (ParseCardPick(m.Groups["pick"].Value) ?? ParseNamePick(m.Groups["pick"].Value)) is { } underPick)
         {
             var (n, match) = underPick;
             bool fdUnder = m.Groups["fd"].Success;   // v0.35.0 뒷면으로
-            return (c => c.Owner.Tamers.Count > 0 && c.Owner.Hand.Count(match) >= n,
+            var hostSpec = ParseUnderHost85(m.Groups["where"].Value);   // v0.85.0 이 테이머 / 테이머 1명
+            return (c => HasUnderHost85(c, hostSpec) && c.Owner.Hand.Count(match) >= n,
                     c =>
                     {
-                        foreach (var x in c.Engine.ChooseCards(c.Owner, CardChoiceZone.Hand, c.Owner.Hand.Where(match).OrderBy(x => x.Level).ToList(), n, upTo: false, $"[{c.Card.Name}] 테이머 아래에 놓을 패 {n}장을 고르세요."))
+                        var xs = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Hand, c.Owner.Hand.Where(match).OrderBy(x => x.Level).ToList(), n, upTo: false, $"[{c.Card.Name}] 테이머 아래에 놓을 패 {n}장을 고르세요.");
+                        if (UnderHost85(c, hostSpec, xs, fdUnder) is not { } host) return;
+                        foreach (var x in xs)
                         {
                             c.Owner.Hand.Remove(x);
-                            if (fdUnder) c.Engine.PlaceFaceDownUnderTamer(c.Owner, x); else c.Owner.UnderTamers.Add(x);
+                            c.Engine.PlaceUnderTamer85(c.Owner, host, x, fdUnder);
                         }
                     },
                     c => c.Owner.Hand.Count >= n + 2, $"패 {n}장을 테이머 아래에 놓아");
@@ -3605,13 +3605,14 @@ internal static partial class SentenceParser
             var (count, pickMatch) = optPick;
             string from = m.Groups["from"].Value.ToLowerInvariant();
             bool fromHand = from.Contains("hand"), fromTrash = from.Contains("trash"), fromUnder = from.Contains("under");
+            bool underThis = from.Contains("this tamer");   // v0.85.0 (ST22-07)
             return (c =>
             {
                 bool Usable(CardData x) => x.Type == CardType.Option && pickMatch(x) && ActionValidator.MissingOptionColors(c.Owner, x, c.Enemy).Count == 0 && !EffectRules.OptionUseBlocked(c.State, c.Owner);   // v0.36.0 옵션 사용 제한
                 var pool = new List<PoolCard>();
                 if (fromHand) pool.AddRange(PoolFrom(c.Owner.Hand, Usable));
                 if (fromTrash) pool.AddRange(PoolFrom(c.Owner.Trash, Usable));
-                if (fromUnder) pool.AddRange(PoolFrom(c.Owner.UnderTamers, Usable));
+                if (fromUnder) pool.AddRange(PoolFrom(c.Owner.UnderTamers, x => !c.Owner.IsFaceDownUnderTamer(x) && (!underThis || ReferenceEquals(c.Owner.HostOfUnderTamer(x), c.Card)) && Usable(x)));   // v0.85.0 뒷면 카드는 정보가 없다 (4-7-9) · "under this Tamer"는 이 테이머 아래만
                 var zoneKind = fromUnder ? CardChoiceZone.Other : fromHand && fromTrash ? CardChoiceZone.HandOrTrash : fromHand ? CardChoiceZone.Hand : CardChoiceZone.Trash;
                 var picks = ChooseFromPool(c, zoneKind, pool.OrderByDescending(x => x.Card.PlayCost).ToList(), count, $"[{c.Card.Name}] 코스트 없이 사용할 옵션 카드를 고르세요.");
                 int used = 0;
@@ -3794,25 +3795,30 @@ internal static partial class SentenceParser
             {
                 if (c.Owner.Tamers.Count == 0 || !c.Owner.Trash.Contains(c.Card)) { c.LastStepResolved = false; return; }
                 if (!c.Engine.AskYesNo(c.Owner, null, $"≪세이브≫ [{c.Card.Name}]을(를) 자신의 테이머 아래에 놓을까요?", recommended: true)) { c.LastStepResolved = false; return; }
+                // v0.85.0 종합 룰 16-20-1: "자신의 테이머 1명의 밑에" — 테이머 1명을 고른다
+                if (UnderHost85(c, null, new[] { c.Card }) is not { } host) { c.LastStepResolved = false; return; }
                 c.Owner.Trash.Remove(c.Card);
-                c.Owner.UnderTamers.Add(c.Card);
-                Emit(c, label, "≪세이브≫ 이 카드를 테이머 아래에 놓는다");
+                c.Engine.PlaceUnderTamer85(c.Owner, host, c.Card);
+                Emit(c, label, $"≪세이브≫ 이 카드를 [{host.Name}] 아래에 놓는다");
             }, null);
         // "Place 1 Digimon card with the [Xros Heart] trait from your hand or trash under 1 of your Tamers" · "Place the top card of your deck face down under this Tamer"
-        if ((m = Regex.Match(s, @"^Place the top card of your deck(?<fd> face down)? under (?:this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success)
+        if ((m = Regex.Match(s, @"^Place the top card of your deck(?<fd> face down)? under (?<where>this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success)
         {
             bool fdTop = m.Groups["fd"].Success;   // v0.35.0 뒷면으로
+            var hostSpec = ParseUnderHost85(m.Groups["where"].Value);   // v0.85.0 이 테이머 / 테이머 1명
             return (c =>
             {
-                if (c.Owner.Tamers.Count == 0 || c.Owner.MainDeck.Count == 0) { c.LastStepResolved = false; return; }
+                if (!HasUnderHost85(c, hostSpec) || c.Owner.MainDeck.Count == 0) { c.LastStepResolved = false; return; }
                 var topCard = c.Owner.MainDeck[0];
+                if (UnderHost85(c, hostSpec, new[] { topCard }, fdTop) is not { } host) { c.LastStepResolved = false; return; }
                 c.Owner.MainDeck.RemoveAt(0);
-                if (fdTop) c.Engine.PlaceFaceDownUnderTamer(c.Owner, topCard); else c.Owner.UnderTamers.Add(topCard);
-                Emit(c, label, fdTop ? "덱 위 1장을 테이머 아래에 뒷면으로 놓는다" : "덱 위 1장을 테이머 아래에 놓는다");
+                c.Engine.PlaceUnderTamer85(c.Owner, host, topCard, fdTop);
+                Emit(c, label, fdTop ? $"덱 위 1장을 [{host.Name}] 아래에 뒷면으로 놓는다" : $"덱 위 1장을 [{host.Name}] 아래에 놓는다");
             }, null);
         }
-        if ((m = Regex.Match(s, @"^Place (?<pick>.+?) from (?<from>your hand or (?:from )?(?:your )?trash|your trash or hand|your hand|your trash|this Digimon's digivolution cards|its digivolution cards) (?<fd>face down )?under (?:this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success)
+        if ((m = Regex.Match(s, @"^Place (?<pick>.+?) from (?<from>your hand or (?:from )?(?:your )?trash|your trash or hand|your hand|your trash|this Digimon's digivolution cards|its digivolution cards) (?<fd>face down )?under (?<where>this Tamer|(?:1|one) of your Tamers|your Tamers)$", RegexOptions.IgnoreCase)).Success)
         {
+            var hostSpec = ParseUnderHost85(m.Groups["where"].Value);   // v0.85.0 이 테이머 / 테이머 1명 (고른 카드는 모두 그 테이머 아래 — 공식 Q&A BT21-092 · BT19-055)
             bool fdPl = m.Groups["fd"].Success;   // v0.35.0 뒷면으로
             var pick = ParseCardPick(m.Groups["pick"].Value) ?? ParseNamePick(m.Groups["pick"].Value);
             if (pick == null) return (null, $"미지원 회수 조건: {m.Groups["pick"].Value}");
@@ -3821,17 +3827,19 @@ internal static partial class SentenceParser
             bool fromHand = from.Contains("hand"), fromTrash = from.Contains("trash"), fromSources = from.Contains("digivolution");
             return (c =>
             {
-                if (c.Owner.Tamers.Count == 0) { c.LastStepResolved = false; Emit(c, label, "테이머가 없습니다"); return; }
+                if (!HasUnderHost85(c, hostSpec)) { c.LastStepResolved = false; Emit(c, label, "테이머가 없습니다"); return; }
                 var pool = new List<PoolCard>();
                 if (fromHand) pool.AddRange(PoolFrom(c.Owner.Hand, match));
                 if (fromTrash) pool.AddRange(PoolFrom(c.Owner.Trash, match));
                 if (fromSources && c.Self != null) pool.AddRange(c.Self.SourcesWhere(match).Select(x => new PoolCard(x, null)));
                 var zone = fromSources ? CardChoiceZone.DigivolutionCards : fromHand && fromTrash ? CardChoiceZone.HandOrTrash : fromHand ? CardChoiceZone.Hand : CardChoiceZone.Trash;
                 var picks = new List<CardData>();
-                foreach (var p in ChooseFromPool(c, zone, pool.OrderBy(x => x.Card.Level).ToList(), count, $"[{c.Card.Name}] 테이머 아래에 놓을 카드 {count}장을 고르세요."))
+                var chosen = ChooseFromPool(c, zone, pool.OrderBy(x => x.Card.Level).ToList(), count, $"[{c.Card.Name}] 테이머 아래에 놓을 카드 {count}장을 고르세요.");
+                var host = chosen.Count == 0 ? null : UnderHost85(c, hostSpec, chosen.Select(p => p.Card).ToList(), fdPl);
+                foreach (var p in host == null ? new List<PoolCard>() : chosen)
                 {
                     if (!TakeFromPool(c, p)) continue;
-                    if (fdPl) c.Engine.PlaceFaceDownUnderTamer(c.Owner, p.Card); else c.Owner.UnderTamers.Add(p.Card);
+                    c.Engine.PlaceUnderTamer85(c.Owner, host!, p.Card, fdPl);
                     picks.Add(p.Card);
                 }
                 if (picks.Count == 0) c.LastStepResolved = false;
@@ -4435,7 +4443,7 @@ internal static partial class SentenceParser
                 var pool = new List<PoolCard>();
                 if (fromHand) pool.AddRange(PoolFrom(c.Owner.Hand, match));
                 if (fromTrash) pool.AddRange(PoolFrom(c.Owner.Trash, match));
-                if (fromUnder) pool.AddRange(PoolFrom(c.Owner.UnderTamers, match));
+                if (fromUnder) pool.AddRange(PoolFrom(c.Owner.UnderTamers, x => !c.Owner.IsFaceDownUnderTamer(x) && match(x)));   // v0.85.0 뒷면 카드는 정보가 없다 (종합 룰 4-7-9)
                 var zoneKind = fromUnder ? CardChoiceZone.Other : fromHand && fromTrash ? CardChoiceZone.HandOrTrash : fromHand ? CardChoiceZone.Hand : CardChoiceZone.Trash;
                 var picks = ChooseFromPool(c, zoneKind, pool.OrderBy(x => x.Card.Level).ToList(), count, $"[{c.Card.Name}] 진화원 아래에 놓을 카드 {count}장을 고르세요.");
                 var cards = picks.Select(p => p.Card).ToList();
@@ -5229,7 +5237,12 @@ internal static partial class SentenceParser
             return (c, x) => { if (c.Self == null) return false; c.Self.AddBottomSource(x); return true; };
         bool fdPlace = Regex.IsMatch(where, @"^face down ", RegexOptions.IgnoreCase);   // v0.35.0 뒷면으로 (종합 룰 4-7-4: 지정이 없으면 앞면)
         if (Regex.IsMatch(where, @"^(?:face down )?under (?:this Tamer|(?:any of |1 of |one of )?your (?:.+? )?Tamers?)$", RegexOptions.IgnoreCase))
-            return (c, x) => { if (c.Owner.Tamers.Count == 0) return false; if (fdPlace) c.Engine.PlaceFaceDownUnderTamer(c.Owner, x); else c.Owner.UnderTamers.Add(x); return true; };
+        {
+            // v0.85.0 테이머 1명 — "any of your [Glowing Dawn] trait Tamers" 같은 조건도 (전에는 조건을 보지 않았다)
+            var hostSpec = ParseUnderHost85(Regex.Replace(where, @"^(?:face down )?under ", "", RegexOptions.IgnoreCase));
+            if (hostSpec == null) return null;
+            return (c, x) => { if (!HasUnderHost85(c, hostSpec) || UnderHost85(c, hostSpec, new[] { x }, fdPlace) is not { } host) return false; c.Engine.PlaceUnderTamer85(c.Owner, host, x, fdPlace); return true; };
+        }
         var m = Regex.Match(where, @"^(?:face down )?(?:as the bottom digivolution card of (?<t>.+)|under (?<t>.+?) as its bottom digivolution card)$", RegexOptions.IgnoreCase);
         if (!m.Success) m = Regex.Match(where, @"^(?:face down )?as (?<t>.+?)'s bottom digivolution card$", RegexOptions.IgnoreCase);   // "as any of your blue Digimon's bottom digivolution card"
         if (!m.Success) return RevealPlace72(where);   // v0.72.0 원래 규칙이 읽지 못한 것만 (Batch72)

@@ -292,17 +292,18 @@ internal static partial class SentenceParser
                     },
                     _ => true, "같은 Lv.의 진화원 1장을 코스트 없이 등장시켜");
         }
-        // "playing 1 play cost 3 or lower Digimon card from under this Tamer without paying the cost" (BT20-092 — 테이머 아래 카드는 한 묶음)
-        if ((m = Regex.Match(cost, @"^playing 1 play cost (?<n>\d+) or (?:lower|less) Digimon card from under (?:this Tamer|your Tamers) without paying (?:the|its) cost$", I)).Success)
+        // "playing 1 play cost 3 or lower Digimon card from under this Tamer without paying the cost" (BT20-092 — v0.85.0 "this Tamer"는 이 테이머 아래만)
+        if ((m = Regex.Match(cost, @"^playing 1 play cost (?<n>\d+) or (?:lower|less) Digimon card from under (?<w>this Tamer|your Tamers) without paying (?:the|its) cost$", I)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value);
-            List<CardData> Able(EffectContext c) => c.Owner.UnderTamers.Where(x => !c.Owner.IsFaceDownUnderTamer(x) && x.Type == CardType.Digimon && x.PlayCost <= n && c.Engine.CanPlayByEffect(c.Owner, x, PlayOrigin.UnderTamers)).ToList();
+            bool thisT = m.Groups["w"].Value.Equals("this Tamer", StringComparison.OrdinalIgnoreCase);
+            List<CardData> Able(EffectContext c) => UnderPool85(c, thisT).Where(x => !c.Owner.IsFaceDownUnderTamer(x) && x.Type == CardType.Digimon && x.PlayCost <= n && c.Engine.CanPlayByEffect(c.Owner, x, PlayOrigin.UnderTamers)).ToList();
             return (c => Able(c).Count > 0,
                     c =>
                     {
                         var pool = Able(c).OrderByDescending(x => x.PlayCost).ThenByDescending(x => x.DP).ToList();
                         var x = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Other, pool, 1, upTo: false, $"[{c.Card.Name}] 비용으로 테이머 아래에서 등장시킬 디지몬 카드를 고르세요.").FirstOrDefault() ?? pool[0];
-                        if (!c.Engine.TryPlayByEffect(c.Owner, x, PlayOrigin.UnderTamers, () => { bool r = c.Owner.UnderTamers.Remove(x); c.Owner.FaceDownUnderTamers.Remove(x); return r; })) { c.CostFailed = true; return; }
+                        if (!c.Engine.TryPlayByEffect(c.Owner, x, PlayOrigin.UnderTamers, () => c.Owner.RemoveUnderTamer85(x))) { c.CostFailed = true; return; }
                         c.RecalculateFieldBuffs();
                         Diag46.Hit("playUnderTamerCost51");
                     },
@@ -536,7 +537,7 @@ internal static partial class SentenceParser
                 Emit(c, label, $"모든 디지몬과 테이머 소멸 ({n})");
             }, null);
         }
-        // "return 1 Digimon card with ＜Save＞ in its text from under one of your Tamers to your hand" (BT12-075 — 테이머 아래 카드는 한 묶음)
+        // "return 1 Digimon card with ＜Save＞ in its text from under one of your Tamers to your hand" (BT12-075 — 어느 테이머 아래에서든 1장)
         if ((m = Regex.Match(s, @"^return (?<pick>1 .+?) from under (?:one of your Tamers|your Tamers|1 of your Tamers) to (?:your|the) hand$", I)).Success
             && ParseCardPick(m.Groups["pick"].Value) is { } up)
         {
@@ -546,8 +547,7 @@ internal static partial class SentenceParser
                 var pool = c.Owner.UnderTamers.Where(x => !c.Owner.IsFaceDownUnderTamer(x) && match(x)).ToList();
                 if (pool.Count == 0) { c.LastStepResolved = false; Emit(c, label, "테이머 아래에 패로 되돌릴 카드가 없습니다"); return; }
                 var x = c.Engine.ChooseCards(c.Owner, CardChoiceZone.Other, pool, 1, upTo: false, $"[{label}] 테이머 아래에서 패로 되돌릴 카드를 고르세요.").FirstOrDefault() ?? pool[0];
-                if (!c.Owner.UnderTamers.Remove(x)) { c.LastStepResolved = false; return; }
-                c.Owner.FaceDownUnderTamers.Remove(x);
+                if (!c.Owner.RemoveUnderTamer85(x)) { c.LastStepResolved = false; return; }
                 c.Owner.Hand.Add(x);
                 Diag46.Hit("underTamerToHand51");
                 Emit(c, label, $"테이머 아래의 [{x.Name}]을(를) 패로");

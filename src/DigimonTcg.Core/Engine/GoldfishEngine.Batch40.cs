@@ -160,7 +160,7 @@ public partial class GoldfishEngine
                 Diag40.Hit(ref Diag40.UnderTamerPlaced);
                 var outerCards = CurrentSourceCards;
                 CurrentSourceCards = placed;
-                try { FireForSide(EffectTrigger.AllyUnderTamerPlaced, zonesOf, null, triggerCard: placed[0]); }
+                try { FireForSide(EffectTrigger.AllyUnderTamerPlaced, zonesOf, null, triggerCard: placed[0]); if (!State.IsGameOver) FireForSide(EffectTrigger.OpponentUnderTamerPlaced85, EnemyOf(zonesOf), null, triggerCard: placed[0]); }   // v0.85.0 상대 쪽에도 (EX10-056)
                 finally { CurrentSourceCards = outerCards; }
             });
         }

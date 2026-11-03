@@ -135,9 +135,14 @@ public partial class GoldfishEngine
     /// 디지몬(맨 위 카드)을 주인의 테이머 아래에 놓는다 (EX10-056 · BT12-083 — "or under any of their Tamers"). 진화원은 트래시 (종합 룰 4-7-7과 같다).
     /// "떠나려 할 때" 효과로 막혔거나 테이머가 없으면 false
     /// </summary>
-    internal bool PlaceDigimonUnderTamers41(PlayerZones zones, CardInstance moving)
+    internal bool PlaceDigimonUnderTamers41(PlayerZones zones, CardInstance moving, PlayerZones? chooser = null, CardData? fixedHost = null)
     {
         if (!zones.BattleArea.Contains(moving) || zones.Tamers.Count == 0)
+            return false;
+        // v0.85.0 놓을 테이머 1명 (효과를 처리하는 쪽이 고른다 — 공식 Q&A BT12-083 "상대의 테이머 아래에 놓습니다")
+        var host = fixedHost != null ? (zones.Tamers.Contains(fixedHost) ? fixedHost : null)   // v0.85.0 BT21-012 "the played Tamer"
+            : ChooseUnderTamerHost85(zones, chooser ?? EnemyOf(zones), new[] { moving.TopCard }, $"[{moving.TopCard.Name}]을(를) 놓을 테이머를 고르세요.");
+        if (host == null)
             return false;
         if (TryPreventLeave(zones, moving, deletion: false, inBattle: false, canPrevent: true, LeaveDestination.Other))
             return false;
@@ -147,7 +152,8 @@ public partial class GoldfishEngine
         ApplyOverflow(zones, moving.GetEvolutionStackBottomUp().ToList());
         while (moving.EvolutionSources.Count > 0)
             zones.Trash.Add(moving.EvolutionSources.Pop());
-        if (!IsToken(moving.TopCard)) zones.UnderTamers.Add(moving.TopCard);
+        if (!IsToken(moving.TopCard) && zones.Tamers.Contains(host)) PlaceUnderTamer85(zones, host, moving.TopCard);
+        else if (!IsToken(moving.TopCard)) zones.Trash.Add(moving.TopCard);   // 놓기 전에 그 테이머가 떠났다 (떠나려 할 때 효과)
         PurgeTokens(zones);
         NotifyLeftBattleArea(zones, moving);
         RecalculateFieldBuffs();

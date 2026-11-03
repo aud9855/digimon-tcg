@@ -297,6 +297,66 @@ public partial class MainWindow
 
     // ==================== 🎖️ 필드 테이머 카드 (디지몬처럼 한 장씩, 레스트면 가로로 눕힘) ====================
 
+    /// <summary>
+    /// v0.85.0 테이머 아래 카드 띠 (아래 쪽 4장, 맨 위 띠에 전체 장 수) — 디지몬 진화원 띠와 같은 모양.
+    /// 앞면은 카드 이름 (마우스를 대면 카드 확인), 뒷면은 카드 뒷면 (자신의 카드만 툴팁으로 내용)
+    /// </summary>
+    private FrameworkElement CreateUnderTamerPeek85(PlayerZones zones, CardData tamer, int count, bool isOpponent, double width)
+    {
+        var under = zones.UnderOf(tamer);   // 위 → 아래
+        int faceDown = zones.FaceDownUnderCountOf(tamer);
+        var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 2), Width = width, HorizontalAlignment = HorizontalAlignment.Center };
+        panel.Children.Add(new Border
+        {
+            Background = BrushFromHex("#33CBA6F7"),
+            BorderBrush = BrushFromHex("#CBA6F7"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(4, 0, 4, 0),
+            Margin = new Thickness(0, 0, 0, 1),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            ToolTip = $"[{tamer.DisplayName}] 아래에 놓인 카드 {count}장" + (faceDown > 0 ? $" (뒷면 {faceDown})" : "") + " — 이 테이머가 떠나면 함께 파기됩니다 (종합 룰 4-7-8)",
+            Child = new TextBlock
+            {
+                Text = $"📥 아래 {count}장" + (faceDown > 0 ? $" · 🂠{faceDown}" : ""),
+                Foreground = BrushFromHex("#CBA6F7"),
+                FontWeight = FontWeights.ExtraBold,
+                FontSize = 9.5
+            }
+        });
+        foreach (var src in under.Skip(Math.Max(0, under.Count - 4)))
+        {
+            bool fd = zones.IsFaceDownUnderTamer(src);
+            var strip = new Border
+            {
+                Height = 15,
+                Background = fd ? Theme.GetBrush("Duel.Brush.CardBackArt") : BrushFromHex("#1D2033"),
+                BorderBrush = fd ? BrushFromHex("#585B70") : GetCardColorBrush(src.Color),
+                BorderThickness = fd ? new Thickness(1, 1, 1, 0) : new Thickness(3, 1, 1, 0),
+                CornerRadius = new CornerRadius(4, 4, 0, 0),
+                Padding = new Thickness(4, 0, 4, 0),
+                Margin = new Thickness(0, 0, 0, 1),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                ToolTip = fd
+                    ? (isOpponent ? "뒷면 카드 — 상대만 내용을 볼 수 있습니다 (종합 룰 4-7-10)." : $"뒷면 (자신만 볼 수 있음): [{src.CardId}] {src.DisplayName}\n뒷면 카드는 정보가 없어 효과의 조건에 들어가지 않습니다 (종합 룰 4-7-9).")
+                    : $"테이머 아래: [{src.CardId}] {(src.Level > 0 ? $"Lv.{src.Level} " : "")}{src.DisplayName}",
+                Child = new TextBlock
+                {
+                    Text = fd ? "🂠 뒷면" : src.DisplayName,
+                    Foreground = fd ? Brushes.White : BrushFromHex("#CDD6F4"),
+                    FontWeight = FontWeights.Bold,
+                    FontSize = 9,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
+            };
+            if (!fd || !isOpponent)
+                strip.MouseEnter += (_, _) => UpdateCardInspector(src);
+            panel.Children.Add(strip);
+        }
+        return panel;
+    }
+
     private FrameworkElement CreateFieldTamerWidget(TamerKey key, PlayerZones zones, bool isOpponent)
     {
         var tamer = key.Card;
@@ -319,6 +379,11 @@ public partial class MainWindow
             FontSize = 10,
             Margin = new Thickness(0, 0, 0, 3)
         });
+
+        // v0.85.0 이 테이머 아래의 카드 (테이머마다 — 종합 룰 4-4-2 · 4-7-8): 디지몬의 진화원처럼 카드 위로 겹쳐 보이는 띠 (아래 쪽 4장) + 장 수 배지.
+        // 뒷면 카드는 카드 뒷면 띠 — 주인만 내용을 볼 수 있다 (종합 룰 4-7-10)
+        if (key.Ordinal == 0 && zones.UnderCountOf(tamer) is int underCount and > 0)
+            stack.Children.Add(CreateUnderTamerPeek85(zones, tamer, underCount, isOpponent, (rested ? artH : artW) + 2));
 
         var art = CreateCardVisualFrame(tamer, width: artW, height: artH, customDpOrBadge: "TAMER", isRested: rested);
         art.HorizontalAlignment = HorizontalAlignment.Center;
@@ -364,6 +429,9 @@ public partial class MainWindow
         }
 
         string auraDesc = GetHandCardQuickEffectSummary(tamer).Text;
+        int underN = key.Ordinal == 0 ? zones.UnderCountOf(tamer) : 0;
+        if (underN > 0)
+            auraDesc += $"\n📥 이 테이머 아래 카드 {underN}장" + (zones.FaceDownUnderCountOf(tamer) is int fd and > 0 ? $" (뒷면 {fd})" : "");
         var scale = new ScaleTransform(1, 1);
         var border = new Border
         {

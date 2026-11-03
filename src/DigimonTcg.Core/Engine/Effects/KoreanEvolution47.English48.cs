@@ -46,9 +46,12 @@ public static partial class KoreanEvolution47
         return (new Condition(m.Value.Trim(), cost, (c, _) => c.Type == CardType.Tamer && ns.Any(x => NameIs(c, x)), And(field, UnderField(under, k)), true), after);
     }
 
-    /// <summary>테이머 아래에 under 카드가 k장 이상 (앞면만 — 종합 룰 4-7-9 뒷면 카드는 정보를 참조할 수 없다). 테이머가 1명일 때만</summary>
+    /// <summary>
+    /// 그 테이머 아래에 under 카드가 k장 이상 (앞면만 — 종합 룰 4-7-9 뒷면 카드는 정보를 참조할 수 없다).
+    /// v0.85.0 진화하는 그 테이머 아래만 센다 (StaticContext.Tamer85 — 전에는 테이머 아래 카드가 한 묶음이라 테이머가 1명일 때만 셌다)
+    /// </summary>
     private static Func<StaticContext, bool> UnderField(Func<CardData, bool> under, int k) =>
-        f => f.Owner.Tamers.Count == 1 && f.Owner.FaceUpUnderTamers.Count(under) >= k;
+        f => f.Tamer85 != null ? f.Owner.FaceUpUnderOf(f.Tamer85).Count(under) >= k : f.Owner.Tamers.Count == 1 && f.Owner.FaceUpUnderTamers.Count(under) >= k;
 
     private static Func<StaticContext, bool> And(Func<StaticContext, bool>? a, Func<StaticContext, bool> b) =>
         a == null ? b : f => a(f) && b(f);

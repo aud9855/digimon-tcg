@@ -219,7 +219,8 @@ internal static partial class SentenceParser
             List<CardData> Zone(EffectContext c) => hand ? c.Owner.Hand : c.Owner.Trash;
             CardData? Find(EffectContext c, string x, CardData? not) => Zone(c).FirstOrDefault(t => !ReferenceEquals(t, not) && CardNames.Is(t, x));
             List<CardInstance> Targets(EffectContext c) => pairDest.Other == null ? new List<CardInstance>() : c.Owner.BattleArea.Where(pairDest.Other).ToList();
-            bool DestOk(EffectContext c) => pairDest.Deck || (pairDest.Tamer != null ? c.Owner.Tamers.Any(pairDest.Tamer) : Targets(c).Count > 0);
+            bool pairThis = Regex.IsMatch(m.Groups["dest"].Value, @"^under this Tamer$", RegexOptions.IgnoreCase);   // v0.85.0
+            bool DestOk(EffectContext c) => pairDest.Deck || (pairDest.Tamer != null ? HostOk85(c, pairThis, pairDest.Tamer) : Targets(c).Count > 0);
             string where = pairDest.Deck ? "덱 아래" : pairDest.Tamer != null ? "테이머 아래" : "자신의 디지몬의 진화원 아래";
             return (c => DestOk(c) && Find(c, a, null) is { } fa && Find(c, b, fa) != null,
                     c =>
@@ -234,7 +235,12 @@ internal static partial class SentenceParser
                         if (ca == null || cb == null) { c.CostFailed = true; return; }
                         Zone(c).Remove(ca); Zone(c).Remove(cb);
                         if (pairDest.Deck) { c.Owner.MainDeck.Add(ca); c.Owner.MainDeck.Add(cb); }
-                        else if (pairDest.Tamer != null) { c.Owner.UnderTamers.Add(ca); c.Owner.UnderTamers.Add(cb); c.LastCard = c.Owner.Tamers.FirstOrDefault(pairDest.Tamer); }   // "that Tamer" = 그 테이머
+                        else if (pairDest.Tamer != null)
+                        {
+                            // v0.85.0 두 장 모두 고른 테이머 1명 아래 · "that Tamer" = 그 테이머
+                            if (DestHost85(c, pairThis, pairDest.Tamer, new[] { ca, cb }, false) is not { } host) { Zone(c).Add(ca); Zone(c).Add(cb); c.CostFailed = true; return; }
+                            c.Engine.PlaceUnderTamer85(c.Owner, host, ca); c.Engine.PlaceUnderTamer85(c.Owner, host, cb); c.LastCard = host;
+                        }
                         else { d!.AddBottomSource(cb); d.AddBottomSource(ca); c.LastTargets = new List<CardInstance> { d }; }
                         c.Log($"[{c.Card.Name}] [{ca.Name}] · [{cb.Name}]을(를) {where}에 놓았습니다 (비용)");
                         c.RecalculateFieldBuffs();
@@ -306,16 +312,19 @@ internal static partial class SentenceParser
             bool hand = fromText.Contains("hand"), trash = fromText.Contains("trash");
             List<PoolCard> Pool(EffectContext c) => (hand ? PoolFrom(c.Owner.Hand, x => match(x) && !ReferenceEquals(x, c.Card)) : Enumerable.Empty<PoolCard>())
                 .Concat(trash ? PoolFrom(c.Owner.Trash, x => match(x) && !ReferenceEquals(x, c.Card)) : Enumerable.Empty<PoolCard>()).ToList();
-            bool TamerOk(EffectContext c) => thisTamer ? c.Owner.Tamers.Contains(c.Card) : c.Owner.Tamers.Any(underTamer);
+            bool TamerOk(EffectContext c) => HostOk85(c, thisTamer, underTamer);
             var zoneKind = hand && trash ? CardChoiceZone.HandOrTrash : hand ? CardChoiceZone.Hand : CardChoiceZone.Trash;
             return (c => TamerOk(c) && Pool(c).Count >= n,
                     c =>
                     {
                         var ranked = Pool(c).OrderBy(x => ReferenceEquals(x.Zone, c.Owner.Hand) ? 1 : 0).ThenBy(x => x.Card.Level).ToList();
                         var placed = new List<string>();
-                        foreach (var x in ChooseFromPool(c, zoneKind, ranked, n, $"[{c.Card.Name}] 테이머 아래에 놓을 카드 {n}장을 고르세요."))
-                            if (TakeFromPool(c, x)) { if (fd) c.Engine.PlaceFaceDownUnderTamer(c.Owner, x.Card); else c.Owner.UnderTamers.Add(x.Card); placed.Add(x.Card.Name); }
-                        c.Log($"[{c.Card.Name}] [{string.Join(", ", placed)}]을(를) 테이머 아래에 놓았습니다 (비용)");
+                        var chosen = ChooseFromPool(c, zoneKind, ranked, n, $"[{c.Card.Name}] 테이머 아래에 놓을 카드 {n}장을 고르세요.");
+                        if (DestHost85(c, thisTamer, underTamer, chosen.Select(x => x.Card).ToList(), fd) is not { } host) { c.CostFailed = true; return; }   // v0.85.0 테이머 1명
+                        foreach (var x in chosen)
+                            if (TakeFromPool(c, x)) { c.Engine.PlaceUnderTamer85(c.Owner, host, x.Card, fd); placed.Add(x.Card.Name); }
+                        c.LastCard = host;
+                        c.Log($"[{c.Card.Name}] [{string.Join(", ", placed)}]을(를) [{host.Name}] 아래에 놓았습니다 (비용)");
                     },
                     c => trash ? Pool(c).Any(x => !ReferenceEquals(x.Zone, c.Owner.Hand)) || c.Owner.Hand.Count >= n + 2 : c.Owner.Hand.Count >= n + 2,
                     $"{(hand && trash ? "패 또는 트래시" : hand ? "패" : "트래시")}의 카드 {n}장을 테이머 아래에 놓아");
@@ -329,9 +338,10 @@ internal static partial class SentenceParser
             return (c => Placed(c) != null && c.Owner.Tamers.Any(optTamer),
                     c =>
                     {
+                        if (DestHost85(c, false, optTamer, new[] { c.Card }, fdOpt) is not { } host) { c.CostFailed = true; return; }   // v0.85.0 테이머 1명
                         if (Placed(c) is not { } p || !c.Owner.OptionsInPlay.Remove(p)) { c.CostFailed = true; return; }
-                        if (fdOpt) c.Engine.PlaceFaceDownUnderTamer(c.Owner, c.Card); else c.Owner.UnderTamers.Add(c.Card);
-                        c.Log($"[{c.Card.Name}] 배틀 에어리어의 이 카드를 테이머 아래에 놓았습니다 (비용)");
+                        c.Engine.PlaceUnderTamer85(c.Owner, host, c.Card, fdOpt);
+                        c.Log($"[{c.Card.Name}] 배틀 에어리어의 이 카드를 [{host.Name}] 아래에 놓았습니다 (비용)");
                     },
                     _ => true, "배틀 에어리어의 이 카드를 테이머 아래에 놓아");
         }
@@ -344,10 +354,11 @@ internal static partial class SentenceParser
                     c =>
                     {
                         var x = c.Owner.SecurityStack[0];
+                        if (DestHost85(c, false, secTamer, new[] { x }, fdSec) is not { } host) { c.CostFailed = true; return; }   // v0.85.0 테이머 1명
                         c.Owner.SecurityStack.RemoveAt(0);
-                        if (fdSec) c.Engine.PlaceFaceDownUnderTamer(c.Owner, x); else c.Owner.UnderTamers.Add(x);
+                        c.Engine.PlaceUnderTamer85(c.Owner, host, x, fdSec);
                         c.Engine.NotifySecurityRemoved(c.Owner, x);
-                        c.Log($"[{c.Card.Name}] 시큐리티 맨 위 카드를 테이머 아래에 놓았습니다 (비용)");
+                        c.Log($"[{c.Card.Name}] 시큐리티 맨 위 카드를 [{host.Name}] 아래에 놓았습니다 (비용)");
                     },
                     c => c.Owner.SecurityStack.Count >= 3, "시큐리티 맨 위 카드를 테이머 아래에 놓아");
         }
@@ -364,9 +375,10 @@ internal static partial class SentenceParser
                     c =>
                     {
                         var picked = all ? Able(c) : c.Engine.ChooseCards(c.Owner, CardChoiceZone.DigivolutionCards, Able(c).OrderBy(x => x.Level).ToList(), n, upTo: false, $"[{c.Card.Name}] 테이머 아래에 놓을 진화원 {n}장을 고르세요.");
+                        if (DestHost85(c, false, srcTamer, picked, false) is not { } host) { c.CostFailed = true; return; }   // v0.85.0 테이머 1명
                         foreach (var x in picked)
-                            if (c.Self!.TakeSource(y => ReferenceEquals(y, x)) != null) c.Owner.UnderTamers.Add(x);
-                        c.Log($"[{c.Card.Name}] 진화원 [{string.Join(", ", picked.Select(x => x.Name))}]을(를) 테이머 아래에 놓았습니다 (비용)");
+                            if (c.Self!.TakeSource(y => ReferenceEquals(y, x)) != null) c.Engine.PlaceUnderTamer85(c.Owner, host, x);
+                        c.Log($"[{c.Card.Name}] 진화원 [{string.Join(", ", picked.Select(x => x.Name))}]을(를) [{host.Name}] 아래에 놓았습니다 (비용)");
                         c.RecalculateFieldBuffs();
                     },
                     _ => true, all ? "이 디지몬의 진화원 전부를 테이머 아래에 놓아" : $"이 디지몬의 진화원 {n}장을 테이머 아래에 놓아");

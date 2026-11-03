@@ -406,14 +406,15 @@ internal static partial class SentenceParser
             };
         if (Regex.IsMatch(c0, @"^played from digivolution cards$", RegexOptions.IgnoreCase))
             return c => c.Trigger == EffectTrigger.OnPlay && c.Engine.CurrentPlayOrigin == PlayOrigin.Sources;
-        // 테이머: "this Tamer is suspended" · "this Tamer has 2 or fewer cards under it" · "this Tamer has 3 or more [Knightmon] text cards under it" (테이머 아래 카드는 한 묶음)
+        // 테이머: "this Tamer is suspended" · "this Tamer has 2 or fewer cards under it" · "this Tamer has 3 or more [Knightmon] text cards under it" (v0.85.0 이 테이머 아래만)
         if (Regex.IsMatch(c0, @"^this Tamer is suspended$", RegexOptions.IgnoreCase))
             return c => c.Card.Type == CardType.Tamer && c.Owner.Tamers.Contains(c.Card) && !c.Owner.HasActiveTamer(c.Card);
         if ((m = Regex.Match(c0, $@"^this Tamer has (?<n>\d+) or (?<dir>more|fewer|less) (?:(?<x>{TargetSpec.NameList}) text )?cards under it$", RegexOptions.IgnoreCase)).Success)
         {
             int n = int.Parse(m.Groups["n"].Value); bool more = m.Groups["dir"].Value.Equals("more", StringComparison.OrdinalIgnoreCase);
             var xs = m.Groups["x"].Success ? TargetSpec.Names(m.Groups["x"].Value) : null;
-            return c => { int k = c.Owner.UnderTamers.Count(x => xs == null || !c.Owner.IsFaceDownUnderTamer(x) && xs.Any(v => TargetSpec.TextHas(x, v))); return more ? k >= n : k <= n; };
+            // v0.85.0 이 테이머 아래 카드만 (전에는 모든 테이머 아래 카드를 셌다)
+            return c => { int k = c.Card.Type != CardType.Tamer ? 0 : c.Owner.UnderOf(c.Card).Count(x => xs == null || !c.Owner.IsFaceDownUnderTamer(x) && xs.Any(v => TargetSpec.TextHas(x, v))); return more ? k >= n : k <= n; };
         }
         // 어택: "this Digimon is attacking" · "one of their Digimon is attacking"
         if (Regex.IsMatch(c0, @"^this Digimon is attacking$", RegexOptions.IgnoreCase))

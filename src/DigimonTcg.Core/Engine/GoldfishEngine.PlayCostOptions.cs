@@ -75,11 +75,10 @@ public partial class GoldfishEngine
     /// <summary>패에서 등장하는 card에 지금 걸리는 필드 · 육성의 등장 코스트 감소 (조건 · [턴에 1회]까지 — 비용을 낼 수 있는지는 보지 않는다)</summary>
     private IEnumerable<(FieldPlayCostModifier Mod, EffectContext Ctx)> ApplicableFieldPlayCostModifiers(PlayerZones owner, CardData card)
     {
-        if (card.Type == CardType.Option || card.IsDual)   // 옵션 · 듀얼 카드(옵션 쪽으로 사용)는 "등장"이 아니다
-            yield break;
+        bool use = card.Type == CardType.Option || card.IsDual;   // 옵션 · 듀얼 카드(옵션 쪽으로 사용)는 "등장"이 아니다 — v0.85.0 사용 코스트 감소(UseOption85)만
         foreach (var (mod, holder, source) in FieldPlayCostSources(owner).ToList())
         {
-            if (!mod.Which(card) || (mod.YourTurnOnly && !IsTurnOf(owner)))
+            if (mod.UseOption85 != use || !mod.Which(card) || (mod.YourTurnOnly && !IsTurnOf(owner)))
                 continue;
             if (mod.OncePerTurn && _fieldPlayCostUsedTurn.TryGetValue((mod, OnceHolder55(mod.Source, holder, source)), out int used) && used == State.TurnSequence)
                 continue;
@@ -98,7 +97,7 @@ public partial class GoldfishEngine
                 continue;
             if (mod.Cost is { } pay)
             {
-                if (!pay.CanPay(ctx) || !AskYesNo(owner, ctx.Self, $"[{ctx.Card.Name}] {pay.Describe} [{card.Name}] 등장 코스트를 {reduce} 줄일까요?", pay.Recommend(ctx)))
+                if (!pay.CanPay(ctx) || !AskYesNo(owner, ctx.Self, $"[{ctx.Card.Name}] {pay.Describe} [{card.Name}] {(mod.UseOption85 ? "사용" : "등장")} 코스트를 {reduce} 줄일까요?", pay.Recommend(ctx)))
                     continue;
                 pay.Pay(ctx);
                 if (mod.PaidAmount42 != null) reduce = Math.Max(0, mod.PaidAmount42(ctx));   // v0.42.0 소멸시킨 디지몬의 등장 코스트만큼 (BT13-103)
@@ -109,7 +108,7 @@ public partial class GoldfishEngine
             cost -= reduced;
             if (mod.OncePerTurn)
                 _fieldPlayCostUsedTurn[(mod, OnceHolder55(mod.Source, ctx.Self, ctx.Card))] = State.TurnSequence;   // v0.55.0 진화원 효과는 진화원 카드마다
-            EffectLog(owner, $"[{ctx.Card.Name}] [{card.Name}] 등장 코스트 -{reduced} (코스트 {cost})");
+            EffectLog(owner, $"[{ctx.Card.Name}] [{card.Name}] {(mod.UseOption85 ? "사용" : "등장")} 코스트 -{reduced} (코스트 {cost})");
         }
         return cost;
     }

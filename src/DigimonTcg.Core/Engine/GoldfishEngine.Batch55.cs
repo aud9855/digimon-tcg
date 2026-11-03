@@ -58,7 +58,16 @@ public partial class GoldfishEngine
             foreach (var list in new[] { z.Hand, z.MainDeck, z.SecurityStack, z.Trash, z.Tamers })
                 for (int i = 0; i < list.Count; i++) list[i] = Own(list[i]);
             // v0.71.0 필드 · 육성 · 테이머 아래도 (Stage 2 수비대처럼 시작할 때 필드에 놓인 카드 — 앞/뒷면 · 기록이 카드마다 따로)
-            for (int i = 0; i < z.UnderTamers.Count; i++) z.UnderTamers[i] = Own(z.UnderTamers[i]);
+            for (int i = 0; i < z.UnderTamers.Count; i++)
+            {
+                var old = z.UnderTamers[i];
+                z.UnderTamers[i] = Own(old);
+                if (!ReferenceEquals(old, z.UnderTamers[i]))   // v0.85.0 복사본도 같은 테이머 아래 · 같은 앞/뒷면
+                {
+                    if (z.UnderTamerHosts85.TryGetValue(old, out var host)) z.UnderTamerHosts85[z.UnderTamers[i]] = host;
+                    if (z.FaceDownUnderTamers.Contains(old)) z.FaceDownUnderTamers.Add(z.UnderTamers[i]);
+                }
+            }
             foreach (var d in z.BattleArea.Append(z.BreedingArea))
             {
                 if (d == null) continue;

@@ -218,7 +218,7 @@ internal static partial class SentenceParser
                 c.Enemy.Hand.Remove(x);
                 if (tamerOf.TryGetValue(dest, out var tamer))
                 {
-                    c.Enemy.UnderTamers.Add(x);
+                    c.Engine.PlaceUnderTamer85(c.Enemy, tamer, x);   // v0.85.0 고른 그 테이머 아래
                     c.LastTargets = new List<CardInstance>();
                     Emit(c, label, $"상대의 패 1장을 상대의 테이머 [{tamer.Name}] 아래에 놓았습니다");
                 }
@@ -232,15 +232,14 @@ internal static partial class SentenceParser
                 Diag46.Hit("blindPlace55");
                 c.RecalculateFieldBuffs();
             }, null);
-        // EX10-059 "delete 1 of their Digimon or Tamers with cards under it" — 진화원이 있는 디지몬 · 아래에 카드가 있는 테이머 (테이머 아래 카드는 지금 모델대로 한 묶음)
+        // EX10-059 "delete 1 of their Digimon or Tamers with cards under it" — 진화원이 있는 디지몬 · 아래에 카드가 있는 테이머 (v0.85.0 테이머마다)
         if (Regex.IsMatch(s, @"^delete 1 of your opponent's Digimon or Tamers with cards under it ⟦under55⟧$", I))
             return (c =>
             {
                 var pool = c.Enemy.BattleArea.Where(d => d.TamerProxyOf == null && d.EvolutionSources.Count > 0 && !c.Engine.IsUnaffectedBy(c.Owner, d))
                     .OrderByDescending(d => d.TopCard.Level).ThenByDescending(d => d.GetCurrentDP()).ToList();
                 var tamerOf = new Dictionary<CardInstance, CardData>(ReferenceEqualityComparer.Instance);
-                if (c.Enemy.UnderTamers.Count > 0)
-                    foreach (var t in c.Enemy.Tamers)
+                foreach (var t in c.Enemy.Tamers.Distinct().Where(t => c.Enemy.UnderCountOf(t) > 0))
                     {
                         var fake = new CardInstance(t, 0);
                         tamerOf[fake] = t;

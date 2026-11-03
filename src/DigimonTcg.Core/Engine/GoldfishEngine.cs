@@ -1907,7 +1907,7 @@ public partial class GoldfishEngine
         if (EffectRules.OptionUseBlocked(State, opp) || !opp.Hand.Remove(use.Card))   // v0.36.0 옵션 사용 제한
             return;
         int beforeMem = ctx.Memory;
-        ctx.Memory -= CardScripts.EffectivePlayCost(opp, use.Card, State.Player);
+        ctx.Memory -= ApplyFieldPlayCostModifiers(opp, use.Card, CardScripts.EffectivePlayCost(opp, use.Card, State.Player));   // v0.85.0 필드의 옵션 사용 코스트 감소 (BT25-049 · BT25-090)
         RecalculateFieldBuffs();   // v0.37.0 메모리 조건 지속 효과
         Log($"🤖 [AI 옵션 사용] [{use.Card.Name}(코스트 {use.Card.PlayCost})] (AI 메모리: +{beforeMem} → {ctx.Memory})");
         AddOpponentEvent(OpponentActionKind.Play, "옵션 사용", $"{use.Card.Name} · 메모리 {beforeMem} → {ctx.Memory}", use.Card);

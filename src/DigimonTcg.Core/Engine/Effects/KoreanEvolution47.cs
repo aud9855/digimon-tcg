@@ -89,6 +89,9 @@ public static partial class KoreanEvolution47
         if (tamer.Type != CardType.Tamer) return null;
         var p = For(evoCard);
         int? best = null;
+        // v0.85.0 테이머 아래 카드 조건은 진화하는 그 테이머 아래만 센다 (StaticContext.Tamer85)
+        if (field != null && !ReferenceEquals(field.Tamer85, tamer))
+            field = new StaticContext { Engine = field.Engine, State = field.State, Owner = field.Owner, Enemy = field.Enemy, Digimon = field.Digimon, OwnersTurn = field.OwnersTurn, BattleOpponentHasSources = field.BattleOpponentHasSources, Tamer85 = tamer };
         foreach (var c in p.Conditions)
             if (c.TamerName && c.Match(tamer, null) && (c.Field == null || (field != null && c.Field(field))))
             {

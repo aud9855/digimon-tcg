@@ -56,7 +56,7 @@ public sealed partial class TargetSpec
         {
             hw.Filters.Add(d => d.EvolutionSources.Count == 0);
             bool opp = hw.Opponent;
-            hw.ContextFilters.Add((c, d) => d.TopCard.Type != CardType.Tamer || d.TamerProxyOf != null || (opp ? c.Enemy : c.Owner).UnderTamers.Count == 0);
+            hw.ContextFilters.Add((c, d) => d.TopCard.Type != CardType.Tamer || d.TamerProxyOf != null || (opp ? c.Enemy : c.Owner).UnderCountOf(d.TopCard) == 0);   // v0.85.0 그 테이머 아래
             return hw;
         }
         // "1 of your [Dark Dragon] or [Evil Dragon] Digimon" (BT24-080 — 이름 또는 특징) · "1 of your [Leviamon] or Digimon with [X Antibody] in their digivolution cards" (BT15-081)

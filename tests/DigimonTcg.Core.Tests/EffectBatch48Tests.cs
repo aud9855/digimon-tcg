@@ -205,8 +205,11 @@ public class EffectBatch48Tests
             Assert.Null(CardScripts.TamerEvolutionCost(alda, takuya));               // 필드를 모르면 쓰지 않는다
             state.Player.UnderTamers.Add(Digimon(Uid("B48-H2-"), 4, traits: "Hybrid"));
             Assert.Equal(3, engine.TamerEvolutionCostFor(state.Player, alda, takuya));
-            state.Player.Tamers.Add(Tamer(Uid("B48-OTHER-"), "Other Tamer"));
-            Assert.Null(engine.TamerEvolutionCostFor(state.Player, alda, takuya));   // 테이머가 여럿이면 누구 아래인지 모른다
+            var other = Tamer(Uid("B48-OTHER-"), "Other Tamer");
+            state.Player.Tamers.Add(other);
+            // v0.85.0 테이머마다: 다른 테이머가 있어도 「타쿠야」 아래 2장으로 진화할 수 있다 (전에는 테이머가 여럿이면 누구 아래인지 몰라 진화할 수 없었다)
+            Assert.Equal(3, engine.TamerEvolutionCostFor(state.Player, alda, takuya));
+            Assert.Equal(0, state.Player.UnderCountOf(other));
             state.Player.Tamers.RemoveAt(1);
             Assert.True(engine.EvolveTamer(takuya, alda).CanExecute, string.Join(" | ", state.ActionLogs));
             var d = Assert.Single(state.Player.BattleArea);
