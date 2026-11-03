@@ -1764,6 +1764,8 @@ public partial class GoldfishEngine
             if (State.IsGameOver || (_aiTurn is { } t64 && AiMem64(t64) < 0)) break;
             if (ability.Zone != MainAbilityZone.Field && !GetZoneAbilities(State.DummyOpponent, ability.Zone).Any(a => ReferenceEquals(a.Card, ability.Card)))
                 continue;   // 앞의 효과로 패 · 트래시를 떠났거나 이미 썼다
+            if (ability.Zone == MainAbilityZone.Trash && !TrashMainStatus(State.DummyOpponent, ability.Card).CanUse)
+                continue;   // v0.86.0 발동 조건 · 비용이 맞지 않는 [트래시]【메인】 (GoldfishEngine.TrashZone86)
             if (ability.Inherited && (ability.Digimon == null || !State.DummyOpponent.BattleArea.Contains(ability.Digimon) || !CardIdentity55.StillIn(ability.Digimon.FaceUpSources, ability.Card)))
                 continue;   // 앞의 효과로 그 디지몬이 떠났거나 그 카드가 진화원이 아니게 되었다
             if (!AiPolicy.ShouldUseMainAbility(this, ability, _aiTurn is { } t64b ? AiMem64(t64b) : 0)) continue;

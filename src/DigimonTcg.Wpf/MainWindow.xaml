@@ -211,7 +211,7 @@
                                             <RowDefinition Height="*"/>
                                             <RowDefinition Height="*"/>
                                         </Grid.RowDefinitions>
-                                        <Border Grid.Row="0" Style="{StaticResource Duel.Zone.Opponent}" Margin="0,0,0,6">
+                                        <Border x:Name="OppTrashZoneBorder" Grid.Row="0" Cursor="Hand" ToolTip="클릭: 상대 트래시 목록" MouseLeftButtonDown="TrashZone_MouseLeftButtonDown" MouseLeftButtonUp="OppTrashZone_MouseLeftButtonUp" Style="{StaticResource Duel.Zone.Opponent}" Margin="0,0,0,6">
                                             <DockPanel>
                                                 <TextBlock DockPanel.Dock="Top" Text="TRASH" Style="{StaticResource Duel.ZoneLabel}" HorizontalAlignment="Center"/>
                                                 <TextBlock x:Name="TxtOppTrashCount" Text="0" Foreground="{StaticResource Neo.Brush.Text.Primary}" FontFamily="{StaticResource Neo.Font.Mono}" FontWeight="ExtraBold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -444,7 +444,7 @@
                                                 </Grid>
                                             </DockPanel>
                                         </Border>
-                                        <Border x:Name="PlayerTrashZoneBorder" Grid.Row="1" Style="{StaticResource Duel.Zone}" MouseRightButtonUp="PlayerTrashZone_MouseRightButtonUp">
+                                        <Border x:Name="PlayerTrashZoneBorder" Grid.Row="1" Style="{StaticResource Duel.Zone}" Cursor="Hand" MouseLeftButtonDown="TrashZone_MouseLeftButtonDown" MouseLeftButtonUp="PlayerTrashZone_MouseLeftButtonUp" MouseRightButtonUp="PlayerTrashZone_MouseRightButtonUp">
                                             <DockPanel>
                                                 <DockPanel DockPanel.Dock="Top">
                                                     <TextBlock Text="TRASH" Style="{StaticResource Duel.ZoneLabel}"/>

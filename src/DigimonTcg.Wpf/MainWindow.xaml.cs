@@ -2808,10 +2808,13 @@ public partial class MainWindow : Window
 
         // 2) 플레이매트 우측: 메인 덱 장수 및 트래시(묘지) 맨 위 카드 렌더링
         TxtMainDeckVisualCount.Text = $"{_gameState.Player.MainDeck.Count}장";
-        // 트래시의 카드로 쓸 수 있는 [Trash] [Main] 효과가 있으면 표시 (트래시 칸 우클릭으로 고른다)
-        int trashAbilities = _gameState.CurrentPhase == Phase.Main ? _engine.GetTrashMainAbilities(_gameState.Player).Count : 0;
+        // 트래시의 카드로 지금 쓸 수 있는 [Trash] [Main] 효과가 있으면 표시 (v0.86.0 조건 · 비용까지 미리 본다 — 클릭: 트래시 목록 · 우클릭: 바로 쓰기)
+        int trashAbilities = _gameState.CurrentPhase == Phase.Main ? UsableTrashMainCards().Count : 0;
         TxtTrashVisualCount.Text = trashAbilities > 0 ? $"{_gameState.Player.Trash.Count}장 · ⚡{trashAbilities}" : $"{_gameState.Player.Trash.Count}장";
-        PlayerTrashZoneBorder.ToolTip = trashAbilities > 0 ? $"우클릭: 트래시의 카드로 쓰는 [메인] 효과 ({trashAbilities}개)" : null;
+        PlayerTrashZoneBorder.ToolTip = trashAbilities > 0
+            ? $"클릭: 트래시 목록 ({_gameState.Player.Trash.Count}장) · 우클릭: 트래시의 카드로 쓰는 [메인] 효과 ({trashAbilities}개)"
+            : $"클릭: 트래시 목록 ({_gameState.Player.Trash.Count}장)";
+        OppTrashZoneBorder.ToolTip = $"클릭: 상대 트래시 목록 ({_gameState.DummyOpponent.Trash.Count}장)";
 
         if (_gameState.Player.Trash.Count > 0)
         {
@@ -4628,10 +4631,14 @@ public partial class MainWindow : Window
     private void PlayerTrashZone_MouseRightButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         e.Handled = true;
-        var abilities = _gameState.CurrentPhase == Phase.Main ? _engine.GetTrashMainAbilities(_gameState.Player) : Array.Empty<GoldfishEngine.MainAbility>();
+        var abilities = _gameState.CurrentPhase == Phase.Main ? UsableTrashMainCards() : Array.Empty<GoldfishEngine.MainAbility>();
         if (abilities.Count == 0)
         {
-            ShowToast(false, "트래시에서 지금 쓸 수 있는 [메인] 효과가 없습니다.");
+            // v0.86.0 [트래시]【메인】 카드가 있으면 쓸 수 없는 이유까지
+            var blocked = _engine.DescribeTrash(_gameState.Player).FirstOrDefault(i => i.HasTrashMain);
+            ShowToast(false, blocked?.Reason is { } why
+                ? $"트래시의 [{blocked.Card.DisplayName}] [메인] 효과를 지금 쓸 수 없습니다 — {why}"
+                : "트래시에서 지금 쓸 수 있는 [메인] 효과가 없습니다.");
             return;
         }
         var card = abilities[0].Card;
@@ -4644,6 +4651,46 @@ public partial class MainWindow : Window
             card = abilities[pick].Card;
         }
         TryActivateZoneAbility(card, MainAbilityZone.Trash);
+    }
+
+    // ==================== v0.86.0 트래시 목록 (트래시 칸 왼쪽 클릭 — 내 트래시 · 상대 트래시) ====================
+    private object? _trashPressSource;
+
+    /// <summary>[Trash] [Main] 효과 중 발동 조건 · 비용까지 지금 맞는 것 (트래시 칸 배지 · 우클릭)</summary>
+    private IReadOnlyList<GoldfishEngine.MainAbility> UsableTrashMainCards() =>
+        _engine.GetTrashMainAbilities(_gameState.Player).Where(a => _engine.TrashMainStatus(_gameState.Player, a.Card).CanUse).ToList();
+
+    private void TrashZone_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) =>
+        _trashPressSource = _isDragging ? null : sender;
+
+    private void PlayerTrashZone_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e) => OpenTrashList(sender, e, mine: true);
+
+    private void OppTrashZone_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e) => OpenTrashList(sender, e, mine: false);
+
+    /// <summary>
+    /// 트래시 목록 창을 연다 — 같은 칸에서 누르고 뗀 클릭만 (패에서 끌어 온 카드를 놓은 것은 아님).
+    /// 동전 던지기 · 멀리건 · 컷인 중에는 열지 않는다. 효과 고르기 창은 모달이라 그동안은 이 칸을 누를 수 없다.
+    /// 상대 턴 재생 · 대상 고르기 중에는 목록만 보고 [트래시]【메인】 효과는 쓰지 못한다.
+    /// </summary>
+    private void OpenTrashList(object sender, System.Windows.Input.MouseButtonEventArgs e, bool mine)
+    {
+        bool pressedHere = ReferenceEquals(_trashPressSource, sender);
+        _trashPressSource = null;
+        if (!pressedHere || _isDragging)
+            return;
+        if (CoinTossOverlay.Visibility == Visibility.Visible || MulliganOverlay.Visibility == Visibility.Visible || UltimateCutInOverlay.Visibility == Visibility.Visible)
+            return;
+        e.Handled = true;
+        var owner = mine ? _gameState.Player : _gameState.DummyOpponent;
+        string? blocked = !mine ? null
+            : IsReplayRunning ? "상대 턴 재생 중에는 쓸 수 없습니다."
+            : _pendingHandCard != null || _pendingAttackerInstance != null ? "대상을 고르는 중에는 쓸 수 없습니다 (먼저 고르기를 끝내거나 취소하세요)."
+            : null;
+        TrashListWindow.Show(this, mine ? "내 트래시" : "상대 트래시", _engine.DescribeTrash(owner), mine,
+            (card, w, h) => CreateCardVisualFrame(card, width: w, height: h),
+            blocked,
+            mine ? card => TryActivateZoneAbility(card, MainAbilityZone.Trash) : null,
+            UpdateCardInspector);
     }
 
     private void BtnStartSt1_Click(object sender, RoutedEventArgs e)

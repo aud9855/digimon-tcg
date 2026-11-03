@@ -2182,7 +2182,7 @@ internal static partial class SentenceParser
         if (c.Deferred39 is { } deferred) { deferred.Add(() => RunStep(s, c)); return; }   // v0.39.0 "At the end of the battle, ~" 뒤의 문장은 배틀 뒤에 (SentenceParser.Batch39Sec.cs)
         c.StepsRan = true;
         if (s.Condition != null && !s.Condition(c)) { c.LastStepResolved = false; return; }
-        if (s.Optional && !c.Engine.AskYesNo(c.Owner, c.Self, $"[{c.Card.Name}] 이 효과를 발휘할까요?\n{s.Text}", AiEvaluator.EstimateSentenceValue(s.Text) >= 0)) { c.LastStepResolved = false; return; }
+        if (s.Optional && !c.Engine.AskYesNo(c.Owner, c.Self, $"[{c.Card.Name}] 이 효과를 발휘할까요?\n{AskText86(c, s.Text)}", AiEvaluator.EstimateSentenceValue(s.Text) >= 0)) { c.LastStepResolved = false; return; }
         c.LastStepResolved = true;
         int t45 = c.Owner.Trash.Count, d45 = c.Owner.MainDeck.Count, s45 = c.Self?.EvolutionSources.Count ?? 0;   // v0.45.0 앞 문장의 결과 기록 (SentenceParser.Batch45Cond)
         s.Act(c);

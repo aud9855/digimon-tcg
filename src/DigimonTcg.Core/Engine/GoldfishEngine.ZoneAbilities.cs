@@ -49,6 +49,8 @@ public partial class GoldfishEngine
             return ActionResult.Fail($"지금은 {ZoneName(zone)}의 [메인] 효과를 쓸 수 없습니다.");
         if (!GetZoneAbilities(State.Player, zone).Any(a => ReferenceEquals(a.Card, card)))
             return ActionResult.Fail($"[{card.Name}]의 {ZoneName(zone)} [메인] 효과는 지금 쓸 수 없습니다 (이번 턴에 이미 썼거나 {ZoneName(zone)}에 없음).");
+        if (zone == MainAbilityZone.Trash && TrashMainStatus(State.Player, card) is { CanUse: false, Reason: { } why86 })   // v0.86.0 조건 · 비용을 미리 본다 (GoldfishEngine.TrashZone86)
+            return ActionResult.Fail($"[{card.Name}]: {why86}");
         var ctx = UseZoneAbility(State.Player, card, zone);
         CheckTurnEndAndAutoReset();
         if (!ctx.AnyStepResolved)
@@ -59,8 +61,13 @@ public partial class GoldfishEngine
     private EffectContext UseZoneAbility(PlayerZones owner, CardData card, MainAbilityZone zone)
     {
         EffectLog(owner, $"[{ZoneName(zone)}] [메인] {card.Name}의 효과 사용");
+        var zoneCards = zone == MainAbilityZone.Hand ? owner.Hand : owner.Trash;
+        int copiesBefore = zoneCards.Count(x => ReferenceEquals(x, card));
         var ctx = RunEffects(ZoneTrigger(zone), owner, null, card, includeInherited: false);
-        if (ctx.AnyStepResolved)
+        // v0.86.0 쓴 카드가 그 효과로 패 · 트래시를 떠났으면 (등장 · 덱 아래 등) 남은 같은 카드는 아직 쓰지 않은 카드다 —
+        // 같은 카드 여러 장은 같은 CardData 객체라 떠난 장수만큼 셈에서 뺀다 (전에는 1장을 써서 떠나면 남은 장도 쓴 것으로 셌다)
+        bool usedCopyLeft = zoneCards.Count(x => ReferenceEquals(x, card)) < copiesBefore;
+        if (ctx.AnyStepResolved && !usedCopyLeft)
             _usedMainAbilities[(zone, card)] = _usedMainAbilities.GetValueOrDefault((zone, card)) + 1;
         RecalculateFieldBuffs();
         return ctx;
